@@ -1,0 +1,23 @@
+{
+  "name": "cf-agent-library",
+  "version":"0.0.0",
+  "authors": [
+    "Danielle Lamb-Books <dlbooks@connectfirst.com>",
+    "Ross Myers <rmyers@connectfirst.com>"
+  ],
+  "description": "Javascript library for Agent UI functionality",
+  "main": "./dist/cfAgentLibrary.min.js",
+  "keywords": [
+    "JavaScript"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
