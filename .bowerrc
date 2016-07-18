@@ -1,0 +1,4 @@
+{
+    "registry":"http://build.connectfirst.com:5678",
+    "timeout": 300000
+}
