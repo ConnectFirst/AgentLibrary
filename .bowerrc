@@ -1,4 +1,4 @@
 {
-    "registry":"http://d01-build1.cf.dev:5678",
+    "registry":"http://build.connectfirst.com:5678",
     "timeout": 300000
 }

@@ -21,8 +21,17 @@
     // public object
     var exports = {};
 
+    exports.hello = function() {
+        return "Hello World";
+    };
+
+    exports.greet = function() {
+        var name = "Agent Library";
+        alert("Hello from the " + name);
+    };
+
     // Just return a value to define the module export.
     // This example returns an object, but the module
     // can return a function as the exported value.
-    return {};
+    return exports;
 }));

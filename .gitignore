@@ -1,0 +1,7 @@
+/*.iml
+/.idea
+/build
+/node_modules
+protractor/testresults
+/vendor
+/dist
