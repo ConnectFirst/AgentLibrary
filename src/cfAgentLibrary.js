@@ -36,8 +36,8 @@ function initAgentLibraryCore (context) {
             // todo default socket address?
         }
 
-        //this.socket = AgentLibrary.openSocket(this.socketDest);
         this.helloStr = "Hello World";
+        this._callbacks = {};
 
         return this;
     };
@@ -45,7 +45,6 @@ function initAgentLibraryCore (context) {
     // LIBRARY PROTOTYPE METHODS
     //
     // These methods define the public API.
-
 
 }
 
@@ -55,17 +54,25 @@ function initAgentLibrarySocket (context) {
 
     var AgentLibrary = context.AgentLibrary;
 
-    AgentLibrary.prototype.hello = function() {
+    AgentLibrary.prototype.hello = function(callback) {
+        this._callbacks.helloResponse = callback;
         return this.helloStr;
     };
 
-    AgentLibrary.prototype.openSocket = function(){
+    AgentLibrary.prototype.helloResponse = function() {
+        this._callbacks.helloResponse.call(this,"test arg");
+
+    };
+
+    AgentLibrary.prototype.openSocket = function(callback){
+        this._callbacks.openResponse = callback;
         if("WebSocket" in context){
             console.log("attempting to open socket connection...");
             this.socket = new WebSocket(this.socketDest);
 
             this.socket.onopen = function() {
                 console.log("websocket opened");
+                socketOpened();
             };
 
             this.socket.onmessage = function(evt){
@@ -76,19 +83,13 @@ function initAgentLibrarySocket (context) {
                 processMessage(receivedMsg);
             };
 
-            //lreturn this.socket;
+            //return this.socket;
         }else{
             console.log("WebSocket NOT supported by your Browser.");
         }
 
     };
 
-    AgentLibrary.prototype.sendMessage = function(msg){
-        console.log("sending message...");
-        console.log(AgentLibrary);
-        this.socket.send(msg);
-
-    };
 
     AgentLibrary.prototype.closeSocket = function(){
         this.socket.onclose = function(){
@@ -97,18 +98,38 @@ function initAgentLibrarySocket (context) {
         };
     };
 
-    function processMessage(msg) {
-        console.log("processing message...");
+    AgentLibrary.prototype.loginAgent = function(msg, callback){
+        this._callbacks.loginResponse = callback;
+        AgentLibrary.sendMessage(msg);
+    };
+
+    function sendMessage(msg){
+        console.log("sending message...");
+        console.log(AgentLibrary);
+        this.socket.send(msg);
+
     }
 
+    function processMessage(response) {
+        console.log("processing message...");
+
+        var type = response.ui_response['@type'];
+        console.log("message type: " + type);
+
+        if(type === 'login'){
+            this._callbacks.loginResponse.call(this, response);
+        }
+    }
+
+    function socketOpened(){
+        this._callbacks.openResponse.call(this);
+    }
 }
 
 var initAgentLibrary = function (context) {
 
     initAgentLibraryCore(context);
     initAgentLibrarySocket(context);
-
-    console.log("initAgentLibrary: " + context.AgentLibrary);
 
     return context.AgentLibrary;
 };
