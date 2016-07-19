@@ -7,6 +7,8 @@
 
 ;(function (global) {
 
+// GLOBAL is a reference to the global Object.
+var Fn = Function, GLOBAL = new Fn('return this')();
 
 /**
  * Init wrapper for the core module.
@@ -34,10 +36,8 @@ function initAgentLibraryCore (context) {
             // todo default socket address?
         }
 
-        //var helloStr = AgentLibrary.hello();
-        //console.log(helloStr);
-
-        this.socket = AgentLibrary._openSocket(this.socketDest);
+        //this.socket = AgentLibrary.openSocket(this.socketDest);
+        this.helloStr = "Hello World";
 
         return this;
     };
@@ -46,13 +46,6 @@ function initAgentLibraryCore (context) {
     //
     // These methods define the public API.
 
-    AgentLibrary.prototype.sendMessage = function(msg){
-        AgentLibrary._sendMessage(msg);
-    };
-
-    AgentLibrary.prototype.hello = function() {
-        return AgentLibrary._hello();
-    };
 
 }
 
@@ -62,20 +55,20 @@ function initAgentLibrarySocket (context) {
 
     var AgentLibrary = context.AgentLibrary;
 
-    AgentLibrary._hello = function() {
-        return "Hello World";
+    AgentLibrary.prototype.hello = function() {
+        return this.helloStr;
     };
 
-    AgentLibrary._openSocket = function(url){
+    AgentLibrary.prototype.openSocket = function(){
         if("WebSocket" in context){
             console.log("attempting to open socket connection...");
-            var ws = new WebSocket(url);
+            this.socket = new WebSocket(this.socketDest);
 
-            ws.onopen = function() {
+            this.socket.onopen = function() {
                 console.log("websocket opened");
             };
 
-            ws.onmessage = function(evt){
+            this.socket.onmessage = function(evt){
                 var receivedMsg = evt.data;
                 console.log("received message...");
                 console.log(receivedMsg);
@@ -83,21 +76,22 @@ function initAgentLibrarySocket (context) {
                 processMessage(receivedMsg);
             };
 
-            return ws;
+            //lreturn this.socket;
         }else{
             console.log("WebSocket NOT supported by your Browser.");
         }
 
     };
 
-    AgentLibrary._sendMessage = function(msg){
+    AgentLibrary.prototype.sendMessage = function(msg){
         console.log("sending message...");
-        AgentLibrary.socket.send(msg);
+        console.log(AgentLibrary);
+        this.socket.send(msg);
 
     };
 
-    AgentLibrary._closeSocket = function(){
-        ws.onclose = function(){
+    AgentLibrary.prototype.closeSocket = function(){
+        this.socket.onclose = function(){
             // websocket is closed
             console.log("websocket closed");
         };
