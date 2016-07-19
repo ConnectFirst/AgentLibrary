@@ -17,7 +17,6 @@
     "url": "http://www.connectfirst.com"
   },
   "readmeFilename": "README.md",
-
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-beep": "^0.3.2",
