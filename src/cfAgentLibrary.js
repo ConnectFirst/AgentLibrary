@@ -100,7 +100,7 @@ function initAgentLibrarySocket (context) {
 
     AgentLibrary.prototype.loginAgent = function(msg, callback){
         this._callbacks.loginResponse = callback;
-        AgentLibrary.sendMessage(msg);
+        sendMessage(msg);
     };
 
     function sendMessage(msg){
