@@ -54,8 +54,14 @@ function initAgentLibrarySocket (context) {
 
     var AgentLibrary = context.AgentLibrary;
 
-    AgentLibrary.prototype.hello = function(callback) {
+    AgentLibrary.prototype.hello = function() {
+        /*var instance = this;
+        return new Promise(function(resolve, reject) {
+            resolve(instance.helloStr);
+        });*/
+
         this._callbacks.helloResponse = callback;
+
         return this.helloStr;
     };
 
@@ -65,14 +71,15 @@ function initAgentLibrarySocket (context) {
     };
 
     AgentLibrary.prototype.openSocket = function(callback){
-        this._callbacks.openResponse = callback;
+        var instance = this;
+        instance._callbacks.openResponse = callback;
         if("WebSocket" in context){
             console.log("attempting to open socket connection...");
             this.socket = new WebSocket(this.socketDest);
 
             this.socket.onopen = function() {
                 console.log("websocket opened");
-                socketOpened();
+                socketOpened(instance);
             };
 
             this.socket.onmessage = function(evt){
@@ -80,7 +87,7 @@ function initAgentLibrarySocket (context) {
                 console.log("received message...");
                 console.log(receivedMsg);
 
-                processMessage(receivedMsg);
+                processMessage(instance, receivedMsg);
             };
 
             //return this.socket;
@@ -100,29 +107,28 @@ function initAgentLibrarySocket (context) {
 
     AgentLibrary.prototype.loginAgent = function(msg, callback){
         this._callbacks.loginResponse = callback;
-        sendMessage(msg);
+        sendMessage(instance, msg);
     };
 
-    function sendMessage(msg){
+    function sendMessage(instance, msg){
         console.log("sending message...");
         console.log(AgentLibrary);
-        this.socket.send(msg);
-
+        instance.socket.send(msg);
     }
 
-    function processMessage(response) {
+    function processMessage(instance, response) {
         console.log("processing message...");
 
         var type = response.ui_response['@type'];
         console.log("message type: " + type);
 
         if(type === 'login'){
-            this._callbacks.loginResponse.call(this, response);
+            instance._callbacks.loginResponse.call(instance, response);
         }
     }
 
-    function socketOpened(){
-        this._callbacks.openResponse.call(this);
+    function socketOpened(instance){
+        instance._callbacks.openResponse.call(instance);
     }
 }
 
