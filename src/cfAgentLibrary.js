@@ -34,12 +34,24 @@ function initAgentLibraryCore (context) {
             // todo default socket address?
         }
 
-        var helloStr = AgentLibrary.hello();
-        console.log(helloStr);
+        //var helloStr = AgentLibrary.hello();
+        //console.log(helloStr);
 
-        this.socket = AgentLibrary.openSocket(this.socketDest);
+        this.socket = AgentLibrary._openSocket(this.socketDest);
 
         return this;
+    };
+
+    // LIBRARY PROTOTYPE METHODS
+    //
+    // These methods define the public API.
+
+    AgentLibrary.prototype.sendMessage = function(msg){
+        AgentLibrary._sendMessage(msg);
+    };
+
+    AgentLibrary.prototype.hello = function() {
+        return AgentLibrary._hello();
     };
 
 }
@@ -50,11 +62,11 @@ function initAgentLibrarySocket (context) {
 
     var AgentLibrary = context.AgentLibrary;
 
-    AgentLibrary.hello = function() {
+    AgentLibrary._hello = function() {
         return "Hello World";
     };
 
-    AgentLibrary.openSocket = function(url){
+    AgentLibrary._openSocket = function(url){
         if("WebSocket" in context){
             console.log("attempting to open socket connection...");
             var ws = new WebSocket(url);
@@ -78,13 +90,13 @@ function initAgentLibrarySocket (context) {
 
     };
 
-    AgentLibrary.sendMessage = function(msg){
+    AgentLibrary._sendMessage = function(msg){
         console.log("sending message...");
         AgentLibrary.socket.send(msg);
 
     };
 
-    AgentLibrary.closeSocket = function(){
+    AgentLibrary._closeSocket = function(){
         ws.onclose = function(){
             // websocket is closed
             console.log("websocket closed");
