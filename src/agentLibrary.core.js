@@ -23,7 +23,8 @@ const CALLBACK_TYPES = {
 const MESSAGE_TYPES = {
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
-    "AGENT_STATE":"AGENT-STATE"
+    "AGENT_STATE":"AGENT-STATE",
+    "ON_MESSAGE":"ON-MESSAGE"
 };
 
 // GLOBAL INTERNAL METHODS
@@ -44,8 +45,7 @@ function initAgentLibraryCore (context) {
      * @param {Object} [config={}] Set socket url and callback functions.
      * @constructor
      * @memberof AgentLibrary
-     * @property {object} callbacks Internal map of registered callback functions<br/>
-     * @property {string} socketDest URL for connecting socket
+     * @property {object} callbacks Internal map of registered callback functions
      * @example
      * var Lib = new AgentLibrary({
      *      socketDest:'ws://d01-test.cf.dev:8080',

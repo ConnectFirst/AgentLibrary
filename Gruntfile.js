@@ -12,9 +12,6 @@ module.exports = function(grunt) {
 
   var LIBRARY_NAME = 'agentLibrary';
 
-  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  // Add your modules to this list
-  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   var MODULE_LIST = [
     sub('src/%s.module.js'),
     sub('src/submodule/%s.submodule.js'),
@@ -24,7 +21,7 @@ module.exports = function(grunt) {
 
   var DIST_HEAD_LIST = [
     sub('src/%s.intro.js'),
-    sub('src/requests/*.request.js'),
+    sub('src/request/*.request.js'),
     sub('src/model/*.model.js'),
     sub('src/utils/*.js'),
     sub('src/%s.const.js'),
@@ -35,7 +32,7 @@ module.exports = function(grunt) {
   // there UglifyJS conditional compilation).
   var DEV_HEAD_LIST = [
     sub('src/%s.intro.js'),
-    sub('src/requests/*.request.js'),
+    sub('src/request/*.request.js'),
     sub('src/model/*.model.js'),
     sub('src/utils/*.js'),
     sub('src/%s.core.js')

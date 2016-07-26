@@ -25,7 +25,7 @@ function initAgentLibrarySocket (context) {
                 UIModel.getInstance().socketConnected = false;
             };
         }else{
-            console.log("AgentLibrary: WebSocket NOT supported by your Browser.");
+            console.warn("AgentLibrary: WebSocket NOT supported by your Browser.");
         }
     };
 

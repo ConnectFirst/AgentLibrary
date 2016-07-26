@@ -1,15 +1,17 @@
 
-var LogoutRequest = function(props) {
-    this.agentId = props.agentId;
-    this.message = props.message;
-    this.isSupervisor = props.isSupervisor;
+var LogoutRequest = function(agentId, message, isSupervisor) {
+    this.agentId = agentId;
+    this.message = message;
+    this.isSupervisor = isSupervisor;
 };
 
 LogoutRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request": {
             "@destination":"IQ",
-            "@type":"LOGOUT",
+            "@type":MESSAGE_TYPES.LOGOUT,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
             "agent_id":{
                 "#text":this.agentId
             },
@@ -18,9 +20,6 @@ LogoutRequest.prototype.formatJSON = function() {
             }
         }
     };
-
-    msg.ui_request['@message_id'] = utils.getMessageId();
-    msg.ui_request['@response_to'] = "";
 
     return JSON.stringify(msg);
 };
