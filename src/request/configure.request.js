@@ -9,6 +9,12 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, outdialGroupId, d
     this.updateFromAdminUI = false;
     this.loginType = "NO-SELECTION";
     this.updateLogin = false;
+
+    // Remove any ids agent doesn't have access to
+    this.queueIds = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableQueues, this.queueIds, "gateId");
+    this.chatIds = utils.checkExistingIds(UIModel.getInstance().chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
+    this.skillPofileId = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
+    this.outdialGroupId = utils.checkExistingIds(UIModel.getInstance().outboundSettings.availableOutdialGroups, [this.outdialGroupId], "dialGroupId")[0] || "";
 };
 
 ConfigRequest.prototype.formatJSON = function() {

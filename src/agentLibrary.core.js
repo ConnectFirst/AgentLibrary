@@ -106,6 +106,7 @@ function initAgentLibraryCore (context) {
     /**
      * Get the map of all registered callbacks
      * @memberof AgentLibrary
+     * @returns {array}
      */
     AgentLibrary.prototype.getCallbacks = function(){
         return this.callbacks;
@@ -114,9 +115,132 @@ function initAgentLibraryCore (context) {
     /**
      * Get a given registered callback by type
      * @memberof AgentLibrary
+     * @returns {object}
      */
     AgentLibrary.prototype.getCallback = function(type){
         return this.callbacks[type];
+    };
+
+
+    // requests and responses
+    /**
+     * Get outgoing Login Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getLoginRequest = function() {
+        return UIModel.getInstance().loginRequest;
+    };
+    /**
+     * Get outgoing Config Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getConfigRequest = function() {
+        return UIModel.getInstance().configRequest;
+    };
+    /**
+     * Get outgoing Logout Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getLogoutRequest = function() {
+        return UIModel.getInstance().logoutRequest;
+    };
+    /**
+     * Get latest outgoing Agent State Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentStateRequest = function() {
+        return UIModel.getInstance().agentStateRequest;
+    };
+    /**
+     * Get packet received on successful Login
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getLoginPacket = function() {
+        return UIModel.getInstance().loginPacket;
+    };
+    /**
+     * Get packet received on successful Configuration (2nd layer login)
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getConfigPacket = function() {
+        return UIModel.getInstance().configPacket;
+    };
+    /**
+     * Get latest received packet for Agent State
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentStatePacket = function() {
+        return UIModel.getInstance().agentStatePacket;
+    };
+    /**
+     * Get latest received packet for the Current Call
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCurrentCallPacket = function() {
+        return UIModel.getInstance().currentCallPacket;
+    };
+
+    // settings objects
+    /**
+     * Get Application Settings object containing the current state of application related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getApplicationSettings = function() {
+        return UIModel.getInstance().applicationSettings;
+    };
+
+    /**
+     * Get Chat Settings object containing the current state of chat related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatSettings = function() {
+        return UIModel.getInstance().chatSettings;
+    };
+
+    /**
+     * Get Inbound Settings object containing the current state of inbound related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getInboundSettings = function() {
+        return UIModel.getInstance().inboundSettings;
+    };
+
+    /**
+     * Get Outbound Settings object containing the current state of outbound related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getOutboundSettings = function() {
+        return UIModel.getInstance().outboundSettings;
+    };
+
+    /**
+     * Get Agent Settings object containing the current state of agent related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentSettings = function() {
+        return UIModel.getInstance().agentSettings;
+    };
+
+    /**
+     * Get the Agent Permissions object containing the current state of agent permissions
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentPermissions = function() {
+        return UIModel.getInstance().agentPermissions;
     };
 
 

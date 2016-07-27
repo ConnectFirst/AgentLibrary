@@ -26,7 +26,7 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v0.0.0 - 2016-07-26 - Connect First */
+            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v0.0.0 - 2016-07-27 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author &lt;a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books &lt;/a>
@@ -127,6 +127,12 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, outdialGroupId, d
     this.updateFromAdminUI = false;
     this.loginType = "NO-SELECTION";
     this.updateLogin = false;
+
+    // Remove any ids agent doesn't have access to
+    this.queueIds = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableQueues, this.queueIds, "gateId");
+    this.chatIds = utils.checkExistingIds(UIModel.getInstance().chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
+    this.skillPofileId = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
+    this.outdialGroupId = utils.checkExistingIds(UIModel.getInstance().outboundSettings.availableOutdialGroups, [this.outdialGroupId], "dialGroupId")[0] || "";
 };
 
 ConfigRequest.prototype.formatJSON = function() {
@@ -753,7 +759,6 @@ var UIModel = (function() {
                 showLeadHistory : true              // Controls whether or not the agents can view lead history
             },
 
-
             // chat
             chatSettings :{
                 availableChatQueues : [],           // List of all chat queues agent has access to, set on login
@@ -762,19 +767,10 @@ var UIModel = (function() {
                 alias : ""                          // Chat alias, on-login this is the UID, but is changed if the user changes it
             },
 
-
             // connection objects
             connectionSettings : {
                 hashCode : null,                    // used specifically for reconnects
                 reconnect : false                   // variable tracks the type of login, on init it's false...once connected it's set to true
-            },
-
-            // outbound settings
-            outboundSettings : {
-                availableCampaigns : [],            // array of campaigns agent has access to, set on login
-                availableOutdialGroups : [],        // array of dial groups agent has access to, set on login
-                insertCampaigns : [],
-                outdialGroup : {}                   // dial group agent is signed into
             },
 
             // inbound settings
@@ -785,16 +781,23 @@ var UIModel = (function() {
                 skillProfile : {}                   // The skill profile the agent is signed into, set on config response
             },
 
-            surveySettings : {
-                availableSurveys : []
+            // outbound settings
+            outboundSettings : {
+                availableCampaigns : [],            // array of campaigns agent has access to, set on login
+                availableOutdialGroups : [],        // array of dial groups agent has access to, set on login
+                insertCampaigns : [],
+                outdialGroup : {}                   // dial group agent is signed into
             },
 
-
-
-            // Public getters
-            getLoginRequest: function() {
-                console.log("loginRequest:", this.loginRequest);
+            surveySettings : {
+                availableSurveys : []
             }
+
+
+            // Public methods
+            //getOutboundSettings: function() {
+            //    return this.outboundSettings;
+            //}
 
         };
     }
@@ -811,6 +814,7 @@ var UIModel = (function() {
     };
 
 })();
+
 
 var utils = {
     sendMessage: function(instance, msg) {
@@ -994,6 +998,37 @@ var utils = {
 
         return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
             s4() + '-' + s4() + s4() + s4();
+    },
+
+    // check whether the given array of ids exist in the given array of objects
+    // if not available, remove the id
+    // returns the clean list of acceptable ids
+    checkExistingIds: function(objArray, idArray, idProperty) {
+        var availIds = [];
+        var removeIds = [];
+
+        // get list of available ids
+        for(var o = 0; o &lt; objArray.length; o++){
+            availIds.push(objArray[o][idProperty]);
+        }
+
+        // go through selected ids and mark unfound ones for removal
+        for(var i = 0; i &lt; idArray.length; i++){
+            if(availIds.indexOf(idArray[i]) === -1){
+                // selected id not found in available list, mark for removal
+                removeIds.push(idArray[i]);
+            }
+        }
+
+        // remove marked ids
+        for(var r = idArray.length -1; r >= 0; r--){
+            if(removeIds.indexOf(idArray[r]) > -1){
+                // remove
+                idArray.splice(r,1);
+            }
+        }
+
+        return idArray;
     }
 };
 
@@ -1044,8 +1079,7 @@ function initAgentLibraryCore (context) {
      * @param {Object} [config={}] Set socket url and callback functions.
      * @constructor
      * @memberof AgentLibrary
-     * @property {object} callbacks Internal map of registered callback functions&lt;br/>
-     * @property {string} socketDest URL for connecting socket
+     * @property {object} callbacks Internal map of registered callback functions
      * @example
      * var Lib = new AgentLibrary({
      *      socketDest:'ws://d01-test.cf.dev:8080',
@@ -1106,6 +1140,7 @@ function initAgentLibraryCore (context) {
     /**
      * Get the map of all registered callbacks
      * @memberof AgentLibrary
+     * @returns {array}
      */
     AgentLibrary.prototype.getCallbacks = function(){
         return this.callbacks;
@@ -1114,9 +1149,132 @@ function initAgentLibraryCore (context) {
     /**
      * Get a given registered callback by type
      * @memberof AgentLibrary
+     * @returns {object}
      */
     AgentLibrary.prototype.getCallback = function(type){
         return this.callbacks[type];
+    };
+
+
+    // requests and responses
+    /**
+     * Get outgoing Login Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getLoginRequest = function() {
+        return UIModel.getInstance().loginRequest;
+    };
+    /**
+     * Get outgoing Config Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getConfigRequest = function() {
+        return UIModel.getInstance().configRequest;
+    };
+    /**
+     * Get outgoing Logout Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getLogoutRequest = function() {
+        return UIModel.getInstance().logoutRequest;
+    };
+    /**
+     * Get latest outgoing Agent State Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentStateRequest = function() {
+        return UIModel.getInstance().agentStateRequest;
+    };
+    /**
+     * Get packet received on successful Login
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getLoginPacket = function() {
+        return UIModel.getInstance().loginPacket;
+    };
+    /**
+     * Get packet received on successful Configuration (2nd layer login)
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getConfigPacket = function() {
+        return UIModel.getInstance().configPacket;
+    };
+    /**
+     * Get latest received packet for Agent State
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentStatePacket = function() {
+        return UIModel.getInstance().agentStatePacket;
+    };
+    /**
+     * Get latest received packet for the Current Call
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCurrentCallPacket = function() {
+        return UIModel.getInstance().currentCallPacket;
+    };
+
+    // settings objects
+    /**
+     * Get Application Settings object containing the current state of application related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getApplicationSettings = function() {
+        return UIModel.getInstance().applicationSettings;
+    };
+
+    /**
+     * Get Chat Settings object containing the current state of chat related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatSettings = function() {
+        return UIModel.getInstance().chatSettings;
+    };
+
+    /**
+     * Get Inbound Settings object containing the current state of inbound related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getInboundSettings = function() {
+        return UIModel.getInstance().inboundSettings;
+    };
+
+    /**
+     * Get Outbound Settings object containing the current state of outbound related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getOutboundSettings = function() {
+        return UIModel.getInstance().outboundSettings;
+    };
+
+    /**
+     * Get Agent Settings object containing the current state of agent related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentSettings = function() {
+        return UIModel.getInstance().agentSettings;
+    };
+
+    /**
+     * Get the Agent Permissions object containing the current state of agent permissions
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentPermissions = function() {
+        return UIModel.getInstance().agentPermissions;
     };
 
 
@@ -1223,8 +1381,9 @@ function initAgentLibraryAgent (context) {
     /**
      * Sends agent state change message to IntelliQueue
      * @memberof AgentLibrary
-     * @param {string} agentState The system/base state to set (AVAILABLE | TRANSITION | ENGAGED | ON-BREAK | WORKING | BREAK-AFTER-CALL | AWAY | LUNCH | OFFLINE)
-     * @param {string} [agentState=""] The aux state label displayed
+     * @param {string} agentState The system/base state to transition to &lt;br />
+     * AVAILABLE | TRANSITION | ENGAGED | ON-BREAK | WORKING | AWAY | LUNCH | AUX-UNAVAIL-NO-OFFHOOK | AUX-UNAVAIL-OFFHOOK
+     * @param {string} [agentAuxState=""] The aux state display label
      * @param {function} callback Callback function when agentState response received
      */
     AgentLibrary.prototype.setAgentState = function(agentState, agentAuxState, callback){
@@ -1281,7 +1440,7 @@ if (typeof define === 'function' &amp;&amp; define.amd) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Tue Jul 26 2016 16:30:39 GMT-0600 (MDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Jul 27 2016 14:34:05 GMT-0600 (MDT)
 </footer>
 
 <script> prettyPrint(); </script>

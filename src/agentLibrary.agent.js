@@ -63,8 +63,9 @@ function initAgentLibraryAgent (context) {
     /**
      * Sends agent state change message to IntelliQueue
      * @memberof AgentLibrary
-     * @param {string} agentState The system/base state to set (AVAILABLE | TRANSITION | ENGAGED | ON-BREAK | WORKING | BREAK-AFTER-CALL | AWAY | LUNCH | OFFLINE)
-     * @param {string} [agentState=""] The aux state label displayed
+     * @param {string} agentState The system/base state to transition to <br />
+     * AVAILABLE | TRANSITION | ENGAGED | ON-BREAK | WORKING | AWAY | LUNCH | AUX-UNAVAIL-NO-OFFHOOK | AUX-UNAVAIL-OFFHOOK
+     * @param {string} [agentAuxState=""] The aux state display label
      * @param {function} callback Callback function when agentState response received
      */
     AgentLibrary.prototype.setAgentState = function(agentState, agentAuxState, callback){

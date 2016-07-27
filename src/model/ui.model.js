@@ -89,7 +89,6 @@ var UIModel = (function() {
                 showLeadHistory : true              // Controls whether or not the agents can view lead history
             },
 
-
             // chat
             chatSettings :{
                 availableChatQueues : [],           // List of all chat queues agent has access to, set on login
@@ -98,19 +97,10 @@ var UIModel = (function() {
                 alias : ""                          // Chat alias, on-login this is the UID, but is changed if the user changes it
             },
 
-
             // connection objects
             connectionSettings : {
                 hashCode : null,                    // used specifically for reconnects
                 reconnect : false                   // variable tracks the type of login, on init it's false...once connected it's set to true
-            },
-
-            // outbound settings
-            outboundSettings : {
-                availableCampaigns : [],            // array of campaigns agent has access to, set on login
-                availableOutdialGroups : [],        // array of dial groups agent has access to, set on login
-                insertCampaigns : [],
-                outdialGroup : {}                   // dial group agent is signed into
             },
 
             // inbound settings
@@ -121,16 +111,23 @@ var UIModel = (function() {
                 skillProfile : {}                   // The skill profile the agent is signed into, set on config response
             },
 
-            surveySettings : {
-                availableSurveys : []
+            // outbound settings
+            outboundSettings : {
+                availableCampaigns : [],            // array of campaigns agent has access to, set on login
+                availableOutdialGroups : [],        // array of dial groups agent has access to, set on login
+                insertCampaigns : [],
+                outdialGroup : {}                   // dial group agent is signed into
             },
 
-
-
-            // Public getters
-            getLoginRequest: function() {
-                console.log("loginRequest:", this.loginRequest);
+            surveySettings : {
+                availableSurveys : []
             }
+
+
+            // Public methods
+            //getOutboundSettings: function() {
+            //    return this.outboundSettings;
+            //}
 
         };
     }
@@ -147,3 +144,4 @@ var UIModel = (function() {
     };
 
 })();
+

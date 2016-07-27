@@ -180,5 +180,36 @@ var utils = {
 
         return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
             s4() + '-' + s4() + s4() + s4();
+    },
+
+    // check whether the given array of ids exist in the given array of objects
+    // if not available, remove the id
+    // returns the clean list of acceptable ids
+    checkExistingIds: function(objArray, idArray, idProperty) {
+        var availIds = [];
+        var removeIds = [];
+
+        // get list of available ids
+        for(var o = 0; o < objArray.length; o++){
+            availIds.push(objArray[o][idProperty]);
+        }
+
+        // go through selected ids and mark unfound ones for removal
+        for(var i = 0; i < idArray.length; i++){
+            if(availIds.indexOf(idArray[i]) === -1){
+                // selected id not found in available list, mark for removal
+                removeIds.push(idArray[i]);
+            }
+        }
+
+        // remove marked ids
+        for(var r = idArray.length -1; r >= 0; r--){
+            if(removeIds.indexOf(idArray[r]) > -1){
+                // remove
+                idArray.splice(r,1);
+            }
+        }
+
+        return idArray;
     }
 };
