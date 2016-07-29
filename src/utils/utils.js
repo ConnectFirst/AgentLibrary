@@ -108,7 +108,7 @@ var utils = {
         var item = {};
         var itemsRaw = [];
 
-        if(typeof response[groupProp][itemProp] !== 'undefined'){
+        if(response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined'){
             itemsRaw = response[groupProp][itemProp];
         }
 
