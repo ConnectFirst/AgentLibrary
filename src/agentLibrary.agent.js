@@ -9,7 +9,7 @@ function initAgentLibraryAgent (context) {
      * @memberof AgentLibrary
      * @param {string} username Agent's username
      * @param {string} password Agent's password
-     * @param {function} callback Callback function when loginAgent response received
+     * @param {function} [callback=null] Callback function when loginAgent response received
      */
     AgentLibrary.prototype.loginAgent = function(username, password, callback){
         UIModel.getInstance().loginRequest = new LoginRequest(username, password);
@@ -27,7 +27,7 @@ function initAgentLibraryAgent (context) {
      * @param {string} [skillProfileId=null] The skill profile the agent will be logged into.
      * @param {string} [outdialGroupId=null] The outbound dial group id the agent will be logged into.
      * @param {string} dialDest The agent's number, sip | DID.
-     * @param {function} callback Callback function when configureAgent response received.
+     * @param {function} [callback=null] Callback function when configureAgent response received.
      */
     AgentLibrary.prototype.configureAgent = function(queueIds, chatIds, skillProfileId, outdialGroupId, dialDest, callback){
         UIModel.getInstance().configRequest = new ConfigRequest(queueIds, chatIds, skillProfileId, outdialGroupId, dialDest);
@@ -41,7 +41,7 @@ function initAgentLibraryAgent (context) {
      * Sends agent logout message to IntelliQueue
      * @memberof AgentLibrary
      * @param {number} agentId Id of the agent that will be logged out.
-     * @param {function} callback Callback function when logoutAgent response received.
+     * @param {function} [callback=null] Callback function when logoutAgent response received.
      */
     AgentLibrary.prototype.logoutAgent = function(agentId, callback){
         UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
@@ -66,13 +66,39 @@ function initAgentLibraryAgent (context) {
      * @param {string} agentState The system/base state to transition to <br />
      * AVAILABLE | TRANSITION | ENGAGED | ON-BREAK | WORKING | AWAY | LUNCH | AUX-UNAVAIL-NO-OFFHOOK | AUX-UNAVAIL-OFFHOOK
      * @param {string} [agentAuxState=""] The aux state display label
-     * @param {function} callback Callback function when agentState response received
+     * @param {function} [callback=null] Callback function when agentState response received
      */
     AgentLibrary.prototype.setAgentState = function(agentState, agentAuxState, callback){
         UIModel.getInstance().agentStateRequest = new AgentStateRequest(agentState, agentAuxState);
         var msg = UIModel.getInstance().agentStateRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.AGENT_STATE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Initiates an agent offhook session
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when offhookInit response received
+     */
+    AgentLibrary.prototype.offhookInit = function(callback){
+        UIModel.getInstance().offhookInitRequest = new OffhookInitRequest();
+        var msg = UIModel.getInstance().offhookInitRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.OFFHOOK_INIT, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Terminates agent's offhook session
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when offhookTerm response received
+     */
+    AgentLibrary.prototype.offhookTerm = function(callback){
+        UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
+        var msg = UIModel.getInstance().offhookTermRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.OFFHOOK_TERM, callback);
         utils.sendMessage(this, msg);
     };
 }

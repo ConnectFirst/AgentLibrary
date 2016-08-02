@@ -7,12 +7,12 @@ var utils = {
         }
     },
 
-    processMessage: function(instance, response)
+    processResponse: function(instance, response)
     {
         var type = response.ui_response['@type'];
         var messageId = response.ui_response['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
-        console.log("AgentLibrary: received message: (" + dest + ") " + type.toUpperCase());
+        console.log("AgentLibrary: received response: (" + dest + ") " + type.toUpperCase());
 
         // Send generic on message response
         utils.fireCallback(instance, CALLBACK_TYPES.ON_MESSAGE, response);
@@ -38,6 +38,30 @@ var utils = {
                 }
                 UIModel.getInstance().agentStateRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, response);
+                break;
+            case MESSAGE_TYPES.OFFHOOK_INIT:
+                UIModel.getInstance().offhookInitRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, response);
+                break;
+        }
+
+    },
+
+    processNotification: function(instance, data){
+        var type = data.ui_notification['@type'];
+        var messageId = data.ui_notification['@message_id'];
+        var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
+        console.log("AgentLibrary: received notification: (" + dest + ") " + type.toUpperCase());
+
+        switch (type.toUpperCase()){
+            case MESSAGE_TYPES.OFFHOOK_TERM:
+                if(UIModel.getInstance().offhookTermRequest === null){
+                    // offhook term initiated by IQ
+                    UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
+                }
+                UIModel.getInstance().offhookTermRequest.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, data);
+                break;
         }
     },
 
@@ -211,5 +235,20 @@ var utils = {
         }
 
         return idArray;
+    },
+
+    // check whether agent dialDest is either a 10-digit number or valid sip
+    validateDest: function(dialDest){
+        var isValid = false;
+        var isNum = /^\d+$/.test(dialDest);
+        if(isNum && dialDest.length === 10){
+            // is a 10-digit number
+            isValid = true;
+        }else if(dialDest.slice(0,4).toLowerCase() === "sip:" && dialDest.indexOf("@") !== -1){
+            // has sip prefix and '@'
+            isValid = true;
+        }
+
+        return isValid;
     }
 };

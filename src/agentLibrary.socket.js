@@ -17,7 +17,12 @@ function initAgentLibrarySocket (context) {
             };
 
             instance.socket.onmessage = function(evt){
-                utils.processMessage(instance, JSON.parse(evt.data));
+                var data = JSON.parse(evt.data);
+                if(data.ui_response){
+                    utils.processResponse(instance, data);
+                }else if(data.ui_notification){
+                    utils.processNotification(instance, data);
+                }
             };
 
             instance.socket.onclose = function(){

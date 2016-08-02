@@ -15,9 +15,7 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, outdialGroupId, d
     this.chatIds = utils.checkExistingIds(UIModel.getInstance().chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
     this.skillPofileId = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
     this.outdialGroupId = utils.checkExistingIds(UIModel.getInstance().outboundSettings.availableOutdialGroups, [this.outdialGroupId], "dialGroupId")[0] || "";
-};
 
-ConfigRequest.prototype.formatJSON = function() {
     // Set loginType value
     if(this.queueIds.length > 0 && this.outdialGroupId !== ""){
         this.loginType = "BLENDED";
@@ -34,6 +32,15 @@ ConfigRequest.prototype.formatJSON = function() {
         this.updateLogin = true;
     }
 
+    // validate dialDest is sip or 10-digit num
+    if(!utils.validateDest(this.dialDest)){
+        // TODO propagate this to the client
+        console.error("AgentLibrary: dialDest must be a valid sip or 10-digit DID");
+    }
+
+};
+
+ConfigRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request":{
             "@destination":"IQ",

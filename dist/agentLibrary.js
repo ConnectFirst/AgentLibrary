@@ -105,9 +105,7 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, outdialGroupId, d
     this.chatIds = utils.checkExistingIds(UIModel.getInstance().chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
     this.skillPofileId = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
     this.outdialGroupId = utils.checkExistingIds(UIModel.getInstance().outboundSettings.availableOutdialGroups, [this.outdialGroupId], "dialGroupId")[0] || "";
-};
 
-ConfigRequest.prototype.formatJSON = function() {
     // Set loginType value
     if(this.queueIds.length > 0 && this.outdialGroupId !== ""){
         this.loginType = "BLENDED";
@@ -124,6 +122,14 @@ ConfigRequest.prototype.formatJSON = function() {
         this.updateLogin = true;
     }
 
+    // validate dialDest is sip or 10-digit num
+    if(!utils.validateDest(this.dialDest)){
+        console.error("AgentLibrary: dialDest must be a valid sip or 10-digit DID");
+    }
+
+};
+
+ConfigRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request":{
             "@destination":"IQ",
@@ -640,6 +646,94 @@ LogoutRequest.prototype.formatJSON = function() {
 
     return JSON.stringify(msg);
 };
+
+var OffhookInitRequest = function(showWarning) {
+
+};
+
+OffhookInitRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.OFFHOOK_INIT,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "dial_dest":{
+                "#text":UIModel.getInstance().agentSettings.dialDest
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+/*
+ * This class is responsible for handling an off-hook-init response packet from IntelliQueue.
+ * If the offhookinit is successful, it will go into the UIModel and set the isOffhook variable
+ * to true.
+ *
+ * <ui_response type="OFF-HOOK-INIT" message_id="UI2005" response_to="">
+ * 		<status>OK|FAILURE</status>
+ * 		<message></message>
+ * 		<detail></detail>
+ * </ui_response>
+ */
+OffhookInitRequest.prototype.processResponse = function(response) {
+    var status = response.ui_response.status['#text'];
+    if(status === 'OK'){
+        UIModel.getInstance().offhookInitPacket = response;
+        UIModel.getInstance().agentSettings.isOffhook = true;
+    }else{
+        UIModel.getInstance().logger.error(this,"Unable to process offhook request, " + packet.detail[0]);
+        console.log("AgentLibrary: Unable to process offhook request ", response.ui_response.detail['#text']);
+    }
+};
+
+
+
+var OffhookTermRequest = function(showWarning) {
+
+};
+
+OffhookTermRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.OFFHOOK_TERM,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+/*
+ * Process an OFF-HOOK-TERM packet and update various variables in the UI
+ *
+ * <ui_notification message_id="IQ10012016080217135001344" response_to="" type="OFF-HOOK-TERM">
+ *    <agent_id>1</agent_id>
+ *    <start_dts>2016-08-02 17:11:38</start_dts>
+ *    <end_dts>2016-08-02 17:14:07</end_dts>
+ *    <monitoring>0</monitoring>
+ * </ui_notification>
+ */
+OffhookTermRequest.prototype.processResponse = function(data) {
+    var monitoring = data.ui_notification.monitoring['#text'] === '1';
+
+    UIModel.getInstance().agentSettings.wasMonitoring = monitoring;
+    UIModel.getInstance().offhookTermPacket = data;
+    UIModel.getInstance().agentSettings.isOffhook = false;
+};
+
 var UIModel = (function() {
 
     var instance;
@@ -658,16 +752,20 @@ var UIModel = (function() {
         return {
 
             // request instances
-            loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
+            agentStateRequest : null,
             configRequest : null,
             logoutRequest : null,
-            agentStateRequest : null,
+            loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
+            offhookInitRequest : null,
+            offhookTermRequest : null,
 
             // response packets
-            loginPacket : null,
-            configPacket : null,
             agentStatePacket : null,
+            configPacket : null,
             currentCallPacket : null,
+            loginPacket : null,
+            offhookInitPacket : null,
+            offhookTermPacket : null,
 
             // application state
             applicationSettings : {
@@ -688,11 +786,12 @@ var UIModel = (function() {
                 currentState : "OFFLINE",           // Agent system/base state
                 currentStateLabel : "",             // Agent aux state label
                 defaultLoginDest : "",
-                dialDest : "",                      // Destination agent is logged in with for offhook session, set on configure response
+                dialDest : "",                      // Destination agent is logged in with for offhook session, set on configure response, if multi values in format "xxxx|,,xxxx"
                 email : "",
                 externalAgentId : "",
                 firstName : "",
                 isLoggedIn : false,                 // agent is logged in to the platform
+                isOffhook : false,                  // track whether or not the agent has an active offhook session
                 initLoginState : "AVAILABLE",       // state agent is placed in on successful login
                 initLoginStateLabel : "Available",  // state label for agent on successful login
                 isOutboundPrepay : false,           // determines if agent is a prepay agent
@@ -704,7 +803,8 @@ var UIModel = (function() {
                 onCall : false,                     // true if agent is on an active call
                 outboundManualDefaultRingtime : "30",
                 realAgentType : "AGENT",
-                updateLoginMode : false             // gets set to true when doing an update login (for events control)
+                updateLoginMode : false,             // gets set to true when doing an update login (for events control)
+                wasMonitoring : false                // used to track if the last call was a monitoring call
             },
 
             // current agent permissions
@@ -797,12 +897,12 @@ var utils = {
         }
     },
 
-    processMessage: function(instance, response)
+    processResponse: function(instance, response)
     {
         var type = response.ui_response['@type'];
         var messageId = response.ui_response['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
-        console.log("AgentLibrary: received message: (" + dest + ") " + type.toUpperCase());
+        console.log("AgentLibrary: received response: (" + dest + ") " + type.toUpperCase());
 
         // Send generic on message response
         utils.fireCallback(instance, CALLBACK_TYPES.ON_MESSAGE, response);
@@ -828,6 +928,30 @@ var utils = {
                 }
                 UIModel.getInstance().agentStateRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, response);
+                break;
+            case MESSAGE_TYPES.OFFHOOK_INIT:
+                UIModel.getInstance().offhookInitRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, response);
+                break;
+        }
+
+    },
+
+    processNotification: function(instance, data){
+        var type = data.ui_notification['@type'];
+        var messageId = data.ui_notification['@message_id'];
+        var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
+        console.log("AgentLibrary: received notification: (" + dest + ") " + type.toUpperCase());
+
+        switch (type.toUpperCase()){
+            case MESSAGE_TYPES.OFFHOOK_TERM:
+                if(UIModel.getInstance().offhookTermRequest === null){
+                    // offhook term initiated by IQ
+                    UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
+                }
+                UIModel.getInstance().offhookTermRequest.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, data);
+                break;
         }
     },
 
@@ -1001,6 +1125,21 @@ var utils = {
         }
 
         return idArray;
+    },
+
+    // check whether agent dialDest is either a 10-digit number or valid sip
+    validateDest: function(dialDest){
+        var isValid = false;
+        var isNum = /^\d+$/.test(dialDest);
+        if(isNum && dialDest.length === 10){
+            // is a 10-digit number
+            isValid = true;
+        }else if(dialDest.slice(0,4).toLowerCase() === "sip:" && dialDest.indexOf("@") !== -1){
+            // has sip prefix and '@'
+            isValid = true;
+        }
+
+        return isValid;
     }
 };
 
@@ -1018,21 +1157,24 @@ var utils = {
  * @type {object}
  */
 
-
+/*jshint esnext: true */
 const CALLBACK_TYPES = {
-    "HELLO":"helloResponse",
-    "OPEN_SOCKET":"openResponse",
+    "AGENT_STATE":"agentStateResponse",
     "CLOSE_SOCKET":"closeResponse",
-    "LOGIN":"loginResponse",
     "CONFIG":"configureResponse",
-    "AGENT_STATE":"agentStateResponse"
+    "LOGIN":"loginResponse",
+    "OFFHOOK_INIT":"offhookInitResponse",
+    "OFFHOOK_TERM":"offhookTermResponse",
+    "OPEN_SOCKET":"openResponse"
 };
 
 const MESSAGE_TYPES = {
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
-    "ON_MESSAGE":"ON-MESSAGE"
+    "ON_MESSAGE":"ON-MESSAGE",
+    "OFFHOOK_INIT":"OFF-HOOK-INIT",
+    "OFFHOOK_TERM":"OFF-HOOK-TERM"
 };
 
 // GLOBAL INTERNAL METHODS
@@ -1273,7 +1415,12 @@ function initAgentLibrarySocket (context) {
             };
 
             instance.socket.onmessage = function(evt){
-                utils.processMessage(instance, JSON.parse(evt.data));
+                var data = JSON.parse(evt.data);
+                if(data.ui_response){
+                    utils.processResponse(instance, data);
+                }else if(data.ui_notification){
+                    utils.processNotification(instance, data);
+                }
             };
 
             instance.socket.onclose = function(){
@@ -1301,7 +1448,7 @@ function initAgentLibraryAgent (context) {
      * @memberof AgentLibrary
      * @param {string} username Agent's username
      * @param {string} password Agent's password
-     * @param {function} callback Callback function when loginAgent response received
+     * @param {function} [callback=null] Callback function when loginAgent response received
      */
     AgentLibrary.prototype.loginAgent = function(username, password, callback){
         UIModel.getInstance().loginRequest = new LoginRequest(username, password);
@@ -1319,7 +1466,7 @@ function initAgentLibraryAgent (context) {
      * @param {string} [skillProfileId=null] The skill profile the agent will be logged into.
      * @param {string} [outdialGroupId=null] The outbound dial group id the agent will be logged into.
      * @param {string} dialDest The agent's number, sip | DID.
-     * @param {function} callback Callback function when configureAgent response received.
+     * @param {function} [callback=null] Callback function when configureAgent response received.
      */
     AgentLibrary.prototype.configureAgent = function(queueIds, chatIds, skillProfileId, outdialGroupId, dialDest, callback){
         UIModel.getInstance().configRequest = new ConfigRequest(queueIds, chatIds, skillProfileId, outdialGroupId, dialDest);
@@ -1333,7 +1480,7 @@ function initAgentLibraryAgent (context) {
      * Sends agent logout message to IntelliQueue
      * @memberof AgentLibrary
      * @param {number} agentId Id of the agent that will be logged out.
-     * @param {function} callback Callback function when logoutAgent response received.
+     * @param {function} [callback=null] Callback function when logoutAgent response received.
      */
     AgentLibrary.prototype.logoutAgent = function(agentId, callback){
         UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
@@ -1358,13 +1505,39 @@ function initAgentLibraryAgent (context) {
      * @param {string} agentState The system/base state to transition to <br />
      * AVAILABLE | TRANSITION | ENGAGED | ON-BREAK | WORKING | AWAY | LUNCH | AUX-UNAVAIL-NO-OFFHOOK | AUX-UNAVAIL-OFFHOOK
      * @param {string} [agentAuxState=""] The aux state display label
-     * @param {function} callback Callback function when agentState response received
+     * @param {function} [callback=null] Callback function when agentState response received
      */
     AgentLibrary.prototype.setAgentState = function(agentState, agentAuxState, callback){
         UIModel.getInstance().agentStateRequest = new AgentStateRequest(agentState, agentAuxState);
         var msg = UIModel.getInstance().agentStateRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.AGENT_STATE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Initiates an agent offhook session
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when offhookInit response received
+     */
+    AgentLibrary.prototype.offhookInit = function(callback){
+        UIModel.getInstance().offhookInitRequest = new OffhookInitRequest();
+        var msg = UIModel.getInstance().offhookInitRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.OFFHOOK_INIT, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Terminates agent's offhook session
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when offhookTerm response received
+     */
+    AgentLibrary.prototype.offhookTerm = function(callback){
+        UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
+        var msg = UIModel.getInstance().offhookTermRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.OFFHOOK_TERM, callback);
         utils.sendMessage(this, msg);
     };
 }

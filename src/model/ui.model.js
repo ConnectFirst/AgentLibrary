@@ -16,16 +16,20 @@ var UIModel = (function() {
         return {
 
             // request instances
-            loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
+            agentStateRequest : null,
             configRequest : null,
             logoutRequest : null,
-            agentStateRequest : null,
+            loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
+            offhookInitRequest : null,
+            offhookTermRequest : null,
 
             // response packets
-            loginPacket : null,
-            configPacket : null,
             agentStatePacket : null,
+            configPacket : null,
             currentCallPacket : null,
+            loginPacket : null,
+            offhookInitPacket : null,
+            offhookTermPacket : null,
 
             // application state
             applicationSettings : {
@@ -46,11 +50,12 @@ var UIModel = (function() {
                 currentState : "OFFLINE",           // Agent system/base state
                 currentStateLabel : "",             // Agent aux state label
                 defaultLoginDest : "",
-                dialDest : "",                      // Destination agent is logged in with for offhook session, set on configure response
+                dialDest : "",                      // Destination agent is logged in with for offhook session, set on configure response, if multi values in format "xxxx|,,xxxx"
                 email : "",
                 externalAgentId : "",
                 firstName : "",
                 isLoggedIn : false,                 // agent is logged in to the platform
+                isOffhook : false,                  // track whether or not the agent has an active offhook session
                 initLoginState : "AVAILABLE",       // state agent is placed in on successful login
                 initLoginStateLabel : "Available",  // state label for agent on successful login
                 isOutboundPrepay : false,           // determines if agent is a prepay agent
@@ -62,7 +67,8 @@ var UIModel = (function() {
                 onCall : false,                     // true if agent is on an active call
                 outboundManualDefaultRingtime : "30",
                 realAgentType : "AGENT",
-                updateLoginMode : false             // gets set to true when doing an update login (for events control)
+                updateLoginMode : false,             // gets set to true when doing an update login (for events control)
+                wasMonitoring : false                // used to track if the last call was a monitoring call
             },
 
             // current agent permissions

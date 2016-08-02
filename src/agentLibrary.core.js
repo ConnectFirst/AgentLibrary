@@ -14,19 +14,22 @@
 
 /*jshint esnext: true */
 const CALLBACK_TYPES = {
-    "HELLO":"helloResponse",
-    "OPEN_SOCKET":"openResponse",
+    "AGENT_STATE":"agentStateResponse",
     "CLOSE_SOCKET":"closeResponse",
-    "LOGIN":"loginResponse",
     "CONFIG":"configureResponse",
-    "AGENT_STATE":"agentStateResponse"
+    "LOGIN":"loginResponse",
+    "OFFHOOK_INIT":"offhookInitResponse",
+    "OFFHOOK_TERM":"offhookTermResponse",
+    "OPEN_SOCKET":"openResponse"
 };
 
 const MESSAGE_TYPES = {
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
-    "ON_MESSAGE":"ON-MESSAGE"
+    "ON_MESSAGE":"ON-MESSAGE",
+    "OFFHOOK_INIT":"OFF-HOOK-INIT",
+    "OFFHOOK_TERM":"OFF-HOOK-TERM"
 };
 
 // GLOBAL INTERNAL METHODS
