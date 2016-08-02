@@ -7,7 +7,7 @@ exports = {
     * development and the `compile_dir` folder is where our app resides once it's
     * completely built.
     */
-    build_dir: 'build',
+    build_dir: 'dist',
     compile_dir: 'bin',
 
     /**

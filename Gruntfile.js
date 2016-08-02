@@ -49,10 +49,16 @@ module.exports = function(grunt) {
     '<%= grunt.template.today("yyyy-mm-dd") %> - <%= pkg.author %> */\n'
   ].join('');
 
+
+  /**
+   * Load required Grunt tasks. These are installed based on the versions listed
+   * in `package.json` when you do `npm install` in this directory.
+   */
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-qunit');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-karma');
+
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -69,7 +75,7 @@ module.exports = function(grunt) {
           banner: BANNER
         },
         src: wrapModules(DEV_HEAD_LIST, TAIL_LIST),
-        dest: sub('dist/%s.js')
+        dest: sub('test/%s.js')
       }
     },
     uglify: {
@@ -86,8 +92,10 @@ module.exports = function(grunt) {
         banner: BANNER
       }
     },
-    qunit: {
-      files: ['test/qunit*.html']
+    karma: {
+      unit: {
+        configFile: 'karma.conf.js'
+      }
     },
     jshint: {
       all_files: [
@@ -95,7 +103,13 @@ module.exports = function(grunt) {
         sub('src/%s.!(intro|outro|const)*.js')
       ],
       options: {
-        jshintrc: '.jshintrc'
+        curly: true,
+        immed: true,
+        newcap: true,
+        noarg: true,
+        sub: true,
+        boss: true,
+        eqnull: true
       }
     }
   });
@@ -103,11 +117,20 @@ module.exports = function(grunt) {
   grunt.registerTask('default', [
     'jshint',
     'build',
-    'qunit'
+    'karma'
   ]);
   grunt.registerTask('build', [
     'concat:dist',
-    'uglify:dist',
-    'concat:dev'
+    'uglify:dist'
   ]);
+  grunt.registerTask('test', [
+    'jshint',
+    'concat:dev',
+    'karma'
+  ]);
+  grunt.registerTask('compile', [
+    'test',
+    'build'
+  ]);
+
 };

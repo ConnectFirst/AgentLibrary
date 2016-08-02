@@ -11,6 +11,8 @@
  * <li>"agentStateResponse"</li>
  * @type {object}
  */
+
+/*jshint esnext: true */
 const CALLBACK_TYPES = {
     "HELLO":"helloResponse",
     "OPEN_SOCKET":"openResponse",

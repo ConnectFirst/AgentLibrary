@@ -3,7 +3,7 @@ var utils = {
         if (instance.socket.readyState === 1) {
             instance.socket.send(msg);
         } else {
-            console.warn("WebSocket is not connected");
+            console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
         }
     },
 

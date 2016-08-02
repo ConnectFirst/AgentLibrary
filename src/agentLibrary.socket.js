@@ -10,9 +10,9 @@ function initAgentLibrarySocket (context) {
         if("WebSocket" in context){
             console.log("AgentLibrary: attempting to open socket connection...");
             instance.socket = new WebSocket(UIModel.getInstance().socketDest);
-            UIModel.getInstance().socketConnected = true;
 
             instance.socket.onopen = function() {
+                UIModel.getInstance().socketConnected = true;
                 utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, '');
             };
 

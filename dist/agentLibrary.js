@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-07-28 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-02 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -793,7 +793,7 @@ var utils = {
         if (instance.socket.readyState === 1) {
             instance.socket.send(msg);
         } else {
-            console.warn("WebSocket is not connected");
+            console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
         }
     },
 
@@ -898,7 +898,7 @@ var utils = {
         var item = {};
         var itemsRaw = [];
 
-        if(typeof response[groupProp][itemProp] !== 'undefined'){
+        if(response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined'){
             itemsRaw = response[groupProp][itemProp];
         }
 
@@ -1017,6 +1017,8 @@ var utils = {
  * <li>"agentStateResponse"</li>
  * @type {object}
  */
+
+
 const CALLBACK_TYPES = {
     "HELLO":"helloResponse",
     "OPEN_SOCKET":"openResponse",
@@ -1264,9 +1266,9 @@ function initAgentLibrarySocket (context) {
         if("WebSocket" in context){
             console.log("AgentLibrary: attempting to open socket connection...");
             instance.socket = new WebSocket(UIModel.getInstance().socketDest);
-            UIModel.getInstance().socketConnected = true;
 
             instance.socket.onopen = function() {
+                UIModel.getInstance().socketConnected = true;
                 utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, '');
             };
 

@@ -4,3 +4,4 @@
 /node_modules
 protractor/testresults
 /vendor
+/test
