@@ -133,11 +133,11 @@ LoginRequest.prototype.processResponse = function(response) {
             UIModel.getInstance().agentSettings.lastName = response.ui_response.last_name['#text'];
             UIModel.getInstance().agentSettings.email = response.ui_response.email['#text'];
             UIModel.getInstance().agentSettings.agentId = response.ui_response.agent_id['#text'];
-            UIModel.getInstance().agentSettings.externalAgentId = response.ui_response.external_agent_id['#text'];
+            UIModel.getInstance().agentSettings.externalAgentId = response.ui_response.external_agent_id['#text'] || "";
             UIModel.getInstance().agentSettings.agentType = response.ui_response.agent_type['#text'];
             UIModel.getInstance().agentSettings.realAgentType = response.ui_response.real_agent_type['#text'];
             UIModel.getInstance().agentSettings.defaultLoginDest = response.ui_response.default_login_dest['#text'];
-            UIModel.getInstance().agentSettings.altDefaultLoginDest = response.ui_response.alt_default_login_dest['#text'];
+            UIModel.getInstance().agentSettings.altDefaultLoginDest = response.ui_response.alt_default_login_dest['#text'] || "";
             UIModel.getInstance().agentSettings.disableSupervisorMonitoring = response.ui_response.disable_supervisor_monitoring['#text'];
             UIModel.getInstance().agentSettings.initLoginState = response.ui_response.init_login_state['#text'];
             UIModel.getInstance().agentSettings.initLoginStateLabel = response.ui_response.init_login_state_label['#text'];
@@ -218,9 +218,13 @@ LoginRequest.prototype.processResponse = function(response) {
 
             var dialGroups = utils.processResponseCollection(response.ui_response, "outdial_groups", "group");
             // set boolean values
-            dialGroups.allowLeadSearch = dialGroups.allowLeadSearch == "YES";
-            dialGroups.allowPreviewLeadFilters = dialGroups.allowPreviewLeadFilters == "1";
-            dialGroups.allowProgressiveEnabled = dialGroups.allowProgressiveEnabled == "1";
+            for(var dg = 0; dg < dialGroups.length; dg++){
+                var group = dialGroups[dg];
+                group.allowLeadSearch = group.allowLeadSearch === "YES";
+                group.allowPreviewLeadFilters = group.allowPreviewLeadFilters === "1";
+                group.progressiveEnabled = group.progressiveEnabled === "1";
+                group.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled === "1";
+            }
             UIModel.getInstance().outboundSettings.availableOutdialGroups = dialGroups;
         }
     }else if(status === 'RESTRICTED'){
