@@ -120,6 +120,24 @@ LoginRequest.prototype.formatJSON = function() {
  */
 LoginRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
+
+    // add message and detail if present
+    var msg = response.ui_response.message;
+    var det = response.ui_response.detail;
+    var message = "";
+    var detail = "";
+    if(msg){
+        message = msg['#text'] || "";
+    }
+    if(det){
+        detail = det['#text'] || "";
+    }
+    var formattedResponse = {
+        status: status,
+        message: message,
+        detail: detail
+    };
+
     if(status === 'OK'){
         if(!UIModel.getInstance().isLoggedInIS){
             // save login packet properties to UIModel
@@ -227,11 +245,24 @@ LoginRequest.prototype.processResponse = function(response) {
             }
             UIModel.getInstance().outboundSettings.availableOutdialGroups = dialGroups;
         }
+
+        formattedResponse.agentSettings = UIModel.getInstance().agentSettings;
+        formattedResponse.agentPermissions = UIModel.getInstance().agentPermissions;
+        formattedResponse.applicationSettings = UIModel.getInstance().applicationSettings;
+        formattedResponse.chatSettings = UIModel.getInstance().chatSettings;
+        formattedResponse.connectionSettings = UIModel.getInstance().connectionSettings;
+        formattedResponse.inboundSettings = UIModel.getInstance().inboundSettings;
+        formattedResponse.outboundSettings = UIModel.getInstance().outboundSettings;
+        formattedResponse.surveySettings = UIModel.getInstance().surveySettings;
     }else if(status === 'RESTRICTED'){
+        formattedResponse.message = "Invalid IP Address";
         console.log("AgentLibrary: Invalid IP Address");
     }else{
+        formattedResponse.message = "Invalid Username or password";
         console.log("AgentLibrary: Invalid Username or password");
     }
+
+    return formattedResponse;
 };
 
 processCampaigns = function(response){

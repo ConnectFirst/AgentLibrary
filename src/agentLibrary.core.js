@@ -17,6 +17,10 @@ const CALLBACK_TYPES = {
     "AGENT_STATE":"agentStateResponse",
     "CLOSE_SOCKET":"closeResponse",
     "CONFIG":"configureResponse",
+    "CALLBACK_PENDING":"callbacksPendingResponse",
+    "CALLBACK_CANCEL":"callbackCancelResponse",
+    "GENERIC_NOTIFICATION":"genericNotification",
+    "GENERIC_RESPONSE":"genericResponse",
     "LOGIN":"loginResponse",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
@@ -27,7 +31,10 @@ const MESSAGE_TYPES = {
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
+    "CALLBACK_PENDING":"PENDING-CALLBACKS",
+    "CALLBACK_CANCEL":"CANCEL-CALLBACK",
     "ON_MESSAGE":"ON-MESSAGE",
+    "GENERIC":"GENERIC",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
     "OFFHOOK_TERM":"OFF-HOOK-TERM"
 };
@@ -51,6 +58,7 @@ function initAgentLibraryCore (context) {
      * @constructor
      * @memberof AgentLibrary
      * @property {object} callbacks Internal map of registered callback functions
+     * @property {object} _requests Internal map of requests by message id, private property.
      * @example
      * var Lib = new AgentLibrary({
      *      socketDest:'ws://d01-test.cf.dev:8080',
@@ -66,6 +74,7 @@ function initAgentLibraryCore (context) {
 
         // define properties
         this.callbacks = {};
+        this._requests = {};
 
         // set default values
         if(typeof config.callbacks !== 'undefined'){
@@ -73,7 +82,7 @@ function initAgentLibraryCore (context) {
         }
 
         if(typeof config.socketDest !== 'undefined'){
-            UIModel.getInstance().socketDest = config.socketDest;
+            UIModel.getInstance().applicationSettings.socketDest = config.socketDest;
             this.openSocket();
         }else{
             // todo default socket address?

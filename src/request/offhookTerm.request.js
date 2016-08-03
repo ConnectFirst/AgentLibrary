@@ -36,4 +36,13 @@ OffhookTermRequest.prototype.processResponse = function(data) {
     UIModel.getInstance().agentSettings.wasMonitoring = monitoring;
     UIModel.getInstance().offhookTermPacket = data;
     UIModel.getInstance().agentSettings.isOffhook = false;
+
+    var formattedResponse = {
+        agentId: data.ui_notification.agent_id['#text'],
+        startDts: data.ui_notification.start_dts['#text'],
+        endDts: data.ui_notification.end_dts['#text'],
+        monitoring: monitoring
+    };
+
+    return formattedResponse;
 };

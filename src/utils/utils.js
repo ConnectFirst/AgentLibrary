@@ -1,6 +1,10 @@
 var utils = {
     sendMessage: function(instance, msg) {
         if (instance.socket.readyState === 1) {
+            // add message id to request map
+            var msgObj = JSON.parse(msg);
+            instance._requests[msgObj.ui_request['@message_id']] = { type: msgObj.ui_request['@type'], msg: msgObj.ui_request };
+
             instance.socket.send(msg);
         } else {
             console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
@@ -21,11 +25,11 @@ var utils = {
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.LOGIN:
                 if (dest === "IS") {
-                    UIModel.getInstance().loginRequest.processResponse(response);
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, response);
+                    var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, loginResponse);
                 } else if (dest === 'IQ') {
-                    UIModel.getInstance().configRequest.processResponse(response);
-                    utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, response);
+                    var configResponse = UIModel.getInstance().configRequest.processResponse(response);
+                    utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
                 }
                 break;
             case MESSAGE_TYPES.LOGOUT:
@@ -36,13 +40,17 @@ var utils = {
                 if(UIModel.getInstance().agentStateRequest === null){
                     UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
                 }
-                UIModel.getInstance().agentStateRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, response);
+                var stateChangeResposne = UIModel.getInstance().agentStateRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResposne);
                 break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
-                UIModel.getInstance().offhookInitRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, response);
+                var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
+            case MESSAGE_TYPES.CALLBACK_PENDING:
+                var pendingCallbacks = UIModel.getInstance().callbacksPendingRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CALLBACK_PENDING, pendingCallbacks);
+            break;
         }
 
     },
@@ -59,8 +67,22 @@ var utils = {
                     // offhook term initiated by IQ
                     UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
                 }
-                UIModel.getInstance().offhookTermRequest.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, data);
+                var termResponse = UIModel.getInstance().offhookTermRequest.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
+                break;
+            case MESSAGE_TYPES.GENERIC:
+                var genericNotif = new GenericNotification();
+                var generic = genericNotif.processResponse(data);
+                var responseTo = data.ui_notification['@response_to'];
+                if(instance._requests[responseTo]){
+                    // found corresponding request, fire registered callback for type
+                    var type = instance._requests[responseTo].type;
+                    var callbackFnName = utils.findCallbackBasedOnMessageType(type);
+                    utils.fireCallback(instance, callbackFnName, generic);
+                }else{
+                    // no corresponding request, just fire generic notification callback
+                    utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
+                }
                 break;
         }
     },
@@ -250,5 +272,17 @@ var utils = {
         }
 
         return isValid;
+    },
+
+    // pass in MESSAGE_TYPE string (e.g. "CANCEL-CALLBACK"),
+    // return corresponding CALLBACK_TYPE function name string (e.g. "callbackCancelResponse")
+    findCallbackBasedOnMessageType: function(messageType){
+        var callbackFnName = "";
+        for(key in MESSAGE_TYPES){
+            if(MESSAGE_TYPES[key] === messageType){
+                callbackFnName = CALLBACK_TYPES[key];
+            }
+        }
+        return callbackFnName;
     }
 };

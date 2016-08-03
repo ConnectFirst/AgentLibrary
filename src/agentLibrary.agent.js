@@ -101,4 +101,33 @@ function initAgentLibraryAgent (context) {
         utils.setCallback(this, CALLBACK_TYPES.OFFHOOK_TERM, callback);
         utils.sendMessage(this, msg);
     };
+
+    /**
+     * Returns scheduled callbacks for the given agent
+     * @memberof AgentLibrary
+     * @param {number} [agentId=logged in agent id] Id of agent to get callbacks for
+     * @param {function} [callback=null] Callback function when pending callbacks response received
+     */
+    AgentLibrary.prototype.getPendingCallbacks = function(agentId, callback){
+        UIModel.getInstance().callbacksPendingRequest = new CallbacksPendingRequest(agentId);
+        var msg = UIModel.getInstance().callbacksPendingRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CALLBACK_PENDING, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Cancel a scheduled callback for the given agent based on lead id
+     * @memberof AgentLibrary
+     * @param {number} leadId Id of lead callback to cancel
+     * @param {number} [agentId=logged in agent id] Id of agent to cancel specified lead callback for
+     * @param {function} [callback=null] Callback function when offhookTerm response received
+     */
+    AgentLibrary.prototype.cancelCallback = function(leadId, agentId, callback){
+        UIModel.getInstance().callbackCancelRequest = new CallbackCancelRequest(leadId, agentId);
+        var msg = UIModel.getInstance().callbackCancelRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CALLBACK_CANCEL, callback);
+        utils.sendMessage(this, msg);
+    };
 }

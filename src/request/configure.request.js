@@ -122,12 +122,28 @@ ConfigRequest.prototype.formatJSON = function() {
 ConfigRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
 
+    // add message and detail if present
+    var msg = response.ui_response.message;
+    var det = response.ui_response.detail;
+    var message = "";
+    var detail = "";
+    if(msg){
+        message = msg['#text'] || "";
+    }
+    if(det){
+        detail = det['#text'] || "";
+    }
+    var formattedResponse = {
+        status: status,
+        message: message,
+        detail: detail
+    };
+
     if(status === "SUCCESS"){
         if(!UIModel.getInstance().isLoggedIn){
             // fresh login, set UI Model properties
             UIModel.getInstance().configPacket = response;
             UIModel.getInstance().connectionSettings.hashCode = response.ui_response.hash_code['#text'];
-            UIModel.getInstance().applicationSettings.message = response.ui_response.message['#text'];
             UIModel.getInstance().agentSettings.isLoggedIn = true;
             UIModel.getInstance().agentSettings.loginDTS = new Date();
             UIModel.getInstance().connectionSettings.reconnect = true;
@@ -168,10 +184,24 @@ ConfigRequest.prototype.processResponse = function(response) {
                 console.log("AgentLibrary: Processed a Layer 2 Reconnect Successfully");
             }
         }
+
+        formattedResponse.agentSettings = UIModel.getInstance().agentSettings;
+        formattedResponse.agentPermissions = UIModel.getInstance().agentPermissions;
+        formattedResponse.applicationSettings = UIModel.getInstance().applicationSettings;
+        formattedResponse.chatSettings = UIModel.getInstance().chatSettings;
+        formattedResponse.connectionSettings = UIModel.getInstance().connectionSettings;
+        formattedResponse.inboundSettings = UIModel.getInstance().inboundSettings;
+        formattedResponse.outboundSettings = UIModel.getInstance().outboundSettings;
+        formattedResponse.surveySettings = UIModel.getInstance().surveySettings;
     }else{
         // Login failed
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Agent configuration attempt failed (2nd layer login)"
+        }
         console.warn("AgentLibrary: Layer 2 login failed!");
     }
+
+    return formattedResponse;
 };
 
 function setDialGroupSettings(response){

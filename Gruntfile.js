@@ -22,6 +22,7 @@ module.exports = function(grunt) {
   var DIST_HEAD_LIST = [
     sub('src/%s.intro.js'),
     sub('src/request/*.request.js'),
+    sub('src/notification/*.notification.js'),
     sub('src/model/*.model.js'),
     sub('src/utils/*.js'),
     sub('src/%s.const.js'),
@@ -33,6 +34,7 @@ module.exports = function(grunt) {
   var DEV_HEAD_LIST = [
     sub('src/%s.intro.js'),
     sub('src/request/*.request.js'),
+    sub('src/notification/*.notification.js'),
     sub('src/model/*.model.js'),
     sub('src/utils/*.js'),
     sub('src/%s.core.js')

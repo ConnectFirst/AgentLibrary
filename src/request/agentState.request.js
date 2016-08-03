@@ -54,6 +54,29 @@ AgentStateRequest.prototype.processResponse = function(response) {
     var prevAuxState = response.ui_response.prev_aux_state['#text'] || "";
     var currAuxState = response.ui_response.agent_aux_state['#text'] || "";
 
+    // add message and detail if present
+    var msg = response.ui_response.message;
+    var det = response.ui_response.detail;
+    var message = "";
+    var detail = "";
+    if(msg){
+        message = msg['#text'] || "";
+    }
+    if(det){
+        detail = det['#text'] || "";
+    }
+
+    var formattedResponse = {
+        status: status,
+        message: message,
+        detail: detail,
+        agentId: response.ui_response.agent_id['#text'] || "",
+        previousState: prevState,
+        currentState: currState,
+        previousAuxState: prevAuxState,
+        currentAuxState: currAuxState
+    };
+
     if(status=="OK"){
         var prevStateStr = prevState;
         var currStateStr = currState;
@@ -73,8 +96,13 @@ AgentStateRequest.prototype.processResponse = function(response) {
         UIModel.getInstance().agentSettings.currentStateLabel = currAuxState;
         UIModel.getInstance().agentStatePacket = response;
     }else{
-        console.warn("AgentLibrary: Unable to change agent state " + response.detail["#text"]);
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Unable to change agent state";
+        }
+        console.warn("AgentLibrary: Unable to change agent state " + detail);
     }
+
+    return formattedResponse;
 };
 
 

@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-02 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-03 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -63,6 +63,29 @@ AgentStateRequest.prototype.processResponse = function(response) {
     var prevAuxState = response.ui_response.prev_aux_state['#text'] || "";
     var currAuxState = response.ui_response.agent_aux_state['#text'] || "";
 
+    // add message and detail if present
+    var msg = response.ui_response.message;
+    var det = response.ui_response.detail;
+    var message = "";
+    var detail = "";
+    if(msg){
+        message = msg['#text'] || "";
+    }
+    if(det){
+        detail = det['#text'] || "";
+    }
+
+    var formattedResponse = {
+        status: status,
+        message: message,
+        detail: detail,
+        agentId: response.ui_response.agent_id['#text'] || "",
+        previousState: prevState,
+        currentState: currState,
+        previousAuxState: prevAuxState,
+        currentAuxState: currAuxState
+    };
+
     if(status=="OK"){
         var prevStateStr = prevState;
         var currStateStr = currState;
@@ -82,11 +105,134 @@ AgentStateRequest.prototype.processResponse = function(response) {
         UIModel.getInstance().agentSettings.currentStateLabel = currAuxState;
         UIModel.getInstance().agentStatePacket = response;
     }else{
-        console.warn("AgentLibrary: Unable to change agent state " + response.detail["#text"]);
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Unable to change agent state";
+        }
+        console.warn("AgentLibrary: Unable to change agent state " + detail);
     }
+
+    return formattedResponse;
 };
 
 
+
+
+var CallbackCancelRequest = function(leadId, agentId) {
+    this.agentId = agentId || UIModel.getInstance().agentSettings.agentId;
+    this.leadId = leadId;
+};
+
+CallbackCancelRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CALLBACK_CANCEL,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":this.agentId    
+            },
+            "lead_id":{
+                "#text":this.leadId
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
+
+var CallbacksPendingRequest = function(agentId) {
+    this.agentId = agentId || UIModel.getInstance().agentSettings.agentId;
+};
+
+CallbacksPendingRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CALLBACK_PENDING,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":this.agentId
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+/*
+ * This class is responsible for handling an PENDING-CALLBACKS response packet from IntelliQueue.
+ *
+ * <ui_response message_id="IQ982008091512353000875"  response_to="UIV220089151235539" type="PENDING-CALLBACKS">
+ *    <lead lead_id="" destination="5555555555" aux_data1="" aux_data2="" aux_data3="" aux_data4="" aux_data5=""
+ *       extern_id="" dial_time="2016-08-03 10:00" dial_group_name="" dial_group_id="" lead_id="">
+ *       <lead_id/>
+ *       <extern_id/>
+ *       <first_name/>
+ *       <mid_name/>
+ *       <last_name/>
+ *       <suffix/>
+ *       <title/>
+ *       <address1/>
+ *       <address2/>
+ *       <city/>
+ *       <state/>
+ *       <zip/>
+ *       <gate_keeper/>
+ *    </lead>
+ * </ui_response>
+ */
+CallbacksPendingRequest.prototype.processResponse = function(response) {
+    var leadsRaw = response.ui_response.lead;
+    var leads = [];
+    if(Array.isArray(leadsRaw)){
+        for(var l = 0; l < leadsRaw.length; l++){
+            var leadRaw = leadsRaw[l];
+            var lead = parseLead(leadRaw);
+            leads.push(lead);
+        }
+    }else if(leadsRaw){
+        leads.push(parseLead(leadsRaw));
+    }
+
+    UIModel.getInstance().agentSettings.pendingCallbacks = JSON.parse(JSON.stringify(leads));
+
+    return UIModel.getInstance().agentSettings.pendingCallbacks;
+};
+
+function parseLead(leadRaw){
+    var lead = {
+        auxData1 : leadRaw['@aux_data1'],
+        auxData2 : leadRaw['@aux_data2'],
+        auxData3 : leadRaw['@aux_data3'],
+        auxData4 : leadRaw['@aux_data4'],
+        auxData5 : leadRaw['@aux_data5'],
+        destination : leadRaw['@destination'],
+        dialGroupId : leadRaw['@dial_group_id'],
+        dialGroupName : leadRaw['@dial_group_name'],
+        dialTime : leadRaw['@dial_time'],
+        externId : leadRaw['@extern_id'],
+        leadId : leadRaw['@lead_id'],
+        firstName : leadRaw.first_name['#text'] || "",
+        midName : leadRaw.mid_name['#text'] || "",
+        lastName : leadRaw.last_name['#text'] || "",
+        sufix : leadRaw.suffix['#text'] || "",
+        title : leadRaw.title['#text'] || "",
+        address1 : leadRaw.address1['#text'] || "",
+        address2 : leadRaw.address2['#text'] || "",
+        city : leadRaw.city['#text'] || "",
+        state : leadRaw.state['#text'] || "",
+        zip : leadRaw.zip['#text'] || "",
+        gateKeeper : leadRaw.gate_keeper['#text'] || ""
+    };
+
+    return lead;
+}
 
 
 var ConfigRequest = function(queueIds, chatIds, skillPofileId, outdialGroupId, dialDest) {
@@ -124,6 +270,7 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, outdialGroupId, d
 
     // validate dialDest is sip or 10-digit num
     if(!utils.validateDest(this.dialDest)){
+        // TODO propagate this to the client
         console.error("AgentLibrary: dialDest must be a valid sip or 10-digit DID");
     }
 
@@ -211,12 +358,28 @@ ConfigRequest.prototype.formatJSON = function() {
 ConfigRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
 
+    // add message and detail if present
+    var msg = response.ui_response.message;
+    var det = response.ui_response.detail;
+    var message = "";
+    var detail = "";
+    if(msg){
+        message = msg['#text'] || "";
+    }
+    if(det){
+        detail = det['#text'] || "";
+    }
+    var formattedResponse = {
+        status: status,
+        message: message,
+        detail: detail
+    };
+
     if(status === "SUCCESS"){
         if(!UIModel.getInstance().isLoggedIn){
             // fresh login, set UI Model properties
             UIModel.getInstance().configPacket = response;
             UIModel.getInstance().connectionSettings.hashCode = response.ui_response.hash_code['#text'];
-            UIModel.getInstance().applicationSettings.message = response.ui_response.message['#text'];
             UIModel.getInstance().agentSettings.isLoggedIn = true;
             UIModel.getInstance().agentSettings.loginDTS = new Date();
             UIModel.getInstance().connectionSettings.reconnect = true;
@@ -257,10 +420,24 @@ ConfigRequest.prototype.processResponse = function(response) {
                 console.log("AgentLibrary: Processed a Layer 2 Reconnect Successfully");
             }
         }
+
+        formattedResponse.agentSettings = UIModel.getInstance().agentSettings;
+        formattedResponse.agentPermissions = UIModel.getInstance().agentPermissions;
+        formattedResponse.applicationSettings = UIModel.getInstance().applicationSettings;
+        formattedResponse.chatSettings = UIModel.getInstance().chatSettings;
+        formattedResponse.connectionSettings = UIModel.getInstance().connectionSettings;
+        formattedResponse.inboundSettings = UIModel.getInstance().inboundSettings;
+        formattedResponse.outboundSettings = UIModel.getInstance().outboundSettings;
+        formattedResponse.surveySettings = UIModel.getInstance().surveySettings;
     }else{
         // Login failed
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Agent configuration attempt failed (2nd layer login)"
+        }
         console.warn("AgentLibrary: Layer 2 login failed!");
     }
+
+    return formattedResponse;
 };
 
 function setDialGroupSettings(response){
@@ -440,6 +617,24 @@ LoginRequest.prototype.formatJSON = function() {
  */
 LoginRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
+
+    // add message and detail if present
+    var msg = response.ui_response.message;
+    var det = response.ui_response.detail;
+    var message = "";
+    var detail = "";
+    if(msg){
+        message = msg['#text'] || "";
+    }
+    if(det){
+        detail = det['#text'] || "";
+    }
+    var formattedResponse = {
+        status: status,
+        message: message,
+        detail: detail
+    };
+
     if(status === 'OK'){
         if(!UIModel.getInstance().isLoggedInIS){
             // save login packet properties to UIModel
@@ -453,11 +648,11 @@ LoginRequest.prototype.processResponse = function(response) {
             UIModel.getInstance().agentSettings.lastName = response.ui_response.last_name['#text'];
             UIModel.getInstance().agentSettings.email = response.ui_response.email['#text'];
             UIModel.getInstance().agentSettings.agentId = response.ui_response.agent_id['#text'];
-            UIModel.getInstance().agentSettings.externalAgentId = response.ui_response.external_agent_id['#text'];
+            UIModel.getInstance().agentSettings.externalAgentId = response.ui_response.external_agent_id['#text'] || "";
             UIModel.getInstance().agentSettings.agentType = response.ui_response.agent_type['#text'];
             UIModel.getInstance().agentSettings.realAgentType = response.ui_response.real_agent_type['#text'];
             UIModel.getInstance().agentSettings.defaultLoginDest = response.ui_response.default_login_dest['#text'];
-            UIModel.getInstance().agentSettings.altDefaultLoginDest = response.ui_response.alt_default_login_dest['#text'];
+            UIModel.getInstance().agentSettings.altDefaultLoginDest = response.ui_response.alt_default_login_dest['#text'] || "";
             UIModel.getInstance().agentSettings.disableSupervisorMonitoring = response.ui_response.disable_supervisor_monitoring['#text'];
             UIModel.getInstance().agentSettings.initLoginState = response.ui_response.init_login_state['#text'];
             UIModel.getInstance().agentSettings.initLoginStateLabel = response.ui_response.init_login_state_label['#text'];
@@ -538,16 +733,33 @@ LoginRequest.prototype.processResponse = function(response) {
 
             var dialGroups = utils.processResponseCollection(response.ui_response, "outdial_groups", "group");
             // set boolean values
-            dialGroups.allowLeadSearch = dialGroups.allowLeadSearch == "YES";
-            dialGroups.allowPreviewLeadFilters = dialGroups.allowPreviewLeadFilters == "1";
-            dialGroups.allowProgressiveEnabled = dialGroups.allowProgressiveEnabled == "1";
+            for(var dg = 0; dg < dialGroups.length; dg++){
+                var group = dialGroups[dg];
+                group.allowLeadSearch = group.allowLeadSearch === "YES";
+                group.allowPreviewLeadFilters = group.allowPreviewLeadFilters === "1";
+                group.progressiveEnabled = group.progressiveEnabled === "1";
+                group.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled === "1";
+            }
             UIModel.getInstance().outboundSettings.availableOutdialGroups = dialGroups;
         }
+
+        formattedResponse.agentSettings = UIModel.getInstance().agentSettings;
+        formattedResponse.agentPermissions = UIModel.getInstance().agentPermissions;
+        formattedResponse.applicationSettings = UIModel.getInstance().applicationSettings;
+        formattedResponse.chatSettings = UIModel.getInstance().chatSettings;
+        formattedResponse.connectionSettings = UIModel.getInstance().connectionSettings;
+        formattedResponse.inboundSettings = UIModel.getInstance().inboundSettings;
+        formattedResponse.outboundSettings = UIModel.getInstance().outboundSettings;
+        formattedResponse.surveySettings = UIModel.getInstance().surveySettings;
     }else if(status === 'RESTRICTED'){
+        formattedResponse.message = "Invalid IP Address";
         console.log("AgentLibrary: Invalid IP Address");
     }else{
+        formattedResponse.message = "Invalid Username or password";
         console.log("AgentLibrary: Invalid Username or password");
     }
+
+    return formattedResponse;
 };
 
 processCampaigns = function(response){
@@ -647,7 +859,7 @@ LogoutRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
-var OffhookInitRequest = function(showWarning) {
+var OffhookInitRequest = function() {
 
 };
 
@@ -684,13 +896,35 @@ OffhookInitRequest.prototype.formatJSON = function() {
  */
 OffhookInitRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
+
+    // add message and detail if present
+    var msg = response.ui_response.message;
+    var det = response.ui_response.detail;
+    var message = "";
+    var detail = "";
+    if(msg){
+        message = msg['#text'] || "";
+    }
+    if(det){
+        detail = det['#text'] || "";
+    }
+    var formattedResponse = {
+        status: status,
+        message: message,
+        detail: detail
+    };
+
     if(status === 'OK'){
         UIModel.getInstance().offhookInitPacket = response;
         UIModel.getInstance().agentSettings.isOffhook = true;
     }else{
-        UIModel.getInstance().logger.error(this,"Unable to process offhook request, " + packet.detail[0]);
-        console.log("AgentLibrary: Unable to process offhook request ", response.ui_response.detail['#text']);
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Unable to process offhook request";
+        }
+        console.log("AgentLibrary: Unable to process offhook request ", detail);
     }
+
+    return formattedResponse;
 };
 
 
@@ -732,6 +966,57 @@ OffhookTermRequest.prototype.processResponse = function(data) {
     UIModel.getInstance().agentSettings.wasMonitoring = monitoring;
     UIModel.getInstance().offhookTermPacket = data;
     UIModel.getInstance().agentSettings.isOffhook = false;
+
+    var formattedResponse = {
+        agentId: data.ui_notification.agent_id['#text'],
+        startDts: data.ui_notification.start_dts['#text'],
+        endDts: data.ui_notification.end_dts['#text'],
+        monitoring: monitoring
+    };
+
+    return formattedResponse;
+};
+
+
+var GenericNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a generic notification
+ *
+ *  <ui_notification message_id="IQ10012016080317400400011"
+ *      response_to="1c2fe39f-a31e-aff8-8d23-92a61c88270f" type="GENERIC">
+ *      <message_code>0</message_code>
+ *      <message>OK</message>
+ *      <detail>Pending Callback Successfully Cancelled.</detail>
+ *  </ui_notification>
+ */
+GenericNotification.prototype.processResponse = function(notification) {
+
+    // add message and detail if present
+    var msgCode = notification.ui_notification.message_code;
+    var msg = notification.ui_notification.message;
+    var det = notification.ui_notification.detail;
+    var messageCode = "";
+    var message = "";
+    var detail = "";
+    if(msg){
+        message = msg['#text'] || "";
+    }
+    if(det){
+        detail = det['#text'] || "";
+    }
+    if(msgCode){
+        messageCode = msgCode['#text'] || "";
+    }
+    var formattedResponse = {
+        messageCode: messageCode,
+        message: message,
+        detail: detail
+    };
+
+    return formattedResponse;
 };
 
 var UIModel = (function() {
@@ -753,6 +1038,7 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            callbacksPendingRequest : null,
             configRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
@@ -772,7 +1058,7 @@ var UIModel = (function() {
                 availableCountries : [],
                 isLoggedInIS : false,               // a check for whether or not user is logged in with IntelliServices
                 socketConnected : false,
-                message : "",
+                socketDest : "",
                 isTcpaSafeMode : false            // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
             },
 
@@ -802,6 +1088,7 @@ var UIModel = (function() {
                 maxLunchTime : -1,
                 onCall : false,                     // true if agent is on an active call
                 outboundManualDefaultRingtime : "30",
+                pendingCallbacks : [],
                 realAgentType : "AGENT",
                 updateLoginMode : false,             // gets set to true when doing an update login (for events control)
                 wasMonitoring : false                // used to track if the last call was a monitoring call
@@ -891,6 +1178,10 @@ var UIModel = (function() {
 var utils = {
     sendMessage: function(instance, msg) {
         if (instance.socket.readyState === 1) {
+            // add message id to request map
+            var msgObj = JSON.parse(msg);
+            instance._requests[msgObj.ui_request['@message_id']] = { type: msgObj.ui_request['@type'], msg: msgObj.ui_request };
+
             instance.socket.send(msg);
         } else {
             console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
@@ -911,11 +1202,11 @@ var utils = {
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.LOGIN:
                 if (dest === "IS") {
-                    UIModel.getInstance().loginRequest.processResponse(response);
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, response);
+                    var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, loginResponse);
                 } else if (dest === 'IQ') {
-                    UIModel.getInstance().configRequest.processResponse(response);
-                    utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, response);
+                    var configResponse = UIModel.getInstance().configRequest.processResponse(response);
+                    utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
                 }
                 break;
             case MESSAGE_TYPES.LOGOUT:
@@ -926,13 +1217,17 @@ var utils = {
                 if(UIModel.getInstance().agentStateRequest === null){
                     UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
                 }
-                UIModel.getInstance().agentStateRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, response);
+                var stateChangeResposne = UIModel.getInstance().agentStateRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResposne);
                 break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
-                UIModel.getInstance().offhookInitRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, response);
+                var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
+            case MESSAGE_TYPES.CALLBACK_PENDING:
+                var pendingCallbacks = UIModel.getInstance().callbacksPendingRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CALLBACK_PENDING, pendingCallbacks);
+            break;
         }
 
     },
@@ -949,8 +1244,22 @@ var utils = {
                     // offhook term initiated by IQ
                     UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
                 }
-                UIModel.getInstance().offhookTermRequest.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, data);
+                var termResponse = UIModel.getInstance().offhookTermRequest.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
+                break;
+            case MESSAGE_TYPES.GENERIC:
+                var genericNotif = new GenericNotification();
+                var generic = genericNotif.processResponse(data);
+                var responseTo = data.ui_notification['@response_to'];
+                if(instance._requests[responseTo]){
+                    // found corresponding request, fire registered callback for type
+                    var type = instance._requests[responseTo].type;
+                    var callbackFnName = utils.findCallbackBasedOnMessageType(type);
+                    utils.fireCallback(instance, callbackFnName, generic);
+                }else{
+                    // no corresponding request, just fire generic notification callback
+                    utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
+                }
                 break;
         }
     },
@@ -1140,6 +1449,18 @@ var utils = {
         }
 
         return isValid;
+    },
+
+    // pass in MESSAGE_TYPE string (e.g. "CANCEL-CALLBACK"),
+    // return corresponding CALLBACK_TYPE function name string (e.g. "callbackCancelResponse")
+    findCallbackBasedOnMessageType: function(messageType){
+        var callbackFnName = "";
+        for(key in MESSAGE_TYPES){
+            if(MESSAGE_TYPES[key] === messageType){
+                callbackFnName = CALLBACK_TYPES[key];
+            }
+        }
+        return callbackFnName;
     }
 };
 
@@ -1162,6 +1483,10 @@ const CALLBACK_TYPES = {
     "AGENT_STATE":"agentStateResponse",
     "CLOSE_SOCKET":"closeResponse",
     "CONFIG":"configureResponse",
+    "CALLBACK_PENDING":"callbacksPendingResponse",
+    "CALLBACK_CANCEL":"callbackCancelResponse",
+    "GENERIC_NOTIFICATION":"genericNotification",
+    "GENERIC_RESPONSE":"genericResponse",
     "LOGIN":"loginResponse",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
@@ -1172,7 +1497,10 @@ const MESSAGE_TYPES = {
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
+    "CALLBACK_PENDING":"PENDING-CALLBACKS",
+    "CALLBACK_CANCEL":"CANCEL-CALLBACK",
     "ON_MESSAGE":"ON-MESSAGE",
+    "GENERIC":"GENERIC",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
     "OFFHOOK_TERM":"OFF-HOOK-TERM"
 };
@@ -1196,6 +1524,7 @@ function initAgentLibraryCore (context) {
      * @constructor
      * @memberof AgentLibrary
      * @property {object} callbacks Internal map of registered callback functions
+     * @property {object} _requests Internal map of requests by message id, private property.
      * @example
      * var Lib = new AgentLibrary({
      *      socketDest:'ws://d01-test.cf.dev:8080',
@@ -1211,6 +1540,7 @@ function initAgentLibraryCore (context) {
 
         // define properties
         this.callbacks = {};
+        this._requests = {};
 
         // set default values
         if(typeof config.callbacks !== 'undefined'){
@@ -1218,7 +1548,7 @@ function initAgentLibraryCore (context) {
         }
 
         if(typeof config.socketDest !== 'undefined'){
-            UIModel.getInstance().socketDest = config.socketDest;
+            UIModel.getInstance().applicationSettings.socketDest = config.socketDest;
             this.openSocket();
         }else{
             // todo default socket address?
@@ -1407,10 +1737,10 @@ function initAgentLibrarySocket (context) {
         utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
         if("WebSocket" in context){
             console.log("AgentLibrary: attempting to open socket connection...");
-            instance.socket = new WebSocket(UIModel.getInstance().socketDest);
+            instance.socket = new WebSocket(UIModel.getInstance().applicationSettings.socketDest);
 
             instance.socket.onopen = function() {
-                UIModel.getInstance().socketConnected = true;
+                UIModel.getInstance().applicationSettings.socketConnected = true;
                 utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, '');
             };
 
@@ -1425,7 +1755,7 @@ function initAgentLibrarySocket (context) {
 
             instance.socket.onclose = function(){
                 utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
-                UIModel.getInstance().socketConnected = false;
+                UIModel.getInstance().applicationSettings.socketConnected = false;
             };
         }else{
             console.warn("AgentLibrary: WebSocket NOT supported by your Browser.");
@@ -1538,6 +1868,35 @@ function initAgentLibraryAgent (context) {
         var msg = UIModel.getInstance().offhookTermRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.OFFHOOK_TERM, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Returns scheduled callbacks for the given agent
+     * @memberof AgentLibrary
+     * @param {number} [agentId=logged in agent id] Id of agent to get callbacks for
+     * @param {function} [callback=null] Callback function when pending callbacks response received
+     */
+    AgentLibrary.prototype.getPendingCallbacks = function(agentId, callback){
+        UIModel.getInstance().callbacksPendingRequest = new CallbacksPendingRequest(agentId);
+        var msg = UIModel.getInstance().callbacksPendingRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CALLBACK_PENDING, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Cancel a scheduled callback for the given agent based on lead id
+     * @memberof AgentLibrary
+     * @param {number} leadId Id of lead callback to cancel
+     * @param {number} [agentId=logged in agent id] Id of agent to cancel specified lead callback for
+     * @param {function} [callback=null] Callback function when offhookTerm response received
+     */
+    AgentLibrary.prototype.cancelCallback = function(leadId, agentId, callback){
+        UIModel.getInstance().callbackCancelRequest = new CallbackCancelRequest(leadId, agentId);
+        var msg = UIModel.getInstance().callbackCancelRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CALLBACK_CANCEL, callback);
         utils.sendMessage(this, msg);
     };
 }

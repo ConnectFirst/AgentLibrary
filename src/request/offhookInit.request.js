@@ -1,5 +1,5 @@
 
-var OffhookInitRequest = function(showWarning) {
+var OffhookInitRequest = function() {
 
 };
 
@@ -36,12 +36,34 @@ OffhookInitRequest.prototype.formatJSON = function() {
  */
 OffhookInitRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
+
+    // add message and detail if present
+    var msg = response.ui_response.message;
+    var det = response.ui_response.detail;
+    var message = "";
+    var detail = "";
+    if(msg){
+        message = msg['#text'] || "";
+    }
+    if(det){
+        detail = det['#text'] || "";
+    }
+    var formattedResponse = {
+        status: status,
+        message: message,
+        detail: detail
+    };
+
     if(status === 'OK'){
         UIModel.getInstance().offhookInitPacket = response;
         UIModel.getInstance().agentSettings.isOffhook = true;
     }else{
-        UIModel.getInstance().logger.error(this,"Unable to process offhook request, " + packet.detail[0]);
-        console.log("AgentLibrary: Unable to process offhook request ", response.ui_response.detail['#text']);
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Unable to process offhook request";
+        }
+        console.log("AgentLibrary: Unable to process offhook request ", detail);
     }
+
+    return formattedResponse;
 };
 

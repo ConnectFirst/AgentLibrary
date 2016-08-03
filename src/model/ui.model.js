@@ -17,6 +17,7 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            callbacksPendingRequest : null,
             configRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
@@ -36,7 +37,7 @@ var UIModel = (function() {
                 availableCountries : [],
                 isLoggedInIS : false,               // a check for whether or not user is logged in with IntelliServices
                 socketConnected : false,
-                message : "",
+                socketDest : "",
                 isTcpaSafeMode : false            // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
             },
 
@@ -66,6 +67,7 @@ var UIModel = (function() {
                 maxLunchTime : -1,
                 onCall : false,                     // true if agent is on an active call
                 outboundManualDefaultRingtime : "30",
+                pendingCallbacks : [],
                 realAgentType : "AGENT",
                 updateLoginMode : false,             // gets set to true when doing an update login (for events control)
                 wasMonitoring : false                // used to track if the last call was a monitoring call
