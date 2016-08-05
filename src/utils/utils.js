@@ -1,10 +1,9 @@
 var utils = {
     sendMessage: function(instance, msg) {
         if (instance.socket.readyState === 1) {
-            // add message id to request map
+            // add message id to request map, then send message
             var msgObj = JSON.parse(msg);
             instance._requests[msgObj.ui_request['@message_id']] = { type: msgObj.ui_request['@type'], msg: msgObj.ui_request };
-
             instance.socket.send(msg);
         } else {
             console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
@@ -33,7 +32,7 @@ var utils = {
                 }
                 break;
             case MESSAGE_TYPES.LOGOUT:
-                // TODO add processResponse
+                // TODO add processResponse?
                 utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
                 break;
             case MESSAGE_TYPES.AGENT_STATE:
@@ -69,6 +68,11 @@ var utils = {
                 }
                 var termResponse = UIModel.getInstance().offhookTermRequest.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
+                break;
+            case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
+                var dgChangeNotif = new DialGroupChangeNotification();
+                var changeResponse = dgChangeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIAL_GROUP_CHANGE, changeResponse);
                 break;
             case MESSAGE_TYPES.GENERIC:
                 var genericNotif = new GenericNotification();

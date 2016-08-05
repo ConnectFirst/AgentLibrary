@@ -273,6 +273,7 @@ processCampaigns = function(response){
     var labelArray = [];
     var label = "";
     var campaignId = 0;
+    var campaignName = "";
     var allowLeadUpdates = false;
 
     if(typeof response.ui_response.campaigns.campaign !== 'undefined'){
@@ -283,6 +284,7 @@ processCampaigns = function(response){
         // dealing with an array
         for(var c = 0; c < campaignsRaw.length; c++){
             campaignId = campaignsRaw[c]['@campaign_id'];
+            campaignName = campaignsRaw[c]['@campaign_name'];
             allowLeadUpdates = campaignsRaw[c]['@allow_lead_updates'] == '1';
             customLabels = campaignsRaw[c]['custom_labels'];
             labelArray = [];
@@ -300,6 +302,7 @@ processCampaigns = function(response){
             campaign = {
                 allowLeadUpdates: allowLeadUpdates,
                 campaignId: campaignId,
+                campaignName: campaignName,
                 surveyId: campaignsRaw[c]['@survey_id'],
                 surveyName: campaignsRaw[c]['@survey_name'],
                 customLabels: labelArray
@@ -307,30 +310,34 @@ processCampaigns = function(response){
             campaigns.push(campaign);
         }
     }else{
-        // single campaign object
-        campaignId = campaignsRaw[c]['@campaign_id'];
-        allowLeadUpdates = campaignsRaw[c]['@allow_lead_updates'] == '1';
-        customLabels = campaignsRaw['custom_labels'];
-        labelArray = [];
-        label = "";
+        if(campaignsRaw){
+            // single campaign object
+            campaignId = campaignsRaw['@campaign_id'];
+            campaignName = campaignsRaw['@campaign_name'];
+            allowLeadUpdates = campaignsRaw['@allow_lead_updates'] == '1';
+            customLabels = campaignsRaw['custom_labels'];
+            labelArray = [];
+            label = "";
 
-        UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
+            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
 
-        for (var p in customLabels) {
-            label = p.replace(/@/, ''); // remove leading '@'
-            var obj = {};
-            obj[label] = customLabels[p];
-            labelArray.push(obj);
+            for (var p in customLabels) {
+                label = p.replace(/@/, ''); // remove leading '@'
+                var obj = {};
+                obj[label] = customLabels[p];
+                labelArray.push(obj);
+            }
+
+            campaign = {
+                allowLeadUpdates: allowLeadUpdates,
+                campaignId: campaignId,
+                campaignName: campaignName,
+                surveyId: campaignsRaw['@survey_id'],
+                surveyName: campaignsRaw['@survey_name'],
+                customLabels: labelArray
+            };
+            campaigns.push(campaign);
         }
-
-        campaign = {
-            allowLeadUpdates: campaignsRaw['@allow_lead_updates'],
-            campaignId: campaignsRaw['@campaign_id'],
-            surveyId: campaignsRaw['@survey_id'],
-            surveyName: campaignsRaw['@survey_name'],
-            customLabels: labelArray
-        };
-        campaigns.push(campaign);
     }
 
     UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;

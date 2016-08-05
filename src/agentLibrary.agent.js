@@ -25,12 +25,12 @@ function initAgentLibraryAgent (context) {
      * @param {string[]} [queueIds=null] The queue ids the agent will be logged into.
      * @param {string[]} [chatIds=null] The chat ids the agent will be logged into.
      * @param {string} [skillProfileId=null] The skill profile the agent will be logged into.
-     * @param {string} [outdialGroupId=null] The outbound dial group id the agent will be logged into.
+     * @param {string} [dialGroupId=null] The outbound dial group id the agent will be logged into.
      * @param {string} dialDest The agent's number, sip | DID.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(queueIds, chatIds, skillProfileId, outdialGroupId, dialDest, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(queueIds, chatIds, skillProfileId, outdialGroupId, dialDest);
+    AgentLibrary.prototype.configureAgent = function(queueIds, chatIds, skillProfileId, dialGroupId, dialDest, callback){
+        UIModel.getInstance().configRequest = new ConfigRequest(queueIds, chatIds, skillProfileId, dialGroupId, dialDest);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);

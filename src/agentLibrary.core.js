@@ -19,6 +19,7 @@ const CALLBACK_TYPES = {
     "CONFIG":"configureResponse",
     "CALLBACK_PENDING":"callbacksPendingResponse",
     "CALLBACK_CANCEL":"callbackCancelResponse",
+    "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
     "LOGIN":"loginResponse",
@@ -33,6 +34,7 @@ const MESSAGE_TYPES = {
     "AGENT_STATE":"AGENT-STATE",
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
+    "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "ON_MESSAGE":"ON-MESSAGE",
     "GENERIC":"GENERIC",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
@@ -170,6 +172,22 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().agentStateRequest;
     };
     /**
+     * Get latest outgoing offhook init Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getOffhookInitRequest = function() {
+        return UIModel.getInstance().offhookInitRequest;
+    };
+    /**
+     * Get latest outgoing offhook termination Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getOffhookTermRequest = function() {
+        return UIModel.getInstance().offhookTermRequest;
+    };
+    /**
      * Get packet received on successful Login
      * @memberof AgentLibrary
      * @returns {object}
@@ -201,6 +219,33 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getCurrentCallPacket = function() {
         return UIModel.getInstance().currentCallPacket;
     };
+    /**
+     * Get latest received packet for initiating an offhook session
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getOffhookInitPacket = function() {
+        return UIModel.getInstance().offhookInitPacket;
+    };
+    /**
+     * Get latest received packet for terminating an offhook session
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getOffhookTermPacket = function() {
+        return UIModel.getInstance().offhookTermPacket;
+    };
+
+    // notifications
+    /**
+     * Get latest received notification for Dial Group Change message
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getDialGroupChangeNotification = function() {
+        return UIModel.getInstance().dialGroupChangeNotification;
+    };
+
 
     // settings objects
     /**
@@ -211,7 +256,6 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getApplicationSettings = function() {
         return UIModel.getInstance().applicationSettings;
     };
-
     /**
      * Get Chat Settings object containing the current state of chat related data
      * @memberof AgentLibrary
@@ -220,7 +264,6 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getChatSettings = function() {
         return UIModel.getInstance().chatSettings;
     };
-
     /**
      * Get Inbound Settings object containing the current state of inbound related data
      * @memberof AgentLibrary
@@ -229,7 +272,6 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getInboundSettings = function() {
         return UIModel.getInstance().inboundSettings;
     };
-
     /**
      * Get Outbound Settings object containing the current state of outbound related data
      * @memberof AgentLibrary
@@ -238,7 +280,6 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getOutboundSettings = function() {
         return UIModel.getInstance().outboundSettings;
     };
-
     /**
      * Get Agent Settings object containing the current state of agent related data
      * @memberof AgentLibrary
@@ -247,7 +288,6 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getAgentSettings = function() {
         return UIModel.getInstance().agentSettings;
     };
-
     /**
      * Get the Agent Permissions object containing the current state of agent permissions
      * @memberof AgentLibrary
@@ -256,6 +296,5 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getAgentPermissions = function() {
         return UIModel.getInstance().agentPermissions;
     };
-
 
 }

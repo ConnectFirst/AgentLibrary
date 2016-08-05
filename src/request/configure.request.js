@@ -1,9 +1,9 @@
 
-var ConfigRequest = function(queueIds, chatIds, skillPofileId, outdialGroupId, dialDest) {
+var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dialDest) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillPofileId = skillPofileId || "";
-    this.outdialGroupId = outdialGroupId || "";
+    this.dialGroupId = dialGroupId || "";
     this.dialDest = dialDest || "";
 
     this.updateFromAdminUI = false;
@@ -14,14 +14,14 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, outdialGroupId, d
     this.queueIds = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableQueues, this.queueIds, "gateId");
     this.chatIds = utils.checkExistingIds(UIModel.getInstance().chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
     this.skillPofileId = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
-    this.outdialGroupId = utils.checkExistingIds(UIModel.getInstance().outboundSettings.availableOutdialGroups, [this.outdialGroupId], "dialGroupId")[0] || "";
+    this.dialGroupId = utils.checkExistingIds(UIModel.getInstance().outboundSettings.availableOutdialGroups, [this.dialGroupId], "dialGroupId")[0] || "";
 
     // Set loginType value
-    if(this.queueIds.length > 0 && this.outdialGroupId !== ""){
+    if(this.queueIds.length > 0 && this.dialGroupId !== ""){
         this.loginType = "BLENDED";
     }else if(this.queueIds.length > 0){
         this.loginType = "INBOUND";
-    }else if(this.outdialGroupId !== ""){
+    }else if(this.dialGroupId !== ""){
         this.loginType = "OUTBOUND";
     }else {
         this.loginType = "NO-SELECTION";
@@ -63,7 +63,7 @@ ConfigRequest.prototype.formatJSON = function() {
                 "#text":this.updateLogin.toString()
             },
             "outdial_group_id":{
-                "#text":this.outdialGroupId
+                "#text":this.dialGroupId
             },
             "skill_profile_id":{
                 "#text":this.skillPofileId
@@ -139,8 +139,13 @@ ConfigRequest.prototype.processResponse = function(response) {
         detail: detail
     };
 
+    if(detail === "Logon Session Configuration Updated!"){
+        // this is an update login packet
+        UIModel.getInstance().agentSettings.updateLoginMode = true;
+    }
+
     if(status === "SUCCESS"){
-        if(!UIModel.getInstance().isLoggedIn){
+        if(!UIModel.getInstance().agentSettings.isLoggedIn){
             // fresh login, set UI Model properties
             UIModel.getInstance().configPacket = response;
             UIModel.getInstance().connectionSettings.hashCode = response.ui_response.hash_code['#text'];
@@ -165,7 +170,7 @@ ConfigRequest.prototype.processResponse = function(response) {
                 // This was an update login request
                 UIModel.getInstance().agentSettings.updateLoginMode = false;
 
-                // update dial group settings
+                // reset to false before updating dial group settings
                 UIModel.getInstance().agentPermissions.allowLeadSearch = false;
                 UIModel.getInstance().agentPermissions.requireFetchedLeadsCalled = false;
                 UIModel.getInstance().agentPermissions.allowPreviewLeadFilters = false;

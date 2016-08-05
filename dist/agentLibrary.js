@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-03 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-04 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -235,11 +235,11 @@ function parseLead(leadRaw){
 }
 
 
-var ConfigRequest = function(queueIds, chatIds, skillPofileId, outdialGroupId, dialDest) {
+var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dialDest) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillPofileId = skillPofileId || "";
-    this.outdialGroupId = outdialGroupId || "";
+    this.dialGroupId = dialGroupId || "";
     this.dialDest = dialDest || "";
 
     this.updateFromAdminUI = false;
@@ -250,14 +250,14 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, outdialGroupId, d
     this.queueIds = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableQueues, this.queueIds, "gateId");
     this.chatIds = utils.checkExistingIds(UIModel.getInstance().chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
     this.skillPofileId = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
-    this.outdialGroupId = utils.checkExistingIds(UIModel.getInstance().outboundSettings.availableOutdialGroups, [this.outdialGroupId], "dialGroupId")[0] || "";
+    this.dialGroupId = utils.checkExistingIds(UIModel.getInstance().outboundSettings.availableOutdialGroups, [this.dialGroupId], "dialGroupId")[0] || "";
 
     // Set loginType value
-    if(this.queueIds.length > 0 && this.outdialGroupId !== ""){
+    if(this.queueIds.length > 0 && this.dialGroupId !== ""){
         this.loginType = "BLENDED";
     }else if(this.queueIds.length > 0){
         this.loginType = "INBOUND";
-    }else if(this.outdialGroupId !== ""){
+    }else if(this.dialGroupId !== ""){
         this.loginType = "OUTBOUND";
     }else {
         this.loginType = "NO-SELECTION";
@@ -299,7 +299,7 @@ ConfigRequest.prototype.formatJSON = function() {
                 "#text":this.updateLogin.toString()
             },
             "outdial_group_id":{
-                "#text":this.outdialGroupId
+                "#text":this.dialGroupId
             },
             "skill_profile_id":{
                 "#text":this.skillPofileId
@@ -376,7 +376,7 @@ ConfigRequest.prototype.processResponse = function(response) {
     };
 
     if(status === "SUCCESS"){
-        if(!UIModel.getInstance().isLoggedIn){
+        if(!UIModel.getInstance().agentSettings.isLoggedIn){
             // fresh login, set UI Model properties
             UIModel.getInstance().configPacket = response;
             UIModel.getInstance().connectionSettings.hashCode = response.ui_response.hash_code['#text'];
@@ -401,7 +401,7 @@ ConfigRequest.prototype.processResponse = function(response) {
                 // This was an update login request
                 UIModel.getInstance().agentSettings.updateLoginMode = false;
 
-                // update dial group settings
+                // reset to false before updating dial group settings
                 UIModel.getInstance().agentPermissions.allowLeadSearch = false;
                 UIModel.getInstance().agentPermissions.requireFetchedLeadsCalled = false;
                 UIModel.getInstance().agentPermissions.allowPreviewLeadFilters = false;
@@ -804,30 +804,32 @@ processCampaigns = function(response){
             campaigns.push(campaign);
         }
     }else{
-        // single campaign object
-        campaignId = campaignsRaw[c]['@campaign_id'];
-        allowLeadUpdates = campaignsRaw[c]['@allow_lead_updates'] == '1';
-        customLabels = campaignsRaw['custom_labels'];
-        labelArray = [];
-        label = "";
+        if(campaignsRaw){
+            // single campaign object
+            campaignId = campaignsRaw['@campaign_id'];
+            allowLeadUpdates = campaignsRaw['@allow_lead_updates'] == '1';
+            customLabels = campaignsRaw['custom_labels'];
+            labelArray = [];
+            label = "";
 
-        UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
+            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
 
-        for (var p in customLabels) {
-            label = p.replace(/@/, ''); // remove leading '@'
-            var obj = {};
-            obj[label] = customLabels[p];
-            labelArray.push(obj);
+            for (var p in customLabels) {
+                label = p.replace(/@/, ''); // remove leading '@'
+                var obj = {};
+                obj[label] = customLabels[p];
+                labelArray.push(obj);
+            }
+
+            campaign = {
+                allowLeadUpdates: allowLeadUpdates,
+                campaignId: campaignId,
+                surveyId: campaignsRaw['@survey_id'],
+                surveyName: campaignsRaw['@survey_name'],
+                customLabels: labelArray
+            };
+            campaigns.push(campaign);
         }
-
-        campaign = {
-            allowLeadUpdates: campaignsRaw['@allow_lead_updates'],
-            campaignId: campaignsRaw['@campaign_id'],
-            surveyId: campaignsRaw['@survey_id'],
-            surveyName: campaignsRaw['@survey_name'],
-            customLabels: labelArray
-        };
-        campaigns.push(campaign);
     }
 
     UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
@@ -978,6 +980,82 @@ OffhookTermRequest.prototype.processResponse = function(data) {
 };
 
 
+var DialGroupChangeNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a DIAL_GROUP_CHANGE notification.
+ * This event is sent from IQ when an agent's dial group is changed in through the AdminUI.
+ *
+ *  <ui_notification message_id="IQ10012016080413085500263" type="DIAL_GROUP_CHANGE">
+ *      <agent_id>1180958</agent_id>
+ *      <dial_group_id>50354</dial_group_id>
+ *      <dialGroupName>Preview Dial Mode</dialGroupName>
+ *      <dial_group_desc/>
+ *  </ui_notification>
+ */
+DialGroupChangeNotification.prototype.processResponse = function(notification) {
+    //Modify configRequest with new DialGroupId
+    var origLoginType = UIModel.getInstance().configRequest.loginType;
+    var origDgId = UIModel.getInstance().configRequest.dialGroupId;
+    var newDgId = notification.ui_notification.dial_group_id['#text'] || "";
+
+    // Calculate type of login - called from AdminUI when assigning agent to new dial group.
+    // Only options should be BLENDED or OUTBOUND here.
+    if(newDgId && newDgId !== "" && (origLoginType === "INBOUND" || origLoginType === "BLENDED") ){
+        UIModel.getInstance().configRequest.loginType = "BLENDED";
+    }else if (newDgId && newDgId !== ""){
+        UIModel.getInstance().configRequest.loginType = "OUTBOUND";
+    }else if (origLoginType  === "INBOUND"){
+        UIModel.getInstance().configRequest.loginType = "INBOUND";
+    }else{
+        UIModel.getInstance().configRequest.loginType = "NO-SELECTION";
+    }
+
+    UIModel.getInstance().configRequest.dialGroupId = newDgId;
+
+    //Update outdial_group
+    /* update SearchLead parameters */
+    /*for each(var group:XML in UIModel.getInstance().IS_loginXML.outdial_groups[0].group){
+        if(group.@dial_group_id==packet.dial_group_id[0]){
+            UIModel.getInstance().currentOutdialGroup = group;
+            UIModel.getInstance().dialGroupName = group.@dial_group_name;
+
+            if (group.@dial_mode == "PREVIEW" && UIModel.getInstance().tcpaSafeModeSet == false){
+                UIModel.getInstance().previewDialMode = true;
+            }else{
+                UIModel.getInstance().previewDialMode = false;
+            }
+
+            if (group.@dial_mode == "TCPA-SAFE-MODE"){
+                UIModel.getInstance().tcpaSafeModeEnabled = true;
+            }else{
+                UIModel.getInstance().tcpaSafeModeEnabled = false;
+            }
+
+            var x:String = group.@allow_lead_search;
+            if(x=="YES"){
+                UIModel.getInstance().allowLeadSearch = true;
+            }else{
+                UIModel.getInstance().allowLeadSearch = false;
+            }
+        }
+    }*/
+
+    var formattedResponse = {
+        message: "Dial Group Updated Successfully.",
+        detail: "Dial Group changed from [" + origDgId + "] to [" + newDgId + "].",
+        dialGroupId: notification.ui_notification.dial_group_id['#text'],
+        dialGroupName: notification.ui_notification.dialGroupName['#text'], // camel case from server for some reason :/
+        dialGroupDesc: notification.ui_notification.dial_group_desc['#text'],
+        agentId: notification.ui_notification.agent_id['#text']
+    };
+
+    return formattedResponse;
+};
+
+
 var GenericNotification = function() {
 
 };
@@ -1052,6 +1130,9 @@ var UIModel = (function() {
             loginPacket : null,
             offhookInitPacket : null,
             offhookTermPacket : null,
+
+            // notification packets
+            dialGroupChangeNotification : new DialGroupChangeNotification(),
 
             // application state
             applicationSettings : {
@@ -1178,10 +1259,9 @@ var UIModel = (function() {
 var utils = {
     sendMessage: function(instance, msg) {
         if (instance.socket.readyState === 1) {
-            // add message id to request map
+            // add message id to request map, then send message
             var msgObj = JSON.parse(msg);
             instance._requests[msgObj.ui_request['@message_id']] = { type: msgObj.ui_request['@type'], msg: msgObj.ui_request };
-
             instance.socket.send(msg);
         } else {
             console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
@@ -1205,12 +1285,17 @@ var utils = {
                     var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
                     utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, loginResponse);
                 } else if (dest === 'IQ') {
+                    var detail = response.ui_response.detail['#text'];
+                    if(detail === "Logon Session Configuration Updated!"){
+                        // update login response
+                        UIModel.getInstance().agentSettings.updateLoginMode = true;
+                    }
                     var configResponse = UIModel.getInstance().configRequest.processResponse(response);
                     utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
                 }
                 break;
             case MESSAGE_TYPES.LOGOUT:
-                // TODO add processResponse
+                // TODO add processResponse?
                 utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
                 break;
             case MESSAGE_TYPES.AGENT_STATE:
@@ -1246,6 +1331,11 @@ var utils = {
                 }
                 var termResponse = UIModel.getInstance().offhookTermRequest.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
+                break;
+            case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
+                var dgChangeNotif = new DialGroupChangeNotification();
+                var changeResponse = dgChangeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIAL_GROUP_CHANGE, changeResponse);
                 break;
             case MESSAGE_TYPES.GENERIC:
                 var genericNotif = new GenericNotification();
@@ -1485,6 +1575,7 @@ const CALLBACK_TYPES = {
     "CONFIG":"configureResponse",
     "CALLBACK_PENDING":"callbacksPendingResponse",
     "CALLBACK_CANCEL":"callbackCancelResponse",
+    "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
     "LOGIN":"loginResponse",
@@ -1499,6 +1590,7 @@ const MESSAGE_TYPES = {
     "AGENT_STATE":"AGENT-STATE",
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
+    "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "ON_MESSAGE":"ON-MESSAGE",
     "GENERIC":"GENERIC",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
@@ -1668,6 +1760,18 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().currentCallPacket;
     };
 
+
+    // notifications
+    /**
+     * Get latest received notification for Dial Group Change message
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getDialGroupChangeNotification = function() {
+        return UIModel.getInstance().dialGroupChangeNotification;
+    };
+
+
     // settings objects
     /**
      * Get Application Settings object containing the current state of application related data
@@ -1677,7 +1781,6 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getApplicationSettings = function() {
         return UIModel.getInstance().applicationSettings;
     };
-
     /**
      * Get Chat Settings object containing the current state of chat related data
      * @memberof AgentLibrary
@@ -1686,7 +1789,6 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getChatSettings = function() {
         return UIModel.getInstance().chatSettings;
     };
-
     /**
      * Get Inbound Settings object containing the current state of inbound related data
      * @memberof AgentLibrary
@@ -1695,7 +1797,6 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getInboundSettings = function() {
         return UIModel.getInstance().inboundSettings;
     };
-
     /**
      * Get Outbound Settings object containing the current state of outbound related data
      * @memberof AgentLibrary
@@ -1704,7 +1805,6 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getOutboundSettings = function() {
         return UIModel.getInstance().outboundSettings;
     };
-
     /**
      * Get Agent Settings object containing the current state of agent related data
      * @memberof AgentLibrary
@@ -1713,7 +1813,6 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getAgentSettings = function() {
         return UIModel.getInstance().agentSettings;
     };
-
     /**
      * Get the Agent Permissions object containing the current state of agent permissions
      * @memberof AgentLibrary
@@ -1794,12 +1893,12 @@ function initAgentLibraryAgent (context) {
      * @param {string[]} [queueIds=null] The queue ids the agent will be logged into.
      * @param {string[]} [chatIds=null] The chat ids the agent will be logged into.
      * @param {string} [skillProfileId=null] The skill profile the agent will be logged into.
-     * @param {string} [outdialGroupId=null] The outbound dial group id the agent will be logged into.
+     * @param {string} [dialGroupId=null] The outbound dial group id the agent will be logged into.
      * @param {string} dialDest The agent's number, sip | DID.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(queueIds, chatIds, skillProfileId, outdialGroupId, dialDest, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(queueIds, chatIds, skillProfileId, outdialGroupId, dialDest);
+    AgentLibrary.prototype.configureAgent = function(queueIds, chatIds, skillProfileId, dialGroupId, dialDest, callback){
+        UIModel.getInstance().configRequest = new ConfigRequest(queueIds, chatIds, skillProfileId, dialGroupId, dialDest);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);

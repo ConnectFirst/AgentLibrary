@@ -32,13 +32,16 @@ var UIModel = (function() {
             offhookInitPacket : null,
             offhookTermPacket : null,
 
+            // notification packets
+            dialGroupChangeNotification : new DialGroupChangeNotification(),
+
             // application state
             applicationSettings : {
                 availableCountries : [],
                 isLoggedInIS : false,               // a check for whether or not user is logged in with IntelliServices
                 socketConnected : false,
                 socketDest : "",
-                isTcpaSafeMode : false            // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
+                isTcpaSafeMode : false              // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
             },
 
             // current agent settings
@@ -69,8 +72,8 @@ var UIModel = (function() {
                 outboundManualDefaultRingtime : "30",
                 pendingCallbacks : [],
                 realAgentType : "AGENT",
-                updateLoginMode : false,             // gets set to true when doing an update login (for events control)
-                wasMonitoring : false                // used to track if the last call was a monitoring call
+                updateLoginMode : false,            // gets set to true when doing an update login (for events control)
+                wasMonitoring : false               // used to track if the last call was a monitoring call
             },
 
             // current agent permissions
