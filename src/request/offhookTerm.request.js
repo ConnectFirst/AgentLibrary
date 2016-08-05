@@ -32,10 +32,11 @@ OffhookTermRequest.prototype.formatJSON = function() {
  */
 OffhookTermRequest.prototype.processResponse = function(data) {
     var monitoring = data.ui_notification.monitoring['#text'] === '1';
+    var model = UIModel.getInstance();
 
-    UIModel.getInstance().agentSettings.wasMonitoring = monitoring;
-    UIModel.getInstance().offhookTermPacket = data;
-    UIModel.getInstance().agentSettings.isOffhook = false;
+    model.agentSettings.wasMonitoring = monitoring;
+    model.offhookTermPacket = data;
+    model.agentSettings.isOffhook = false;
 
     var formattedResponse = {
         agentId: data.ui_notification.agent_id['#text'],

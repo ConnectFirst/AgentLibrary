@@ -53,29 +53,16 @@ AgentStateRequest.prototype.processResponse = function(response) {
     var currState = response.ui_response.current_state['#text'];
     var prevAuxState = response.ui_response.prev_aux_state['#text'] || "";
     var currAuxState = response.ui_response.agent_aux_state['#text'] || "";
+    var model = UIModel.getInstance();
 
     // add message and detail if present
-    var msg = response.ui_response.message;
-    var det = response.ui_response.detail;
-    var message = "";
-    var detail = "";
-    if(msg){
-        message = msg['#text'] || "";
-    }
-    if(det){
-        detail = det['#text'] || "";
-    }
+    var formattedResponse = utils.buildDefaultResponse(response);
 
-    var formattedResponse = {
-        status: status,
-        message: message,
-        detail: detail,
-        agentId: response.ui_response.agent_id['#text'] || "",
-        previousState: prevState,
-        currentState: currState,
-        previousAuxState: prevAuxState,
-        currentAuxState: currAuxState
-    };
+    formattedResponse.agentId = response.ui_response.agent_id['#text'] || "";
+    formattedResponse.previousState = prevState;
+    formattedResponse.currentState = currState;
+    formattedResponse.previousAuxState = prevAuxState;
+    formattedResponse.currentAuxState = currAuxState;
 
     if(status=="OK"){
         var prevStateStr = prevState;
@@ -92,9 +79,9 @@ AgentStateRequest.prototype.processResponse = function(response) {
         console.log("AgentLibrary: Agent state changed from [" + prevStateStr + "] to [" + currStateStr + "]" );
 
         // Update the state in the UIModel
-        UIModel.getInstance().agentSettings.currentState = currState;
-        UIModel.getInstance().agentSettings.currentStateLabel = currAuxState;
-        UIModel.getInstance().agentStatePacket = response;
+        model.agentSettings.currentState = currState;
+        model.agentSettings.currentStateLabel = currAuxState;
+        model.agentStatePacket = response;
     }else{
         if(formattedResponse.message === ""){
             formattedResponse.message = "Unable to change agent state";

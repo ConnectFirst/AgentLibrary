@@ -11,10 +11,11 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dial
     this.updateLogin = false;
 
     // Remove any ids agent doesn't have access to
-    this.queueIds = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableQueues, this.queueIds, "gateId");
-    this.chatIds = utils.checkExistingIds(UIModel.getInstance().chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
-    this.skillPofileId = utils.checkExistingIds(UIModel.getInstance().inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
-    this.dialGroupId = utils.checkExistingIds(UIModel.getInstance().outboundSettings.availableOutdialGroups, [this.dialGroupId], "dialGroupId")[0] || "";
+    var model = UIModel.getInstance();
+    this.queueIds = utils.checkExistingIds(model.inboundSettings.availableQueues, this.queueIds, "gateId");
+    this.chatIds = utils.checkExistingIds(model.chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
+    this.skillPofileId = utils.checkExistingIds(model.inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
+    this.dialGroupId = utils.checkExistingIds(model.outboundSettings.availableOutdialGroups, [this.dialGroupId], "dialGroupId")[0] || "";
 
     // Set loginType value
     if(this.queueIds.length > 0 && this.dialGroupId !== ""){
@@ -28,7 +29,7 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dial
     }
 
     // set updateLogin value
-    if(UIModel.getInstance().isLoggedIn){
+    if(model.isLoggedIn){
         this.updateLogin = true;
     }
 
@@ -121,40 +122,26 @@ ConfigRequest.prototype.formatJSON = function() {
  */
 ConfigRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
-
-    // add message and detail if present
-    var msg = response.ui_response.message;
-    var det = response.ui_response.detail;
-    var message = "";
-    var detail = "";
-    if(msg){
-        message = msg['#text'] || "";
-    }
-    if(det){
-        detail = det['#text'] || "";
-    }
-    var formattedResponse = {
-        status: status,
-        message: message,
-        detail: detail
-    };
+    var detail = response.ui_response.detail['#text'];
+    var model = UIModel.getInstance();
+    var formattedResponse = utils.buildDefaultResponse(response);
 
     if(detail === "Logon Session Configuration Updated!"){
         // this is an update login packet
-        UIModel.getInstance().agentSettings.updateLoginMode = true;
+        model.agentSettings.updateLoginMode = true;
     }
 
     if(status === "SUCCESS"){
-        if(!UIModel.getInstance().agentSettings.isLoggedIn){
+        if(!model.agentSettings.isLoggedIn){
             // fresh login, set UI Model properties
-            UIModel.getInstance().configPacket = response;
-            UIModel.getInstance().connectionSettings.hashCode = response.ui_response.hash_code['#text'];
-            UIModel.getInstance().agentSettings.isLoggedIn = true;
-            UIModel.getInstance().agentSettings.loginDTS = new Date();
-            UIModel.getInstance().connectionSettings.reconnect = true;
-            UIModel.getInstance().agentPermissions.allowLeadSearch = false;
-            UIModel.getInstance().agentSettings.dialDest = UIModel.getInstance().configRequest.dialDest; // not sent in response
-            UIModel.getInstance().agentSettings.loginType = response.ui_response.login_type['#text'];
+            model.configPacket = response;
+            model.connectionSettings.hashCode = response.ui_response.hash_code['#text'];
+            model.agentSettings.isLoggedIn = true;
+            model.agentSettings.loginDTS = new Date();
+            model.connectionSettings.reconnect = true;
+            model.agentPermissions.allowLeadSearch = false;
+            model.agentSettings.dialDest = model.configRequest.dialDest; // not sent in response
+            model.agentSettings.loginType = response.ui_response.login_type['#text'];
 
             // Set collection values
             setDialGroupSettings(response);
@@ -166,14 +153,14 @@ ConfigRequest.prototype.processResponse = function(response) {
             setSkillProfileSettings();
 
         }else{
-            if(UIModel.getInstance().agentSettings.updateLoginMode){
+            if(model.agentSettings.updateLoginMode){
                 // This was an update login request
-                UIModel.getInstance().agentSettings.updateLoginMode = false;
+                model.agentSettings.updateLoginMode = false;
 
                 // reset to false before updating dial group settings
-                UIModel.getInstance().agentPermissions.allowLeadSearch = false;
-                UIModel.getInstance().agentPermissions.requireFetchedLeadsCalled = false;
-                UIModel.getInstance().agentPermissions.allowPreviewLeadFilters = false;
+                model.agentPermissions.allowLeadSearch = false;
+                model.agentPermissions.requireFetchedLeadsCalled = false;
+                model.agentPermissions.allowPreviewLeadFilters = false;
 
                 // Set collection values
                 setDialGroupSettings(response);
@@ -190,14 +177,14 @@ ConfigRequest.prototype.processResponse = function(response) {
             }
         }
 
-        formattedResponse.agentSettings = UIModel.getInstance().agentSettings;
-        formattedResponse.agentPermissions = UIModel.getInstance().agentPermissions;
-        formattedResponse.applicationSettings = UIModel.getInstance().applicationSettings;
-        formattedResponse.chatSettings = UIModel.getInstance().chatSettings;
-        formattedResponse.connectionSettings = UIModel.getInstance().connectionSettings;
-        formattedResponse.inboundSettings = UIModel.getInstance().inboundSettings;
-        formattedResponse.outboundSettings = UIModel.getInstance().outboundSettings;
-        formattedResponse.surveySettings = UIModel.getInstance().surveySettings;
+        formattedResponse.agentSettings = model.agentSettings;
+        formattedResponse.agentPermissions = model.agentPermissions;
+        formattedResponse.applicationSettings = model.applicationSettings;
+        formattedResponse.chatSettings = model.chatSettings;
+        formattedResponse.connectionSettings = model.connectionSettings;
+        formattedResponse.inboundSettings = model.inboundSettings;
+        formattedResponse.outboundSettings = model.outboundSettings;
+        formattedResponse.surveySettings = model.surveySettings;
     }else{
         // Login failed
         if(formattedResponse.message === ""){
@@ -210,24 +197,26 @@ ConfigRequest.prototype.processResponse = function(response) {
 };
 
 function setDialGroupSettings(response){
-    var outdialGroups = UIModel.getInstance().outboundSettings.availableOutdialGroups;
+    var model = UIModel.getInstance();
+    var outdialGroups = model.outboundSettings.availableOutdialGroups;
     for(var g = 0; g < outdialGroups.length; g++){
         var group = outdialGroups[g];
         if(group.dialGroupId === response.ui_response.outdial_group_id['#text']){
-            UIModel.getInstance().agentPermissions.allowLeadSearch = group.allowLeadSearch;
-            UIModel.getInstance().agentPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
-            UIModel.getInstance().outboundSettings.outdialGroup = JSON.parse(JSON.stringify(group)); // copy object
+            model.agentPermissions.allowLeadSearch = group.allowLeadSearch;
+            model.agentPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
+            model.outboundSettings.outdialGroup = JSON.parse(JSON.stringify(group)); // copy object
 
             // Only used for Preview or TCPA Safe accounts.
             // If set to true, only allow fetching new leads when current leads are called or expired
-            UIModel.getInstance().agentPermissions.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled;
+            model.agentPermissions.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled;
         }
     }
 }
 
 function setGateSettings(){
-    var gates = UIModel.getInstance().inboundSettings.availableQueues;
-    var selectedGateIds = UIModel.getInstance().configRequest.queueIds;
+    var model = UIModel.getInstance();
+    var gates = model.inboundSettings.availableQueues;
+    var selectedGateIds = model.configRequest.queueIds;
     var selectedGates = [];
 
     for(var gIdx = 0; gIdx < gates.length; gIdx++){
@@ -237,12 +226,13 @@ function setGateSettings(){
         }
     }
 
-    UIModel.getInstance().inboundSettings.queues = JSON.parse(JSON.stringify(selectedGates)); // copy array
+    model.inboundSettings.queues = JSON.parse(JSON.stringify(selectedGates)); // copy array
 }
 
 function setChatQueueSettings(){
-    var chatQueues = UIModel.getInstance().chatSettings.availableChatQueues;
-    var selectedChatQueueIds = UIModel.getInstance().configRequest.chatIds;
+    var model = UIModel.getInstance();
+    var chatQueues = model.chatSettings.availableChatQueues;
+    var selectedChatQueueIds = model.configRequest.chatIds;
     var selectedChatQueues = [];
 
     for(var cIdx = 0; cIdx < chatQueues.length; cIdx++){
@@ -252,15 +242,16 @@ function setChatQueueSettings(){
         }
     }
 
-    UIModel.getInstance().chatSettings.chatQueues = JSON.parse(JSON.stringify(selectedChatQueues)); // copy array
+    model.chatSettings.chatQueues = JSON.parse(JSON.stringify(selectedChatQueues)); // copy array
 }
 
 function setSkillProfileSettings(){
-    var skillProfiles = UIModel.getInstance().inboundSettings.availableSkillProfiles;
+    var model = UIModel.getInstance();
+    var skillProfiles = model.inboundSettings.availableSkillProfiles;
     for(var s = 0; s < skillProfiles.length; s++){
         var profile = skillProfiles[s];
-        if(profile.skillProfileId === UIModel.getInstance().configRequest.skillProfileId){
-            UIModel.getInstance().inboundSettings.skillProfile = JSON.parse(JSON.stringify(profile)); // copy object
+        if(profile.skillProfileId === model.configRequest.skillProfileId){
+            model.inboundSettings.skillProfile = JSON.parse(JSON.stringify(profile)); // copy object
         }
     }
 }

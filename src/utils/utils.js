@@ -288,5 +288,32 @@ var utils = {
             }
         }
         return callbackFnName;
+    },
+
+    // add message, detail, and status values to the formattedResponse
+    // returned from each request processResponse method
+    buildDefaultResponse: function(response){
+        // add message and detail if present
+        var msg = response.ui_response.message;
+        var det = response.ui_response.detail;
+        var stat = response.ui_response.status;
+        var message = "";
+        var detail = "";
+        var status = "";
+        if(msg){
+            message = msg['#text'] || "";
+        }
+        if(det){
+            detail = det['#text'] || "";
+        }
+        if(stat){
+            status = stat['#text'] || "";
+        }
+
+        return ({
+            message: message,
+            detail: detail,
+            status: status
+        });
     }
 };

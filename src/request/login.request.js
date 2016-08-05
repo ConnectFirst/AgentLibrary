@@ -120,46 +120,31 @@ LoginRequest.prototype.formatJSON = function() {
  */
 LoginRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
-
-    // add message and detail if present
-    var msg = response.ui_response.message;
-    var det = response.ui_response.detail;
-    var message = "";
-    var detail = "";
-    if(msg){
-        message = msg['#text'] || "";
-    }
-    if(det){
-        detail = det['#text'] || "";
-    }
-    var formattedResponse = {
-        status: status,
-        message: message,
-        detail: detail
-    };
+    var model = UIModel.getInstance();
+    var formattedResponse = utils.buildDefaultResponse(response);
 
     if(status === 'OK'){
-        if(!UIModel.getInstance().isLoggedInIS){
+        if(!model.isLoggedInIS){
             // save login packet properties to UIModel
-            UIModel.getInstance().loginPacket = response;
-            UIModel.getInstance().applicationSettings.isLoggedInIS = true;
-            UIModel.getInstance().agentSettings.loginDTS = new Date();
-            UIModel.getInstance().chatSettings.alias = response.ui_response.first_name['#text'] + " " + response.ui_response.last_name['#text']
-            UIModel.getInstance().agentSettings.maxBreakTime = response.ui_response.max_break_time['#text'];
-            UIModel.getInstance().agentSettings.maxLunchTime = response.ui_response.max_lunch_time['#text'];
-            UIModel.getInstance().agentSettings.firstName = response.ui_response.first_name['#text'];
-            UIModel.getInstance().agentSettings.lastName = response.ui_response.last_name['#text'];
-            UIModel.getInstance().agentSettings.email = response.ui_response.email['#text'];
-            UIModel.getInstance().agentSettings.agentId = response.ui_response.agent_id['#text'];
-            UIModel.getInstance().agentSettings.externalAgentId = response.ui_response.external_agent_id['#text'] || "";
-            UIModel.getInstance().agentSettings.agentType = response.ui_response.agent_type['#text'];
-            UIModel.getInstance().agentSettings.realAgentType = response.ui_response.real_agent_type['#text'];
-            UIModel.getInstance().agentSettings.defaultLoginDest = response.ui_response.default_login_dest['#text'];
-            UIModel.getInstance().agentSettings.altDefaultLoginDest = response.ui_response.alt_default_login_dest['#text'] || "";
-            UIModel.getInstance().agentSettings.disableSupervisorMonitoring = response.ui_response.disable_supervisor_monitoring['#text'];
-            UIModel.getInstance().agentSettings.initLoginState = response.ui_response.init_login_state['#text'];
-            UIModel.getInstance().agentSettings.initLoginStateLabel = response.ui_response.init_login_state_label['#text'];
-            UIModel.getInstance().agentSettings.outboundManualDefaultRingtime = response.ui_response.outbound_manual_default_ringtime['#text'];
+            model.loginPacket = response;
+            model.applicationSettings.isLoggedInIS = true;
+            model.agentSettings.loginDTS = new Date();
+            model.chatSettings.alias = response.ui_response.first_name['#text'] + " " + response.ui_response.last_name['#text']
+            model.agentSettings.maxBreakTime = response.ui_response.max_break_time['#text'];
+            model.agentSettings.maxLunchTime = response.ui_response.max_lunch_time['#text'];
+            model.agentSettings.firstName = response.ui_response.first_name['#text'];
+            model.agentSettings.lastName = response.ui_response.last_name['#text'];
+            model.agentSettings.email = response.ui_response.email['#text'];
+            model.agentSettings.agentId = response.ui_response.agent_id['#text'];
+            model.agentSettings.externalAgentId = response.ui_response.external_agent_id['#text'] || "";
+            model.agentSettings.agentType = response.ui_response.agent_type['#text'];
+            model.agentSettings.realAgentType = response.ui_response.real_agent_type['#text'];
+            model.agentSettings.defaultLoginDest = response.ui_response.default_login_dest['#text'];
+            model.agentSettings.altDefaultLoginDest = response.ui_response.alt_default_login_dest['#text'] || "";
+            model.agentSettings.disableSupervisorMonitoring = response.ui_response.disable_supervisor_monitoring['#text'];
+            model.agentSettings.initLoginState = response.ui_response.init_login_state['#text'];
+            model.agentSettings.initLoginStateLabel = response.ui_response.init_login_state_label['#text'];
+            model.agentSettings.outboundManualDefaultRingtime = response.ui_response.outbound_manual_default_ringtime['#text'];
 
             var allowCallControl = typeof response.ui_response.allow_call_control == 'undefined' ? false : response.ui_response.allow_call_control['#text'];
             var allowChat = typeof response.ui_response.allow_chat == 'undefined' ? false : response.ui_response.allow_chat['#text'];
@@ -170,69 +155,69 @@ LoginRequest.prototype.processResponse = function(response) {
             var isOutboundPrepay = typeof response.ui_response.outbound_prepay == 'undefined' ? false : response.ui_response.outbound_prepay['#text'];
 
             if(allowCallControl == "0"){
-                UIModel.getInstance().agentPermissions.allowCallControl = false;
+                model.agentPermissions.allowCallControl = false;
             }
             if(allowChat == "1"){
-                UIModel.getInstance().agentPermissions.allowChat = true;
+                model.agentPermissions.allowChat = true;
             }
             if(showLeadHistory == "0"){
-                UIModel.getInstance().agentPermissions.showLeadHistory = false;
+                model.agentPermissions.showLeadHistory = false;
             }
             if(allowManualOutboundGates == "1"){
-                UIModel.getInstance().agentPermissions.allowManualOutboundGates = true;
+                model.agentPermissions.allowManualOutboundGates = true;
             }
             if(isTcpaSafeMode == "1"){
-                UIModel.getInstance().applicationSettings.isTcpaSafeMode = true;
+                model.applicationSettings.isTcpaSafeMode = true;
             }
             if(allowLeadInserts && allowLeadInserts.length > 0){
-                UIModel.getInstance().agentPermissions.allowLeadInserts = true;
+                model.agentPermissions.allowLeadInserts = true;
             }
             if(isOutboundPrepay == "1"){
-                UIModel.getInstance().agentSettings.isOutboundPrepay = true;
+                model.agentSettings.isOutboundPrepay = true;
             }
             if(response.ui_response.allow_off_hook['#text'] == "0"){
-                UIModel.getInstance().agentPermissions.allowOffHook = false;
+                model.agentPermissions.allowOffHook = false;
             }
             if(response.ui_response.allow_manual_calls['#text'] == "0"){
-                UIModel.getInstance().agentPermissions.allowManualCalls = false;
+                model.agentPermissions.allowManualCalls = false;
             }
             if(response.ui_response.allow_manual_pass['#text'] == "0"){
-                UIModel.getInstance().agentPermissions.allowManualPass = false;
+                model.agentPermissions.allowManualPass = false;
             }
             if(response.ui_response.allow_manual_intl_calls['#text'] == "1"){
-                UIModel.getInstance().agentPermissions.allowManualIntlCalls = true;
+                model.agentPermissions.allowManualIntlCalls = true;
             }
             if(response.ui_response.allow_login_updates['#text'] == "0"){
-                UIModel.getInstance().agentPermissions.allowLoginUpdates = false;
+                model.agentPermissions.allowLoginUpdates = false;
             }
             if(response.ui_response.allow_inbound['#text'] == "0"){
-                UIModel.getInstance().agentPermissions.allowInbound = false;
+                model.agentPermissions.allowInbound = false;
             }
             if(response.ui_response.allow_outbound['#text'] == "0"){
-                UIModel.getInstance().agentPermissions.allowOutbound = false;
+                model.agentPermissions.allowOutbound = false;
             }
             if(response.ui_response.allow_blended['#text'] == "0"){
-                UIModel.getInstance().agentPermissions.allowBlended = false;
+                model.agentPermissions.allowBlended = false;
             }
             if(response.ui_response.allow_login_control['#text'] == "0"){
-                UIModel.getInstance().agentPermissions.allowLoginControl = false;
+                model.agentPermissions.allowLoginControl = false;
             }
             if(response.ui_response.allow_cross_gate_requeue['#text'] == "1"){
-                UIModel.getInstance().agentPermissions.allowCrossQueueRequeue = true;
+                model.agentPermissions.allowCrossQueueRequeue = true;
             }
 
             // Set collection values
             processCampaigns(response);
-            UIModel.getInstance().chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
-            UIModel.getInstance().inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
-            UIModel.getInstance().inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
-            UIModel.getInstance().inboundSettings.availableRequeueQueues = utils.processResponseCollection(response.ui_response, "requeue_gates", "gate_group");
-            UIModel.getInstance().chatSettings.availableChatRooms = utils.processResponseCollection(response.ui_response, "chat_rooms", "room");
-            UIModel.getInstance().surveySettings.availableSurveys = utils.processResponseCollection(response.ui_response, "surveys", "survey");
-            UIModel.getInstance().agentSettings.callerIds = utils.processResponseCollection(response.ui_response, "caller_ids", "caller_id");
-            UIModel.getInstance().agentSettings.availableAgentStates = utils.processResponseCollection(response.ui_response, "agent_states", "agent_state");
-            UIModel.getInstance().applicationSettings.availableCountries = utils.processResponseCollection(response.ui_response, "account_countries", "country");
-            UIModel.getInstance().outboundSettings.insertCampaigns = utils.processResponseCollection(response.ui_response, "insert_campaigns", "campaign");
+            model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
+            model.inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
+            model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
+            model.inboundSettings.availableRequeueQueues = utils.processResponseCollection(response.ui_response, "requeue_gates", "gate_group");
+            model.chatSettings.availableChatRooms = utils.processResponseCollection(response.ui_response, "chat_rooms", "room");
+            model.surveySettings.availableSurveys = utils.processResponseCollection(response.ui_response, "surveys", "survey");
+            model.agentSettings.callerIds = utils.processResponseCollection(response.ui_response, "caller_ids", "caller_id");
+            model.agentSettings.availableAgentStates = utils.processResponseCollection(response.ui_response, "agent_states", "agent_state");
+            model.applicationSettings.availableCountries = utils.processResponseCollection(response.ui_response, "account_countries", "country");
+            model.outboundSettings.insertCampaigns = utils.processResponseCollection(response.ui_response, "insert_campaigns", "campaign");
 
             var dialGroups = utils.processResponseCollection(response.ui_response, "outdial_groups", "group");
             // set boolean values
@@ -243,17 +228,17 @@ LoginRequest.prototype.processResponse = function(response) {
                 group.progressiveEnabled = group.progressiveEnabled === "1";
                 group.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled === "1";
             }
-            UIModel.getInstance().outboundSettings.availableOutdialGroups = dialGroups;
+            model.outboundSettings.availableOutdialGroups = dialGroups;
         }
 
-        formattedResponse.agentSettings = UIModel.getInstance().agentSettings;
-        formattedResponse.agentPermissions = UIModel.getInstance().agentPermissions;
-        formattedResponse.applicationSettings = UIModel.getInstance().applicationSettings;
-        formattedResponse.chatSettings = UIModel.getInstance().chatSettings;
-        formattedResponse.connectionSettings = UIModel.getInstance().connectionSettings;
-        formattedResponse.inboundSettings = UIModel.getInstance().inboundSettings;
-        formattedResponse.outboundSettings = UIModel.getInstance().outboundSettings;
-        formattedResponse.surveySettings = UIModel.getInstance().surveySettings;
+        formattedResponse.agentSettings = model.agentSettings;
+        formattedResponse.agentPermissions = model.agentPermissions;
+        formattedResponse.applicationSettings = model.applicationSettings;
+        formattedResponse.chatSettings = model.chatSettings;
+        formattedResponse.connectionSettings = model.connectionSettings;
+        formattedResponse.inboundSettings = model.inboundSettings;
+        formattedResponse.outboundSettings = model.outboundSettings;
+        formattedResponse.surveySettings = model.surveySettings;
     }else if(status === 'RESTRICTED'){
         formattedResponse.message = "Invalid IP Address";
         console.log("AgentLibrary: Invalid IP Address");

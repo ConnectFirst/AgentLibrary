@@ -36,23 +36,7 @@ OffhookInitRequest.prototype.formatJSON = function() {
  */
 OffhookInitRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
-
-    // add message and detail if present
-    var msg = response.ui_response.message;
-    var det = response.ui_response.detail;
-    var message = "";
-    var detail = "";
-    if(msg){
-        message = msg['#text'] || "";
-    }
-    if(det){
-        detail = det['#text'] || "";
-    }
-    var formattedResponse = {
-        status: status,
-        message: message,
-        detail: detail
-    };
+    var formattedResponse = utils.buildDefaultResponse(response);
 
     if(status === 'OK'){
         UIModel.getInstance().offhookInitPacket = response;
