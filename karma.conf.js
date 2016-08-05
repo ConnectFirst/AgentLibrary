@@ -5,11 +5,12 @@ module.exports = function (config) {
         basePath: 'test/',
 
         // frameworks to use
-        frameworks: ['jasmine'],
+        frameworks: ['jasmine', 'fixture'],
 
         // list of files / patterns to load in the browser
         files: [
-            '**/*.js'
+            '**/*.js',
+            { pattern: 'mock/**/*' }
         ],
 
         // list of files to exclude
@@ -19,6 +20,14 @@ module.exports = function (config) {
 
         // test results reporter to use
         reporters: ['progress'],
+
+        preprocessors: {
+            '**/*.json' : ['json_fixtures']
+        },
+
+        jsonFixturesPreprocessor: {
+            variableName: '__json__'
+        },
 
         // web server port
         port: 9876,
