@@ -5,7 +5,7 @@
     "Danielle Lamb-Books <dlbooks@connectfirst.com>"
   ],
   "description": "Javascript library for Agent UI functionality",
-  "main": "./src/cfAgentLibrary.js",
+  "main": "./dist/agentLibrary.js",
   "keywords": [
     "JavaScript"
   ],

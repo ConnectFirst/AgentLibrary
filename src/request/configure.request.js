@@ -1,12 +1,11 @@
 
-var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dialDest) {
+var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dialDest, updateFromAdminUI) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillPofileId = skillPofileId || "";
     this.dialGroupId = dialGroupId || "";
     this.dialDest = dialDest || "";
-
-    this.updateFromAdminUI = false;
+    this.updateFromAdminUI = updateFromAdminUI || false;
     this.loginType = "NO-SELECTION";
     this.updateLogin = false;
 

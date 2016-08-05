@@ -31,9 +31,12 @@ var UIModel = (function() {
             loginPacket : null,
             offhookInitPacket : null,
             offhookTermPacket : null,
+            transferSessions: null,
 
             // notification packets
             dialGroupChangeNotification : new DialGroupChangeNotification(),
+            endCallNotification : new EndCallNotification(),
+            currentCall: {},                        // save the NEW-CALL notification in original form??
 
             // application state
             applicationSettings : {
@@ -51,6 +54,7 @@ var UIModel = (function() {
                 altDefaultLoginDest : "",
                 availableAgentStates : [],
                 callerIds : [],
+                callState: null,                     // display the current state of the call
                 currentState : "OFFLINE",           // Agent system/base state
                 currentStateLabel : "",             // Agent aux state label
                 defaultLoginDest : "",
@@ -71,7 +75,9 @@ var UIModel = (function() {
                 onCall : false,                     // true if agent is on an active call
                 outboundManualDefaultRingtime : "30",
                 pendingCallbacks : [],
+                pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
                 realAgentType : "AGENT",
+                updateDGFromAdminUI : false,        // if pending Dial Group change came from AdminUI, set to true (only used if request is pending)
                 updateLoginMode : false,            // gets set to true when doing an update login (for events control)
                 wasMonitoring : false               // used to track if the last call was a monitoring call
             },

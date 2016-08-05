@@ -74,6 +74,16 @@ var utils = {
                 var changeResponse = dgChangeNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.DIAL_GROUP_CHANGE, changeResponse);
                 break;
+            case MESSAGE_TYPES.DIAL_GROUP_CHANGE_PENDING:
+                var dgChangePendNotif = new DialGroupChangePendingNotification();
+                var pendResponse = dgChangePendNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIAL_GROUP_CHANGE_PENDING, pendResponse);
+                break;
+            case MESSAGE_TYPES.END_CALL:
+                var endCallNotif = new EndCallNotification(instance);
+                var endCallResponse = endCallNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.END_CALL, endCallResponse);
+                break;
             case MESSAGE_TYPES.GENERIC:
                 var genericNotif = new GenericNotification();
                 var generic = genericNotif.processResponse(data);

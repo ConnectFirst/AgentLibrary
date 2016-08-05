@@ -16,20 +16,23 @@ var DialGroupChangeNotification = function() {
  */
 DialGroupChangeNotification.prototype.processResponse = function(notification) {
     //Modify configRequest with new DialGroupId
-    var origLoginType = UIModel.getInstance().configRequest.loginType;
-    var origDgId = UIModel.getInstance().configRequest.dialGroupId;
+    var model = UIModel.getInstance();
+    var origLoginType = model.configRequest.loginType;
+    var origDgId = model.configRequest.dialGroupId;
     var newDgId = notification.ui_notification.dial_group_id['#text'] || "";
+
+    model.dialGroupChangeNotification = notification;
 
     // Calculate type of login - called from AdminUI when assigning agent to new dial group.
     // Only options should be BLENDED or OUTBOUND here.
     if(newDgId && newDgId !== "" && (origLoginType === "INBOUND" || origLoginType === "BLENDED") ){
-        UIModel.getInstance().configRequest.loginType = "BLENDED";
+        model.configRequest.loginType = "BLENDED";
     }else if (newDgId && newDgId !== ""){
-        UIModel.getInstance().configRequest.loginType = "OUTBOUND";
+        model.configRequest.loginType = "OUTBOUND";
     }else if (origLoginType  === "INBOUND"){
-        UIModel.getInstance().configRequest.loginType = "INBOUND";
+        model.configRequest.loginType = "INBOUND";
     }else{
-        UIModel.getInstance().configRequest.loginType = "NO-SELECTION";
+        model.configRequest.loginType = "NO-SELECTION";
     }
 
     UIModel.getInstance().configRequest.dialGroupId = newDgId;
