@@ -1105,6 +1105,55 @@ EndCallNotification.prototype.processResponse = function(notification) {
 };
 
 
+var GatesChangeNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a generic notification
+ *
+ * <ui_notification message_id="IQ10012016080815372800837" type="GATES_CHANGE">
+ *    <agent_id>1180958</agent_id>
+ *    <gate_ids>11117,3</gate_ids>
+ * </ui_notification>
+ */
+GatesChangeNotification.prototype.processResponse = function(notification) {
+    var model = UIModel.getInstance();
+    var newAssignedGates = [];
+    var availableQueues = model.inboundSettings.availableQueues;
+    var assignedGateIds = notification.ui_notification.gate_ids['#text'].split(',');
+
+    for(var a = 0; a < assignedGateIds.length; a++){
+        // find gate in avail list
+        var id = assignedGateIds[a];
+        var foundGate = utils.findObjById(availableQueues, id, "gateId");
+        if(foundGate){
+            newAssignedGates.push(foundGate);
+        }else{
+            // gate not in assigned list, add stub
+            var gate = {
+                gateId: id,
+                gateName:"",
+                gateDesc:"",
+                defaultDestOverride:"",
+                isAgentSelectable:false
+            };
+            newAssignedGates.push(gate);
+        }
+    }
+
+    model.inboundSettings.queues = newAssignedGates;
+
+    var formattedResponse = {
+        agentId: notification.ui_notification.agent_id['#text'],
+        message: "Gates Change notification received.",
+        queues: newAssignedGates
+    };
+
+    return formattedResponse;
+};
+
+
 var GenericNotification = function() {
 
 };
@@ -1120,28 +1169,15 @@ var GenericNotification = function() {
  *  </ui_notification>
  */
 GenericNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
 
     // add message and detail if present
     var msgCode = notification.ui_notification.message_code;
-    var msg = notification.ui_notification.message;
-    var det = notification.ui_notification.detail;
     var messageCode = "";
-    var message = "";
-    var detail = "";
-    if(msg){
-        message = msg['#text'] || "";
-    }
-    if(det){
-        detail = det['#text'] || "";
-    }
     if(msgCode){
         messageCode = msgCode['#text'] || "";
     }
-    var formattedResponse = {
-        messageCode: messageCode,
-        message: message,
-        detail: detail
-    };
+    formattedResponse.messageCode = messageCode;
 
     return formattedResponse;
 };
@@ -1183,7 +1219,9 @@ var UIModel = (function() {
 
             // notification packets
             dialGroupChangeNotification : new DialGroupChangeNotification(),
+            dialGroupChangePendingNotification : new DialGroupChangePendingNotification(),
             endCallNotification : new EndCallNotification(),
+            gatesChangeNotification : new GatesChangeNotification(),
             currentCall: {},                        // save the NEW-CALL notification in original form??
 
             // application state
@@ -1374,13 +1412,10 @@ var utils = {
         console.log("AgentLibrary: received notification: (" + dest + ") " + type.toUpperCase());
 
         switch (type.toUpperCase()){
-            case MESSAGE_TYPES.OFFHOOK_TERM:
-                if(UIModel.getInstance().offhookTermRequest === null){
-                    // offhook term initiated by IQ
-                    UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
-                }
-                var termResponse = UIModel.getInstance().offhookTermRequest.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
+            case MESSAGE_TYPES.GATES_CHANGE:
+                var gateChangeNotif = new GatesChangeNotification();
+                var gateChangeResponse = gateChangeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.GATES_CHANGE, gateChangeResponse);
                 break;
             case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
                 var dgChangeNotif = new DialGroupChangeNotification();
@@ -1410,6 +1445,14 @@ var utils = {
                     // no corresponding request, just fire generic notification callback
                     utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
                 }
+                break;
+            case MESSAGE_TYPES.OFFHOOK_TERM:
+                if(UIModel.getInstance().offhookTermRequest === null){
+                    // offhook term initiated by IQ
+                    UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
+                }
+                var termResponse = UIModel.getInstance().offhookTermRequest.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
                 break;
         }
     },
@@ -1586,6 +1629,18 @@ var utils = {
         return idArray;
     },
 
+    // find an object by given id in an array of objects
+    findObjById: function(objArray, id, propName){
+        for(var o = 0; o < objArray.length; o++){
+            var obj = objArray[o];
+            if(obj[propName] === id){
+                return obj;
+            }
+        }
+
+        return null;
+    },
+
     // check whether agent dialDest is either a 10-digit number or valid sip
     validateDest: function(dialDest){
         var isValid = false;
@@ -1665,6 +1720,7 @@ const CALLBACK_TYPES = {
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
     "END_CALL":"endCallNotification",
+    "GATES_CHANGE":"gatesChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
     "LOGIN":"loginResponse",
@@ -1682,6 +1738,7 @@ const MESSAGE_TYPES = {
     "END_CALL":"END-CALL",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
+    "GATES_CHANGE":"GATES_CHANGE",
     "ON_MESSAGE":"ON-MESSAGE",
     "GENERIC":"GENERIC",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
@@ -1892,7 +1949,22 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getDialGroupChangeNotification = function() {
         return UIModel.getInstance().dialGroupChangeNotification;
     };
-
+    /**
+     * Get latest received notification for Dial Group Change Pending message
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getDialGroupChangePendingNotification = function() {
+        return UIModel.getInstance().dialGroupChangePendingNotification;
+    };
+    /**
+     * Get latest received notification for End Call message
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getEndCallNotification = function() {
+        return UIModel.getInstance().endCallNotification;
+    };
 
     // settings objects
     /**

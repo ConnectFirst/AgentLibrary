@@ -22,6 +22,7 @@ const CALLBACK_TYPES = {
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
     "END_CALL":"endCallNotification",
+    "GATES_CHANGE":"gatesChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
     "LOGIN":"loginResponse",
@@ -39,6 +40,7 @@ const MESSAGE_TYPES = {
     "END_CALL":"END-CALL",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
+    "GATES_CHANGE":"GATES_CHANGE",
     "ON_MESSAGE":"ON-MESSAGE",
     "GENERIC":"GENERIC",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
@@ -248,6 +250,30 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getDialGroupChangeNotification = function() {
         return UIModel.getInstance().dialGroupChangeNotification;
+    };
+    /**
+     * Get latest received notification for Dial Group Change Pending message
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getDialGroupChangePendingNotification = function() {
+        return UIModel.getInstance().dialGroupChangePendingNotification;
+    };
+    /**
+     * Get latest received notification for End Call message
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getEndCallNotification = function() {
+        return UIModel.getInstance().endCallNotification;
+    };
+    /**
+     * Get latest received notification for Gates Change message
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getGatesChangeNotification = function() {
+        return UIModel.getInstance().gatesChangeNotification();
     };
 
 

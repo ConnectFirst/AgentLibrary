@@ -61,13 +61,10 @@ var utils = {
         console.log("AgentLibrary: received notification: (" + dest + ") " + type.toUpperCase());
 
         switch (type.toUpperCase()){
-            case MESSAGE_TYPES.OFFHOOK_TERM:
-                if(UIModel.getInstance().offhookTermRequest === null){
-                    // offhook term initiated by IQ
-                    UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
-                }
-                var termResponse = UIModel.getInstance().offhookTermRequest.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
+            case MESSAGE_TYPES.GATES_CHANGE:
+                var gateChangeNotif = new GatesChangeNotification();
+                var gateChangeResponse = gateChangeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.GATES_CHANGE, gateChangeResponse);
                 break;
             case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
                 var dgChangeNotif = new DialGroupChangeNotification();
@@ -97,6 +94,14 @@ var utils = {
                     // no corresponding request, just fire generic notification callback
                     utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
                 }
+                break;
+            case MESSAGE_TYPES.OFFHOOK_TERM:
+                if(UIModel.getInstance().offhookTermRequest === null){
+                    // offhook term initiated by IQ
+                    UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
+                }
+                var termResponse = UIModel.getInstance().offhookTermRequest.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
                 break;
         }
     },
@@ -271,6 +276,18 @@ var utils = {
         }
 
         return idArray;
+    },
+
+    // find an object by given id in an array of objects
+    findObjById: function(objArray, id, propName){
+        for(var o = 0; o < objArray.length; o++){
+            var obj = objArray[o];
+            if(obj[propName] === id){
+                return obj;
+            }
+        }
+
+        return null;
     },
 
     // check whether agent dialDest is either a 10-digit number or valid sip

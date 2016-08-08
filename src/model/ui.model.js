@@ -35,7 +35,9 @@ var UIModel = (function() {
 
             // notification packets
             dialGroupChangeNotification : new DialGroupChangeNotification(),
+            dialGroupChangePendingNotification : new DialGroupChangePendingNotification(),
             endCallNotification : new EndCallNotification(),
+            gatesChangeNotification : new GatesChangeNotification(),
             currentCall: {},                        // save the NEW-CALL notification in original form??
 
             // application state

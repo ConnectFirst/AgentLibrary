@@ -14,28 +14,15 @@ var GenericNotification = function() {
  *  </ui_notification>
  */
 GenericNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
 
     // add message and detail if present
     var msgCode = notification.ui_notification.message_code;
-    var msg = notification.ui_notification.message;
-    var det = notification.ui_notification.detail;
     var messageCode = "";
-    var message = "";
-    var detail = "";
-    if(msg){
-        message = msg['#text'] || "";
-    }
-    if(det){
-        detail = det['#text'] || "";
-    }
     if(msgCode){
         messageCode = msgCode['#text'] || "";
     }
-    var formattedResponse = {
-        messageCode: messageCode,
-        message: message,
-        detail: detail
-    };
+    formattedResponse.messageCode = messageCode;
 
     return formattedResponse;
 };
