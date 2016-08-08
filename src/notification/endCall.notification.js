@@ -54,12 +54,12 @@ EndCallNotification.prototype.processResponse = function(notification) {
         // update dial group id
         model.configRequest.dialGroupId = model.agentSettings.pendingDialGroupChange;
 
+        // send login update request
+        this.libInstance.configureAgent(model.configRequest.queueIds, model.configRequest.chatIds, model.configRequest.skillProfileId, model.configRequest.dialGroupId, model.configRequest.dialDest, model.agentSettings.updateDGFromAdminUI);
+
         // reset pending dial group variables
         model.agentSettings.pendingDialGroupChange = 0;
         model.agentSettings.updateDGFromAdminUI = false;
-
-        // send login update request
-        this.libInstance.configureAgent(model.configRequest.queueIds, model.configRequest.chatIds, model.configRequest.skillProfileId, model.configRequest.dialGroupId, model.configRequest.dialDest, model.configRequest.updateFromAdminUI);
     }
 
     var formattedResponse = {

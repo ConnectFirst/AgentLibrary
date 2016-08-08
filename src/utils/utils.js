@@ -251,20 +251,20 @@ var utils = {
 
         // get list of available ids
         for(var o = 0; o < objArray.length; o++){
-            availIds.push(objArray[o][idProperty]);
+            availIds.push(parseInt(objArray[o][idProperty], 10));
         }
 
         // go through selected ids and mark unfound ones for removal
         for(var i = 0; i < idArray.length; i++){
-            if(availIds.indexOf(idArray[i]) === -1){
+            if(availIds.indexOf(parseInt(idArray[i],10)) === -1){
                 // selected id not found in available list, mark for removal
-                removeIds.push(idArray[i]);
+                removeIds.push(parseInt(idArray[i],10));
             }
         }
 
         // remove marked ids
         for(var r = idArray.length -1; r >= 0; r--){
-            if(removeIds.indexOf(idArray[r]) > -1){
+            if(removeIds.indexOf(parseInt(idArray[r],10)) > -1){
                 // remove
                 idArray.splice(r,1);
             }

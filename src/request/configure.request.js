@@ -28,7 +28,7 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dial
     }
 
     // set updateLogin value
-    if(model.isLoggedIn){
+    if(model.agentSettings.isLoggedIn){
         this.updateLogin = true;
     }
 
@@ -48,13 +48,13 @@ ConfigRequest.prototype.formatJSON = function() {
             "@message_id":utils.getMessageId(),
             "response_to":"",
             "agent_id":{
-                "#text":UIModel.getInstance().agentSettings.agentId
+                "#text":UIModel.getInstance().agentSettings.agentId.toString()
             },
             "agent_pwd":{
                 "#text": UIModel.getInstance().loginRequest.password
             },
             "dial_dest":{
-                "#text":this.dialDest
+                "#text":this.dialDest.toString()
             },
             "login_type":{
                 "#text":this.loginType
@@ -63,10 +63,10 @@ ConfigRequest.prototype.formatJSON = function() {
                 "#text":this.updateLogin.toString()
             },
             "outdial_group_id":{
-                "#text":this.dialGroupId
+                "#text":this.dialGroupId.toString()
             },
             "skill_profile_id":{
-                "#text":this.skillPofileId
+                "#text":this.skillPofileId.toString()
             },
             "update_from_adminui":{
                 "#text":this.updateFromAdminUI.toString()
@@ -79,7 +79,7 @@ ConfigRequest.prototype.formatJSON = function() {
     for(var i = 0; i < this.queueIds.length; i++){
         if(this.queueIds[i] !== ""){
             queueIds.push(
-                {  "#text": this.queueIds[i] }
+                {  "#text": this.queueIds[i].toString() }
             );
         }
     }
@@ -92,7 +92,7 @@ ConfigRequest.prototype.formatJSON = function() {
     var chatIds = [];
     for(var i = 0; i < this.chatIds.length; i++){
         if(this.chatIds[i] !== "") {
-            chatIds.push( {"#text": this.chatIds[i]} );
+            chatIds.push( {"#text": this.chatIds[i]}.toString() );
         }
     }
     if(chatIds.length > 0) {

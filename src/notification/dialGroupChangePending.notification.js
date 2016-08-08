@@ -26,12 +26,10 @@ DialGroupChangePendingNotification.prototype.processResponse = function(notifica
 
     var formattedResponse = {
         message: "Dial Group Change Pending notification received.",
-        detail: "DialGroup switch for existing session pending until active call ends."
-        // TODO complete response based on xml
-        //dialGroupId: notification.ui_notification.dial_group_id['#text'],
-        //dialGroupName: notification.ui_notification.dialGroupName['#text'], // camel case from server for some reason :/
-        //dialGroupDesc: notification.ui_notification.dial_group_desc['#text'],
-        //agentId: notification.ui_notification.agent_id['#text']
+        detail: "DialGroup switch for existing session pending until active call ends.",
+        agentId: notification.ui_notification.agent_id['#text'],
+        dialGroupId: notification.ui_notification.dial_group_id['#text'],
+        updateFromAdminUI: notification.ui_notification.update_from_adminui['#text']
     };
 
     return formattedResponse;
