@@ -1,0 +1,30 @@
+{
+  "ui_notification": {
+    "@message_id": "IQ982008082910362203349",
+    "@response_to": "",
+    "@type": "END-CALL",
+    "agent_id": {
+      "#text": "1"
+    },
+    "uii": {
+      "#text": "200808291035510000000900029412"
+    },
+    "session_id": {
+      "#text": "2"
+    },
+    "call_dts": {
+      "#text": "2008-08-29 10:36:04"
+    },
+    "call_duration": {
+      "#text": "15"
+    },
+    "term_party": {
+      "#text": "CALLER"
+    },
+    "term_reason": {},
+    "recording_url": {},
+    "disposition_timeout":{
+      "#text": "60"
+    }
+  }
+}

@@ -16,6 +16,9 @@ GatesChangeNotification.prototype.processResponse = function(notification) {
     var newAssignedGates = [];
     var availableQueues = model.inboundSettings.availableQueues;
     var assignedGateIds = notification.ui_notification.gate_ids['#text'] || "";
+    if(assignedGateIds !== ""){
+        assignedGateIds = assignedGateIds.split(',');
+    }
 
     for(var a = 0; a < assignedGateIds.length; a++){
         // find gate in avail list

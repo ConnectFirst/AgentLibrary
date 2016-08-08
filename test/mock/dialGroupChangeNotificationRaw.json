@@ -1,0 +1,16 @@
+{
+  "ui_notification": {
+    "@message_id": "IQ10012016080413085500263",
+    "@type": "DIAL_GROUP_CHANGE",
+    "agent_id": {
+      "#text": "1"
+    },
+    "dial_group_id": {
+      "#text": "2"
+    },
+    "dialGroupName": {
+      "#text": "Preview Group"
+    },
+    "dial_group_desc": {}
+  }
+}

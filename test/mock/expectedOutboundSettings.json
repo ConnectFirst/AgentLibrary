@@ -1,0 +1,113 @@
+{
+  "availableCampaigns": [
+    {
+      "allowLeadUpdates": true,
+      "campaignId": "1",
+      "campaignName":"Test Campaign1",
+      "surveyId": "1",
+      "surveyName": "New Survey",
+      "customLabels": [
+        {
+          "aux_1_label": ""
+        },
+        {
+          "aux_2_label": ""
+        },
+        {
+          "aux_3_label": ""
+        },
+        {
+          "aux_4_label": ""
+        },
+        {
+          "aux_5_label": ""
+        }
+      ]
+    },
+    {
+      "allowLeadUpdates": false,
+      "campaignId": "2",
+      "campaignName": "Test Campaign2",
+      "surveyId": "2",
+      "surveyName": "Test Survey",
+      "customLabels": [
+        {
+          "aux_1_label": ""
+        },
+        {
+          "aux_2_label": ""
+        },
+        {
+          "aux_3_label": ""
+        },
+        {
+          "aux_4_label": ""
+        },
+        {
+          "aux_5_label": ""
+        }
+      ]
+    },
+    {
+      "allowLeadUpdates": true,
+      "campaignId": "3",
+      "campaignName": "Test Campaign3",
+      "surveyId": "3",
+      "surveyName": "Danielle Survey",
+      "customLabels": [
+        {
+          "aux_1_label": ""
+        },
+        {
+          "aux_2_label": ""
+        },
+        {
+          "aux_3_label": ""
+        },
+        {
+          "aux_4_label": ""
+        },
+        {
+          "aux_5_label": ""
+        }
+      ]
+    }
+  ],
+  "availableOutdialGroups": [
+    {
+      "allowLeadSearch": false,
+      "allowPreviewLeadFilters": false,
+      "billingKey": "",
+      "dialGroupDesc": "",
+      "dialGroupId": "1",
+      "dialGroupName": "Predictive Group",
+      "dialMode": "PREDICTIVE",
+      "progressiveCallDelay": "0",
+      "progressiveEnabled": false,
+      "requireFetchedLeadsCalled": false
+    },
+    {
+      "allowLeadSearch": true,
+      "allowPreviewLeadFilters": true,
+      "billingKey": "Test Pool",
+      "dialGroupDesc": "",
+      "dialGroupId": "2",
+      "dialGroupName": "Preview Group",
+      "dialMode": "PREVIEW",
+      "progressiveCallDelay": "10",
+      "progressiveEnabled": true,
+      "requireFetchedLeadsCalled": true
+    }
+  ],
+  "insertCampaigns": [
+    {
+      "campaignId": "1",
+      "campaignName": "Test Campaign1"
+    },
+    {
+      "campaignId": "2",
+      "campaignName": "Test Campaign2"
+    }
+  ],
+  "outdialGroup": {}
+}

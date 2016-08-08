@@ -1,0 +1,29 @@
+{
+  "ui_response": {
+    "@message_id": "IQ10012016080417223400294",
+    "@response_to": "111-111-111",
+    "@type": "LOGIN",
+    "agent_id": {
+      "#text": "1"
+    },
+    "status": {
+      "#text": "SUCCESS"
+    },
+    "message": {
+      "#text": "Hello Test First Test Last!"
+    },
+    "detail": {
+      "#text": "Logon request processed successfully!"
+    },
+    "hash_code": {
+      "#text": "111111111"
+    },
+    "login_type": {
+      "#text": "BLENDED"
+    },
+    "outdial_group_id": {
+      "#text": "1"
+    },
+    "gates": {}
+  }
+}

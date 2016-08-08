@@ -33,10 +33,10 @@ EndCallNotification.prototype.processResponse = function(notification) {
         duration = notification.ui_notification.call_duration["#text"];
     }
     if(notification.ui_notification.term_party){
-        duration = notification.ui_notification.term_party["#text"];
+        termParty = notification.ui_notification.term_party["#text"];
     }
     if(notification.ui_notification.term_reason){
-        duration = notification.ui_notification.term_reason["#text"];
+        termReason = notification.ui_notification.term_reason["#text"];
     }
 
     model.currentCall.duration = duration;

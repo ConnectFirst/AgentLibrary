@@ -320,13 +320,24 @@ var utils = {
     // add message, detail, and status values to the formattedResponse
     // returned from each request processResponse method
     buildDefaultResponse: function(response){
-        // add message and detail if present
-        var msg = response.ui_response.message;
-        var det = response.ui_response.detail;
-        var stat = response.ui_response.status;
         var message = "";
         var detail = "";
         var status = "";
+        var msg = "";
+        var det = "";
+        var stat = "";
+
+        // add message and detail if present
+        if(response.ui_response){
+            msg = response.ui_response.message;
+            det = response.ui_response.detail;
+            stat = response.ui_response.status;
+        }else if(response.ui_notification){
+            msg = response.ui_notification.message;
+            det = response.ui_notification.detail;
+            stat = response.ui_notification.status;
+        }
+
         if(msg){
             message = msg['#text'] || "";
         }

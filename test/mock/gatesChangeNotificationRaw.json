@@ -1,0 +1,12 @@
+{
+  "ui_notification": {
+    "@message_id": "IQ10012016080817344100936",
+    "@type": "GATES_CHANGE",
+    "agent_id": {
+      "#text": "1180958"
+    },
+    "gate_ids": {
+      "#text": "1,2"
+    }
+  }
+}

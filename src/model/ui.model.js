@@ -38,6 +38,7 @@ var UIModel = (function() {
             dialGroupChangePendingNotification : new DialGroupChangePendingNotification(),
             endCallNotification : new EndCallNotification(),
             gatesChangeNotification : new GatesChangeNotification(),
+            genericNotification : new GenericNotification(),
             currentCall: {},                        // save the NEW-CALL notification in original form??
 
             // application state

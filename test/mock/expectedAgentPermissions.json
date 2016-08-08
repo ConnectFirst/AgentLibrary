@@ -1,0 +1,26 @@
+{
+  "allowBlended": true,
+  "allowCallControl": true,
+  "allowChat": true,
+  "allowCrossQueueRequeue": true,
+  "allowInbound": true,
+  "allowLeadInserts": true,
+  "allowLeadSearch": false,
+  "allowLoginControl": true,
+  "allowLoginUpdates": true,
+  "allowManualCalls": true,
+  "allowManualPass": true,
+  "allowManualIntlCalls": true,
+  "allowManualOutboundGates": true,
+  "allowOffHook": true,
+  "allowOutbound": true,
+  "allowPreviewLeadFilters": false,
+  "allowLeadUpdatesByCampaign": {
+    "1": true,
+    "2": false,
+    "3": true
+  },
+  "disableSupervisorMonitoring": true,
+  "requireFetchedLeadsCalled": false,
+  "showLeadHistory": true
+}

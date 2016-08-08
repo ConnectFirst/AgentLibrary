@@ -273,7 +273,23 @@ function initAgentLibraryCore (context) {
      * @returns {object}
      */
     AgentLibrary.prototype.getGatesChangeNotification = function() {
-        return UIModel.getInstance().gatesChangeNotification();
+        return UIModel.getInstance().gatesChangeNotification;
+    };
+    /**
+     * Get latest received generic notification message
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getGenericNotification = function() {
+        return UIModel.getInstance().genericNotification;
+    };
+    /**
+     * Get current call object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCurrentCall = function() {
+        return UIModel.getInstance().currentCall;
     };
 
 

@@ -1,0 +1,84 @@
+{
+  "availableQueues": [
+    {
+      "defaultDestOverride": "",
+      "gateDesc": "",
+      "gateId": "1",
+      "gateName": "First Queue"
+    },
+    {
+      "defaultDestOverride": "",
+      "gateDesc": "some desc",
+      "gateId": "2",
+      "gateName": "Second Queue"
+    },
+    {
+      "defaultDestOverride": "",
+      "gateDesc": "desc",
+      "gateId": "3",
+      "gateName": "Third Queue"
+    }
+  ],
+  "availableSkillProfiles": [
+    {
+      "profileDesc": "",
+      "profileId": "1",
+      "profileName": "Test Skill Profile"
+    }
+  ],
+  "queues": [],
+  "skillProfile": {},
+  "availableRequeueQueues": [
+    {
+      "gateGroupId": "1",
+      "groupName": "Test Gate Group 1",
+      "gates": [
+        {
+          "gateDesc": "",
+          "gateId": "1",
+          "gateName": "First Queue"
+        },
+        {
+          "gateDesc": "some desc",
+          "gateId": "2",
+          "gateName": "Second Queue"
+        }
+      ],
+      "skills": [
+        {
+          "skillDesc": "speaks English",
+          "skillId": "1",
+          "skillName": "English"
+        },
+        {
+          "skillDesc": "speaks Spanish",
+          "skillId": "2",
+          "skillName": "Spanish"
+        },
+        {
+          "skillDesc": "speaks French",
+          "skillId": "3",
+          "skillName": "French"
+        }
+      ]
+    },
+    {
+      "gateGroupId": "2",
+      "groupName": "New Test Group",
+      "gates": [
+        {
+          "gateDesc": "desc",
+          "gateId": "3",
+          "gateName": "Third Queue"
+        }
+      ],
+      "skills": [
+        {
+          "skillDesc": "",
+          "skillId": "4",
+          "skillName": "Arabic"
+        }
+      ]
+    }
+  ]
+}

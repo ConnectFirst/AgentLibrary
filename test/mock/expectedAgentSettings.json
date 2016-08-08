@@ -1,0 +1,73 @@
+{
+  "agentId": "1",
+  "agentType": "AGENT",
+  "altDefaultLoginDest": "",
+  "availableAgentStates": [
+    {
+      "agentAuxState": "Available",
+      "agentState": "AVAILABLE",
+      "rank": "1"
+    },
+    {
+      "agentAuxState": "On Break",
+      "agentState": "ON-BREAK",
+      "rank": "2"
+    },
+    {
+      "agentAuxState": "Away",
+      "agentState": "AWAY",
+      "rank": "3"
+    },
+    {
+      "agentAuxState": "Lunch",
+      "agentState": "LUNCH",
+      "rank": "4"
+    },
+    {
+      "agentAuxState": "Training",
+      "agentState": "TRAINING",
+      "rank": "5"
+    },
+    {
+      "agentAuxState": "Tutor",
+      "agentState": "LUNCH",
+      "rank": "6"
+    }
+  ],
+  "callerIds": [
+    {
+      "description": "Cell Number",
+      "number": "5555555551"
+    },
+    {
+      "description": "Office",
+      "number": "5555555552"
+    }
+  ],
+  "callState": null,
+  "currentState": "OFFLINE",
+  "currentStateLabel": "",
+  "defaultLoginDest": "sip:99@boulder-voip.connectfirst.com",
+  "dialDest": "",
+  "email": "test@connectfirst.com",
+  "externalAgentId": "",
+  "firstName": "Test First",
+  "isLoggedIn": false,
+  "isOffhook": false,
+  "initLoginState": "AVAILABLE",
+  "initLoginStateLabel": "Available",
+  "isOutboundPrepay": false,
+  "lastName": "Test Last",
+  "loginType": "NO-SELECTION",
+  "maxBreakTime": "-1",
+  "maxLunchTime": "-1",
+  "onCall": false,
+  "outboundManualDefaultRingtime": "30",
+  "pendingCallbacks": [],
+  "pendingDialGroupChange": 0,
+  "realAgentType": "AGENT",
+  "updateDGFromAdminUI": false,
+  "updateLoginMode": false,
+  "wasMonitoring": false,
+  "disableSupervisorMonitoring": "0"
+}
