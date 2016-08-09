@@ -311,6 +311,14 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().chatSettings;
     };
     /**
+     * Get Connection Settings object containing the current state of connection related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getConnectionSettings = function() {
+        return UIModel.getInstance().connectionSettings;
+    };
+    /**
      * Get Inbound Settings object containing the current state of inbound related data
      * @memberof AgentLibrary
      * @returns {object}
