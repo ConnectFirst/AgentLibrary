@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-08 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-09 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -271,28 +271,28 @@ ConfigRequest.prototype.formatJSON = function() {
             "@message_id":utils.getMessageId(),
             "response_to":"",
             "agent_id":{
-                "#text":UIModel.getInstance().agentSettings.agentId.toString()
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
             },
             "agent_pwd":{
                 "#text": UIModel.getInstance().loginRequest.password
             },
             "dial_dest":{
-                "#text":this.dialDest.toString()
+                "#text":utils.toString(this.dialDest)
             },
             "login_type":{
                 "#text":this.loginType
             },
             "update_login":{
-                "#text":this.updateLogin.toString()
+                "#text":utils.toString(this.updateLogin)
             },
             "outdial_group_id":{
-                "#text":this.dialGroupId.toString()
+                "#text":utils.toString(this.dialGroupId)
             },
             "skill_profile_id":{
-                "#text":this.skillPofileId.toString()
+                "#text":utils.toString(this.skillPofileId)
             },
             "update_from_adminui":{
-                "#text":this.updateFromAdminUI.toString()
+                "#text":utils.toString(this.updateFromAdminUI)
             }
         }
     };
@@ -301,9 +301,7 @@ ConfigRequest.prototype.formatJSON = function() {
     var queueIds = [];
     for(var i = 0; i < this.queueIds.length; i++){
         if(this.queueIds[i] !== ""){
-            queueIds.push(
-                {  "#text": this.queueIds[i].toString() }
-            );
+            queueIds.push( { "#text": utils.toString(this.queueIds[i]) } );
         }
     }
     if(queueIds.length > 0){
@@ -315,7 +313,7 @@ ConfigRequest.prototype.formatJSON = function() {
     var chatIds = [];
     for(var i = 0; i < this.chatIds.length; i++){
         if(this.chatIds[i] !== "") {
-            chatIds.push( {"#text": this.chatIds[i]}.toString() );
+            chatIds.push( {"#text": utils.toString(this.chatIds[i]) } );
         }
     }
     if(chatIds.length > 0) {
@@ -376,6 +374,8 @@ ConfigRequest.prototype.processResponse = function(response) {
 
         }else{
             if(model.agentSettings.updateLoginMode){
+                // TODO set login type and dial dest for update logins??
+
                 // This was an update login request
                 model.agentSettings.updateLoginMode = false;
 
@@ -1058,10 +1058,10 @@ EndCallNotification.prototype.processResponse = function(notification) {
         duration = notification.ui_notification.call_duration["#text"];
     }
     if(notification.ui_notification.term_party){
-        duration = notification.ui_notification.term_party["#text"];
+        termParty = notification.ui_notification.term_party["#text"];
     }
     if(notification.ui_notification.term_reason){
-        duration = notification.ui_notification.term_reason["#text"];
+        termReason = notification.ui_notification.term_reason["#text"];
     }
 
     model.currentCall.duration = duration;
@@ -1110,7 +1110,7 @@ var GatesChangeNotification = function() {
 };
 
 /*
- * This class is responsible for handling a generic notification
+ * This class is responsible for handling a gates change notification
  *
  * <ui_notification message_id="IQ10012016080815372800837" type="GATES_CHANGE">
  *    <agent_id>1180958</agent_id>
@@ -1121,7 +1121,10 @@ GatesChangeNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
     var newAssignedGates = [];
     var availableQueues = model.inboundSettings.availableQueues;
-    var assignedGateIds = notification.ui_notification.gate_ids['#text'].split(',');
+    var assignedGateIds = notification.ui_notification.gate_ids['#text'] || "";
+    if(assignedGateIds !== ""){
+        assignedGateIds = assignedGateIds.split(',');
+    }
 
     for(var a = 0; a < assignedGateIds.length; a++){
         // find gate in avail list
@@ -1142,7 +1145,7 @@ GatesChangeNotification.prototype.processResponse = function(notification) {
         }
     }
 
-    model.inboundSettings.queues = newAssignedGates;
+    model.inboundSettings.queues = JSON.parse(JSON.stringify(newAssignedGates));
 
     var formattedResponse = {
         agentId: notification.ui_notification.agent_id['#text'],
@@ -1222,6 +1225,7 @@ var UIModel = (function() {
             dialGroupChangePendingNotification : new DialGroupChangePendingNotification(),
             endCallNotification : new EndCallNotification(),
             gatesChangeNotification : new GatesChangeNotification(),
+            genericNotification : new GenericNotification(),
             currentCall: {},                        // save the NEW-CALL notification in original form??
 
             // application state
@@ -1671,13 +1675,24 @@ var utils = {
     // add message, detail, and status values to the formattedResponse
     // returned from each request processResponse method
     buildDefaultResponse: function(response){
-        // add message and detail if present
-        var msg = response.ui_response.message;
-        var det = response.ui_response.detail;
-        var stat = response.ui_response.status;
         var message = "";
         var detail = "";
         var status = "";
+        var msg = "";
+        var det = "";
+        var stat = "";
+
+        // add message and detail if present
+        if(response.ui_response){
+            msg = response.ui_response.message;
+            det = response.ui_response.detail;
+            stat = response.ui_response.status;
+        }else if(response.ui_notification){
+            msg = response.ui_notification.message;
+            det = response.ui_notification.detail;
+            stat = response.ui_notification.status;
+        }
+
         if(msg){
             message = msg['#text'] || "";
         }
@@ -1693,6 +1708,14 @@ var utils = {
             detail: detail,
             status: status
         });
+    },
+
+    toString: function(val){
+        if(val){
+            return val.toString();
+        }else{
+            return "";
+        }
     }
 };
 
@@ -1965,6 +1988,31 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getEndCallNotification = function() {
         return UIModel.getInstance().endCallNotification;
     };
+    /**
+     * Get latest received notification for Gates Change message
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getGatesChangeNotification = function() {
+        return UIModel.getInstance().gatesChangeNotification;
+    };
+    /**
+     * Get latest received generic notification message
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getGenericNotification = function() {
+        return UIModel.getInstance().genericNotification;
+    };
+    /**
+     * Get current call object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCurrentCall = function() {
+        return UIModel.getInstance().currentCall;
+    };
+
 
     // settings objects
     /**
@@ -1982,6 +2030,14 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getChatSettings = function() {
         return UIModel.getInstance().chatSettings;
+    };
+    /**
+     * Get Connection Settings object containing the current state of connection related data
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getConnectionSettings = function() {
+        return UIModel.getInstance().connectionSettings;
     };
     /**
      * Get Inbound Settings object containing the current state of inbound related data
