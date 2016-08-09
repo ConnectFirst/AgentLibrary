@@ -353,5 +353,13 @@ var utils = {
             detail: detail,
             status: status
         });
+    },
+
+    toString: function(val){
+        if(val){
+            return val.toString();
+        }else{
+            return "";
+        }
     }
 };

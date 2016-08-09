@@ -48,28 +48,28 @@ ConfigRequest.prototype.formatJSON = function() {
             "@message_id":utils.getMessageId(),
             "response_to":"",
             "agent_id":{
-                "#text":UIModel.getInstance().agentSettings.agentId.toString()
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
             },
             "agent_pwd":{
                 "#text": UIModel.getInstance().loginRequest.password
             },
             "dial_dest":{
-                "#text":this.dialDest.toString()
+                "#text":utils.toString(this.dialDest)
             },
             "login_type":{
                 "#text":this.loginType
             },
             "update_login":{
-                "#text":this.updateLogin.toString()
+                "#text":utils.toString(this.updateLogin)
             },
             "outdial_group_id":{
-                "#text":this.dialGroupId.toString()
+                "#text":utils.toString(this.dialGroupId)
             },
             "skill_profile_id":{
-                "#text":this.skillPofileId.toString()
+                "#text":utils.toString(this.skillPofileId)
             },
             "update_from_adminui":{
-                "#text":this.updateFromAdminUI.toString()
+                "#text":utils.toString(this.updateFromAdminUI)
             }
         }
     };
@@ -78,9 +78,7 @@ ConfigRequest.prototype.formatJSON = function() {
     var queueIds = [];
     for(var i = 0; i < this.queueIds.length; i++){
         if(this.queueIds[i] !== ""){
-            queueIds.push(
-                {  "#text": this.queueIds[i].toString() }
-            );
+            queueIds.push( { "#text": utils.toString(this.queueIds[i]) } );
         }
     }
     if(queueIds.length > 0){
@@ -92,7 +90,7 @@ ConfigRequest.prototype.formatJSON = function() {
     var chatIds = [];
     for(var i = 0; i < this.chatIds.length; i++){
         if(this.chatIds[i] !== "") {
-            chatIds.push( {"#text": this.chatIds[i]}.toString() );
+            chatIds.push( {"#text": utils.toString(this.chatIds[i]) } );
         }
     }
     if(chatIds.length > 0) {
@@ -153,6 +151,8 @@ ConfigRequest.prototype.processResponse = function(response) {
 
         }else{
             if(model.agentSettings.updateLoginMode){
+                // TODO set login type and dial dest for update logins??
+
                 // This was an update login request
                 model.agentSettings.updateLoginMode = false;
 
