@@ -13,9 +13,10 @@ var GatesChangeNotification = function() {
  */
 GatesChangeNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
     var newAssignedGates = [];
     var availableQueues = model.inboundSettings.availableQueues;
-    var assignedGateIds = notification.ui_notification.gate_ids['#text'] || "";
+    var assignedGateIds = utils.getText(notif, "gate_ids");
     if(assignedGateIds !== ""){
         assignedGateIds = assignedGateIds.split(',');
     }
@@ -42,7 +43,7 @@ GatesChangeNotification.prototype.processResponse = function(notification) {
     model.inboundSettings.queues = JSON.parse(JSON.stringify(newAssignedGates));
 
     var formattedResponse = {
-        agentId: notification.ui_notification.agent_id['#text'],
+        agentId: utils.getText(notif, "agent_id"),
         message: "Gates Change notification received.",
         queues: newAssignedGates
     };

@@ -17,12 +17,7 @@ GenericNotification.prototype.processResponse = function(notification) {
     var formattedResponse = utils.buildDefaultResponse(notification);
 
     // add message and detail if present
-    var msgCode = notification.ui_notification.message_code;
-    var messageCode = "";
-    if(msgCode){
-        messageCode = msgCode['#text'] || "";
-    }
-    formattedResponse.messageCode = messageCode;
+    formattedResponse.messageCode = utils.getText(notification.ui_notification,"message_code");
 
     return formattedResponse;
 };

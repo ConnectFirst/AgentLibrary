@@ -21,27 +21,14 @@ var EndCallNotification = function(libInstance) {
  *  </ui_notification>
  */
 EndCallNotification.prototype.processResponse = function(notification) {
-    var duration = 0;
-    var termParty = "";
-    var termReason = "";
     var model = UIModel.getInstance();
-
+    var notif = notification.ui_notification;
     model.endCallNotification = notification;
 
     // add callDuration, termParty, and termReason to the current call packet
-    if(notification.ui_notification.call_duration){
-        duration = notification.ui_notification.call_duration["#text"];
-    }
-    if(notification.ui_notification.term_party){
-        termParty = notification.ui_notification.term_party["#text"];
-    }
-    if(notification.ui_notification.term_reason){
-        termReason = notification.ui_notification.term_reason["#text"];
-    }
-
-    model.currentCall.duration = duration;
-    model.currentCall.termParty = termParty;
-    model.currentCall.termReason = termReason;
+    model.currentCall.duration = utils.getText(notif, "call_duration");
+    model.currentCall.termParty = utils.getText(notif, "term_party");
+    model.currentCall.termReason = utils.getText(notif, "term_reason");
 
     // set call state to "CALL-ENDED"
     model.agentSettings.callState = "CALL-ENDED";
@@ -65,15 +52,15 @@ EndCallNotification.prototype.processResponse = function(notification) {
     var formattedResponse = {
         message: "End Call Notification Received.",
         detail: "",
-        uii: notification.ui_notification.uii["#text"],
-        sessionId: notification.ui_notification.session_id["#text"],
-        agentId: notification.ui_notification.agent_id['#text'],
-        callDts: notification.ui_notification.call_dts['#text'],
-        duration: duration,
-        termParty: termParty,
-        termReason: termReason,
-        recordingUrl: notification.ui_notification.recording_url['#text'],
-        dispositionTimeout: notification.ui_notification.disposition_timeout['#text']
+        uii: utils.getText(notif, "uii"),
+        sessionId: utils.getText(notif, "session_id"),
+        agentId: utils.getText(notif, "agent_id"),
+        callDts: utils.getText(notif, "call_dts"),
+        duration: model.currentCall.duration,
+        termParty: model.currentCall.termParty,
+        termReason: model.currentCall.termReason,
+        recordingUrl: utils.getText(notif, "recording_url"),
+        dispositionTimeout: utils.getText(notif, "disposition_timeout")
     };
 
     return formattedResponse;

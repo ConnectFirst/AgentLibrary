@@ -73,17 +73,17 @@ function parseLead(leadRaw){
         dialTime : leadRaw['@dial_time'],
         externId : leadRaw['@extern_id'],
         leadId : leadRaw['@lead_id'],
-        firstName : leadRaw.first_name['#text'] || "",
-        midName : leadRaw.mid_name['#text'] || "",
-        lastName : leadRaw.last_name['#text'] || "",
-        sufix : leadRaw.suffix['#text'] || "",
-        title : leadRaw.title['#text'] || "",
-        address1 : leadRaw.address1['#text'] || "",
-        address2 : leadRaw.address2['#text'] || "",
-        city : leadRaw.city['#text'] || "",
-        state : leadRaw.state['#text'] || "",
-        zip : leadRaw.zip['#text'] || "",
-        gateKeeper : leadRaw.gate_keeper['#text'] || ""
+        firstName : utils.getText(leadRaw, "first_name"),
+        midName : utils.getText(leadRaw, "mid_name"),
+        lastName : utils.getText(leadRaw, "last_name"),
+        sufix : utils.getText(leadRaw, "suffix"),
+        title : utils.getText(leadRaw, "title"),
+        address1 : utils.getText(leadRaw, "address1"),
+        address2 : utils.getText(leadRaw, "address2"),
+        city : utils.getText(leadRaw, "city"),
+        state : utils.getText(leadRaw, "state"),
+        zip : utils.getText(leadRaw, "zip"),
+        gateKeeper : utils.getText(leadRaw, "gate_keeper")
     };
 
     return lead;

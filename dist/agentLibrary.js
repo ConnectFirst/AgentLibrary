@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-09 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-15 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -57,11 +57,12 @@ AgentStateRequest.prototype.formatJSON = function() {
  * </ui_response>
  */
 AgentStateRequest.prototype.processResponse = function(response) {
-    var status = response.ui_response.status['#text'];
-    var prevState = response.ui_response.prev_state['#text'];
-    var currState = response.ui_response.current_state['#text'];
-    var prevAuxState = response.ui_response.prev_aux_state['#text'] || "";
-    var currAuxState = response.ui_response.agent_aux_state['#text'] || "";
+    var resp = response.ui_response;
+    var status = utils.getText(resp, "status");
+    var prevState = utils.getText(resp, "prev_state");
+    var currState = utils.getText(resp, "current_state");
+    var prevAuxState = utils.getText(resp, "prev_aux_state");
+    var currAuxState = utils.getText(resp, "agent_aux_state");
     var model = UIModel.getInstance();
 
     // add message and detail if present
@@ -205,17 +206,17 @@ function parseLead(leadRaw){
         dialTime : leadRaw['@dial_time'],
         externId : leadRaw['@extern_id'],
         leadId : leadRaw['@lead_id'],
-        firstName : leadRaw.first_name['#text'] || "",
-        midName : leadRaw.mid_name['#text'] || "",
-        lastName : leadRaw.last_name['#text'] || "",
-        sufix : leadRaw.suffix['#text'] || "",
-        title : leadRaw.title['#text'] || "",
-        address1 : leadRaw.address1['#text'] || "",
-        address2 : leadRaw.address2['#text'] || "",
-        city : leadRaw.city['#text'] || "",
-        state : leadRaw.state['#text'] || "",
-        zip : leadRaw.zip['#text'] || "",
-        gateKeeper : leadRaw.gate_keeper['#text'] || ""
+        firstName : utils.getText(leadRaw, "first_name"),
+        midName : utils.getText(leadRaw, "mid_name"),
+        lastName : utils.getText(leadRaw, "last_name"),
+        sufix : utils.getText(leadRaw, "suffix"),
+        title : utils.getText(leadRaw, "title"),
+        address1 : utils.getText(leadRaw, "address1"),
+        address2 : utils.getText(leadRaw, "address2"),
+        city : utils.getText(leadRaw, "city"),
+        state : utils.getText(leadRaw, "state"),
+        zip : utils.getText(leadRaw, "zip"),
+        gateKeeper : utils.getText(leadRaw, "gate_keeper")
     };
 
     return lead;
@@ -341,8 +342,9 @@ ConfigRequest.prototype.formatJSON = function() {
  * </ui_response>
  */
 ConfigRequest.prototype.processResponse = function(response) {
-    var status = response.ui_response.status['#text'];
-    var detail = response.ui_response.detail['#text'];
+    var resp = response.ui_response;
+    var status = utils.getText(resp, "status");
+    var detail = utils.getText(resp, "detail");
     var model = UIModel.getInstance();
     var formattedResponse = utils.buildDefaultResponse(response);
 
@@ -355,13 +357,13 @@ ConfigRequest.prototype.processResponse = function(response) {
         if(!model.agentSettings.isLoggedIn){
             // fresh login, set UI Model properties
             model.configPacket = response;
-            model.connectionSettings.hashCode = response.ui_response.hash_code['#text'];
+            model.connectionSettings.hashCode = utils.getText(resp, "hash_code");
             model.agentSettings.isLoggedIn = true;
             model.agentSettings.loginDTS = new Date();
             model.connectionSettings.reconnect = true;
             model.agentPermissions.allowLeadSearch = false;
             model.agentSettings.dialDest = model.configRequest.dialDest; // not sent in response
-            model.agentSettings.loginType = response.ui_response.login_type['#text'];
+            model.agentSettings.loginType = utils.getText(resp, "login_type");
 
             // Set collection values
             setDialGroupSettings(response);
@@ -598,7 +600,8 @@ LoginRequest.prototype.formatJSON = function() {
  *
  */
 LoginRequest.prototype.processResponse = function(response) {
-    var status = response.ui_response.status['#text'];
+    var resp = response.ui_response;
+    var status = resp.status['#text'];
     var model = UIModel.getInstance();
     var formattedResponse = utils.buildDefaultResponse(response);
 
@@ -607,82 +610,45 @@ LoginRequest.prototype.processResponse = function(response) {
             // save login packet properties to UIModel
             model.loginPacket = response;
             model.applicationSettings.isLoggedInIS = true;
+            model.applicationSettings.isTcpaSafeMode = utils.getText(resp, 'tcpa_safe_mode') === "1";
+            model.chatSettings.alias = utils.getText(resp, 'first_name') + " " + utils.getText(resp, 'last_name');
+
             model.agentSettings.loginDTS = new Date();
-            model.chatSettings.alias = response.ui_response.first_name['#text'] + " " + response.ui_response.last_name['#text']
-            model.agentSettings.maxBreakTime = response.ui_response.max_break_time['#text'];
-            model.agentSettings.maxLunchTime = response.ui_response.max_lunch_time['#text'];
-            model.agentSettings.firstName = response.ui_response.first_name['#text'];
-            model.agentSettings.lastName = response.ui_response.last_name['#text'];
-            model.agentSettings.email = response.ui_response.email['#text'];
-            model.agentSettings.agentId = response.ui_response.agent_id['#text'];
-            model.agentSettings.externalAgentId = response.ui_response.external_agent_id['#text'] || "";
-            model.agentSettings.agentType = response.ui_response.agent_type['#text'];
-            model.agentSettings.realAgentType = response.ui_response.real_agent_type['#text'];
-            model.agentSettings.defaultLoginDest = response.ui_response.default_login_dest['#text'];
-            model.agentSettings.altDefaultLoginDest = response.ui_response.alt_default_login_dest['#text'] || "";
-            model.agentSettings.disableSupervisorMonitoring = response.ui_response.disable_supervisor_monitoring['#text'];
-            model.agentSettings.initLoginState = response.ui_response.init_login_state['#text'];
-            model.agentSettings.initLoginStateLabel = response.ui_response.init_login_state_label['#text'];
-            model.agentSettings.outboundManualDefaultRingtime = response.ui_response.outbound_manual_default_ringtime['#text'];
+            model.agentSettings.maxBreakTime = utils.getText(resp, 'max_break_time');
+            model.agentSettings.maxLunchTime = utils.getText(resp, 'max_lunch_time');
+            model.agentSettings.firstName = utils.getText(resp, 'first_name');
+            model.agentSettings.lastName = utils.getText(resp, 'last_name');
+            model.agentSettings.email = utils.getText(resp, 'email');
+            model.agentSettings.agentId = utils.getText(resp, 'agent_id');
+            model.agentSettings.externalAgentId = utils.getText(resp, 'external_agent_id');
+            model.agentSettings.agentType = utils.getText(resp, 'agent_type');
+            model.agentSettings.realAgentType = utils.getText(resp, 'real_agent_type');
+            model.agentSettings.defaultLoginDest = utils.getText(resp, 'default_login_dest');
+            model.agentSettings.altDefaultLoginDest = utils.getText(resp, 'alt_default_login_dest');
+            model.agentSettings.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring');
+            model.agentSettings.initLoginState = utils.getText(resp, 'init_login_state');
+            model.agentSettings.initLoginStateLabel = utils.getText(resp, 'init_login_state_label');
+            model.agentSettings.outboundManualDefaultRingtime = utils.getText(resp, 'outbound_manual_default_ringtime');
+            model.agentSettings.isOutboundPrepay = utils.getText(resp, 'outbound_prepay') === "1";
 
-            var allowCallControl = typeof response.ui_response.allow_call_control == 'undefined' ? false : response.ui_response.allow_call_control['#text'];
-            var allowChat = typeof response.ui_response.allow_chat == 'undefined' ? false : response.ui_response.allow_chat['#text'];
-            var showLeadHistory = typeof response.ui_response.show_lead_history == 'undefined' ? false : response.ui_response.show_lead_history['#text'];
-            var allowManualOutboundGates = typeof response.ui_response.allow_manual_outbound_gates == 'undefined' ? false : response.ui_response.allow_manual_outbound_gates['#text'];
-            var isTcpaSafeMode = typeof response.ui_response.tcpa_safe_mode == 'undefined' ? false : response.ui_response.tcpa_safe_mode['#text'];
-            var allowLeadInserts = typeof response.ui_response.insert_campaigns == 'undefined' ? false : response.ui_response.insert_campaigns.campaign;
-            var isOutboundPrepay = typeof response.ui_response.outbound_prepay == 'undefined' ? false : response.ui_response.outbound_prepay['#text'];
+            model.agentPermissions.allowCallControl = utils.getText(resp, 'allow_call_control') === "1";
+            model.agentPermissions.allowChat = utils.getText(resp, 'allow_chat') === "1";
+            model.agentPermissions.showLeadHistory = utils.getText(resp, 'show_lead_history') === "1";
+            model.agentPermissions.allowManualOutboundGates = utils.getText(resp, 'allow_manual_outbound_gates') === "1";
+            model.agentPermissions.allowOffHook = utils.getText(resp, 'allow_off_hook') === "1";
+            model.agentPermissions.allowManualCalls = utils.getText(resp, 'allow_manual_calls') === "1";
+            model.agentPermissions.allowManualPass = utils.getText(resp, 'allow_manual_pass') === "1";
+            model.agentPermissions.allowManualIntlCalls = utils.getText(resp, 'allow_manual_intl_calls') === "1";
+            model.agentPermissions.allowLoginUpdates = utils.getText(resp, 'allow_login_updates') === "1";
+            model.agentPermissions.allowInbound = utils.getText(resp, 'allow_inbound') === "1";
+            model.agentPermissions.allowOutbound = utils.getText(resp, 'allow_outbound') === "1";
+            model.agentPermissions.allowBlended = utils.getText(resp, 'allow_blended') === "1";
+            model.agentPermissions.allowLoginControl = utils.getText(resp, 'allow_login_control') === "1";
+            model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
 
-            if(allowCallControl == "0"){
-                model.agentPermissions.allowCallControl = false;
-            }
-            if(allowChat == "1"){
-                model.agentPermissions.allowChat = true;
-            }
-            if(showLeadHistory == "0"){
-                model.agentPermissions.showLeadHistory = false;
-            }
-            if(allowManualOutboundGates == "1"){
-                model.agentPermissions.allowManualOutboundGates = true;
-            }
-            if(isTcpaSafeMode == "1"){
-                model.applicationSettings.isTcpaSafeMode = true;
-            }
+            var allowLeadInserts = typeof resp.insert_campaigns === 'undefined' ? false : response.ui_response.insert_campaigns.campaign;
             if(allowLeadInserts && allowLeadInserts.length > 0){
                 model.agentPermissions.allowLeadInserts = true;
-            }
-            if(isOutboundPrepay == "1"){
-                model.agentSettings.isOutboundPrepay = true;
-            }
-            if(response.ui_response.allow_off_hook['#text'] == "0"){
-                model.agentPermissions.allowOffHook = false;
-            }
-            if(response.ui_response.allow_manual_calls['#text'] == "0"){
-                model.agentPermissions.allowManualCalls = false;
-            }
-            if(response.ui_response.allow_manual_pass['#text'] == "0"){
-                model.agentPermissions.allowManualPass = false;
-            }
-            if(response.ui_response.allow_manual_intl_calls['#text'] == "1"){
-                model.agentPermissions.allowManualIntlCalls = true;
-            }
-            if(response.ui_response.allow_login_updates['#text'] == "0"){
-                model.agentPermissions.allowLoginUpdates = false;
-            }
-            if(response.ui_response.allow_inbound['#text'] == "0"){
-                model.agentPermissions.allowInbound = false;
-            }
-            if(response.ui_response.allow_outbound['#text'] == "0"){
-                model.agentPermissions.allowOutbound = false;
-            }
-            if(response.ui_response.allow_blended['#text'] == "0"){
-                model.agentPermissions.allowBlended = false;
-            }
-            if(response.ui_response.allow_login_control['#text'] == "0"){
-                model.agentPermissions.allowLoginControl = false;
-            }
-            if(response.ui_response.allow_cross_gate_requeue['#text'] == "1"){
-                model.agentPermissions.allowCrossQueueRequeue = true;
             }
 
             // Set collection values
@@ -718,6 +684,7 @@ LoginRequest.prototype.processResponse = function(response) {
         formattedResponse.inboundSettings = model.inboundSettings;
         formattedResponse.outboundSettings = model.outboundSettings;
         formattedResponse.surveySettings = model.surveySettings;
+
     }else if(status === 'RESTRICTED'){
         formattedResponse.message = "Invalid IP Address";
         console.log("AgentLibrary: Invalid IP Address");
@@ -919,7 +886,8 @@ OffhookTermRequest.prototype.formatJSON = function() {
  * </ui_notification>
  */
 OffhookTermRequest.prototype.processResponse = function(data) {
-    var monitoring = data.ui_notification.monitoring['#text'] === '1';
+    var notif = data.ui_notification;
+    var monitoring = utils.getText(notif, "monitoring") === '1';
     var model = UIModel.getInstance();
 
     model.agentSettings.wasMonitoring = monitoring;
@@ -927,9 +895,9 @@ OffhookTermRequest.prototype.processResponse = function(data) {
     model.agentSettings.isOffhook = false;
 
     var formattedResponse = {
-        agentId: data.ui_notification.agent_id['#text'],
-        startDts: data.ui_notification.start_dts['#text'],
-        endDts: data.ui_notification.end_dts['#text'],
+        agentId: utils.getText(notif, "agent_id"),
+        startDts: utils.getText(notif, "start_dts"),
+        endDts: utils.getText(notif, "end_dts"),
         monitoring: monitoring
     };
 
@@ -955,8 +923,9 @@ var DialGroupChangeNotification = function() {
 DialGroupChangeNotification.prototype.processResponse = function(notification) {
     //Modify configRequest with new DialGroupId
     var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
     var origLoginType = model.configRequest.loginType;
-    var newDgId = notification.ui_notification.dial_group_id['#text'] || "";
+    var newDgId = utils.getText(notif, "dial_group_id");
 
     model.dialGroupChangeNotification = notification;
 
@@ -977,10 +946,10 @@ DialGroupChangeNotification.prototype.processResponse = function(notification) {
     var formattedResponse = {
         message: "Dial Group Updated Successfully.",
         detail: "Dial Group changed to [" + newDgId + "].",
-        dialGroupId: notification.ui_notification.dial_group_id['#text'],
-        dialGroupName: notification.ui_notification.dialGroupName['#text'], // camel case from server for some reason :/
-        dialGroupDesc: notification.ui_notification.dial_group_desc['#text'],
-        agentId: notification.ui_notification.agent_id['#text']
+        dialGroupId: utils.getText(notif, "dial_group_id"),
+        dialGroupName: utils.getText(notif, "dialGroupName"), // camel case from server for some reason :/
+        dialGroupDesc: utils.getText(notif, "dial_group_desc"),
+        agentId: utils.getText(notif, "agent_id")
     };
 
     return formattedResponse;
@@ -1003,11 +972,12 @@ var DialGroupChangePendingNotification = function() {
  */
 DialGroupChangePendingNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
-    model.agentSettings.pendingDialGroupChange = parseInt(notification.ui_notification.dial_group_id["#text"], 10);
+    var notif = notification.ui_notification;
+    model.agentSettings.pendingDialGroupChange = parseInt(utils.getText(notif, "dial_group_id"), 10);
 
     // check if request originated with AdminUI
-    if(notification.ui_notification.update_from_adminui){
-        model.agentSettings.updateDGFromAdminUI = notification.ui_notification.update_from_adminui["#text"].toUpperCase() === "TRUE";
+    if(notif.update_from_adminui){
+        model.agentSettings.updateDGFromAdminUI = utils.getText(notif, "update_from_adminui") === true;
     }else{
         model.agentSettings.updateDGFromAdminUI = false;
     }
@@ -1015,9 +985,9 @@ DialGroupChangePendingNotification.prototype.processResponse = function(notifica
     var formattedResponse = {
         message: "Dial Group Change Pending notification received.",
         detail: "DialGroup switch for existing session pending until active call ends.",
-        agentId: notification.ui_notification.agent_id['#text'],
-        dialGroupId: notification.ui_notification.dial_group_id['#text'],
-        updateFromAdminUI: notification.ui_notification.update_from_adminui['#text']
+        agentId: utils.getText(notif, "agent_id"),
+        dialGroupId: utils.getText(notif, "dial_group_id"),
+        updateFromAdminUI: utils.getText(notif, "update_from_adminui")
     };
 
     return formattedResponse;
@@ -1046,27 +1016,14 @@ var EndCallNotification = function(libInstance) {
  *  </ui_notification>
  */
 EndCallNotification.prototype.processResponse = function(notification) {
-    var duration = 0;
-    var termParty = "";
-    var termReason = "";
     var model = UIModel.getInstance();
-
+    var notif = notification.ui_notification;
     model.endCallNotification = notification;
 
     // add callDuration, termParty, and termReason to the current call packet
-    if(notification.ui_notification.call_duration){
-        duration = notification.ui_notification.call_duration["#text"];
-    }
-    if(notification.ui_notification.term_party){
-        termParty = notification.ui_notification.term_party["#text"];
-    }
-    if(notification.ui_notification.term_reason){
-        termReason = notification.ui_notification.term_reason["#text"];
-    }
-
-    model.currentCall.duration = duration;
-    model.currentCall.termParty = termParty;
-    model.currentCall.termReason = termReason;
+    model.currentCall.duration = utils.getText(notif, "call_duration");
+    model.currentCall.termParty = utils.getText(notif, "term_party");
+    model.currentCall.termReason = utils.getText(notif, "term_reason");
 
     // set call state to "CALL-ENDED"
     model.agentSettings.callState = "CALL-ENDED";
@@ -1090,15 +1047,15 @@ EndCallNotification.prototype.processResponse = function(notification) {
     var formattedResponse = {
         message: "End Call Notification Received.",
         detail: "",
-        uii: notification.ui_notification.uii["#text"],
-        sessionId: notification.ui_notification.session_id["#text"],
-        agentId: notification.ui_notification.agent_id['#text'],
-        callDts: notification.ui_notification.call_dts['#text'],
-        duration: duration,
-        termParty: termParty,
-        termReason: termReason,
-        recordingUrl: notification.ui_notification.recording_url['#text'],
-        dispositionTimeout: notification.ui_notification.disposition_timeout['#text']
+        uii: utils.getText(notif, "uii"),
+        sessionId: utils.getText(notif, "session_id"),
+        agentId: utils.getText(notif, "agent_id"),
+        callDts: utils.getText(notif, "call_dts"),
+        duration: model.currentCall.duration,
+        termParty: model.currentCall.termParty,
+        termReason: model.currentCall.termReason,
+        recordingUrl: utils.getText(notif, "recording_url"),
+        dispositionTimeout: utils.getText(notif, "disposition_timeout")
     };
 
     return formattedResponse;
@@ -1119,9 +1076,10 @@ var GatesChangeNotification = function() {
  */
 GatesChangeNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
     var newAssignedGates = [];
     var availableQueues = model.inboundSettings.availableQueues;
-    var assignedGateIds = notification.ui_notification.gate_ids['#text'] || "";
+    var assignedGateIds = utils.getText(notif, "gate_ids");
     if(assignedGateIds !== ""){
         assignedGateIds = assignedGateIds.split(',');
     }
@@ -1148,7 +1106,7 @@ GatesChangeNotification.prototype.processResponse = function(notification) {
     model.inboundSettings.queues = JSON.parse(JSON.stringify(newAssignedGates));
 
     var formattedResponse = {
-        agentId: notification.ui_notification.agent_id['#text'],
+        agentId: utils.getText(notif, "agent_id"),
         message: "Gates Change notification received.",
         queues: newAssignedGates
     };
@@ -1175,16 +1133,282 @@ GenericNotification.prototype.processResponse = function(notification) {
     var formattedResponse = utils.buildDefaultResponse(notification);
 
     // add message and detail if present
-    var msgCode = notification.ui_notification.message_code;
-    var messageCode = "";
-    if(msgCode){
-        messageCode = msgCode['#text'] || "";
-    }
-    formattedResponse.messageCode = messageCode;
+    formattedResponse.messageCode = utils.getText(notification.ui_notification,"message_code");
 
     return formattedResponse;
 };
 
+
+var NewCallNotification = function() {
+
+};
+
+/*
+ * This class processes a "NEW-CALL" packet received from Intelliqueue. It will determine
+ * if the call is a regular or monitoring call:
+ * 		@Monitoring==true:  set state to ACTIVE-MONITORING, send NewMonitoringCall event
+ * 		@Monitoring==false: set state to ACTIVE, send newcall packet and increment total calls
+ *
+ *  <ui_notification message_id="IQ982010020911335300027" response_to="" type="NEW-CALL">
+ *      <uii>201002091133350139990000000010</uii>
+ *      <agent_id>657</agent_id>
+ *      <dial_dest>sip:+16789050673@sip.connectfirst.com</dial_dest>
+ *      <queue_dts>2010-02-09 11:33:53</queue_dts>
+ *      <queue_time>-1</queue_time>
+ *      <ani>9548298548</ani>
+ *      <dnis/>
+ *      <call_type>OUTBOUND</call_type>
+ *      <app_url><![CDATA[]]></app_url>
+ *      <is_monitoring>FALSE</is_monitoring>
+ *      <gate number="17038">
+ *          <name>AM Campaign</name>
+ *      <description/>
+ *      </gate>
+ *      <message/>
+ *      <survey_id/>
+ *      <survey_pop_type>SUPPRESS</survey_pop_type>
+ *      <agent_recording default="ON" pause="10">TRUE</agent_recording>
+ *          <outdial_dispositions type="CAMPAIGN|GATE">
+ *          <disposition disposition_id="20556" contact_forwarding="FALSE">Not Available</disposition>
+ *      <disposition disposition_id="20559" contact_forwarding="FALSE">Transfer Not Available</disposition>
+ *      <disposition disposition_id="20560" contact_forwarding="FALSE">Transfer Not Available - Ringing (no answer)</disposition>
+ *      <disposition disposition_id="20561" contact_forwarding="TRUE">Succesfull Transfer</disposition>
+ *      <disposition disposition_id="20562" contact_forwarding="TRUE">High School Senior</disposition>
+ *      <disposition disposition_id="20563" contact_forwarding="FALSE">Transfer Not Available - Voicemail</disposition>
+ *      <disposition disposition_id="20564" contact_forwarding="FALSE">Transfer Not Available - On Hold Too Long</disposition>
+ *      <disposition disposition_id="20565" contact_forwarding="FALSE">Transfer Not Available - Busy</disposition>
+ *      <disposition disposition_id="20557" contact_forwarding="FALSE">Not Available</disposition>
+ *      </outdial_dispositions>
+ *      <baggage allow_updates="TRUE" show_lead_passes="TRUE" show_list_name="TRUE">
+ *          <state>OH</state>
+ *          <aux_data4/>
+ *          <address2/>
+ *          <mid_name/>
+ *          <extern_id>9548298548</extern_id>
+ *          <aux_data1>BMAK</aux_data1>
+ *          <aux_external_url/>
+ *          <lead_id>64306</lead_id>
+ *          <aux_data5/>
+ *          <aux_data2>BMAK-041653-934</aux_data2>
+ *          <last_name>Taylor</last_name>
+ *          <lead_passes>1</lead_passes>
+ *          <first_name>Ryant</first_name>
+ *          <city>Cleveland</city>
+ *          <aux_greeting/>
+ *          <address1>8010 Maryland Ave</address1>
+ *      <zip>44105</zip>
+ *      <aux_data3>Call Ctr 1</aux_data3>
+ *      <aux_phone/>
+ *      <custom_labels>
+ *      <aux_1_label/>
+ *      <aux_2_label/>
+ *      <aux_3_label/>
+ *      <aux_4_label/>
+ *      <aux_5_label/>
+ *      </custom_labels>
+ *      </baggage>
+ *      <survey_response response_id="24" survey_id="1775">
+ *          <details>
+ *              <detail element_id="9001" option_id="0"><![CDATA[Box 1]]></detail>
+ *              <detail element_id="9002" option_id="0"><![CDATA[Area 1]]></detail>
+ *              <detail element_id="9003" option_id="6439"/>
+ *              <detail element_id="9004" option_id="6443"/>
+ *              <detail element_id="9004" option_id="6444"/>
+ *              <detail element_id="9005" option_id="6447"/>
+ *              <detail element_id="9006" option_id="0"><![CDATA[11/20/2013]]></detail>
+ *              <detail element_id="9015" option_id="0"><![CDATA[Box 2]]></detail>
+ *              <detail element_id="9016" option_id="0"><![CDATA[Area 2]]></detail>
+ *              <detail element_id="9017" option_id="6466"/>
+ *              <detail element_id="9018" option_id="6471"/>
+ *              <detail element_id="9018" option_id="6472"/>
+ *              <detail element_id="9019" option_id="6477"/>
+ *              <detail element_id="9020" option_id="0"><![CDATA[11/21/2013]]></detail>
+ *          </details>
+ *      </survey_response>
+ *  </ui_notification>
+ */
+NewCallNotification.prototype.processResponse = function(notification) {
+    var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
+
+    // set up new call obj
+    var newCall = {
+        uii: utils.getText(notif,'uii'),
+        agentId: utils.getText(notif,'agent_id'),
+        dialDest: utils.getText(notif,'dial_dest'),
+        queueDts: utils.getText(notif,'queue_dts'),
+        queueTime: utils.getText(notif,'queue_time'),
+        ani: utils.getText(notif,'ani'),
+        dnis: utils.getText(notif,'dnis'),
+        callType: utils.getText(notif,'call_type'),
+        appUrl: utils.getText(notif,'app_url'),
+        isMonitoring: utils.getText(notif,'is_monitoring'),
+        allowHold: utils.getText(notif,'allow_hold'),
+        allowTransfer: utils.getText(notif,'allow_transfer'),
+        allowHangup: utils.getText(notif,'allow_hangup'),
+        allowRequeue: utils.getText(notif,'allow_requeue'),
+        allowEndCallForEveryone: utils.getText(notif,'allow_endcallforeveryone'),
+        surveyId: utils.getText(notif,'survey_id'),
+        surveyPopType: utils.getText(notif,'survey_pop_type'),
+        requeueType: utils.getText(notif,'requeue_type')
+    };
+
+    // set collection values
+    newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
+    newCall.agentRecording = utils.processResponseCollection(notification, 'ui_notification', 'agent_recording', 'agentRecording')[0];
+    newCall.outdialDispositions = utils.processResponseCollection(notification, 'ui_notification', 'outdial_dispositions', 'disposition')[0];
+    newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
+    newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
+    newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+
+    // convert numbers to boolean where applicable
+    newCall.queue.isCampaign = newCall.queue.isCampaign === "1";
+    if(newCall.outdialDispositions.type.toUpperCase() === "GATE"){
+        for(var d = 0; d < newCall.outdialDispositions.dispositions.length; d++) {
+            var disp = newCall.outdialDispositions.dispositions[d];
+            disp.isComplete = disp.isComplete === "1";
+            disp.requireNote = disp.requireNote === "1";
+            disp.saveSurvey = disp.saveSurvey === "1";
+            disp.xfer = disp.xfer === "1";
+        }
+    }
+
+    // Build token map
+    model.tokens = buildTokenMap(notif, newCall);
+
+    // Is Monitoring Call?
+    if(newCall.isMonitoring){
+        model.agentSettings.callState = "ACTIVE-MONITORING";
+    }else{
+        model.agentSettings.callState = "ACTIVE";
+
+        // check for preloaded transfer number
+        if(newCall.baggage && newCall.baggage.auxPhone != ""){
+            model.transferNumber = newCall.baggage.auxPhone;
+        }
+    }
+
+    // Reset the current call counter for Agent Daily Stats
+    model.agentDailyStats.currCallTime = 0;
+
+
+    // todo handle scripting??
+
+    return newCall;
+};
+
+
+function buildTokenMap(notif, newCall){
+    var model = UIModel.getInstance();
+    var tokens = {};
+    if(isCampaign(newCall.queue)){
+        var keyValuePairs = [];
+        if (notif.generic_key_value_pairs){
+            var keyValuePairsStr = utils.getText(notif, 'generic_key_value_pairs');
+            if (keyValuePairsStr.length > 0){
+                keyValuePairs = util.parseKeyValuePairsFromString(keyValuePairsStr, "|", "::");
+            }
+        }
+
+        for(var keyValue in keyValuePairs){
+            tokens[keyValue] = keyValuePairs[keyValue];
+        }
+    }
+
+    tokens["ani"] = newCall.ani;
+    tokens["dnis"] = newCall.dnis;
+    tokens["uii"] = newCall.uii;
+
+    try{
+        if(newCall.queue.number){
+            tokens["source_id"] = newCall.number;
+            tokens["source_name"] = newCall.name;
+            tokens["source_desc"] = newCall.description;
+
+            if(newCall.queue.isCampaign === "0"){
+                tokens["source_type"] = "INBOUND";
+            }else{
+                tokens["source_type"] = "OUTBOUND";
+            }
+        }else{
+            tokens["source_id"] = "0";
+            tokens["source_type"] = "MANUAL";
+            tokens["source_name"] = "";
+            tokens["source_desc"] = "";
+        }
+    }catch(any){
+        console.error("There was an error processing source tokenization", + any);
+    }
+
+    try{
+        tokens["agent_first_name"] = model.agentSettings.firstName;
+        tokens["agent_last_name"] = model.agentSettings.lastName;
+        tokens["agent_external_id"] = model.agentSettings.externalAgentId;
+        tokens["agent_extern_id"] = model.agentSettings.externalAgentId;
+        tokens["agent_type"] = model.agentSettings.agentType;
+    }catch(any){
+        console.error("There was an error parsing tokens for agent info. ", any);
+    }
+
+    if(notif.baggage){
+        try{
+            tokens["lead_id"] = newCall.baggage.leadId;
+            tokens["extern_id"] = newCall.baggage.externId;
+            tokens["first_name"] = newCall.baggage.firstName;
+            tokens["mid_name"] = newCall.baggage.midName;
+            tokens["last_name"] = newCall.baggage.lastName;
+            tokens["address1"] = newCall.baggage.address1;
+            tokens["address2"] = newCall.baggage.address2;
+            tokens["suffix"] = newCall.baggage.suffix;
+            tokens["title"] = newCall.baggage.title;
+            tokens["city"] = newCall.baggage.city;
+            tokens["state"] = newCall.baggage.state;
+            tokens["zip"] = newCall.baggage.zip;
+            tokens["aux_data1"] = newCall.baggage.auxData1;
+            tokens["aux_data2"] = newCall.baggage.auxData2;
+            tokens["aux_data3"] = newCall.baggage.auxData3;
+            tokens["aux_data4"] = newCall.baggage.auxData4;
+            tokens["aux_data5"] = newCall.baggage.auxData5;
+            tokens["aux_phone"] = newCall.baggage.auxPhone;
+            tokens["email"] = newCall.baggage.email;
+            tokens["gate_keeper"] = newCall.baggage.gateKeeper;
+
+        }catch(any){
+            console.error("There was an error parsing baggage tokens. ", any);
+        }
+    }else{
+        tokens["lead_id"] = "";
+        tokens["extern_id"] = "";
+        tokens["first_name"] = "";
+        tokens["mid_name"] = "";
+        tokens["last_name"] = "";
+        tokens["address1"] = "";
+        tokens["address2"] = "";
+        tokens["suffix"] = "";
+        tokens["title"] = "";
+        tokens["city"] = "";
+        tokens["state"] = "";
+        tokens["zip"] = "";
+        tokens["aux_data1"] = "";
+        tokens["aux_data2"] = "";
+        tokens["aux_data3"] = "";
+        tokens["aux_data4"] = "";
+        tokens["aux_data5"] = "";
+        tokens["aux_phone"] = "";
+        tokens["email"] = "";
+        tokens["gate_keeper"] = "";
+    }
+
+    return tokens;
+}
+
+
+function isCampaign(gate){
+    if (gate && gate.isCampaign){
+        return gate.isCampaign === "1";
+    }
+    return false;
+}
 var UIModel = (function() {
 
     var instance;
@@ -1226,7 +1450,7 @@ var UIModel = (function() {
             endCallNotification : new EndCallNotification(),
             gatesChangeNotification : new GatesChangeNotification(),
             genericNotification : new GenericNotification(),
-            currentCall: {},                        // save the NEW-CALL notification in original form??
+            newCallNotification: new NewCallNotification(),
 
             // application state
             applicationSettings : {
@@ -1235,6 +1459,16 @@ var UIModel = (function() {
                 socketConnected : false,
                 socketDest : "",
                 isTcpaSafeMode : false              // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
+            },
+
+            currentCall: {},                        // save the NEW-CALL notification in parsed form
+            callTokens:{},                          // Stores a map of all tokens for a call
+
+            agentDailyStats: {
+                loginTime: 0,
+                offhookTime: 0,
+                talkTime: 0,
+                currCallTime: 0
             },
 
             // current agent settings
@@ -1267,6 +1501,7 @@ var UIModel = (function() {
                 pendingCallbacks : [],
                 pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
                 realAgentType : "AGENT",
+                transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
                 updateDGFromAdminUI : false,        // if pending Dial Group change came from AdminUI, set to true (only used if request is pending)
                 updateLoginMode : false,            // gets set to true when doing an update login (for events control)
                 wasMonitoring : false               // used to track if the last call was a monitoring call
@@ -1431,6 +1666,11 @@ var utils = {
                 var pendResponse = dgChangePendNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.DIAL_GROUP_CHANGE_PENDING, pendResponse);
                 break;
+            case MESSAGE_TYPES.NEW_CALL:
+                var newCallNotif = new NewCallNotification(instance);
+                var newCallResponse = newCallNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+                break;
             case MESSAGE_TYPES.END_CALL:
                 var endCallNotif = new EndCallNotification(instance);
                 var endCallResponse = endCallNotif.processResponse(data);
@@ -1523,10 +1763,11 @@ var utils = {
      *   }
      */
 
-    processResponseCollection: function(response, groupProp, itemProp){
+    processResponseCollection: function(response, groupProp, itemProp, textName){
         var items = [];
         var item = {};
         var itemsRaw = [];
+        var textName = textName || "text";
 
         if(response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined'){
             itemsRaw = response[groupProp][itemProp];
@@ -1537,17 +1778,44 @@ var utils = {
             for (var i = 0; i < itemsRaw.length; i++) {
                 var formattedKey = "";
                 for(var key in itemsRaw[i]){
-                    formattedKey = key.replace(/@/, ''); // remove leading '@'
-                    formattedKey = formattedKey.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); }); // convert to camelCase
+                    if(key.match(/^#/)){
+                        // dealing with text property
+                        formattedKey = textName;
+                    }else{
+                        // dealing with attribute
+                        formattedKey = key.replace(/@/, ''); // remove leading '@'
+                        formattedKey = formattedKey.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); }); // convert to camelCase
+                    }
 
                     if(typeof itemsRaw[i][key] === "object"){
-                        // make recursive call
-                        var newItemProp = Object.keys(itemsRaw[i][key])[0];
-                        var newItems = [];
-                        newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
-                        item[formattedKey] = newItems;
+                        // check for #text element
+                        if(itemsRaw[i][key]['#text']) {
+                            item[key] = itemsRaw[i][key]['#text'];
+                        }else if(Object.keys(itemsRaw[i][key]).length === 0){
+                            // dealing with empty property
+                            item[key] = "";
+                        }else {
+                            // make recursive call
+                            if(Array.isArray(itemsRaw[key])){
+                                var newIt = [];
+                                newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
+                                item[formattedKey + 's'] = newIt;
+                            }else{
+                                var newItemProp = Object.keys(itemsRaw[i][key])[0];
+                                var newItems = [];
+                                newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
+                                item[formattedKey] = newItems;
+                            }
+                        }
                     }else{
-                        item[formattedKey] = itemsRaw[i][key];
+                        // can't convert 0 | 1 to boolean since some are counters
+                        if(itemsRaw[i][key].toUpperCase() === "TRUE"){
+                            item[formattedKey] = true;
+                        }else if(itemsRaw[i][key].toUpperCase() === "FALSE"){
+                            item[formattedKey] = false;
+                        }else{
+                            item[formattedKey] = itemsRaw[i][key];
+                        }
                     }
                 }
 
@@ -1558,17 +1826,46 @@ var utils = {
             // single item
             var formattedProp = "";
             for(var prop in itemsRaw){
-                formattedProp = prop.replace(/@/, ''); // remove leading '@'
-                formattedProp = formattedProp.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); }); // convert to camelCase
+                if(prop.match(/^#/)) {
+                    // dealing with text property
+                    formattedProp = textName;
+                }else{
+                    // dealing with attribute
+                    formattedProp = prop.replace(/@/, ''); // remove leading '@'
+                    formattedProp = formattedProp.replace(/_([a-z])/g, function (g) {
+                        return g[1].toUpperCase();
+                    }); // convert to camelCase
+                }
 
                 if(typeof itemsRaw[prop] === "object"){
-                    // make recursive call
-                    var newProp = Object.keys(itemsRaw[prop])[0];
-                    var newItms = [];
-                    newItms = utils.processResponseCollection(itemsRaw, prop, newProp);
-                    item[formattedProp] = itemsRaw[prop];
+                    if(itemsRaw[prop]['#text']) {
+                        // dealing with #text element
+                        item[prop] = itemsRaw[prop]['#text'];
+                    }else if(Object.keys(itemsRaw[prop]).length === 0){
+                        // dealing with empty property
+                        item[prop] = "";
+                    }else{
+                        // make recursive call
+                        if(Array.isArray(itemsRaw[prop])){
+                            var newIt = [];
+                            newIt = utils.processResponseCollection(response[groupProp], itemProp, prop, textName);
+                            item[formattedProp + 's'] = newIt;
+                        }else {
+                            var newProp = Object.keys(itemsRaw[prop])[0];
+                            var newItms = [];
+                            newItms = utils.processResponseCollection(itemsRaw, prop, newProp);
+                            item[formattedProp] = newItms;
+                        }
+                    }
                 }else{
-                    item[formattedProp] = itemsRaw[prop];
+                    // can't convert 0 | 1 to boolean since some are counters
+                    if(itemsRaw[prop].toUpperCase() === "TRUE"){
+                        item[formattedProp] = true;
+                    }else if(itemsRaw[prop].toUpperCase() === "FALSE"){
+                        item[formattedProp] = false;
+                    }else {
+                        item[formattedProp] = itemsRaw[prop];
+                    }
                 }
             }
 
@@ -1716,7 +2013,53 @@ var utils = {
         }else{
             return "";
         }
+    },
+
+    // safely check if property exists and return empty string
+    // instead of undefined if it doesn't exist
+    // convert "TRUE" | "FALSE" to boolean
+    getText: function(obj,prop){
+        var o = obj[prop];
+        if(o){
+            if(o['#text']){
+                if(o['#text'].toUpperCase() === "TRUE"){
+                    return true;
+                }else if(o['#text'].toUpperCase() === "FALSE"){
+                    return false;
+                }else{
+                    return o['#text'] || "";
+                }
+            }else{
+                return "";
+            }
+        }else{
+            return "";
+        }
+    },
+
+    /**
+     * Parses a string of key value pairs and returns an Array of KeyValue objects.
+     *
+     * @param str The string of keyvalue pairs to parse
+     * @param outerDelimiter The delimiter that separates each keyValue pair
+     * @param innerDelimiter The delimiter that separates each key from its value
+     */
+    parseKeyValuePairsFromString: function(str, outerDelimiter, innerDelimiter){
+    if (!str){
+        return [];
     }
+    var arr = [];
+    var keyValuesPairs = str.split(outerDelimiter);
+    for (var p = 0; p < keyValuesPairs.length; p++){
+        var keyValuePair = keyValuesPairs[p];
+        var pair = keyValuePair.split(innerDelimiter);
+        var keyValue = {};
+        keyValue[pair[0]] = pair[1];
+        arr.push(keyValue);
+    }
+
+    return arr;
+}
 };
 
 
@@ -1747,6 +2090,7 @@ const CALLBACK_TYPES = {
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
     "LOGIN":"loginResponse",
+    "NEW_CALL":"newCallNotification",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
     "OPEN_SOCKET":"openResponse"
@@ -1762,10 +2106,11 @@ const MESSAGE_TYPES = {
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "GATES_CHANGE":"GATES_CHANGE",
-    "ON_MESSAGE":"ON-MESSAGE",
     "GENERIC":"GENERIC",
+    "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
-    "OFFHOOK_TERM":"OFF-HOOK-TERM"
+    "OFFHOOK_TERM":"OFF-HOOK-TERM",
+    "ON_MESSAGE":"ON-MESSAGE"
 };
 
 // GLOBAL INTERNAL METHODS
@@ -1891,6 +2236,22 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().logoutRequest;
     };
     /**
+     * Get latest Agent Daily Stats object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentDailyStats = function() {
+        return UIModel.getInstance().agentDailyStats;
+    };
+    /**
+     * Get latest Call Tokens object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCallTokens = function() {
+        return UIModel.getInstance().callTokens;
+    };
+    /**
      * Get latest outgoing Agent State Request object
      * @memberof AgentLibrary
      * @returns {object}
@@ -1965,7 +2326,7 @@ function initAgentLibraryCore (context) {
 
     // notifications
     /**
-     * Get latest received notification for Dial Group Change message
+     * Get Dial Group Change notification class
      * @memberof AgentLibrary
      * @returns {object}
      */
@@ -1973,7 +2334,7 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().dialGroupChangeNotification;
     };
     /**
-     * Get latest received notification for Dial Group Change Pending message
+     * Get Dial Group Change Pending notification class
      * @memberof AgentLibrary
      * @returns {object}
      */
@@ -1981,7 +2342,7 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().dialGroupChangePendingNotification;
     };
     /**
-     * Get latest received notification for End Call message
+     * Get End Call notification class
      * @memberof AgentLibrary
      * @returns {object}
      */
@@ -1989,7 +2350,7 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().endCallNotification;
     };
     /**
-     * Get latest received notification for Gates Change message
+     * Get Gates Change notification class
      * @memberof AgentLibrary
      * @returns {object}
      */
@@ -1997,12 +2358,20 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().gatesChangeNotification;
     };
     /**
-     * Get latest received generic notification message
+     * Get Generic notification class
      * @memberof AgentLibrary
      * @returns {object}
      */
     AgentLibrary.prototype.getGenericNotification = function() {
         return UIModel.getInstance().genericNotification;
+    };
+    /**
+     * Get New Call notification class
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getNewCallNotification = function() {
+        return UIModel.getInstance().newCallNotification;
     };
     /**
      * Get current call object

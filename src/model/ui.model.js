@@ -39,7 +39,7 @@ var UIModel = (function() {
             endCallNotification : new EndCallNotification(),
             gatesChangeNotification : new GatesChangeNotification(),
             genericNotification : new GenericNotification(),
-            currentCall: {},                        // save the NEW-CALL notification in original form??
+            newCallNotification: new NewCallNotification(),
 
             // application state
             applicationSettings : {
@@ -48,6 +48,16 @@ var UIModel = (function() {
                 socketConnected : false,
                 socketDest : "",
                 isTcpaSafeMode : false              // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
+            },
+
+            currentCall: {},                        // save the NEW-CALL notification in parsed form
+            callTokens:{},                          // Stores a map of all tokens for a call
+
+            agentDailyStats: {
+                loginTime: 0,
+                offhookTime: 0,
+                talkTime: 0,
+                currCallTime: 0
             },
 
             // current agent settings
@@ -80,6 +90,7 @@ var UIModel = (function() {
                 pendingCallbacks : [],
                 pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
                 realAgentType : "AGENT",
+                transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
                 updateDGFromAdminUI : false,        // if pending Dial Group change came from AdminUI, set to true (only used if request is pending)
                 updateLoginMode : false,            // gets set to true when doing an update login (for events control)
                 wasMonitoring : false               // used to track if the last call was a monitoring call

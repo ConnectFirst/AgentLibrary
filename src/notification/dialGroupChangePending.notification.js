@@ -15,11 +15,12 @@ var DialGroupChangePendingNotification = function() {
  */
 DialGroupChangePendingNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
-    model.agentSettings.pendingDialGroupChange = parseInt(notification.ui_notification.dial_group_id["#text"], 10);
+    var notif = notification.ui_notification;
+    model.agentSettings.pendingDialGroupChange = parseInt(utils.getText(notif, "dial_group_id"), 10);
 
     // check if request originated with AdminUI
-    if(notification.ui_notification.update_from_adminui){
-        model.agentSettings.updateDGFromAdminUI = notification.ui_notification.update_from_adminui["#text"].toUpperCase() === "TRUE";
+    if(notif.update_from_adminui){
+        model.agentSettings.updateDGFromAdminUI = utils.getText(notif, "update_from_adminui") === true;
     }else{
         model.agentSettings.updateDGFromAdminUI = false;
     }
@@ -27,9 +28,9 @@ DialGroupChangePendingNotification.prototype.processResponse = function(notifica
     var formattedResponse = {
         message: "Dial Group Change Pending notification received.",
         detail: "DialGroup switch for existing session pending until active call ends.",
-        agentId: notification.ui_notification.agent_id['#text'],
-        dialGroupId: notification.ui_notification.dial_group_id['#text'],
-        updateFromAdminUI: notification.ui_notification.update_from_adminui['#text']
+        agentId: utils.getText(notif, "agent_id"),
+        dialGroupId: utils.getText(notif, "dial_group_id"),
+        updateFromAdminUI: utils.getText(notif, "update_from_adminui")
     };
 
     return formattedResponse;

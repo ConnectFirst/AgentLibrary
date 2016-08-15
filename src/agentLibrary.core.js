@@ -26,6 +26,7 @@ const CALLBACK_TYPES = {
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
     "LOGIN":"loginResponse",
+    "NEW_CALL":"newCallNotification",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
     "OPEN_SOCKET":"openResponse"
@@ -41,10 +42,11 @@ const MESSAGE_TYPES = {
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "GATES_CHANGE":"GATES_CHANGE",
-    "ON_MESSAGE":"ON-MESSAGE",
     "GENERIC":"GENERIC",
+    "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
-    "OFFHOOK_TERM":"OFF-HOOK-TERM"
+    "OFFHOOK_TERM":"OFF-HOOK-TERM",
+    "ON_MESSAGE":"ON-MESSAGE"
 };
 
 // GLOBAL INTERNAL METHODS
@@ -170,6 +172,22 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().logoutRequest;
     };
     /**
+     * Get latest Agent Daily Stats object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentDailyStats = function() {
+        return UIModel.getInstance().agentDailyStats;
+    };
+    /**
+     * Get latest Call Tokens object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCallTokens = function() {
+        return UIModel.getInstance().callTokens;
+    };
+    /**
      * Get latest outgoing Agent State Request object
      * @memberof AgentLibrary
      * @returns {object}
@@ -244,7 +262,7 @@ function initAgentLibraryCore (context) {
 
     // notifications
     /**
-     * Get latest received notification for Dial Group Change message
+     * Get Dial Group Change notification class
      * @memberof AgentLibrary
      * @returns {object}
      */
@@ -252,7 +270,7 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().dialGroupChangeNotification;
     };
     /**
-     * Get latest received notification for Dial Group Change Pending message
+     * Get Dial Group Change Pending notification class
      * @memberof AgentLibrary
      * @returns {object}
      */
@@ -260,7 +278,7 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().dialGroupChangePendingNotification;
     };
     /**
-     * Get latest received notification for End Call message
+     * Get End Call notification class
      * @memberof AgentLibrary
      * @returns {object}
      */
@@ -268,7 +286,7 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().endCallNotification;
     };
     /**
-     * Get latest received notification for Gates Change message
+     * Get Gates Change notification class
      * @memberof AgentLibrary
      * @returns {object}
      */
@@ -276,12 +294,20 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().gatesChangeNotification;
     };
     /**
-     * Get latest received generic notification message
+     * Get Generic notification class
      * @memberof AgentLibrary
      * @returns {object}
      */
     AgentLibrary.prototype.getGenericNotification = function() {
         return UIModel.getInstance().genericNotification;
+    };
+    /**
+     * Get New Call notification class
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getNewCallNotification = function() {
+        return UIModel.getInstance().newCallNotification;
     };
     /**
      * Get current call object

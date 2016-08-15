@@ -25,6 +25,8 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         this.gatesChangeNotificationRaw = fixture.load('gatesChangeNotificationRaw.json');
         this.endCallNotificationRaw = fixture.load('endCallNotificationRaw.json');
         this.genericCancelCallbackNotificationRaw = fixture.load('genericCancelCallbackNotificationRaw.json');
+        this.newCallNotificationRaw = fixture.load('newCallNotificationRaw.json');
+        this.expectedNewCallOutbound = fixture.load('expectedNewCallOutbound.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -135,9 +137,9 @@ describe( 'Tests for processing notification messages in Agent Library', functio
 
         var currentCall = Lib.getCurrentCall();
         var expectedCurrentCall = {
-          duration: this.endCallNotificationRaw.ui_notification.call_duration['#text'],
-          termParty: this.endCallNotificationRaw.ui_notification.term_party['#text'],
-          termReason: this.endCallNotificationRaw.ui_notification.term_reason['#text']
+          duration: this.endCallNotificationRaw.ui_notification.call_duration['#text'] || "",
+          termParty: this.endCallNotificationRaw.ui_notification.term_party['#text'] || "",
+          termReason: this.endCallNotificationRaw.ui_notification.term_reason['#text'] || ""
         };
 
         var callState = Lib.getAgentSettings().callState;
@@ -203,6 +205,27 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         };
 
         expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should process a new_call notification message', function() {
+        var Lib = new AgentLibrary();
+
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
+        // process new call event
+        var newCallNotifRaw = JSON.parse(JSON.stringify(this.newCallNotificationRaw));
+        var response = Lib.getNewCallNotification().processResponse(newCallNotifRaw);
+
+        delete response.queueDts; // dates won't match
+
+        expect(response).toEqual(this.expectedNewCallOutbound);
     });
 
 });

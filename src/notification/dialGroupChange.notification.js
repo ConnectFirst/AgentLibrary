@@ -17,8 +17,9 @@ var DialGroupChangeNotification = function() {
 DialGroupChangeNotification.prototype.processResponse = function(notification) {
     //Modify configRequest with new DialGroupId
     var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
     var origLoginType = model.configRequest.loginType;
-    var newDgId = notification.ui_notification.dial_group_id['#text'] || "";
+    var newDgId = utils.getText(notif, "dial_group_id");
 
     model.dialGroupChangeNotification = notification;
 
@@ -39,10 +40,10 @@ DialGroupChangeNotification.prototype.processResponse = function(notification) {
     var formattedResponse = {
         message: "Dial Group Updated Successfully.",
         detail: "Dial Group changed to [" + newDgId + "].",
-        dialGroupId: notification.ui_notification.dial_group_id['#text'],
-        dialGroupName: notification.ui_notification.dialGroupName['#text'], // camel case from server for some reason :/
-        dialGroupDesc: notification.ui_notification.dial_group_desc['#text'],
-        agentId: notification.ui_notification.agent_id['#text']
+        dialGroupId: utils.getText(notif, "dial_group_id"),
+        dialGroupName: utils.getText(notif, "dialGroupName"), // camel case from server for some reason :/
+        dialGroupDesc: utils.getText(notif, "dial_group_desc"),
+        agentId: utils.getText(notif, "agent_id")
     };
 
     return formattedResponse;

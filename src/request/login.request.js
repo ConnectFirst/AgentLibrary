@@ -119,7 +119,8 @@ LoginRequest.prototype.formatJSON = function() {
  *
  */
 LoginRequest.prototype.processResponse = function(response) {
-    var status = response.ui_response.status['#text'];
+    var resp = response.ui_response;
+    var status = resp.status['#text'];
     var model = UIModel.getInstance();
     var formattedResponse = utils.buildDefaultResponse(response);
 
@@ -128,82 +129,45 @@ LoginRequest.prototype.processResponse = function(response) {
             // save login packet properties to UIModel
             model.loginPacket = response;
             model.applicationSettings.isLoggedInIS = true;
+            model.applicationSettings.isTcpaSafeMode = utils.getText(resp, 'tcpa_safe_mode') === "1";
+            model.chatSettings.alias = utils.getText(resp, 'first_name') + " " + utils.getText(resp, 'last_name');
+
             model.agentSettings.loginDTS = new Date();
-            model.chatSettings.alias = response.ui_response.first_name['#text'] + " " + response.ui_response.last_name['#text']
-            model.agentSettings.maxBreakTime = response.ui_response.max_break_time['#text'];
-            model.agentSettings.maxLunchTime = response.ui_response.max_lunch_time['#text'];
-            model.agentSettings.firstName = response.ui_response.first_name['#text'];
-            model.agentSettings.lastName = response.ui_response.last_name['#text'];
-            model.agentSettings.email = response.ui_response.email['#text'];
-            model.agentSettings.agentId = response.ui_response.agent_id['#text'];
-            model.agentSettings.externalAgentId = response.ui_response.external_agent_id['#text'] || "";
-            model.agentSettings.agentType = response.ui_response.agent_type['#text'];
-            model.agentSettings.realAgentType = response.ui_response.real_agent_type['#text'];
-            model.agentSettings.defaultLoginDest = response.ui_response.default_login_dest['#text'];
-            model.agentSettings.altDefaultLoginDest = response.ui_response.alt_default_login_dest['#text'] || "";
-            model.agentSettings.disableSupervisorMonitoring = response.ui_response.disable_supervisor_monitoring['#text'];
-            model.agentSettings.initLoginState = response.ui_response.init_login_state['#text'];
-            model.agentSettings.initLoginStateLabel = response.ui_response.init_login_state_label['#text'];
-            model.agentSettings.outboundManualDefaultRingtime = response.ui_response.outbound_manual_default_ringtime['#text'];
+            model.agentSettings.maxBreakTime = utils.getText(resp, 'max_break_time');
+            model.agentSettings.maxLunchTime = utils.getText(resp, 'max_lunch_time');
+            model.agentSettings.firstName = utils.getText(resp, 'first_name');
+            model.agentSettings.lastName = utils.getText(resp, 'last_name');
+            model.agentSettings.email = utils.getText(resp, 'email');
+            model.agentSettings.agentId = utils.getText(resp, 'agent_id');
+            model.agentSettings.externalAgentId = utils.getText(resp, 'external_agent_id');
+            model.agentSettings.agentType = utils.getText(resp, 'agent_type');
+            model.agentSettings.realAgentType = utils.getText(resp, 'real_agent_type');
+            model.agentSettings.defaultLoginDest = utils.getText(resp, 'default_login_dest');
+            model.agentSettings.altDefaultLoginDest = utils.getText(resp, 'alt_default_login_dest');
+            model.agentSettings.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring');
+            model.agentSettings.initLoginState = utils.getText(resp, 'init_login_state');
+            model.agentSettings.initLoginStateLabel = utils.getText(resp, 'init_login_state_label');
+            model.agentSettings.outboundManualDefaultRingtime = utils.getText(resp, 'outbound_manual_default_ringtime');
+            model.agentSettings.isOutboundPrepay = utils.getText(resp, 'outbound_prepay') === "1";
 
-            var allowCallControl = typeof response.ui_response.allow_call_control == 'undefined' ? false : response.ui_response.allow_call_control['#text'];
-            var allowChat = typeof response.ui_response.allow_chat == 'undefined' ? false : response.ui_response.allow_chat['#text'];
-            var showLeadHistory = typeof response.ui_response.show_lead_history == 'undefined' ? false : response.ui_response.show_lead_history['#text'];
-            var allowManualOutboundGates = typeof response.ui_response.allow_manual_outbound_gates == 'undefined' ? false : response.ui_response.allow_manual_outbound_gates['#text'];
-            var isTcpaSafeMode = typeof response.ui_response.tcpa_safe_mode == 'undefined' ? false : response.ui_response.tcpa_safe_mode['#text'];
-            var allowLeadInserts = typeof response.ui_response.insert_campaigns == 'undefined' ? false : response.ui_response.insert_campaigns.campaign;
-            var isOutboundPrepay = typeof response.ui_response.outbound_prepay == 'undefined' ? false : response.ui_response.outbound_prepay['#text'];
+            model.agentPermissions.allowCallControl = utils.getText(resp, 'allow_call_control') === "1";
+            model.agentPermissions.allowChat = utils.getText(resp, 'allow_chat') === "1";
+            model.agentPermissions.showLeadHistory = utils.getText(resp, 'show_lead_history') === "1";
+            model.agentPermissions.allowManualOutboundGates = utils.getText(resp, 'allow_manual_outbound_gates') === "1";
+            model.agentPermissions.allowOffHook = utils.getText(resp, 'allow_off_hook') === "1";
+            model.agentPermissions.allowManualCalls = utils.getText(resp, 'allow_manual_calls') === "1";
+            model.agentPermissions.allowManualPass = utils.getText(resp, 'allow_manual_pass') === "1";
+            model.agentPermissions.allowManualIntlCalls = utils.getText(resp, 'allow_manual_intl_calls') === "1";
+            model.agentPermissions.allowLoginUpdates = utils.getText(resp, 'allow_login_updates') === "1";
+            model.agentPermissions.allowInbound = utils.getText(resp, 'allow_inbound') === "1";
+            model.agentPermissions.allowOutbound = utils.getText(resp, 'allow_outbound') === "1";
+            model.agentPermissions.allowBlended = utils.getText(resp, 'allow_blended') === "1";
+            model.agentPermissions.allowLoginControl = utils.getText(resp, 'allow_login_control') === "1";
+            model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
 
-            if(allowCallControl == "0"){
-                model.agentPermissions.allowCallControl = false;
-            }
-            if(allowChat == "1"){
-                model.agentPermissions.allowChat = true;
-            }
-            if(showLeadHistory == "0"){
-                model.agentPermissions.showLeadHistory = false;
-            }
-            if(allowManualOutboundGates == "1"){
-                model.agentPermissions.allowManualOutboundGates = true;
-            }
-            if(isTcpaSafeMode == "1"){
-                model.applicationSettings.isTcpaSafeMode = true;
-            }
+            var allowLeadInserts = typeof resp.insert_campaigns === 'undefined' ? false : response.ui_response.insert_campaigns.campaign;
             if(allowLeadInserts && allowLeadInserts.length > 0){
                 model.agentPermissions.allowLeadInserts = true;
-            }
-            if(isOutboundPrepay == "1"){
-                model.agentSettings.isOutboundPrepay = true;
-            }
-            if(response.ui_response.allow_off_hook['#text'] == "0"){
-                model.agentPermissions.allowOffHook = false;
-            }
-            if(response.ui_response.allow_manual_calls['#text'] == "0"){
-                model.agentPermissions.allowManualCalls = false;
-            }
-            if(response.ui_response.allow_manual_pass['#text'] == "0"){
-                model.agentPermissions.allowManualPass = false;
-            }
-            if(response.ui_response.allow_manual_intl_calls['#text'] == "1"){
-                model.agentPermissions.allowManualIntlCalls = true;
-            }
-            if(response.ui_response.allow_login_updates['#text'] == "0"){
-                model.agentPermissions.allowLoginUpdates = false;
-            }
-            if(response.ui_response.allow_inbound['#text'] == "0"){
-                model.agentPermissions.allowInbound = false;
-            }
-            if(response.ui_response.allow_outbound['#text'] == "0"){
-                model.agentPermissions.allowOutbound = false;
-            }
-            if(response.ui_response.allow_blended['#text'] == "0"){
-                model.agentPermissions.allowBlended = false;
-            }
-            if(response.ui_response.allow_login_control['#text'] == "0"){
-                model.agentPermissions.allowLoginControl = false;
-            }
-            if(response.ui_response.allow_cross_gate_requeue['#text'] == "1"){
-                model.agentPermissions.allowCrossQueueRequeue = true;
             }
 
             // Set collection values
@@ -239,6 +203,7 @@ LoginRequest.prototype.processResponse = function(response) {
         formattedResponse.inboundSettings = model.inboundSettings;
         formattedResponse.outboundSettings = model.outboundSettings;
         formattedResponse.surveySettings = model.surveySettings;
+
     }else if(status === 'RESTRICTED'){
         formattedResponse.message = "Invalid IP Address";
         console.log("AgentLibrary: Invalid IP Address");

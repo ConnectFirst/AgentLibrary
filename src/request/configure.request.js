@@ -118,8 +118,9 @@ ConfigRequest.prototype.formatJSON = function() {
  * </ui_response>
  */
 ConfigRequest.prototype.processResponse = function(response) {
-    var status = response.ui_response.status['#text'];
-    var detail = response.ui_response.detail['#text'];
+    var resp = response.ui_response;
+    var status = utils.getText(resp, "status");
+    var detail = utils.getText(resp, "detail");
     var model = UIModel.getInstance();
     var formattedResponse = utils.buildDefaultResponse(response);
 
@@ -132,13 +133,13 @@ ConfigRequest.prototype.processResponse = function(response) {
         if(!model.agentSettings.isLoggedIn){
             // fresh login, set UI Model properties
             model.configPacket = response;
-            model.connectionSettings.hashCode = response.ui_response.hash_code['#text'];
+            model.connectionSettings.hashCode = utils.getText(resp, "hash_code");
             model.agentSettings.isLoggedIn = true;
             model.agentSettings.loginDTS = new Date();
             model.connectionSettings.reconnect = true;
             model.agentPermissions.allowLeadSearch = false;
             model.agentSettings.dialDest = model.configRequest.dialDest; // not sent in response
-            model.agentSettings.loginType = response.ui_response.login_type['#text'];
+            model.agentSettings.loginType = utils.getText(resp, "login_type");
 
             // Set collection values
             setDialGroupSettings(response);

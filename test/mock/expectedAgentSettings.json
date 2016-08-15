@@ -66,6 +66,7 @@
   "pendingCallbacks": [],
   "pendingDialGroupChange": 0,
   "realAgentType": "AGENT",
+  "transferNumber": "",
   "updateDGFromAdminUI": false,
   "updateLoginMode": false,
   "wasMonitoring": false,

@@ -48,11 +48,12 @@ AgentStateRequest.prototype.formatJSON = function() {
  * </ui_response>
  */
 AgentStateRequest.prototype.processResponse = function(response) {
-    var status = response.ui_response.status['#text'];
-    var prevState = response.ui_response.prev_state['#text'];
-    var currState = response.ui_response.current_state['#text'];
-    var prevAuxState = response.ui_response.prev_aux_state['#text'] || "";
-    var currAuxState = response.ui_response.agent_aux_state['#text'] || "";
+    var resp = response.ui_response;
+    var status = utils.getText(resp, "status");
+    var prevState = utils.getText(resp, "prev_state");
+    var currState = utils.getText(resp, "current_state");
+    var prevAuxState = utils.getText(resp, "prev_aux_state");
+    var currAuxState = utils.getText(resp, "agent_aux_state");
     var model = UIModel.getInstance();
 
     // add message and detail if present

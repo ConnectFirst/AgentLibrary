@@ -76,6 +76,11 @@ var utils = {
                 var pendResponse = dgChangePendNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.DIAL_GROUP_CHANGE_PENDING, pendResponse);
                 break;
+            case MESSAGE_TYPES.NEW_CALL:
+                var newCallNotif = new NewCallNotification(instance);
+                var newCallResponse = newCallNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+                break;
             case MESSAGE_TYPES.END_CALL:
                 var endCallNotif = new EndCallNotification(instance);
                 var endCallResponse = endCallNotif.processResponse(data);
@@ -166,12 +171,30 @@ var utils = {
      *           }
      *       ]
      *   }
+     *
+     *   OR
+     *
+     *   "outdial_dispositions": {
+     *       "@type": "GATE",
+     *       "disposition": [
+     *          {
+     *           "@contact_forwarding": "false",
+     *           "@disposition_id": "926",
+     *           "@is_complete": "1",
+     *           "@require_note": "0",
+     *           "@save_survey": "1",
+     *           "@xfer": "0",
+     *           "#text": "One B"
+     *          }
+     *      ]
+     *   }
      */
 
-    processResponseCollection: function(response, groupProp, itemProp){
+    processResponseCollection: function(response, groupProp, itemProp, textName){
         var items = [];
         var item = {};
         var itemsRaw = [];
+        var textName = textName || "text";
 
         if(response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined'){
             itemsRaw = response[groupProp][itemProp];
@@ -182,17 +205,44 @@ var utils = {
             for (var i = 0; i < itemsRaw.length; i++) {
                 var formattedKey = "";
                 for(var key in itemsRaw[i]){
-                    formattedKey = key.replace(/@/, ''); // remove leading '@'
-                    formattedKey = formattedKey.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); }); // convert to camelCase
+                    if(key.match(/^#/)){
+                        // dealing with text property
+                        formattedKey = textName;
+                    }else{
+                        // dealing with attribute
+                        formattedKey = key.replace(/@/, ''); // remove leading '@'
+                        formattedKey = formattedKey.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); }); // convert to camelCase
+                    }
 
                     if(typeof itemsRaw[i][key] === "object"){
-                        // make recursive call
-                        var newItemProp = Object.keys(itemsRaw[i][key])[0];
-                        var newItems = [];
-                        newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
-                        item[formattedKey] = newItems;
+                        // check for #text element
+                        if(itemsRaw[i][key]['#text']) {
+                            item[key] = itemsRaw[i][key]['#text'];
+                        }else if(Object.keys(itemsRaw[i][key]).length === 0){
+                            // dealing with empty property
+                            item[key] = "";
+                        }else {
+                            // make recursive call
+                            if(Array.isArray(itemsRaw[key])){
+                                var newIt = [];
+                                newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
+                                item[formattedKey + 's'] = newIt;
+                            }else{
+                                var newItemProp = Object.keys(itemsRaw[i][key])[0];
+                                var newItems = [];
+                                newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
+                                item[formattedKey] = newItems;
+                            }
+                        }
                     }else{
-                        item[formattedKey] = itemsRaw[i][key];
+                        // can't convert 0 | 1 to boolean since some are counters
+                        if(itemsRaw[i][key].toUpperCase() === "TRUE"){
+                            item[formattedKey] = true;
+                        }else if(itemsRaw[i][key].toUpperCase() === "FALSE"){
+                            item[formattedKey] = false;
+                        }else{
+                            item[formattedKey] = itemsRaw[i][key];
+                        }
                     }
                 }
 
@@ -203,17 +253,46 @@ var utils = {
             // single item
             var formattedProp = "";
             for(var prop in itemsRaw){
-                formattedProp = prop.replace(/@/, ''); // remove leading '@'
-                formattedProp = formattedProp.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); }); // convert to camelCase
+                if(prop.match(/^#/)) {
+                    // dealing with text property
+                    formattedProp = textName;
+                }else{
+                    // dealing with attribute
+                    formattedProp = prop.replace(/@/, ''); // remove leading '@'
+                    formattedProp = formattedProp.replace(/_([a-z])/g, function (g) {
+                        return g[1].toUpperCase();
+                    }); // convert to camelCase
+                }
 
                 if(typeof itemsRaw[prop] === "object"){
-                    // make recursive call
-                    var newProp = Object.keys(itemsRaw[prop])[0];
-                    var newItms = [];
-                    newItms = utils.processResponseCollection(itemsRaw, prop, newProp);
-                    item[formattedProp] = itemsRaw[prop];
+                    if(itemsRaw[prop]['#text']) {
+                        // dealing with #text element
+                        item[prop] = itemsRaw[prop]['#text'];
+                    }else if(Object.keys(itemsRaw[prop]).length === 0){
+                        // dealing with empty property
+                        item[prop] = "";
+                    }else{
+                        // make recursive call
+                        if(Array.isArray(itemsRaw[prop])){
+                            var newIt = [];
+                            newIt = utils.processResponseCollection(response[groupProp], itemProp, prop, textName);
+                            item[formattedProp + 's'] = newIt;
+                        }else {
+                            var newProp = Object.keys(itemsRaw[prop])[0];
+                            var newItms = [];
+                            newItms = utils.processResponseCollection(itemsRaw, prop, newProp);
+                            item[formattedProp] = newItms;
+                        }
+                    }
                 }else{
-                    item[formattedProp] = itemsRaw[prop];
+                    // can't convert 0 | 1 to boolean since some are counters
+                    if(itemsRaw[prop].toUpperCase() === "TRUE"){
+                        item[formattedProp] = true;
+                    }else if(itemsRaw[prop].toUpperCase() === "FALSE"){
+                        item[formattedProp] = false;
+                    }else {
+                        item[formattedProp] = itemsRaw[prop];
+                    }
                 }
             }
 
@@ -361,5 +440,51 @@ var utils = {
         }else{
             return "";
         }
+    },
+
+    // safely check if property exists and return empty string
+    // instead of undefined if it doesn't exist
+    // convert "TRUE" | "FALSE" to boolean
+    getText: function(obj,prop){
+        var o = obj[prop];
+        if(o){
+            if(o['#text']){
+                if(o['#text'].toUpperCase() === "TRUE"){
+                    return true;
+                }else if(o['#text'].toUpperCase() === "FALSE"){
+                    return false;
+                }else{
+                    return o['#text'] || "";
+                }
+            }else{
+                return "";
+            }
+        }else{
+            return "";
+        }
+    },
+
+    /**
+     * Parses a string of key value pairs and returns an Array of KeyValue objects.
+     *
+     * @param str The string of keyvalue pairs to parse
+     * @param outerDelimiter The delimiter that separates each keyValue pair
+     * @param innerDelimiter The delimiter that separates each key from its value
+     */
+    parseKeyValuePairsFromString: function(str, outerDelimiter, innerDelimiter){
+    if (!str){
+        return [];
     }
+    var arr = [];
+    var keyValuesPairs = str.split(outerDelimiter);
+    for (var p = 0; p < keyValuesPairs.length; p++){
+        var keyValuePair = keyValuesPairs[p];
+        var pair = keyValuePair.split(innerDelimiter);
+        var keyValue = {};
+        keyValue[pair[0]] = pair[1];
+        arr.push(keyValue);
+    }
+
+    return arr;
+}
 };

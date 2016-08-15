@@ -31,7 +31,8 @@ OffhookTermRequest.prototype.formatJSON = function() {
  * </ui_notification>
  */
 OffhookTermRequest.prototype.processResponse = function(data) {
-    var monitoring = data.ui_notification.monitoring['#text'] === '1';
+    var notif = data.ui_notification;
+    var monitoring = utils.getText(notif, "monitoring") === '1';
     var model = UIModel.getInstance();
 
     model.agentSettings.wasMonitoring = monitoring;
@@ -39,9 +40,9 @@ OffhookTermRequest.prototype.processResponse = function(data) {
     model.agentSettings.isOffhook = false;
 
     var formattedResponse = {
-        agentId: data.ui_notification.agent_id['#text'],
-        startDts: data.ui_notification.start_dts['#text'],
-        endDts: data.ui_notification.end_dts['#text'],
+        agentId: utils.getText(notif, "agent_id"),
+        startDts: utils.getText(notif, "start_dts"),
+        endDts: utils.getText(notif, "end_dts"),
         monitoring: monitoring
     };
 
