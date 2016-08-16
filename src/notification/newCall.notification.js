@@ -123,7 +123,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
 
     // convert numbers to boolean where applicable
     newCall.queue.isCampaign = newCall.queue.isCampaign === "1";
-    if(newCall.outdialDispositions.type && newCall.outdialDispositions.type.toUpperCase() === "GATE"){
+    if(newCall.outdialDispositions && newCall.outdialDispositions.type && newCall.outdialDispositions.type.toUpperCase() === "GATE"){
         for(var d = 0; d < newCall.outdialDispositions.dispositions.length; d++) {
             var disp = newCall.outdialDispositions.dispositions[d];
             disp.isComplete = disp.isComplete === "1";
@@ -134,7 +134,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
     }
 
     // Build token map
-    model.tokens = buildTokenMap(notif, newCall);
+    model.callTokens = buildTokenMap(notif, newCall);
 
     // Is Monitoring Call?
     if(newCall.isMonitoring){
@@ -151,8 +151,9 @@ NewCallNotification.prototype.processResponse = function(notification) {
     // Reset the current call counter for Agent Daily Stats
     model.agentDailyStats.currCallTime = 0;
 
-
     // todo handle scripting??
+
+    model.currentCall = newCall;
 
     return newCall;
 };
@@ -181,9 +182,9 @@ function buildTokenMap(notif, newCall){
 
     try{
         if(newCall.queue.number){
-            tokens["source_id"] = newCall.number;
-            tokens["source_name"] = newCall.name;
-            tokens["source_desc"] = newCall.description;
+            tokens["source_id"] = newCall.number || "";
+            tokens["source_name"] = newCall.name || "";
+            tokens["source_desc"] = newCall.description || "";
 
             if(newCall.queue.isCampaign === "0"){
                 tokens["source_type"] = "INBOUND";
@@ -212,26 +213,26 @@ function buildTokenMap(notif, newCall){
 
     if(notif.baggage){
         try{
-            tokens["lead_id"] = newCall.baggage.leadId;
-            tokens["extern_id"] = newCall.baggage.externId;
-            tokens["first_name"] = newCall.baggage.firstName;
-            tokens["mid_name"] = newCall.baggage.midName;
-            tokens["last_name"] = newCall.baggage.lastName;
-            tokens["address1"] = newCall.baggage.address1;
-            tokens["address2"] = newCall.baggage.address2;
-            tokens["suffix"] = newCall.baggage.suffix;
-            tokens["title"] = newCall.baggage.title;
-            tokens["city"] = newCall.baggage.city;
-            tokens["state"] = newCall.baggage.state;
-            tokens["zip"] = newCall.baggage.zip;
-            tokens["aux_data1"] = newCall.baggage.auxData1;
-            tokens["aux_data2"] = newCall.baggage.auxData2;
-            tokens["aux_data3"] = newCall.baggage.auxData3;
-            tokens["aux_data4"] = newCall.baggage.auxData4;
-            tokens["aux_data5"] = newCall.baggage.auxData5;
-            tokens["aux_phone"] = newCall.baggage.auxPhone;
-            tokens["email"] = newCall.baggage.email;
-            tokens["gate_keeper"] = newCall.baggage.gateKeeper;
+            tokens["lead_id"] = newCall.baggage.leadId || "";
+            tokens["extern_id"] = newCall.baggage.externId || "";
+            tokens["first_name"] = newCall.baggage.firstName || "";
+            tokens["mid_name"] = newCall.baggage.midName || "";
+            tokens["last_name"] = newCall.baggage.lastName || "";
+            tokens["address1"] = newCall.baggage.address1 || "";
+            tokens["address2"] = newCall.baggage.address2 || "";
+            tokens["suffix"] = newCall.baggage.suffix || "";
+            tokens["title"] = newCall.baggage.title || "";
+            tokens["city"] = newCall.baggage.city || "";
+            tokens["state"] = newCall.baggage.state || "";
+            tokens["zip"] = newCall.baggage.zip || "";
+            tokens["aux_data1"] = newCall.baggage.auxData1 || "";
+            tokens["aux_data2"] = newCall.baggage.auxData2 || "";
+            tokens["aux_data3"] = newCall.baggage.auxData3 || "";
+            tokens["aux_data4"] = newCall.baggage.auxData4 || "";
+            tokens["aux_data5"] = newCall.baggage.auxData5 || "";
+            tokens["aux_phone"] = newCall.baggage.auxPhone || "";
+            tokens["email"] = newCall.baggage.email || "";
+            tokens["gate_keeper"] = newCall.baggage.gateKeeper || "";
 
         }catch(any){
             console.error("There was an error parsing baggage tokens. ", any);

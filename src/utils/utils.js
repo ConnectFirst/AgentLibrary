@@ -232,10 +232,10 @@ var utils = {
                     if(typeof itemsRaw[i][key] === "object"){
                         // check for #text element
                         if(itemsRaw[i][key]['#text']) {
-                            item[key] = itemsRaw[i][key]['#text'];
+                            item[formattedKey] = itemsRaw[i][key]['#text'];
                         }else if(Object.keys(itemsRaw[i][key]).length === 0){
                             // dealing with empty property
-                            item[key] = "";
+                            item[formattedKey] = "";
                         }else {
                             // make recursive call
                             if(Array.isArray(itemsRaw[key])){
@@ -282,10 +282,10 @@ var utils = {
                 if(typeof itemsRaw[prop] === "object"){
                     if(itemsRaw[prop]['#text']) {
                         // dealing with #text element
-                        item[prop] = itemsRaw[prop]['#text'];
+                        item[formattedProp] = itemsRaw[prop]['#text'];
                     }else if(Object.keys(itemsRaw[prop]).length === 0){
                         // dealing with empty property
-                        item[prop] = "";
+                        item[formattedProp] = "";
                     }else{
                         // make recursive call
                         if(Array.isArray(itemsRaw[prop])){

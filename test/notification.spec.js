@@ -30,6 +30,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         this.addSessionNotificationRaw = fixture.load('addSessionNotificationRaw.json');
         this.dropSessionNotificationRaw = fixture.load('dropSessionNotificationRaw.json');
         this.earlyUiiNotificationRaw = fixture.load('earlyUiiNotificationRaw.json');
+        this.expectedTokens = fixture.load('expectedTokens.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -225,10 +226,14 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         // process new call event
         var newCallNotifRaw = JSON.parse(JSON.stringify(this.newCallNotificationRaw));
         var response = Lib.getNewCallNotification().processResponse(newCallNotifRaw);
+        var modelNewCall = Lib.getCurrentCall();
+        var modelTokens = Lib.getCallTokens();
 
         delete response.queueDts; // dates won't match
 
         expect(response).toEqual(this.expectedNewCallOutbound);
+        expect(response).toEqual(modelNewCall);
+        expect(modelTokens).toEqual(this.expectedTokens);
     });
 
     it( 'should process a add-session notification message', function() {
