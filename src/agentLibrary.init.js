@@ -3,6 +3,7 @@ var initAgentLibrary = function (context) {
     initAgentLibraryCore(context);
     initAgentLibrarySocket(context);
     initAgentLibraryAgent(context);
+    initAgentLibraryCall(context);
 
     return context.AgentLibrary;
 };

@@ -123,7 +123,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
 
     // convert numbers to boolean where applicable
     newCall.queue.isCampaign = newCall.queue.isCampaign === "1";
-    if(newCall.outdialDispositions.type.toUpperCase() === "GATE"){
+    if(newCall.outdialDispositions.type && newCall.outdialDispositions.type.toUpperCase() === "GATE"){
         for(var d = 0; d < newCall.outdialDispositions.dispositions.length; d++) {
             var disp = newCall.outdialDispositions.dispositions[d];
             disp.isComplete = disp.isComplete === "1";

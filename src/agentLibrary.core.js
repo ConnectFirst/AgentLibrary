@@ -49,10 +49,15 @@ const MESSAGE_TYPES = {
     "DROP_SESSION":"DROP-SESSION",
     "GATES_CHANGE":"GATES_CHANGE",
     "GENERIC":"GENERIC",
+    "HANGUP":"HANGUP",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
     "OFFHOOK_TERM":"OFF-HOOK-TERM",
-    "ON_MESSAGE":"ON-MESSAGE"
+    "ON_MESSAGE":"ON-MESSAGE",
+    "ONE_TO_ONE_OUTDIAL":"ONE-TO-ONE-OUTDIAL",
+    "ONE_TO_ONE_OUTDIAL_CANCEL":"ONE-TO-ONE-OUTDIAL-CANCEL",
+    "PREVIEW_DIAL":"PREVIEW-DIAL",
+    "TCPA_SAFE":"TCPA-SAFE"
 };
 
 
@@ -217,6 +222,46 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().offhookTermRequest;
     };
     /**
+     * Get latest outgoing Hangup Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getHangupRequest = function() {
+        return UIModel.getInstance().hangupRequest;
+    };
+    /**
+     * Get latest outgoing Preview Dial Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getPreviewDialRequest = function() {
+        return UIModel.getInstance().previewDialRequest;
+    };
+    /**
+     * Get latest TCPA Safe Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getTcpaSafeRequest = function() {
+        return UIModel.getInstance().tcpaSafeRequest;
+    };
+    /**
+     * Get latest Manual Outdial Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getOneToOneOutdialRequest = function() {
+        return UIModel.getInstance().oneToOneOutdialRequest;
+    };
+    /**
+     * Get latest Manual Outdial Cancel Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getOneToOneOutdialCancelRequest = function() {
+        return UIModel.getInstance().oneToOneOutdialCancelRequest;
+    };
+    /**
      * Get packet received on successful Login
      * @memberof AgentLibrary
      * @returns {object}
@@ -350,7 +395,9 @@ function initAgentLibraryCore (context) {
     };
 
 
-    // settings objects
+    //////////////////////
+    // settings objects //
+    //////////////////////
     /**
      * Get Application Settings object containing the current state of application related data
      * @memberof AgentLibrary

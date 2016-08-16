@@ -87,7 +87,7 @@ AgentStateRequest.prototype.processResponse = function(response) {
         if(formattedResponse.message === ""){
             formattedResponse.message = "Unable to change agent state";
         }
-        console.warn("AgentLibrary: Unable to change agent state " + detail);
+        console.warn("AgentLibrary: Unable to change agent state " + formattedResponse.detail);
     }
 
     return formattedResponse;

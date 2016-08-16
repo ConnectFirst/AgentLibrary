@@ -19,10 +19,15 @@ var UIModel = (function() {
             agentStateRequest : null,
             callbacksPendingRequest : null,
             configRequest : null,
+            hangupRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
             offhookInitRequest : null,
             offhookTermRequest : null,
+            oneToOneOutdialRequest : null,
+            oneToOneOutdialCancelRequest : null,
+            previewDialRequest : null,
+            tcpaSafeRequest : null,
 
             // response packets
             agentStatePacket : null,
@@ -34,15 +39,15 @@ var UIModel = (function() {
             transferSessions: {},
 
             // notification packets
+            addSessionNotification: new AddSessionNotification(),
             dialGroupChangeNotification : new DialGroupChangeNotification(),
             dialGroupChangePendingNotification : new DialGroupChangePendingNotification(),
+            dropSessionNotification: new DropSessionNotification(),
+            earlyUiiNotification: new EarlyUiiNotification(),
             endCallNotification : new EndCallNotification(),
             gatesChangeNotification : new GatesChangeNotification(),
             genericNotification : new GenericNotification(),
             newCallNotification: new NewCallNotification(),
-            addSessionNotification: new AddSessionNotification(),
-            dropSessionNotification: new DropSessionNotification(),
-            earlyUiiNotification: new EarlyUiiNotification(),
 
             // application state
             applicationSettings : {

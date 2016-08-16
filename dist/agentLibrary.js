@@ -96,7 +96,7 @@ AgentStateRequest.prototype.processResponse = function(response) {
         if(formattedResponse.message === ""){
             formattedResponse.message = "Unable to change agent state";
         }
-        console.warn("AgentLibrary: Unable to change agent state " + detail);
+        console.warn("AgentLibrary: Unable to change agent state " + formattedResponse.detail);
     }
 
     return formattedResponse;
@@ -479,6 +479,33 @@ function setSkillProfileSettings(){
         }
     }
 }
+
+var HangupRequest = function(sessionId) {
+    this.sessionId = sessionId || null;
+};
+
+HangupRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.HANGUP,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
+            },
+            "uii":{
+                "#text":utils.toString(UIModel.getInstance().currentCall.uii)
+            },
+            "session_id":{
+                "#text":utils.toString(this.sessionId === null ? UIModel.getInstance().currentCall.sessionId : this.sessionId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
 
 var LoginRequest = function(username, password) {
     this.username = username;
@@ -902,6 +929,163 @@ OffhookTermRequest.prototype.processResponse = function(data) {
     };
 
     return formattedResponse;
+};
+
+
+var OneToOneOutdialRequest = function(destination, ringTime, callerId, countryId, gateId) {
+    this.destination = destination;
+    this.ringTime = ringTime || "60";
+    this.callerId = callerId;
+    this.countryId = countryId || "USA";
+    this.gateId = gateId || "";
+};
+
+OneToOneOutdialRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.ONE_TO_ONE_OUTDIAL,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
+            },
+            "destination":{
+                "#text":utils.toString(this.destination)
+            },
+            "ring_time":{
+                "#text":utils.toString(this.ringTime)
+            },
+            "caller_id":{
+                "#text":utils.toString(this.callerId)
+            },
+            "country_id":{
+                "#text":utils.toString(this.countryId)
+            },
+            "gate_id":{
+                "#text":utils.toString(this.gateId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
+
+var OneToOneOutdialCancelRequest = function(uii) {
+    this.uii = uii
+};
+
+/*
+ * This class is responsible for creating a new packet to cancel
+ * an in-progress outbound call.
+ */
+OneToOneOutdialCancelRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.ONE_TO_ONE_OUTDIAL_CANCEL,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
+            },
+            "uii":{
+                "#text":utils.toString(this.uii)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
+
+
+var PreviewDialRequest = function(action, searchFields, requestId) {
+    this.agentId = UIModel.getInstance().agentSettings.agentId;
+    this.searchFields = searchFields || [];
+    this.requestId = requestId || "";
+    this.action = action || "";
+};
+
+/*
+ * searchFields = [
+ *  {key: "name", value: "Danielle"},
+ *  {key: "number", value: "5555555555"
+ * ];
+ */
+PreviewDialRequest.prototype.formatJSON = function() {
+    var fields = {};
+    for(var i =0; i < this.searchFields.length; i++){
+        var fieldObj = this.searchFields[i];
+        fields[fieldObj.key] = { "#text" : utils.toString(fieldObj.value) };
+    }
+
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.PREVIEW_DIAL,
+            "@message_id":utils.getMessageId(),
+            "@action":this.action,
+            "response_to":"",
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
+            },
+            "pending_request_id":{
+                "#text":utils.toString(this.requestId)
+            },
+            "search_fields": fields
+                // { "name": {"#text": "Danielle" } }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+var TcpaSafeRequest = function(action, searchFields, requestId) {
+    this.agentId = UIModel.getInstance().agentSettings.agentId;
+    this.searchFields = searchFields || [];
+    this.requestId = requestId || "";
+    this.action = action || "";
+};
+
+/*
+ * searchFields = [
+ *  {key: "name", value: "Danielle"},
+ *  {key: "number", value: "5555555555"
+ * ];
+ */
+TcpaSafeRequest.prototype.formatJSON = function() {
+    var fields = {};
+    for(var i =0; i < this.searchFields.length; i++){
+        var fieldObj = this.searchFields[i];
+        fields[fieldObj.key] = { "#text" : utils.toString(fieldObj.value) };
+    }
+
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.TCPA_SAFE,
+            "@message_id":utils.getMessageId(),
+            "@action":this.action,
+            "response_to":"",
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
+            },
+            "pending_request_id":{
+                "#text":utils.toString(this.requestId)
+            },
+            "search_fields": fields
+                // { "name": {"#text": "Danielle"} }
+        }
+    };
+
+    return JSON.stringify(msg);
 };
 
 
@@ -1374,7 +1558,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
 
     // convert numbers to boolean where applicable
     newCall.queue.isCampaign = newCall.queue.isCampaign === "1";
-    if(newCall.outdialDispositions.type.toUpperCase() === "GATE"){
+    if(newCall.outdialDispositions.type && newCall.outdialDispositions.type.toUpperCase() === "GATE"){
         for(var d = 0; d < newCall.outdialDispositions.dispositions.length; d++) {
             var disp = newCall.outdialDispositions.dispositions[d];
             disp.isComplete = disp.isComplete === "1";
@@ -1541,10 +1725,15 @@ var UIModel = (function() {
             agentStateRequest : null,
             callbacksPendingRequest : null,
             configRequest : null,
+            hangupRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
             offhookInitRequest : null,
             offhookTermRequest : null,
+            oneToOneOutdialRequest : null,
+            oneToOneOutdialCancelRequest : null,
+            previewDialRequest : null,
+            tcpaSafeRequest : null,
 
             // response packets
             agentStatePacket : null,
@@ -1556,15 +1745,15 @@ var UIModel = (function() {
             transferSessions: {},
 
             // notification packets
+            addSessionNotification: new AddSessionNotification(),
             dialGroupChangeNotification : new DialGroupChangeNotification(),
             dialGroupChangePendingNotification : new DialGroupChangePendingNotification(),
+            dropSessionNotification: new DropSessionNotification(),
+            earlyUiiNotification: new EarlyUiiNotification(),
             endCallNotification : new EndCallNotification(),
             gatesChangeNotification : new GatesChangeNotification(),
             genericNotification : new GenericNotification(),
             newCallNotification: new NewCallNotification(),
-            addSessionNotification: new AddSessionNotification(),
-            dropSessionNotification: new DropSessionNotification(),
-            earlyUiiNotification: new EarlyUiiNotification(),
 
             // application state
             applicationSettings : {
@@ -2260,10 +2449,15 @@ const MESSAGE_TYPES = {
     "DROP_SESSION":"DROP-SESSION",
     "GATES_CHANGE":"GATES_CHANGE",
     "GENERIC":"GENERIC",
+    "HANGUP":"HANGUP",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
     "OFFHOOK_TERM":"OFF-HOOK-TERM",
-    "ON_MESSAGE":"ON-MESSAGE"
+    "ON_MESSAGE":"ON-MESSAGE",
+    "ONE_TO_ONE_OUTDIAL":"ONE-TO-ONE-OUTDIAL",
+    "ONE_TO_ONE_OUTDIAL_CANCEL":"ONE-TO-ONE-OUTDIAL-CANCEL",
+    "PREVIEW_DIAL":"PREVIEW-DIAL",
+    "TCPA_SAFE":"TCPA-SAFE"
 };
 
 
@@ -2428,6 +2622,46 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().offhookTermRequest;
     };
     /**
+     * Get latest outgoing Hangup Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getHangupRequest = function() {
+        return UIModel.getInstance().hangupRequest;
+    };
+    /**
+     * Get latest outgoing Preview Dial Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getPreviewDialRequest = function() {
+        return UIModel.getInstance().previewDialRequest;
+    };
+    /**
+     * Get latest TCPA Safe Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getTcpaSafeRequest = function() {
+        return UIModel.getInstance().tcpaSafeRequest;
+    };
+    /**
+     * Get latest Manual Outdial Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getOneToOneOutdialRequest = function() {
+        return UIModel.getInstance().oneToOneOutdialRequest;
+    };
+    /**
+     * Get latest Manual Outdial Cancel Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getOneToOneOutdialCancelRequest = function() {
+        return UIModel.getInstance().oneToOneOutdialCancelRequest;
+    };
+    /**
      * Get packet received on successful Login
      * @memberof AgentLibrary
      * @returns {object}
@@ -2561,7 +2795,9 @@ function initAgentLibraryCore (context) {
     };
 
 
-    // settings objects
+    //////////////////////
+    // settings objects //
+    //////////////////////
     /**
      * Get Application Settings object containing the current state of application related data
      * @memberof AgentLibrary
@@ -2797,11 +3033,89 @@ function initAgentLibraryAgent (context) {
     };
 }
 
+function initAgentLibraryCall (context) {
+
+    'use strict';
+
+    var AgentLibrary = context.AgentLibrary;
+
+    /**
+     * Sends a manual outdial request message
+     * @memberof AgentLibrary
+     * @param {string} destination Number to call - ANI
+     * @param {number} [ringTime=60] Time in seconds to ring call
+     * @param {number} callerId Number displayed to callee, DNIS
+     * @param {string} [countryId='USA'] Country for the destination number
+     * @param {number} [queueId=''] Queue id to tie manual call to
+     */
+    AgentLibrary.prototype.manualOutdial = function(destination, ringTime, callerId, countryId, queueId){
+        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, ringTime, callerId, countryId, queueId);
+        var msg = UIModel.getInstance().oneToOneOutdialRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a manual outdial request message
+     * @memberof AgentLibrary
+     * @param {string} destination Number to call - ANI
+     * @param {number} [ringTime=60] Time in seconds to ring call
+     * @param {number} callerId Number displayed to callee, DNIS
+     * @param {string} [countryId='USA'] Country for the destination number
+     * @param {number} [queueId=''] Queue id to tie manual call to
+     */
+    AgentLibrary.prototype.manualOutdialCancel = function(uii){
+        UIModel.getInstance().oneToOneOutdialCancelRequest = new OneToOneOutdialCancelRequest(uii);
+        var msg = UIModel.getInstance().oneToOneOutdialCancelRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a hangup request message
+     * @memberof AgentLibrary
+     * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
+     */
+    AgentLibrary.prototype.hangup = function(sessionId){
+        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
+        var msg = UIModel.getInstance().hangupRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a preview dial request message
+     * @memberof AgentLibrary
+     * @param {string} [action=""] Action to take
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     */
+    AgentLibrary.prototype.previewDial = function(action, searchFields, requestId){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest(action, searchFields, requestId);
+        var msg = UIModel.getInstance().previewDialRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a TCPA Safe call request message
+     * @memberof AgentLibrary
+     * @param {string} [action=""] Action to take
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     */
+    AgentLibrary.prototype.tcpaSafeCall = function(action, searchFields, requestId){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest(action, searchFields, requestId);
+        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+}
+
 var initAgentLibrary = function (context) {
 
     initAgentLibraryCore(context);
     initAgentLibrarySocket(context);
     initAgentLibraryAgent(context);
+    initAgentLibraryCall(context);
 
     return context.AgentLibrary;
 };
