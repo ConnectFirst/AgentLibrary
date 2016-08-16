@@ -1,0 +1,13 @@
+{
+  "ui_notification": {
+    "@message_id": "IQ10012016081613222800341",
+    "@response_to": "",
+    "@type": "DROP-SESSION",
+    "session_id": {
+      "#text": "3"
+    },
+    "uii": {
+      "#text": "201608161322180139000000000124"
+    }
+  }
+}

@@ -27,6 +27,9 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         this.genericCancelCallbackNotificationRaw = fixture.load('genericCancelCallbackNotificationRaw.json');
         this.newCallNotificationRaw = fixture.load('newCallNotificationRaw.json');
         this.expectedNewCallOutbound = fixture.load('expectedNewCallOutbound.json');
+        this.addSessionNotificationRaw = fixture.load('addSessionNotificationRaw.json');
+        this.dropSessionNotificationRaw = fixture.load('dropSessionNotificationRaw.json');
+        this.earlyUiiNotificationRaw = fixture.load('earlyUiiNotificationRaw.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -226,6 +229,93 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         delete response.queueDts; // dates won't match
 
         expect(response).toEqual(this.expectedNewCallOutbound);
+    });
+
+    it( 'should process a add-session notification message', function() {
+        var Lib = new AgentLibrary();
+
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
+        // process add session event
+        var addSessionNotifRaw = JSON.parse(JSON.stringify(this.addSessionNotificationRaw));
+        var response = Lib.getAddSessionNotification().processResponse(addSessionNotifRaw);
+
+        var expectedResponse = {
+            "message":"Received ADD-SESSION notification",
+            "detail":"",
+            "status":"OK",
+            "sessionId": "2",
+            "uii": "200808291814560000000900016558",
+            "phone": "200808291814370000000900016555",
+            "sessionType":"AGENT",
+            "sessionLabel": "Primary Agents Call Session",
+            "allowControl": true,
+            "monitoring": false,
+            "agentId": "1"
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should process a drop-session notification message', function() {
+        var Lib = new AgentLibrary();
+
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
+        // process early uii event
+        var dropSesNotifRaw = JSON.parse(JSON.stringify(this.dropSessionNotificationRaw));
+        var response = Lib.getDropSessionNotification().processResponse(dropSesNotifRaw);
+
+        var expectedResponse = {
+            "message":"Received DROP-SESSION Notification",
+            "detail":"",
+            "status":"OK",
+            "sessionId": "3",
+            "uii": "201608161322180139000000000124"
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should process a early_uii notification message', function() {
+        var Lib = new AgentLibrary();
+
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
+        // process early uii event
+        var earlyUiiNotifRaw = JSON.parse(JSON.stringify(this.earlyUiiNotificationRaw));
+        var response = Lib.getEarlyUiiNotification().processResponse(earlyUiiNotifRaw);
+
+        var expectedResponse = {
+            "message":"Received EARLY_UII notification",
+            "detail":"",
+            "status":"OK",
+            "uii": "201608161200240139000000000120",
+            "agentId": "1"
+        };
+
+        expect(response).toEqual(expectedResponse);
     });
 
 });

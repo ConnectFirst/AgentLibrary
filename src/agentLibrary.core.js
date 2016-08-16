@@ -14,6 +14,7 @@
 
 /*jshint esnext: true */
 const CALLBACK_TYPES = {
+    "ADD_SESSION":"addSessionResponse",
     "AGENT_STATE":"agentStateResponse",
     "CLOSE_SOCKET":"closeResponse",
     "CONFIG":"configureResponse",
@@ -21,6 +22,8 @@ const CALLBACK_TYPES = {
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
+    "DROP_SESSION":"dropSessionNotification",
+    "EARLY_UII":"earlyUiiNotification",
     "END_CALL":"endCallNotification",
     "GATES_CHANGE":"gatesChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
@@ -33,14 +36,17 @@ const CALLBACK_TYPES = {
 };
 
 const MESSAGE_TYPES = {
+    "ADD_SESSION":"ADD-SESSION",
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
+    "EARLY_UII":"EARLY_UII",
     "END_CALL":"END-CALL",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
+    "DROP_SESSION":"DROP-SESSION",
     "GATES_CHANGE":"GATES_CHANGE",
     "GENERIC":"GENERIC",
     "NEW_CALL":"NEW-CALL",
@@ -48,8 +54,6 @@ const MESSAGE_TYPES = {
     "OFFHOOK_TERM":"OFF-HOOK-TERM",
     "ON_MESSAGE":"ON-MESSAGE"
 };
-
-// GLOBAL INTERNAL METHODS
 
 
 /*
@@ -145,8 +149,9 @@ function initAgentLibraryCore (context) {
         return this.callbacks[type];
     };
 
-
-    // requests and responses
+    ////////////////////////////
+    // requests and responses //
+    ////////////////////////////
     /**
      * Get outgoing Login Request object
      * @memberof AgentLibrary
@@ -260,7 +265,9 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().offhookTermPacket;
     };
 
-    // notifications
+    ///////////////////
+    // notifications //
+    ///////////////////
     /**
      * Get Dial Group Change notification class
      * @memberof AgentLibrary
@@ -316,6 +323,30 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getCurrentCall = function() {
         return UIModel.getInstance().currentCall;
+    };
+    /**
+     * Get Add Session notification class
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAddSessionNotification = function() {
+        return UIModel.getInstance().addSessionNotification;
+    };
+    /**
+     * Get Drop Session notification class
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getDropSessionNotification = function() {
+        return UIModel.getInstance().dropSessionNotification;
+    };
+    /**
+     * Get Early UII notification class
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getEarlyUiiNotification = function() {
+        return UIModel.getInstance().earlyUiiNotification;
     };
 
 

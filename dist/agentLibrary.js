@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-15 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-16 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -905,6 +905,65 @@ OffhookTermRequest.prototype.processResponse = function(data) {
 };
 
 
+var AddSessionNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling "ADD-SESSION" packets from IntelliQueue.  This is used by
+ * the CallControlForm. Then it will increment the total_calls count.
+ *
+ * <ui_notification message_id="IQ982008082918151403727" response_to="" type="ADD-SESSION">
+ *     <session_id>2</session_id>
+ *     <uii>200808291814560000000900016558</uii>
+ *     <phone>200808291814370000000900016555</phone>
+ *     <session_type>AGENT</session_type>
+ *     <session_label>Primary Agents Call Session</session_label>
+ *     <allow_control>TRUE</allow_control>
+ *     <monitoring>FALSE</monitoring>
+ *     <agent_id>1856</agent_id>
+ * </ui_notification>
+ */
+AddSessionNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+    var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
+    var sessionAgentId = utils.getText(notif, "agent_id");
+
+    if(utils.getText(notif, "session_type") === "AGENT"){
+        model.incrementTotalCalls();
+    }
+
+    if(sessionAgentId === model.agentSettings.agentId){
+        // add the session_id of this leg to the current call packet -
+        // this way we can use it for hangups later.
+        model.currentCall.sessionId = utils.getText(notif, "session_id");
+
+    }else if(sessionAgentId != ""){
+        // this is a monitoring session, lets save the monitored agent id for barge-ins
+        model.currentCall.monitorAgentId = sessionAgentId;
+    }
+
+    // Check to see if we have a transfer leg here, if so, register it
+    if(utils.getText(notif, "session_type") === 'OUTBOUND' && sessionAgentId === "" && utils.getText(notif, "allow_control") === true){
+        model.transferSessions[utils.getText(notif, "session_id")] = {sessionId:utils.getText(notif, "session_id"),destination:utils.getText(notif, "phone"),uii:utils.getText(notif, "uii")};
+    }
+
+    formattedResponse.status = "OK";
+    formattedResponse.message = "Received ADD-SESSION notification";
+    formattedResponse.sessionId = utils.getText(notif, "session_id");
+    formattedResponse.uii = utils.getText(notif, "uii");
+    formattedResponse.phone = utils.getText(notif, "phone");
+    formattedResponse.sessionType = utils.getText(notif, "session_type");
+    formattedResponse.sessionLabel = utils.getText(notif, "session_label");
+    formattedResponse.allowControl = utils.getText(notif, "allow_control");
+    formattedResponse.monitoring = utils.getText(notif, "monitoring");
+    formattedResponse.agentId = utils.getText(notif, "agent_id");
+
+    return formattedResponse;
+};
+
+
 var DialGroupChangeNotification = function() {
 
 };
@@ -989,6 +1048,58 @@ DialGroupChangePendingNotification.prototype.processResponse = function(notifica
         dialGroupId: utils.getText(notif, "dial_group_id"),
         updateFromAdminUI: utils.getText(notif, "update_from_adminui")
     };
+
+    return formattedResponse;
+};
+
+
+var DropSessionNotification = function() {
+
+};
+
+/*
+ * This class handles the DROP-SESSION packet from IQ. It doesn't really do anything
+ * besides format a response for the callback notification since there isn't any action needed.
+ *
+  <ui_notification message_id="IQ10012016081613222800341" response_to="" type="DROP-SESSION">
+     <session_id>3</session_id>
+     <uii>201608161322180139000000000124</uii>
+  </ui_notification>
+ */
+DropSessionNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+    var notif = notification.ui_notification;
+
+    formattedResponse.message = "Received DROP-SESSION Notification";
+    formattedResponse.status = "OK";
+    formattedResponse.sessionId = utils.getText(notif, "session_id");
+    formattedResponse.uii = utils.getText(notif, "uii");
+
+    return formattedResponse;
+};
+
+
+var EarlyUiiNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling "EARLY_UII" packets from IntelliQueue.
+ * For manual outdials, this gives the uii to cancel a ringing line.
+ *
+ * <ui_notification message_id="IQ10012016081611595000289" type="EARLY_UII">
+ *      <agent_id>1180958</agent_id>
+ *      <uii>201608161200240139000000000120</uii>
+ *  </ui_notification>
+ */
+EarlyUiiNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+    var notif = notification.ui_notification;
+
+    formattedResponse.message = "Received EARLY_UII notification";
+    formattedResponse.status = "OK";
+    formattedResponse.agentId = utils.getText(notif, "agent_id");
+    formattedResponse.uii = utils.getText(notif, "uii");
 
     return formattedResponse;
 };
@@ -1442,7 +1553,7 @@ var UIModel = (function() {
             loginPacket : null,
             offhookInitPacket : null,
             offhookTermPacket : null,
-            transferSessions: null,
+            transferSessions: {},
 
             // notification packets
             dialGroupChangeNotification : new DialGroupChangeNotification(),
@@ -1451,6 +1562,9 @@ var UIModel = (function() {
             gatesChangeNotification : new GatesChangeNotification(),
             genericNotification : new GenericNotification(),
             newCallNotification: new NewCallNotification(),
+            addSessionNotification: new AddSessionNotification(),
+            dropSessionNotification: new DropSessionNotification(),
+            earlyUiiNotification: new EarlyUiiNotification(),
 
             // application state
             applicationSettings : {
@@ -1501,6 +1615,7 @@ var UIModel = (function() {
                 pendingCallbacks : [],
                 pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
                 realAgentType : "AGENT",
+                totalCalls : 0,                     // Call counter that is incremented every time a new session is received
                 transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
                 updateDGFromAdminUI : false,        // if pending Dial Group change came from AdminUI, set to true (only used if request is pending)
                 updateLoginMode : false,            // gets set to true when doing an update login (for events control)
@@ -1563,13 +1678,13 @@ var UIModel = (function() {
 
             surveySettings : {
                 availableSurveys : []
-            }
+            },
 
 
             // Public methods
-            //getOutboundSettings: function() {
-            //    return this.outboundSettings;
-            //}
+            incrementTotalCalls: function() {
+                this.agentSettings.totalCalls = this.agentSettings.totalCalls + 1;
+            }
 
         };
     }
@@ -1651,10 +1766,10 @@ var utils = {
         console.log("AgentLibrary: received notification: (" + dest + ") " + type.toUpperCase());
 
         switch (type.toUpperCase()){
-            case MESSAGE_TYPES.GATES_CHANGE:
-                var gateChangeNotif = new GatesChangeNotification();
-                var gateChangeResponse = gateChangeNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.GATES_CHANGE, gateChangeResponse);
+            case MESSAGE_TYPES.ADD_SESSION:
+                var addSesNotif = new AddSessionNotification();
+                var addResponse = addSesNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.ADD_SESSION, addResponse);
                 break;
             case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
                 var dgChangeNotif = new DialGroupChangeNotification();
@@ -1666,15 +1781,25 @@ var utils = {
                 var pendResponse = dgChangePendNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.DIAL_GROUP_CHANGE_PENDING, pendResponse);
                 break;
-            case MESSAGE_TYPES.NEW_CALL:
-                var newCallNotif = new NewCallNotification(instance);
-                var newCallResponse = newCallNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+            case MESSAGE_TYPES.DROP_SESSION:
+                var dropSesNotif = new DropSessionNotification(instance);
+                var dropSesResponse = dropSesNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.DROP_SESSION, dropSesResponse);
+                break;
+            case MESSAGE_TYPES.EARLY_UII:
+                var earlyUiiNotif = new EarlyUiiNotification(instance);
+                var earlyUiiResponse = earlyUiiNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.EARLY_UII, earlyUiiResponse);
                 break;
             case MESSAGE_TYPES.END_CALL:
                 var endCallNotif = new EndCallNotification(instance);
                 var endCallResponse = endCallNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.END_CALL, endCallResponse);
+                break;
+            case MESSAGE_TYPES.GATES_CHANGE:
+                var gateChangeNotif = new GatesChangeNotification();
+                var gateChangeResponse = gateChangeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.GATES_CHANGE, gateChangeResponse);
                 break;
             case MESSAGE_TYPES.GENERIC:
                 var genericNotif = new GenericNotification();
@@ -1689,6 +1814,11 @@ var utils = {
                     // no corresponding request, just fire generic notification callback
                     utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
                 }
+                break;
+            case MESSAGE_TYPES.NEW_CALL:
+                var newCallNotif = new NewCallNotification(instance);
+                var newCallResponse = newCallNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
@@ -1760,6 +1890,23 @@ var utils = {
      *               }
      *           }
      *       ]
+     *   }
+     *
+     *   OR
+     *
+     *   "outdial_dispositions": {
+     *       "@type": "GATE",
+     *       "disposition": [
+     *          {
+     *           "@contact_forwarding": "false",
+     *           "@disposition_id": "926",
+     *           "@is_complete": "1",
+     *           "@require_note": "0",
+     *           "@save_survey": "1",
+     *           "@xfer": "0",
+     *           "#text": "One B"
+     *          }
+     *      ]
      *   }
      */
 
@@ -2078,6 +2225,7 @@ var utils = {
 
 /*jshint esnext: true */
 const CALLBACK_TYPES = {
+    "ADD_SESSION":"addSessionResponse",
     "AGENT_STATE":"agentStateResponse",
     "CLOSE_SOCKET":"closeResponse",
     "CONFIG":"configureResponse",
@@ -2085,6 +2233,8 @@ const CALLBACK_TYPES = {
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
+    "DROP_SESSION":"dropSessionNotification",
+    "EARLY_UII":"earlyUiiNotification",
     "END_CALL":"endCallNotification",
     "GATES_CHANGE":"gatesChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
@@ -2097,14 +2247,17 @@ const CALLBACK_TYPES = {
 };
 
 const MESSAGE_TYPES = {
+    "ADD_SESSION":"ADD-SESSION",
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
+    "EARLY_UII":"EARLY_UII",
     "END_CALL":"END-CALL",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
+    "DROP_SESSION":"DROP-SESSION",
     "GATES_CHANGE":"GATES_CHANGE",
     "GENERIC":"GENERIC",
     "NEW_CALL":"NEW-CALL",
@@ -2112,8 +2265,6 @@ const MESSAGE_TYPES = {
     "OFFHOOK_TERM":"OFF-HOOK-TERM",
     "ON_MESSAGE":"ON-MESSAGE"
 };
-
-// GLOBAL INTERNAL METHODS
 
 
 /*
@@ -2209,8 +2360,9 @@ function initAgentLibraryCore (context) {
         return this.callbacks[type];
     };
 
-
-    // requests and responses
+    ////////////////////////////
+    // requests and responses //
+    ////////////////////////////
     /**
      * Get outgoing Login Request object
      * @memberof AgentLibrary
@@ -2324,7 +2476,9 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().offhookTermPacket;
     };
 
-    // notifications
+    ///////////////////
+    // notifications //
+    ///////////////////
     /**
      * Get Dial Group Change notification class
      * @memberof AgentLibrary
@@ -2380,6 +2534,30 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getCurrentCall = function() {
         return UIModel.getInstance().currentCall;
+    };
+    /**
+     * Get Add Session notification class
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAddSessionNotification = function() {
+        return UIModel.getInstance().addSessionNotification;
+    };
+    /**
+     * Get Drop Session notification class
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getDropSessionNotification = function() {
+        return UIModel.getInstance().dropSessionNotification;
+    };
+    /**
+     * Get Early UII notification class
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getEarlyUiiNotification = function() {
+        return UIModel.getInstance().earlyUiiNotification;
     };
 
 

@@ -31,7 +31,7 @@ var UIModel = (function() {
             loginPacket : null,
             offhookInitPacket : null,
             offhookTermPacket : null,
-            transferSessions: null,
+            transferSessions: {},
 
             // notification packets
             dialGroupChangeNotification : new DialGroupChangeNotification(),
@@ -40,6 +40,9 @@ var UIModel = (function() {
             gatesChangeNotification : new GatesChangeNotification(),
             genericNotification : new GenericNotification(),
             newCallNotification: new NewCallNotification(),
+            addSessionNotification: new AddSessionNotification(),
+            dropSessionNotification: new DropSessionNotification(),
+            earlyUiiNotification: new EarlyUiiNotification(),
 
             // application state
             applicationSettings : {
@@ -90,6 +93,7 @@ var UIModel = (function() {
                 pendingCallbacks : [],
                 pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
                 realAgentType : "AGENT",
+                totalCalls : 0,                     // Call counter that is incremented every time a new session is received
                 transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
                 updateDGFromAdminUI : false,        // if pending Dial Group change came from AdminUI, set to true (only used if request is pending)
                 updateLoginMode : false,            // gets set to true when doing an update login (for events control)
@@ -152,13 +156,13 @@ var UIModel = (function() {
 
             surveySettings : {
                 availableSurveys : []
-            }
+            },
 
 
             // Public methods
-            //getOutboundSettings: function() {
-            //    return this.outboundSettings;
-            //}
+            incrementTotalCalls: function() {
+                this.agentSettings.totalCalls = this.agentSettings.totalCalls + 1;
+            }
 
         };
     }

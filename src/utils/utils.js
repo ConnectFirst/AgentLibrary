@@ -61,10 +61,10 @@ var utils = {
         console.log("AgentLibrary: received notification: (" + dest + ") " + type.toUpperCase());
 
         switch (type.toUpperCase()){
-            case MESSAGE_TYPES.GATES_CHANGE:
-                var gateChangeNotif = new GatesChangeNotification();
-                var gateChangeResponse = gateChangeNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.GATES_CHANGE, gateChangeResponse);
+            case MESSAGE_TYPES.ADD_SESSION:
+                var addSesNotif = new AddSessionNotification();
+                var addResponse = addSesNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.ADD_SESSION, addResponse);
                 break;
             case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
                 var dgChangeNotif = new DialGroupChangeNotification();
@@ -76,15 +76,25 @@ var utils = {
                 var pendResponse = dgChangePendNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.DIAL_GROUP_CHANGE_PENDING, pendResponse);
                 break;
-            case MESSAGE_TYPES.NEW_CALL:
-                var newCallNotif = new NewCallNotification(instance);
-                var newCallResponse = newCallNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+            case MESSAGE_TYPES.DROP_SESSION:
+                var dropSesNotif = new DropSessionNotification(instance);
+                var dropSesResponse = dropSesNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.DROP_SESSION, dropSesResponse);
+                break;
+            case MESSAGE_TYPES.EARLY_UII:
+                var earlyUiiNotif = new EarlyUiiNotification(instance);
+                var earlyUiiResponse = earlyUiiNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.EARLY_UII, earlyUiiResponse);
                 break;
             case MESSAGE_TYPES.END_CALL:
                 var endCallNotif = new EndCallNotification(instance);
                 var endCallResponse = endCallNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.END_CALL, endCallResponse);
+                break;
+            case MESSAGE_TYPES.GATES_CHANGE:
+                var gateChangeNotif = new GatesChangeNotification();
+                var gateChangeResponse = gateChangeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.GATES_CHANGE, gateChangeResponse);
                 break;
             case MESSAGE_TYPES.GENERIC:
                 var genericNotif = new GenericNotification();
@@ -99,6 +109,11 @@ var utils = {
                     // no corresponding request, just fire generic notification callback
                     utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
                 }
+                break;
+            case MESSAGE_TYPES.NEW_CALL:
+                var newCallNotif = new NewCallNotification(instance);
+                var newCallResponse = newCallNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
