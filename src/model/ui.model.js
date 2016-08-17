@@ -60,6 +60,7 @@ var UIModel = (function() {
 
             currentCall: {},                        // save the NEW-CALL notification in parsed form
             callTokens:{},                          // Stores a map of all tokens for a call
+            callbacks:[],
 
             agentDailyStats: {
                 loginTime: 0,
@@ -156,7 +157,9 @@ var UIModel = (function() {
                 availableCampaigns : [],            // array of campaigns agent has access to, set on login
                 availableOutdialGroups : [],        // array of dial groups agent has access to, set on login
                 insertCampaigns : [],
-                outdialGroup : {}                   // dial group agent is signed into
+                outdialGroup : {},                  // dial group agent is signed into
+                previewDialLeads : [],              // list of leads returned from preview dial request
+                tcpaSafeLeads : []                  // list of leads returned from tcpa safe request
             },
 
             surveySettings : {

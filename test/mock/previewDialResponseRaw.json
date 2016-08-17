@@ -1,0 +1,111 @@
+{
+  "dialer_request": {
+    "@callbacks": "TRUE|FALSE",
+    "@message_id": "ID2008091513163400220",
+    "@response_to": "",
+    "@type": "PREVIEW_DIAL",
+    "dial_group_id": {
+      "#text": "1"
+    },
+    "account_id": {
+      "#text": "99999999"
+    },
+    "agent_id": {
+      "#text": "1"
+    },
+    "destinations": {
+      "lead": [
+        {
+          "@aux_data1": "",
+          "@aux_data2": "",
+          "@aux_data3": "",
+          "@aux_data4": "",
+          "@aux_data5": "",
+          "@aux_phone": "",
+          "@campaign_id": "1",
+          "@country_code":"-99",
+          "@country_id":"USA",
+          "@destination": "5555555551",
+          "@dnis": "5555555555",
+          "@extern_id": "5555555551",
+          "@lead_id": "1",
+          "@lead_state": "PENDING",
+          "@live_answer_msg": "",
+          "@mach_answer_msg": "",
+          "@machine_detect": "FALSE",
+          "@request_key": "IQ10012016081712583500760",
+          "@valid_until": "2016-08-17 13:58:35",
+          "extern_id": {
+            "#text": "5555555551"
+          },
+          "first_name": {
+            "#text": "Amanda"
+          },
+          "mid_name": {
+            "#text": "Amanda"
+          },
+          "last_name": {
+            "#text": "Machutta2"
+          },
+          "suffix": {},
+          "title": {},
+          "address1": {},
+          "address2": {},
+          "city": {},
+          "state": {},
+          "zip": {},
+          "email": {},
+          "gate_keeper": {},
+          "aux_greeting": {},
+          "aux_external_url": {},
+          "app_url": {}
+        },
+        {
+          "@aux_data1": "",
+          "@aux_data2": "",
+          "@aux_data3": "",
+          "@aux_data4": "",
+          "@aux_data5": "",
+          "@aux_phone": "",
+          "@campaign_id": "1",
+          "@country_code":"-99",
+          "@country_id":"USA",
+          "@destination": "5555555551",
+          "@dnis": "5555555555",
+          "@extern_id": "5555555551",
+          "@lead_id": "1",
+          "@lead_state": "PENDING",
+          "@live_answer_msg": "",
+          "@mach_answer_msg": "",
+          "@machine_detect": "FALSE",
+          "@request_key": "IQ10012016081712583500760",
+          "@valid_until": "2016-08-17 13:58:35",
+          "extern_id": {
+            "#text": "5555555551"
+          },
+          "first_name": {
+            "#text": "Amanda"
+          },
+          "mid_name": {
+            "#text": "Amanda"
+          },
+          "last_name": {
+            "#text": "Machutta2"
+          },
+          "suffix": {},
+          "title": {},
+          "address1": {},
+          "address2": {},
+          "city": {},
+          "state": {},
+          "zip": {},
+          "email": {},
+          "gate_keeper": {},
+          "aux_greeting": {},
+          "aux_external_url": {},
+          "app_url": {}
+        }
+      ]
+    }
+  }
+}

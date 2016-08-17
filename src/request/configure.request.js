@@ -153,6 +153,7 @@ ConfigRequest.prototype.processResponse = function(response) {
         }else{
             if(model.agentSettings.updateLoginMode){
                 // TODO set login type and dial dest for update logins??
+                model.agentSettings.dialDest = model.configRequest.dialDest;
 
                 // This was an update login request
                 model.agentSettings.updateLoginMode = false;

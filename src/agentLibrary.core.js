@@ -32,7 +32,9 @@ const CALLBACK_TYPES = {
     "NEW_CALL":"newCallNotification",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
-    "OPEN_SOCKET":"openResponse"
+    "OPEN_SOCKET":"openResponse",
+    "PREVIEW_DIAL":"previewDialResponse",
+    "TCPA_SAFE":"tcpaSafeResponse"
 };
 
 const MESSAGE_TYPES = {
@@ -57,7 +59,9 @@ const MESSAGE_TYPES = {
     "ONE_TO_ONE_OUTDIAL":"ONE-TO-ONE-OUTDIAL",
     "ONE_TO_ONE_OUTDIAL_CANCEL":"ONE-TO-ONE-OUTDIAL-CANCEL",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
-    "TCPA_SAFE":"TCPA-SAFE"
+    "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
+    "TCPA_SAFE":"TCPA-SAFE",
+    "TCPA_SAFE_ID":"TCPA_SAFE"
 };
 
 
@@ -250,7 +254,7 @@ function initAgentLibraryCore (context) {
      * @memberof AgentLibrary
      * @returns {object}
      */
-    AgentLibrary.prototype.getOneToOneOutdialRequest = function() {
+    AgentLibrary.prototype.getManualOutdialRequest = function() {
         return UIModel.getInstance().oneToOneOutdialRequest;
     };
     /**
@@ -258,7 +262,7 @@ function initAgentLibraryCore (context) {
      * @memberof AgentLibrary
      * @returns {object}
      */
-    AgentLibrary.prototype.getOneToOneOutdialCancelRequest = function() {
+    AgentLibrary.prototype.getManualOutdialCancelRequest = function() {
         return UIModel.getInstance().oneToOneOutdialCancelRequest;
     };
     /**

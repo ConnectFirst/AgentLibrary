@@ -14,6 +14,12 @@ var dialDest = "sip:99@boulder-voip.connectfirst.com";
 
 describe( 'Tests for Agent Library agent methods', function() {
     beforeEach(function() {
+        fixture.setBase('mock');  // If base path is different from the default `spec/fixtures`
+        this.loginResponseRaw = fixture.load('loginResponseRaw.json');
+        this.configResponseRaw = fixture.load('configResponseRaw.json');
+        this.previewDialResponseRaw = fixture.load('previewDialResponseRaw.json');
+        this.expectedPreviewDialResponse = fixture.load('expectedPreviewDialResponse.json');
+
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
             socketMock = {
@@ -57,6 +63,10 @@ describe( 'Tests for Agent Library agent methods', function() {
         //spyOn(windowMock.WebSocket, '_message');
     });
 
+    afterEach(function(){
+        fixture.cleanup()
+    });
+
     it( 'should build a one-to-one-outdial message and send message over socket', function() {
         var Lib = new AgentLibrary();
         var destination = "55555555555";
@@ -66,7 +76,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket._open();
 
         Lib.manualOutdial(destination, null, callerId, null, null);
-        var msg = Lib.getOneToOneOutdialRequest().formatJSON();
+        var msg = Lib.getManualOutdialRequest().formatJSON();
 
         Lib.socket._message(msg);
 
@@ -82,7 +92,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket._open();
 
         Lib.manualOutdialCancel(uii);
-        var msg = Lib.getOneToOneOutdialCancelRequest().formatJSON();
+        var msg = Lib.getManualOutdialCancelRequest().formatJSON();
 
         Lib.socket._message(msg);
 
@@ -145,6 +155,44 @@ describe( 'Tests for Agent Library agent methods', function() {
 
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
+    it( 'should process a previewDial dialer response message', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
+        // process preview dial response
+        var previewDialResponse = JSON.parse(JSON.stringify(this.previewDialResponseRaw));
+        var response = Lib.getPreviewDialRequest().processResponse(previewDialResponse);
+        var expectedResponse = this.expectedPreviewDialResponse;
+
+        expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should process a tcpaSafe dialer response message', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
+        // process tcpa safe response
+        var tcpaSafeResponse = JSON.parse(JSON.stringify(this.previewDialResponseRaw));
+        var response = Lib.getTcpaSafeRequest().processResponse(tcpaSafeResponse);
+        var expectedResponse = this.expectedPreviewDialResponse;
+
+        expect(response).toEqual(expectedResponse);
     });
 
 

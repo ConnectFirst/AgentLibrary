@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-16 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-17 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -377,6 +377,7 @@ ConfigRequest.prototype.processResponse = function(response) {
         }else{
             if(model.agentSettings.updateLoginMode){
                 // TODO set login type and dial dest for update logins??
+                model.agentSettings.dialDest = model.configRequest.dialDest;
 
                 // This was an update login request
                 model.agentSettings.updateLoginMode = false;
@@ -1046,6 +1047,59 @@ PreviewDialRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+/*
+ * This class is responsible for handling PREVIEW-DIAL packets received
+ * from the dialer. It will save a copy of it in the UIModel.
+ *
+ * <dialer_request message_id="ID2008091513163400220" response_to="" type="PREVIEW_DIAL" callbacks="TRUE|FALSE">
+ * 		<dial_group_id>200018</dial_group_id>
+ * 		<account_id>99999999</account_id>
+ * 		<agent_id>1810</agent_id>
+ * 		<destinations>
+ * 			<lead aux_data1="" aux_data2="" aux_data3="" aux_data4="" aux_data5="" aux_phone="" campaign_id="51" destination="9548298548" dnis="1112223333" extern_id="amanda" lead_id="2646" lead_state="PENDING" live_answer_msg="" mach_answer_msg="" machine_detect="FALSE" request_key="IQ982008091516241101125" valid_until="2008-09-15 17:24:11">
+ * 				<extern_id><![CDATA[9548298548]]></extern_id>
+ * 				<first_name><![CDATA[Amanda]]></first_name>
+ * 				<mid_name><![CDATA[Amanda]]></mid_name>
+ * 				<last_name><![CDATA[Machutta2]]></last_name>
+ * 				<address1/>
+ * 				<address2/>
+ * 				<city/>
+ * 				<state/>
+ * 				<zip/>
+ * 				<aux_greeting/>
+ * 				<aux_external_url/>
+ * 			</lead>
+ * 		</destinations>
+ * </dialer_request>
+ *
+ */
+PreviewDialRequest.prototype.processResponse = function(notification) {
+    var notif = notification.dialer_request;
+    var model = UIModel.getInstance();
+    var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
+    var formattedResponse = {
+        dialGroupId: utils.getText(notif,"dial_group_id"),
+        accountId: utils.getText(notif,"account_id"),
+        agentId: utils.getText(notif,"agent_id"),
+        leads: leads
+    };
+
+    if(notif['@callbacks'] === 'TRUE'){
+        console.log("AgentLibrary: New CALLBACK packet request rec'd from dialer");
+        // clear callbacks??
+        //model.callbacks = [];
+        for(var l = 0; l < leads.length; l++){
+            var lead = leads[l];
+            model.callbacks.push(lead);
+        }
+    }else{
+        console.log("AgentLibrary: New PREVIEW-DIAL packet rec'd from dialer");
+        model.outboundSettings.previewDialLeads = leads;
+    }
+
+    return formattedResponse;
+};
+
 
 var TcpaSafeRequest = function(action, searchFields, requestId) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
@@ -1086,6 +1140,59 @@ TcpaSafeRequest.prototype.formatJSON = function() {
     };
 
     return JSON.stringify(msg);
+};
+
+/*
+ * This class is responsible for handling TCPA-SAFE packets received
+ * from the dialer. It will save a copy of it in the UIModel.
+ *
+ * <dialer_request message_id="ID2008091513163400220" response_to="" type="TCPA_SAFE" callbacks="TRUE|FALSE">
+ * 		<dial_group_id>200018</dial_group_id>
+ * 		<account_id>99999999</account_id>
+ * 		<agent_id>1810</agent_id>
+ * 		<destinations>
+ * 			<lead aux_data1="" aux_data2="" aux_data3="" aux_data4="" aux_data5="" aux_phone="" campaign_id="51" destination="9548298548" dnis="1112223333" extern_id="amanda" lead_id="2646" lead_state="PENDING" live_answer_msg="" mach_answer_msg="" machine_detect="FALSE" request_key="IQ982008091516241101125" valid_until="2008-09-15 17:24:11">
+ * 				<extern_id><![CDATA[9548298548]]></extern_id>
+ * 				<first_name><![CDATA[Amanda]]></first_name>
+ * 				<mid_name><![CDATA[Amanda]]></mid_name>
+ * 				<last_name><![CDATA[Machutta2]]></last_name>
+ * 				<address1/>
+ * 				<address2/>
+ * 				<city/>
+ * 				<state/>
+ * 				<zip/>
+ * 				<aux_greeting/>
+ * 				<aux_external_url/>
+ * 			</lead>
+ * 		</destinations>
+ * </dialer_request>
+ *
+ */
+TcpaSafeRequest.prototype.processResponse = function(notification) {
+    var notif = notification.dialer_request;
+    var model = UIModel.getInstance();
+    var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
+    var formattedResponse = {
+        dialGroupId: utils.getText(notif,"dial_group_id"),
+        accountId: utils.getText(notif,"account_id"),
+        agentId: utils.getText(notif,"agent_id"),
+        leads: leads
+    };
+
+    if(notif['@callbacks'] === 'TRUE'){
+        console.log("AgentLibrary: New CALLBACK packet request rec'd from dialer");
+        // clear callbacks??
+        //model.callbacks = [];
+        for(var l = 0; l < leads.length; l++){
+            var lead = leads[l];
+            model.callbacks.push(lead);
+        }
+    }else{
+        console.log("AgentLibrary: New TCPA_SAFE packet rec'd from dialer");
+        model.outboundSettings.tcpaSafeLeads = leads;
+    }
+
+    return formattedResponse;
 };
 
 
@@ -1767,6 +1874,7 @@ var UIModel = (function() {
 
             currentCall: {},                        // save the NEW-CALL notification in parsed form
             callTokens:{},                          // Stores a map of all tokens for a call
+            callbacks:[],
 
             agentDailyStats: {
                 loginTime: 0,
@@ -1863,7 +1971,9 @@ var UIModel = (function() {
                 availableCampaigns : [],            // array of campaigns agent has access to, set on login
                 availableOutdialGroups : [],        // array of dial groups agent has access to, set on login
                 insertCampaigns : [],
-                outdialGroup : {}                   // dial group agent is signed into
+                outdialGroup : {},                  // dial group agent is signed into
+                previewDialLeads : [],              // list of leads returned from preview dial request
+                tcpaSafeLeads : []                  // list of leads returned from tcpa safe request
             },
 
             surveySettings : {
@@ -2019,6 +2129,30 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
                 break;
         }
+    },
+
+    processDialerResponse: function(instance, response)
+    {
+        var type = response.dialer_request['@type'];
+        var messageId = response.dialer_request['@message_id'];
+        var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
+        console.log("AgentLibrary: received response: (" + dest + ") " + type.toUpperCase());
+
+        // Send generic on message response
+        utils.fireCallback(instance, CALLBACK_TYPES.ON_MESSAGE, response);
+
+        // Fire callback function
+        switch (type.toUpperCase()) {
+            case MESSAGE_TYPES.PREVIEW_DIAL_ID:
+                var dialResponse = UIModel.getInstance().previewDialRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_DIAL, dialResponse);
+                break;
+            case MESSAGE_TYPES.TCPA_SAFE_ID:
+                var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
+                break;
+        }
+
     },
 
     /*
@@ -2433,7 +2567,9 @@ const CALLBACK_TYPES = {
     "NEW_CALL":"newCallNotification",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
-    "OPEN_SOCKET":"openResponse"
+    "OPEN_SOCKET":"openResponse",
+    "PREVIEW_DIAL":"previewDialResponse",
+    "TCPA_SAFE":"tcpaSafeResponse"
 };
 
 const MESSAGE_TYPES = {
@@ -2458,7 +2594,9 @@ const MESSAGE_TYPES = {
     "ONE_TO_ONE_OUTDIAL":"ONE-TO-ONE-OUTDIAL",
     "ONE_TO_ONE_OUTDIAL_CANCEL":"ONE-TO-ONE-OUTDIAL-CANCEL",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
-    "TCPA_SAFE":"TCPA-SAFE"
+    "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
+    "TCPA_SAFE":"TCPA-SAFE",
+    "TCPA_SAFE_ID":"TCPA_SAFE"
 };
 
 
@@ -2651,7 +2789,7 @@ function initAgentLibraryCore (context) {
      * @memberof AgentLibrary
      * @returns {object}
      */
-    AgentLibrary.prototype.getOneToOneOutdialRequest = function() {
+    AgentLibrary.prototype.getManualOutdialRequest = function() {
         return UIModel.getInstance().oneToOneOutdialRequest;
     };
     /**
@@ -2659,7 +2797,7 @@ function initAgentLibraryCore (context) {
      * @memberof AgentLibrary
      * @returns {object}
      */
-    AgentLibrary.prototype.getOneToOneOutdialCancelRequest = function() {
+    AgentLibrary.prototype.getManualOutdialCancelRequest = function() {
         return UIModel.getInstance().oneToOneOutdialCancelRequest;
     };
     /**
@@ -2882,6 +3020,8 @@ function initAgentLibrarySocket (context) {
                     utils.processResponse(instance, data);
                 }else if(data.ui_notification){
                     utils.processNotification(instance, data);
+                }else if(data.dialer_request){
+                    utils.processDialerResponse(instance, data);
                 }
             };
 

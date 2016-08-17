@@ -126,6 +126,30 @@ var utils = {
         }
     },
 
+    processDialerResponse: function(instance, response)
+    {
+        var type = response.dialer_request['@type'];
+        var messageId = response.dialer_request['@message_id'];
+        var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
+        console.log("AgentLibrary: received response: (" + dest + ") " + type.toUpperCase());
+
+        // Send generic on message response
+        utils.fireCallback(instance, CALLBACK_TYPES.ON_MESSAGE, response);
+
+        // Fire callback function
+        switch (type.toUpperCase()) {
+            case MESSAGE_TYPES.PREVIEW_DIAL_ID:
+                var dialResponse = UIModel.getInstance().previewDialRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_DIAL, dialResponse);
+                break;
+            case MESSAGE_TYPES.TCPA_SAFE_ID:
+                var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
+                break;
+        }
+
+    },
+
     /*
      * Take the xml marked JSON, group and item property names and reformat to
      * simple javascript object without the xml markers.
