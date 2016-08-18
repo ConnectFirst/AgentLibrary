@@ -22,6 +22,25 @@ var utils = {
 
         // Fire callback function
         switch (type.toUpperCase()) {
+            case MESSAGE_TYPES.AGENT_STATE:
+                if(UIModel.getInstance().agentStateRequest === null){
+                    UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
+                }
+                var stateChangeResposne = UIModel.getInstance().agentStateRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResposne);
+                break;
+            case MESSAGE_TYPES.CAMPAIGN_DISPOSITIONS:
+                var campaignDispsResposne = UIModel.getInstance().campaignDispositionsRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CAMPAIGN_DISPOSITIONS, campaignDispsResposne);
+                break;
+            case MESSAGE_TYPES.CALL_NOTES:
+                var callNotes = UIModel.getInstance().callNotesRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CALL_NOTES, callNotes);
+                break;
+            case MESSAGE_TYPES.CALLBACK_PENDING:
+                var pendingCallbacks = UIModel.getInstance().callbacksPendingRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CALLBACK_PENDING, pendingCallbacks);
+                break;
             case MESSAGE_TYPES.LOGIN:
                 if (dest === "IS") {
                     var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
@@ -35,21 +54,11 @@ var utils = {
                 // TODO add processResponse?
                 utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
                 break;
-            case MESSAGE_TYPES.AGENT_STATE:
-                if(UIModel.getInstance().agentStateRequest === null){
-                    UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
-                }
-                var stateChangeResposne = UIModel.getInstance().agentStateRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResposne);
-                break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
-            case MESSAGE_TYPES.CALLBACK_PENDING:
-                var pendingCallbacks = UIModel.getInstance().callbacksPendingRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.CALLBACK_PENDING, pendingCallbacks);
-            break;
+
         }
 
     },

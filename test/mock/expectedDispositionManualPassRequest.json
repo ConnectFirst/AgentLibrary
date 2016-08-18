@@ -1,0 +1,39 @@
+{
+  "ui_request": {
+    "@destination":"IQ",
+    "@response_to": "",
+    "@type": "OUTDIAL-DISPOSITION",
+    "manual_disp": {
+      "#text": "TRUE"
+    },
+    "agent_id": {
+      "#text": "1"
+    },
+    "request_key": {
+      "#text": "11111"
+    },
+    "disposition_id": {
+      "#text": "1"
+    },
+    "notes": {
+      "#text": "A note!"
+    },
+    "call_back": {
+      "#text": "FALSE"
+    },
+    "call_back_DTS": {
+      "#text": ""
+    },
+    "lead_id": {
+      "#text": "1"
+    },
+    "extern_id": {
+      "#text": "1"
+    },
+    "contact_forwarding":{
+      "#text":"null"
+    },
+    "session_id":{},
+    "uii":{}
+  }
+}

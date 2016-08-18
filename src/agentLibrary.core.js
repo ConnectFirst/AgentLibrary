@@ -18,8 +18,10 @@ const CALLBACK_TYPES = {
     "AGENT_STATE":"agentStateResponse",
     "CLOSE_SOCKET":"closeResponse",
     "CONFIG":"configureResponse",
+    "CALL_NOTES":"callNotesResponse",
     "CALLBACK_PENDING":"callbacksPendingResponse",
     "CALLBACK_CANCEL":"callbackCancelResponse",
+    "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
     "DROP_SESSION":"dropSessionNotification",
@@ -42,8 +44,10 @@ const MESSAGE_TYPES = {
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
+    "CALL_NOTES":"CALL-NOTES",
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
+    "CAMPAIGN_DISPOSITIONS":"CAMPAIGN-DISPOSITIONS",
     "EARLY_UII":"EARLY_UII",
     "END_CALL":"END-CALL",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
@@ -52,12 +56,14 @@ const MESSAGE_TYPES = {
     "GATES_CHANGE":"GATES_CHANGE",
     "GENERIC":"GENERIC",
     "HANGUP":"HANGUP",
+    "INBOUND_DISPOSITION":"INBOUND-DISPOSITION",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
     "OFFHOOK_TERM":"OFF-HOOK-TERM",
     "ON_MESSAGE":"ON-MESSAGE",
     "ONE_TO_ONE_OUTDIAL":"ONE-TO-ONE-OUTDIAL",
     "ONE_TO_ONE_OUTDIAL_CANCEL":"ONE-TO-ONE-OUTDIAL-CANCEL",
+    "OUTDIAL_DISPOSITION":"OUTDIAL-DISPOSITION",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
     "TCPA_SAFE":"TCPA-SAFE",
@@ -264,6 +270,38 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getManualOutdialCancelRequest = function() {
         return UIModel.getInstance().oneToOneOutdialCancelRequest;
+    };
+    /**
+     * Get latest Call Notes Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCallNotesRequest = function() {
+        return UIModel.getInstance().callNotesRequest;
+    };
+    /**
+     * Get latest Campaign Dispositions Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCampaignDispositionsRequest = function() {
+        return UIModel.getInstance().campaignDispositionsRequest;
+    };
+    /**
+     * Get latest Disposition Call Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getDispositionRequest = function() {
+        return UIModel.getInstance().dispositionRequest;
+    };
+    /**
+     * Get latest Disposition Manual Pass Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getDispositionManualPassRequest = function() {
+        return UIModel.getInstance().dispositionManualPassRequest;
     };
     /**
      * Get packet received on successful Login

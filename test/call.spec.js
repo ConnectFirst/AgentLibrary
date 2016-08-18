@@ -19,6 +19,9 @@ describe( 'Tests for Agent Library agent methods', function() {
         this.configResponseRaw = fixture.load('configResponseRaw.json');
         this.previewDialResponseRaw = fixture.load('previewDialResponseRaw.json');
         this.expectedPreviewDialResponse = fixture.load('expectedPreviewDialResponse.json');
+        this.campaignDispositionsRaw = fixture.load('campaignDispositionsRaw.json');
+        this.expectedOutdialDispositionRequest = fixture.load('expectedOutdialDispositionRequest.json');
+        this.expectedDispositionManualPassRequest = fixture.load('expectedDispositionManualPassRequest.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -67,6 +70,80 @@ describe( 'Tests for Agent Library agent methods', function() {
         fixture.cleanup()
     });
 
+    it( 'should process a call-notes response message', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.setCallNotes("A new Note!");
+
+        // process call-notes response
+        var callNotesResponse = {
+            "ui_response": {
+                "@type":"CALL-NOTES",
+                "status":{"#text": "OK"},
+                "message": {},
+                "detail":{}
+            }
+        };
+        var response = Lib.getCallNotesRequest().processResponse(callNotesResponse);
+        var expectedResponse = {
+            message: "Call notes have been updated.",
+            detail: "",
+            status: "OK",
+            type:"INFO_EVENT"
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should process a campaign-dispositions response message', function() {
+        var Lib = new AgentLibrary();
+        var campaignId = "1";
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getCampaignDispositions(campaignId);
+
+        // process response
+        var response = Lib.getCampaignDispositionsRequest().processResponse(this.campaignDispositionsRaw);
+        var expectedResponse = [
+            {dispositionId: "1", disposition:"requeue"},
+            {dispositionId: "2", disposition:"complete"}
+        ];
+
+        // check model
+        var dispositions = Lib.getOutboundSettings().campaignDispositions;
+
+        expect(response).toEqual(expectedResponse);
+        expect(dispositions).toEqual(expectedResponse);
+    });
+
+    it( 'should build a hangup message and send message over socket', function() {
+        var Lib = new AgentLibrary();
+
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        Lib.hangup();
+        var msg = Lib.getHangupRequest().formatJSON();
+
+        Lib.socket._message(msg);
+
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
     it( 'should build a one-to-one-outdial message and send message over socket', function() {
         var Lib = new AgentLibrary();
         var destination = "55555555555";
@@ -100,22 +177,57 @@ describe( 'Tests for Agent Library agent methods', function() {
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
 
-    it( 'should build a hangup message and send message over socket', function() {
+    it( 'should build a outdial-disposition request message and send over socket', function() {
         var Lib = new AgentLibrary();
+        var uii = "1111";
+        var dispId = "1";
+        var notes = "A note!";
+        var callback = false;
+        var survey = [
+            { label: "hello", externId: "text_box", leadUpdateColumn: ""},
+            { label: "20", externId: "check_box", leadUpdateColumn: ""}
+        ];
 
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        Lib.hangup();
-        var msg = Lib.getHangupRequest().formatJSON();
+        Lib.dispositionCall(uii, dispId, notes, callback, null, null, survey);
+        var msg = Lib.getDispositionRequest().formatJSON();
+        var requestMsg = JSON.parse(msg);
+        delete requestMsg.ui_request['@message_id']; // won't match
 
         Lib.socket._message(msg);
 
+        expect(requestMsg).toEqual(this.expectedOutdialDispositionRequest);
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
 
-    it( 'should build a previewDial message and send message over socket', function() {
+    it( 'should build a manual pass request message and send over socket', function() {
+        var Lib = new AgentLibrary();
+        var dispId = "1";
+        var notes = "A note!";
+        var callback = false;
+        var leadId = "1";
+        var requestKey = "11111";
+        var externId = "1";
+
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        Lib.dispositionManualPass(dispId, notes, callback, null, leadId, requestKey, externId);
+        var msg = Lib.getDispositionManualPassRequest().formatJSON();
+        var requestMsg = JSON.parse(msg);
+        delete requestMsg.ui_request['@message_id']; // won't match
+
+        Lib.socket._message(msg);
+
+        expect(requestMsg).toEqual(this.expectedDispositionManualPassRequest);
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
+    it( 'should build a preview-dial message and send message over socket', function() {
         var Lib = new AgentLibrary();
         var action = "";
         var requestId = "";
@@ -136,7 +248,26 @@ describe( 'Tests for Agent Library agent methods', function() {
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
 
-    it( 'should build a tcpaSafe message and send message over socket', function() {
+    it( 'should process a preview-dial dialer response message', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
+        // process preview dial response
+        var previewDialResponse = JSON.parse(JSON.stringify(this.previewDialResponseRaw));
+        var response = Lib.getPreviewDialRequest().processResponse(previewDialResponse);
+        var expectedResponse = this.expectedPreviewDialResponse;
+
+        expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should build a tcpa-safe message and send message over socket', function() {
         var Lib = new AgentLibrary();
         var action = "";
         var requestId = "";
@@ -157,26 +288,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
 
-    it( 'should process a previewDial dialer response message', function() {
-        var Lib = new AgentLibrary();
-        Lib.socket = windowMock.WebSocket(address);
-        Lib.socket._open();
-
-        // set login and config values
-        Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
-
-        // process preview dial response
-        var previewDialResponse = JSON.parse(JSON.stringify(this.previewDialResponseRaw));
-        var response = Lib.getPreviewDialRequest().processResponse(previewDialResponse);
-        var expectedResponse = this.expectedPreviewDialResponse;
-
-        expect(response).toEqual(expectedResponse);
-    });
-
-    it( 'should process a tcpaSafe dialer response message', function() {
+    it( 'should process a tcpa-safe dialer response message', function() {
         var Lib = new AgentLibrary();
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();

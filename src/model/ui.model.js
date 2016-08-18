@@ -17,8 +17,12 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            callNotesRequest : null,
             callbacksPendingRequest : null,
+            campaignDispositionsRequest : null,
             configRequest : null,
+            dispositionRequest : null,
+            dispositionManualPassRequest : null,
             hangupRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
@@ -159,7 +163,8 @@ var UIModel = (function() {
                 insertCampaigns : [],
                 outdialGroup : {},                  // dial group agent is signed into
                 previewDialLeads : [],              // list of leads returned from preview dial request
-                tcpaSafeLeads : []                  // list of leads returned from tcpa safe request
+                tcpaSafeLeads : [],                 // list of leads returned from tcpa safe request
+                campaignDispositions : []           // list of campaign dispositions for specific campaign
             },
 
             surveySettings : {

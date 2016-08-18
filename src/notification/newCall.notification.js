@@ -28,16 +28,16 @@ var NewCallNotification = function() {
  *      <survey_id/>
  *      <survey_pop_type>SUPPRESS</survey_pop_type>
  *      <agent_recording default="ON" pause="10">TRUE</agent_recording>
- *          <outdial_dispositions type="CAMPAIGN|GATE">
+ *      <outdial_dispositions type="CAMPAIGN|GATE">
  *          <disposition disposition_id="20556" contact_forwarding="FALSE">Not Available</disposition>
- *      <disposition disposition_id="20559" contact_forwarding="FALSE">Transfer Not Available</disposition>
- *      <disposition disposition_id="20560" contact_forwarding="FALSE">Transfer Not Available - Ringing (no answer)</disposition>
- *      <disposition disposition_id="20561" contact_forwarding="TRUE">Succesfull Transfer</disposition>
- *      <disposition disposition_id="20562" contact_forwarding="TRUE">High School Senior</disposition>
- *      <disposition disposition_id="20563" contact_forwarding="FALSE">Transfer Not Available - Voicemail</disposition>
- *      <disposition disposition_id="20564" contact_forwarding="FALSE">Transfer Not Available - On Hold Too Long</disposition>
- *      <disposition disposition_id="20565" contact_forwarding="FALSE">Transfer Not Available - Busy</disposition>
- *      <disposition disposition_id="20557" contact_forwarding="FALSE">Not Available</disposition>
+ *          <disposition disposition_id="20559" contact_forwarding="FALSE">Transfer Not Available</disposition>
+ *          <disposition disposition_id="20560" contact_forwarding="FALSE">Transfer Not Available - Ringing (no answer)</disposition>
+ *          <disposition disposition_id="20561" contact_forwarding="TRUE">Succesfull Transfer</disposition>
+ *          <disposition disposition_id="20562" contact_forwarding="TRUE">High School Senior</disposition>
+ *          <disposition disposition_id="20563" contact_forwarding="FALSE">Transfer Not Available - Voicemail</disposition>
+ *          <disposition disposition_id="20564" contact_forwarding="FALSE">Transfer Not Available - On Hold Too Long</disposition>
+ *          <disposition disposition_id="20565" contact_forwarding="FALSE">Transfer Not Available - Busy</disposition>
+ *          <disposition disposition_id="20557" contact_forwarding="FALSE">Not Available</disposition>
  *      </outdial_dispositions>
  *      <baggage allow_updates="TRUE" show_lead_passes="TRUE" show_list_name="TRUE">
  *          <state>OH</state>

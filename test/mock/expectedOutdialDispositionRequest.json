@@ -1,0 +1,45 @@
+{
+  "ui_request": {
+    "@destination":"IQ",
+    "@response_to": "",
+    "@type": "OUTDIAL-DISPOSITION",
+    "agent_id": {
+      "#text": "1"
+    },
+    "session_id": {
+      "#text": ""
+    },
+    "uii": {
+      "#text": "1111"
+    },
+    "disposition_id": {
+      "#text": "1"
+    },
+    "notes": {
+      "#text": "A note!"
+    },
+    "call_back": {
+      "#text": "FALSE"
+    },
+    "call_back_DTS": {
+      "#text": ""
+    },
+    "contact_forwarding": {
+      "#text": ""
+    },
+    "survey": {
+      "response": [
+        {
+          "@extern_id": "text_box",
+          "@lead_update_column": "",
+          "#text": "hello"
+        },
+        {
+          "@extern_id": "check_box",
+          "@lead_update_column": "",
+          "#text": "20"
+        }
+      ]
+    }
+  }
+}

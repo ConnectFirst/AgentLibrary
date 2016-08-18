@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-17 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-18 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -103,6 +103,66 @@ AgentStateRequest.prototype.processResponse = function(response) {
 };
 
 
+
+
+var CallNotesRequest = function(notes) {
+    this.notes = notes;
+};
+
+/*
+* This event is responsible for allowing an agent to tag a call with notes
+*
+* <ui_request type="CALL-NOTES" uii="" response_to="" message_id="IQ20081027151806763">
+* 		<notes><![[BLAH]]></notes>
+* </ui_request>
+* */
+CallNotesRequest.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "@type":MESSAGE_TYPES.CALL_NOTES,
+            "agent_id": {
+                "#text" : utils.toString(model.agentSettings.agentId)
+            },
+            "uii": {
+                "#text" : utils.toString(model.currentCall.uii)
+            },
+            "notes": {
+                "#text" : utils.toString(this.notes)
+            }
+        }
+    };
+
+
+    return JSON.stringify(msg);
+};
+
+
+/*
+ * This class process CALL-NOTES packets rec'd from IntelliQueue.
+ *
+ * <ui_response message_id="IQ982008082817165103294" type="CALL-NOTES">
+ *	  <status>OK</status>
+ * 	  <message/>
+ *	  <detail/>
+ * </ui_response>
+ */
+CallNotesRequest.prototype.processResponse = function(response) {
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    if(formattedResponse.status === "OK"){
+        formattedResponse.message = "Call notes have been updated.";
+        formattedResponse.type = "INFO_EVENT";
+    }else{
+        formattedResponse.type = "ERROR_EVENT";
+        formattedResponse.message = "Unable to update notes.";
+    }
+
+    return formattedResponse;
+};
 
 
 var CallbackCancelRequest = function(leadId, agentId) {
@@ -221,6 +281,57 @@ function parseLead(leadRaw){
 
     return lead;
 }
+
+
+/*
+ * This request is used to get the list of dispositions for a given campaign
+ * E.g. in the lead search form for manual passes
+ */
+var CampaignDispositionsRequest = function(campaignId) {
+    this.agentId = UIModel.getInstance().agentSettings.agentId;
+    this.campaignId = campaignId;
+};
+
+CampaignDispositionsRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CAMPAIGN_DISPOSITIONS,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":utils.toString(this.agentId)
+            },
+            "campaign_id": {
+                "#text":utils.toString(this.campaignId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class is responsible for handling CAMPAIGN-DISPOSITIONS packets received
+ * from IntelliQueue. It will save a copy of it in the UIModel.
+ *
+  <ui_response message_id="IQ982008091512353000875"  response_to="UIV220089151235539" type="CAMPAIGN-DISPOSITIONS">
+  		<outdial_dispositions>
+     		<disposition disposition_id="130">complete</disposition>
+     		<disposition disposition_id="131">incomplete</disposition>
+     		<disposition disposition_id="132">warm xfer</disposition>
+     		<disposition disposition_id="133">cold xfer</disposition>
+   	</outdial_dispositions>
+  </ui_response>
+ */
+CampaignDispositionsRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var model = UIModel.getInstance();
+    var dispositions = utils.processResponseCollection(resp, 'outdial_dispositions', 'disposition', 'disposition');
+
+    model.outboundSettings.campaignDispositions = dispositions;
+    return dispositions;
+};
 
 
 var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dialDest, updateFromAdminUI) {
@@ -480,6 +591,188 @@ function setSkillProfileSettings(){
         }
     }
 }
+
+var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey) {
+    this.uii = uii;
+    this.dispId = dispId;
+    this.notes = notes;
+    this.callback = callback;
+    this.callbackDTS = callbackDTS || "";
+    this.contactForwardNumber = contactForwardNumber || null;
+
+    /*
+     * survey = [
+     *      { label: "", externId: "", leadUpdateColumn: ""}
+     * ]
+     */
+    this.survey = survey || null;
+};
+
+/*
+ * This class is responsible for creating an inbound or outbound disposition packet to
+ * send to intelliqueue. It will grab uii and agent_id directly from packets saved
+ * in the UIModel. Then, using the information passed in, it will
+ * create the remainder of the packet. This class is called from the ExtendedCallForm
+ *
+ * <ui_request response_to="" message_id="UIV220089241119416" type="OUTDIAL-DISPOSITION|INBOUND-DISPOSITION">
+ * 		<uii>200809241119590139990000000069</uii>
+ * 		<lead_id>213215</lead_id>
+ * 		<outbound_externid>909809</outbound_externid>
+ * 		<agent_id>1810</agent_id>
+ * 		<disposition_id>126</disposition_id>
+ * 		<notes>here are my notes :)</notes>
+ * 		<call_back>TRUE | FALSE</call_back>
+ * 		<call_back_DTS>2008-09-30 22:30:00 | null</call_back_DTS>
+ * 		<contact_forward_number>5555555555 | null</contact_forward_number>
+ * 		<session_id>2</session_id>  ONLY WHEN AVAILABLE otherwise the node is left blank. this is the AGENT session_id
+ * </ui_request>
+ *
+ */
+DispositionRequest.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "@type":MESSAGE_TYPES.OUTDIAL_DISPOSITION,
+            "agent_id": {
+                "#text" : utils.toString(model.agentSettings.agentId)
+            },
+            "session_id":{
+                "#text": ""
+            },
+            "uii": {
+                "#text" : utils.toString(this.uii)
+            },
+            "disposition_id": {
+                "#text" : utils.toString(this.dispId)
+            },
+            "notes": {
+                "#text" : utils.toString(this.notes)
+            },
+            "call_back": {
+                "#text" : this.callback === true? "TRUE" : "FALSE"
+            },
+            "call_back_DTS": {
+                "#text" : utils.toString(this.callbackDTS)
+            },
+            "contact_forwarding": {
+                "#text" : utils.toString(this.contactForwardNumber)
+            }
+        }
+    };
+
+
+    if(model.currentCall.outdialDispositions && model.currentCall.outdialDispositions.type === "GATE") {
+        msg.ui_request['@type'] = MESSAGE_TYPES.INBOUND_DISPOSITION;
+    }
+
+    if(model.currentCall.sessionId){
+        msg.ui_request.session_id = {"#text":model.currentCall.sessionId};
+    }
+
+    /*
+     * survey : {
+     *      response: [
+     *          { "@extern_id":"", "@lead_update_column":"", "#text":"" }
+     *      ]
+     * }
+     */
+    if(this.survey !== null){
+        var response = [];
+        for(var i = 0; i < this.survey.length; i++){
+            var obj = {
+                "@extern_id": utils.toString(this.survey[i].externId),
+                "@lead_update_column": utils.toString(this.survey[i].leadUpdateColumn),
+                "#text": this.survey[i].label
+            };
+            response.push(obj);
+        }
+        msg.ui_request.survey = {"response":response};
+    }
+
+
+    return JSON.stringify(msg);
+};
+
+
+var DispositionManualPassRequest = function(dispId, notes, callback, callbackDTS, leadId, requestKey, externId) {
+    this.dispId = dispId;
+    this.notes = notes;
+    this.callback = callback;
+    this.callbackDTS = callbackDTS || "";
+    this.leadId = leadId || null;
+    this.requestKey = requestKey || null;
+    this.externId = externId || null;
+};
+
+/*
+ * Sends an OUTDIAL-DISPOSITION request, just a separate class
+ * specifically for dispositions on manual pass.
+ *
+ * <ui_request response_to="" message_id="UIV220089241119416" type="OUTDIAL-DISPOSITION">
+ *      <manual_disp>TRUE</manual_disp>
+ *      <request_key>IQ10012016081719070100875</request_key>
+ *      <session_id/>
+ * 		<uii/>
+ * 	    <agent_id>1810</agent_id>
+ * 		<lead_id>213215</lead_id>
+ * 		<outbound_externid>909809</outbound_externid>
+ * 		<disposition_id>126</disposition_id>
+ * 		<notes>here are my notes :)</notes>
+ * 		<call_back>TRUE | FALSE</call_back>
+ * 		<call_back_DTS>2008-09-30 22:30:00 | null</call_back_DTS>
+ * 	    <contact_forwarding>null</contact_forwarding>
+ * </ui_request>
+ *
+ */
+DispositionManualPassRequest.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "@type":MESSAGE_TYPES.OUTDIAL_DISPOSITION,
+            "manual_disp": {
+                "#text" : "TRUE"
+            },
+            "agent_id": {
+                "#text" : utils.toString(model.agentSettings.agentId)
+            },
+            "request_key": {
+                "#text": utils.toString(this.requestKey)
+            },
+            "disposition_id": {
+                "#text" : utils.toString(this.dispId)
+            },
+            "notes": {
+                "#text" : utils.toString(this.notes)
+            },
+            "call_back": {
+                "#text" : this.callback === true? "TRUE" : "FALSE"
+            },
+            "call_back_DTS": {
+                "#text" : utils.toString(this.callbackDTS)
+            },
+            "lead_id": {
+                "#text" : utils.toString(this.leadId)
+            },
+            "extern_id": {
+                "#text" : utils.toString(this.externId)
+            },
+            "contact_forwarding": {
+                "#text": "null"
+            },
+            "session_id":{},
+            "uii": {}
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
 
 var HangupRequest = function(sessionId) {
     this.sessionId = sessionId || null;
@@ -1570,16 +1863,16 @@ var NewCallNotification = function() {
  *      <survey_id/>
  *      <survey_pop_type>SUPPRESS</survey_pop_type>
  *      <agent_recording default="ON" pause="10">TRUE</agent_recording>
- *          <outdial_dispositions type="CAMPAIGN|GATE">
+ *      <outdial_dispositions type="CAMPAIGN|GATE">
  *          <disposition disposition_id="20556" contact_forwarding="FALSE">Not Available</disposition>
- *      <disposition disposition_id="20559" contact_forwarding="FALSE">Transfer Not Available</disposition>
- *      <disposition disposition_id="20560" contact_forwarding="FALSE">Transfer Not Available - Ringing (no answer)</disposition>
- *      <disposition disposition_id="20561" contact_forwarding="TRUE">Succesfull Transfer</disposition>
- *      <disposition disposition_id="20562" contact_forwarding="TRUE">High School Senior</disposition>
- *      <disposition disposition_id="20563" contact_forwarding="FALSE">Transfer Not Available - Voicemail</disposition>
- *      <disposition disposition_id="20564" contact_forwarding="FALSE">Transfer Not Available - On Hold Too Long</disposition>
- *      <disposition disposition_id="20565" contact_forwarding="FALSE">Transfer Not Available - Busy</disposition>
- *      <disposition disposition_id="20557" contact_forwarding="FALSE">Not Available</disposition>
+ *          <disposition disposition_id="20559" contact_forwarding="FALSE">Transfer Not Available</disposition>
+ *          <disposition disposition_id="20560" contact_forwarding="FALSE">Transfer Not Available - Ringing (no answer)</disposition>
+ *          <disposition disposition_id="20561" contact_forwarding="TRUE">Succesfull Transfer</disposition>
+ *          <disposition disposition_id="20562" contact_forwarding="TRUE">High School Senior</disposition>
+ *          <disposition disposition_id="20563" contact_forwarding="FALSE">Transfer Not Available - Voicemail</disposition>
+ *          <disposition disposition_id="20564" contact_forwarding="FALSE">Transfer Not Available - On Hold Too Long</disposition>
+ *          <disposition disposition_id="20565" contact_forwarding="FALSE">Transfer Not Available - Busy</disposition>
+ *          <disposition disposition_id="20557" contact_forwarding="FALSE">Not Available</disposition>
  *      </outdial_dispositions>
  *      <baggage allow_updates="TRUE" show_lead_passes="TRUE" show_list_name="TRUE">
  *          <state>OH</state>
@@ -1831,8 +2124,12 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            callNotesRequest : null,
             callbacksPendingRequest : null,
+            campaignDispositionsRequest : null,
             configRequest : null,
+            dispositionRequest : null,
+            dispositionManualPassRequest : null,
             hangupRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
@@ -1973,7 +2270,8 @@ var UIModel = (function() {
                 insertCampaigns : [],
                 outdialGroup : {},                  // dial group agent is signed into
                 previewDialLeads : [],              // list of leads returned from preview dial request
-                tcpaSafeLeads : []                  // list of leads returned from tcpa safe request
+                tcpaSafeLeads : [],                 // list of leads returned from tcpa safe request
+                campaignDispositions : []           // list of campaign dispositions for specific campaign
             },
 
             surveySettings : {
@@ -2027,6 +2325,25 @@ var utils = {
 
         // Fire callback function
         switch (type.toUpperCase()) {
+            case MESSAGE_TYPES.AGENT_STATE:
+                if(UIModel.getInstance().agentStateRequest === null){
+                    UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
+                }
+                var stateChangeResposne = UIModel.getInstance().agentStateRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResposne);
+                break;
+            case MESSAGE_TYPES.CAMPAIGN_DISPOSITIONS:
+                var campaignDispsResposne = UIModel.getInstance().campaignDispositionsRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CAMPAIGN_DISPOSITIONS, campaignDispsResposne);
+                break;
+            case MESSAGE_TYPES.CALL_NOTES:
+                var callNotes = UIModel.getInstance().callNotesRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CALL_NOTES, callNotes);
+                break;
+            case MESSAGE_TYPES.CALLBACK_PENDING:
+                var pendingCallbacks = UIModel.getInstance().callbacksPendingRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CALLBACK_PENDING, pendingCallbacks);
+                break;
             case MESSAGE_TYPES.LOGIN:
                 if (dest === "IS") {
                     var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
@@ -2040,21 +2357,11 @@ var utils = {
                 // TODO add processResponse?
                 utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
                 break;
-            case MESSAGE_TYPES.AGENT_STATE:
-                if(UIModel.getInstance().agentStateRequest === null){
-                    UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
-                }
-                var stateChangeResposne = UIModel.getInstance().agentStateRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResposne);
-                break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
-            case MESSAGE_TYPES.CALLBACK_PENDING:
-                var pendingCallbacks = UIModel.getInstance().callbacksPendingRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.CALLBACK_PENDING, pendingCallbacks);
-            break;
+
         }
 
     },
@@ -2553,8 +2860,10 @@ const CALLBACK_TYPES = {
     "AGENT_STATE":"agentStateResponse",
     "CLOSE_SOCKET":"closeResponse",
     "CONFIG":"configureResponse",
+    "CALL_NOTES":"callNotesResponse",
     "CALLBACK_PENDING":"callbacksPendingResponse",
     "CALLBACK_CANCEL":"callbackCancelResponse",
+    "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
     "DROP_SESSION":"dropSessionNotification",
@@ -2577,8 +2886,10 @@ const MESSAGE_TYPES = {
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
+    "CALL_NOTES":"CALL-NOTES",
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
+    "CAMPAIGN_DISPOSITIONS":"CAMPAIGN-DISPOSITIONS",
     "EARLY_UII":"EARLY_UII",
     "END_CALL":"END-CALL",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
@@ -2587,12 +2898,14 @@ const MESSAGE_TYPES = {
     "GATES_CHANGE":"GATES_CHANGE",
     "GENERIC":"GENERIC",
     "HANGUP":"HANGUP",
+    "INBOUND_DISPOSITION":"INBOUND-DISPOSITION",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
     "OFFHOOK_TERM":"OFF-HOOK-TERM",
     "ON_MESSAGE":"ON-MESSAGE",
     "ONE_TO_ONE_OUTDIAL":"ONE-TO-ONE-OUTDIAL",
     "ONE_TO_ONE_OUTDIAL_CANCEL":"ONE-TO-ONE-OUTDIAL-CANCEL",
+    "OUTDIAL_DISPOSITION":"OUTDIAL-DISPOSITION",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
     "TCPA_SAFE":"TCPA-SAFE",
@@ -2799,6 +3112,38 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getManualOutdialCancelRequest = function() {
         return UIModel.getInstance().oneToOneOutdialCancelRequest;
+    };
+    /**
+     * Get latest Call Notes Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCallNotesRequest = function() {
+        return UIModel.getInstance().callNotesRequest;
+    };
+    /**
+     * Get latest Campaign Dispositions Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCampaignDispositionsRequest = function() {
+        return UIModel.getInstance().campaignDispositionsRequest;
+    };
+    /**
+     * Get latest Disposition Call Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getDispositionRequest = function() {
+        return UIModel.getInstance().dispositionRequest;
+    };
+    /**
+     * Get latest Disposition Manual Pass Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getDispositionManualPassRequest = function() {
+        return UIModel.getInstance().dispositionManualPassRequest;
     };
     /**
      * Get packet received on successful Login
@@ -3246,6 +3591,69 @@ function initAgentLibraryCall (context) {
     AgentLibrary.prototype.tcpaSafeCall = function(action, searchFields, requestId){
         UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest(action, searchFields, requestId);
         var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Get a list of all campaign dispositions for given campaign id
+     * @memberof AgentLibrary
+     * @param {string} campaignId Id for campaign to get dispositions for
+     * @param {function} [callback=null] Callback function when campaign dispositions response received
+     */
+    AgentLibrary.prototype.getCampaignDispositions = function(campaignId, callback){
+        UIModel.getInstance().campaignDispositionsRequest = new CampaignDispositionsRequest(campaignId);
+        var msg = UIModel.getInstance().campaignDispositionsRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CAMPAIGN_DISPOSITIONS, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send a disposition for an inbound or outbound call
+     * @memberof AgentLibrary
+     * @param {string} uii UII (unique id) for call
+     * @param {string} dispId The disposition id
+     * @param {string} notes Agent notes for call
+     * @param {boolean} callback Boolean for whether or not this call is a callback
+     * @param {string} [callbackDTS=""] date time stamp if callback
+     * @param {string} [contactForwardNumber=null] Number for contact forwarding
+     * @param {string} [survey=null] The survey response values for the call.
+     * Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]
+     */
+    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey){
+        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey);
+        var msg = UIModel.getInstance().dispositionRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send a disposition for a manual pass on a lead
+     * @memberof AgentLibrary
+     * @param {string} dispId The disposition id
+     * @param {string} notes Agent notes for call
+     * @param {boolean} callback Boolean for whether or not this call is a callback
+     * @param {string} [callbackDTS=""] date time stamp if callback
+     * @param {string} [leadId=null] The lead id (for outbound dispositions)
+     * @param {string} [requestKey=null] The request key for the lead (if manual pass disposition)
+     * @param {string} [externId=null] The external id of the lead (outbound)
+     */
+    AgentLibrary.prototype.dispositionManualPass = function(dispId, notes, callback, callbackDTS, leadId, requestKey, externId){
+        UIModel.getInstance().dispositionManualPassRequest = new DispositionManualPassRequest(dispId, notes, callback, callbackDTS, leadId, requestKey, externId);
+        var msg = UIModel.getInstance().dispositionManualPassRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Set agent notes for a call
+     * @memberof AgentLibrary
+     * @param {string} notes Agent notes to add to call
+     * @param {function} [callback=null] Callback function when call notes response received
+     */
+    AgentLibrary.prototype.setCallNotes = function(notes, callback){
+        UIModel.getInstance().callNotesRequest = new CallNotesRequest(notes);
+        var msg = UIModel.getInstance().callNotesRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CALL_NOTES, callback);
         utils.sendMessage(this, msg);
     };
 
