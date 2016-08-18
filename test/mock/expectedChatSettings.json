@@ -1,0 +1,18 @@
+{
+  "availableChatQueues" : [
+    {
+      "chatQueueDesc":"",
+      "chatQueueId":"1",
+      "chatQueueName":"test chat queue"
+    }
+  ],
+  "availableChatRooms" : [
+    {
+      "roomDesc": "",
+      "roomId": "1",
+      "roomName": "Test Chat Room"
+    }
+  ],
+  "chatQueues" : [],
+  "alias" : "Test First Test Last"
+}

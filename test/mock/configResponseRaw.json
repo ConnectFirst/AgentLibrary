@@ -24,6 +24,25 @@
     "outdial_group_id": {
       "#text": "1"
     },
-    "gates": {}
+    "gates": {
+      "gate_id": [
+        {
+          "#text": "1"
+        },
+        {
+          "#text": "2"
+        }
+      ]
+    },
+    "chat_queues": {
+      "chat_queue_id":[
+        {
+          "#text":"1"
+        }
+      ]
+    },
+    "skill_profile_id":{
+      "#text": "1"
+    }
   }
 }

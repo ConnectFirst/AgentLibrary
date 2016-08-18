@@ -136,7 +136,6 @@ CallNotesRequest.prototype.formatJSON = function() {
         }
     };
 
-
     return JSON.stringify(msg);
 };
 
@@ -449,7 +448,9 @@ ConfigRequest.prototype.formatJSON = function() {
  * 		<hash_code>117800988</hash_code>
  * 		<login_type>OUTBOUND</login_type>
  * 		<outdial_group_id>200018</outdial_group_id>
- * 		<gates/>
+ * 		<gates>
+ *          <gate_id>3</gate_id>
+ *      </gates>
  * </ui_response>
  */
 ConfigRequest.prototype.processResponse = function(response) {
@@ -478,17 +479,14 @@ ConfigRequest.prototype.processResponse = function(response) {
 
             // Set collection values
             setDialGroupSettings(response);
-
-            // For some strange reason IQ is not returning any collections other than outboundDialGroups
-            // so for now, get the list of ids for the following collections from the request
-            setGateSettings();
-            setChatQueueSettings();
-            setSkillProfileSettings();
+            setGateSettings(response);
+            setChatQueueSettings(response);
+            setSkillProfileSettings(response);
 
         }else{
             if(model.agentSettings.updateLoginMode){
-                // TODO set login type and dial dest for update logins??
                 model.agentSettings.dialDest = model.configRequest.dialDest;
+                model.agentSettings.loginType = utils.getText(resp, "login_type");
 
                 // This was an update login request
                 model.agentSettings.updateLoginMode = false;
@@ -500,12 +498,9 @@ ConfigRequest.prototype.processResponse = function(response) {
 
                 // Set collection values
                 setDialGroupSettings(response);
-
-                // For some strange reason IQ is not returning any collections other than outboundDialGroups
-                // so for now, get the list of ids for the following collections from the request
-                setGateSettings();
-                setChatQueueSettings();
-                setSkillProfileSettings();
+                setGateSettings(response);
+                setChatQueueSettings(response);
+                setSkillProfileSettings(response);
 
             }else{
                 // this was a reconnect
@@ -549,11 +544,29 @@ function setDialGroupSettings(response){
     }
 }
 
-function setGateSettings(){
+function setSkillProfileSettings(response){
+    var model = UIModel.getInstance();
+    var skillProfiles = model.inboundSettings.availableSkillProfiles;
+    for(var s = 0; s < skillProfiles.length; s++){
+        var profile = skillProfiles[s];
+        if(profile.skillProfileId === response.ui_response.skill_profile_id){
+            model.inboundSettings.skillProfile = JSON.parse(JSON.stringify(profile)); // copy object
+        }
+    }
+}
+
+function setGateSettings(response){
     var model = UIModel.getInstance();
     var gates = model.inboundSettings.availableQueues;
-    var selectedGateIds = model.configRequest.queueIds;
+    var selectedGateIds = [];
     var selectedGates = [];
+
+    if(response.ui_response.gates.gate_id){
+        for(var s = 0; s < response.ui_response.gates.gate_id.length; s++){
+            var obj = response.ui_response.gates.gate_id[s];
+            selectedGateIds.push(obj["#text"]);
+        }
+    }
 
     for(var gIdx = 0; gIdx < gates.length; gIdx++){
         var gate = gates[gIdx];
@@ -565,11 +578,18 @@ function setGateSettings(){
     model.inboundSettings.queues = JSON.parse(JSON.stringify(selectedGates)); // copy array
 }
 
-function setChatQueueSettings(){
+function setChatQueueSettings(response){
     var model = UIModel.getInstance();
     var chatQueues = model.chatSettings.availableChatQueues;
-    var selectedChatQueueIds = model.configRequest.chatIds;
+    var selectedChatQueueIds = [];
     var selectedChatQueues = [];
+
+    if(response.ui_response.chat_queues.chat_queue_id){
+        for(var c = 0; c < response.ui_response.chat_queues.chat_queue_id.length; c++){
+            var obj = response.ui_response.chat_queues.chat_queue_id[c];
+            selectedChatQueueIds.push(obj["#text"]);
+        }
+    }
 
     for(var cIdx = 0; cIdx < chatQueues.length; cIdx++){
         var chatQueue = chatQueues[cIdx];
@@ -581,16 +601,6 @@ function setChatQueueSettings(){
     model.chatSettings.chatQueues = JSON.parse(JSON.stringify(selectedChatQueues)); // copy array
 }
 
-function setSkillProfileSettings(){
-    var model = UIModel.getInstance();
-    var skillProfiles = model.inboundSettings.availableSkillProfiles;
-    for(var s = 0; s < skillProfiles.length; s++){
-        var profile = skillProfiles[s];
-        if(profile.skillProfileId === model.configRequest.skillProfileId){
-            model.inboundSettings.skillProfile = JSON.parse(JSON.stringify(profile)); // copy object
-        }
-    }
-}
 
 var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey) {
     this.uii = uii;

@@ -22,6 +22,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         this.expectedInboundSettings = fixture.load('expectedInboundSettings.json');
         this.expectedOutboundSettings = fixture.load('expectedOutboundSettings.json');
         this.expectedConnectionSettings = fixture.load('expectedConnectionSettings.json');
+        this.expectedChatSettings = fixture.load('expectedChatSettings.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -133,9 +134,11 @@ describe( 'Tests for Agent Library agent methods', function() {
         var connection = Lib.getConnectionSettings();
         var outbound = Lib.getOutboundSettings();
         var inbound = Lib.getInboundSettings();
+        var chat = Lib.getChatSettings();
 
         var expectedOutbound = JSON.parse(JSON.stringify(this.expectedOutboundSettings));
         var expectedInbound = JSON.parse(JSON.stringify(this.expectedInboundSettings));
+        var expectedChat = JSON.parse(JSON.stringify(this.expectedChatSettings));
 
         // set expected dial group
         for(var e = 0; e < expectedOutbound.availableOutdialGroups.length; e++){
@@ -156,13 +159,22 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set expected skill profile
         for(var p = 0; p < expectedInbound.availableSkillProfiles.length; p++){
             var profile = expectedInbound.availableSkillProfiles[p];
-            if(skillProfileId === profile.profileId){
+            if(skillProfileId === profile.skillProfileId){
                 expectedInbound.skillProfile = profile;
+            }
+        }
+
+        // set expected chat queues
+        for(var q = 0; q < expectedChat.availableChatQueues.length; q++){
+            var queue = expectedChat.availableChatQueues[q];
+            if(chatIds.indexOf(queue.chatQueueId) !== -1){
+                expectedChat.chatQueues.push(queue);
             }
         }
 
         expect(inbound).toEqual(expectedInbound);
         expect(outbound).toEqual(expectedOutbound);
+        expect(chat).toEqual(expectedChat);
         expect(connection).toEqual(this.expectedConnectionSettings);
     });
 
