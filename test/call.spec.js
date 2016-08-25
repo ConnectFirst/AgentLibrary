@@ -22,6 +22,11 @@ describe( 'Tests for Agent Library agent methods', function() {
         this.campaignDispositionsRaw = fixture.load('campaignDispositionsRaw.json');
         this.expectedOutdialDispositionRequest = fixture.load('expectedOutdialDispositionRequest.json');
         this.expectedDispositionManualPassRequest = fixture.load('expectedDispositionManualPassRequest.json');
+        this.expectedWarmXferRequest = fixture.load('expectedWarmXferRequest.json');
+        this.expectedColdXferRequest = fixture.load('expectedColdXferRequest.json');
+        this.expectedWarmXferCancelRequest = fixture.load('expectedWarmXferCancelRequest.json');
+        this.warmXferResponseRaw = fixture.load('warmXferResponseRaw.json');
+        this.coldXferResponseRaw = fixture.load('coldXferResponseRaw.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -127,6 +132,53 @@ describe( 'Tests for Agent Library agent methods', function() {
 
         expect(response).toEqual(expectedResponse);
         expect(dispositions).toEqual(expectedResponse);
+    });
+
+
+    it( 'should build a cold-xfer message and send message over socket', function() {
+        var Lib = new AgentLibrary();
+        var dest = "5555555555";
+        var callerId = "5555555551";
+
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        Lib.coldXfer(dest, callerId);
+        var msg = Lib.getColdTransferRequest().formatJSON();
+        var requestMsg = JSON.parse(msg);
+        delete requestMsg.ui_request['@message_id']; // won't match
+
+        Lib.socket._message(msg);
+
+        expect(requestMsg).toEqual(this.expectedColdXferRequest);
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
+    it( 'should process a cold-xfer response message', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
+        // process warm-xfer response
+        var response = Lib.getColdTransferRequest().processResponse(this.coldXferResponseRaw);
+        var expectedResponse = {
+            "message":"OK",
+            "detail":"",
+            "status":"OK",
+            "agentId": "1",
+            "uii":"1111",
+            "sessionId":"3",
+            "dialDest":"5555555555"
+        };
+
+        expect(response).toEqual(expectedResponse);
     });
 
     it( 'should build a hangup message and send message over socket', function() {
@@ -305,6 +357,71 @@ describe( 'Tests for Agent Library agent methods', function() {
         var expectedResponse = this.expectedPreviewDialResponse;
 
         expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should build a warm-xfer message and send message over socket', function() {
+        var Lib = new AgentLibrary();
+        var dest = "5555555555";
+        var callerId = "5555555551";
+
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        Lib.warmXfer(dest, callerId);
+        var msg = Lib.getWarmTransferRequest().formatJSON();
+        var requestMsg = JSON.parse(msg);
+        delete requestMsg.ui_request['@message_id']; // won't match
+
+        Lib.socket._message(msg);
+
+        expect(requestMsg).toEqual(this.expectedWarmXferRequest);
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
+    it( 'should process a warm-xfer response message', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
+        // process warm-xfer response
+        var response = Lib.getWarmTransferRequest().processResponse(this.warmXferResponseRaw);
+        var expectedResponse = {
+            "message":"OK",
+            "detail":"",
+            "status":"OK",
+            "agentId": "1",
+            "uii":"1111",
+            "sessionId":"3",
+            "dialDest":"5555555555"
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should build a warm-xfer-cancel message and send message over socket', function() {
+        var Lib = new AgentLibrary();
+        var dest = "5555555555";
+
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        Lib.warmXferCancel(dest);
+        var msg = Lib.getWarmTransferCancelRequest().formatJSON();
+        var requestMsg = JSON.parse(msg);
+        delete requestMsg.ui_request['@message_id']; // won't match
+
+        Lib.socket._message(msg);
+
+        expect(requestMsg).toEqual(this.expectedWarmXferCancelRequest);
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
 
 

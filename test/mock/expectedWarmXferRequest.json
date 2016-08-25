@@ -1,0 +1,17 @@
+{
+  "ui_request": {
+    "@destination":"IQ",
+    "@type":"WARM-XFER",
+    "response_to":"",
+    "agent_id":{
+      "#text":"1"
+    },
+    "uii":{},
+    "dial_dest":{
+      "#text":"5555555555"
+    },
+    "caller_id":{
+      "#text":"5555555551"
+    }
+  }
+}

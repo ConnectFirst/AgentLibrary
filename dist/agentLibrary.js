@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-18 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-25 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -333,6 +333,69 @@ CampaignDispositionsRequest.prototype.processResponse = function(response) {
 };
 
 
+var XferColdRequest = function(dialDest, callerId) {
+    this.dialDest = dialDest;
+    this.callerId = callerId || "";
+};
+
+XferColdRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.XFER_COLD,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "uii":{
+                "#text":UIModel.getInstance().currentCall.uii
+            },
+            "dial_dest":{
+                "#text":utils.toString(this.dialDest)
+            },
+            "caller_id":{
+                "#text":utils.toString(this.callerId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes COLD-XFER packets rec'd from IQ.
+ *
+ * <ui_response message_id="IQ10012016082314475000219" response_to="" type="COLD-XFER">
+ *   <agent_id>1</agent_id>
+ *   <uii>201608231447590139000000000200</uii>
+ *   <session_id>3</session_id>
+ *   <status>OK</status>
+ *   <dial_dest>3038593775</dial_dest>
+ *   <message>OK</message>
+ *   <detail/>
+ * </ui_response>
+ */
+XferColdRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    formattedResponse.agentId = utils.getText(resp, 'agent_id');
+    formattedResponse.uii = utils.getText(resp, 'uii');
+    formattedResponse.sessionId = utils.getText(resp, 'session_id');
+    formattedResponse.dialDest = utils.getText(resp, 'dial_dest');
+
+    if(formattedResponse.status === "OK"){
+        console.log("AgentLibrary: Cold Xfer to " + formattedResponse.dialDest + " processed successfully." );
+    }else{
+
+        console.warn("AgentLibrary: There was an error processing the Cold Xfer request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+    }
+
+    return formattedResponse;
+};
+
+
 var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dialDest, updateFromAdminUI) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
@@ -448,9 +511,13 @@ ConfigRequest.prototype.formatJSON = function() {
  * 		<hash_code>117800988</hash_code>
  * 		<login_type>OUTBOUND</login_type>
  * 		<outdial_group_id>200018</outdial_group_id>
+ * 	    <skill_profile_id>1513</skill_profile_id>
  * 		<gates>
  *          <gate_id>3</gate_id>
  *      </gates>
+ *      <chat_queues>
+ *          <chat_queue_id>30</chat_queue_id>
+ *      </chat_queues>
  * </ui_response>
  */
 ConfigRequest.prototype.processResponse = function(response) {
@@ -1404,6 +1471,70 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
 };
 
 
+var RequeueRequest = function(queueId, skillId, maintain) {
+    this.queueId = queueId;
+    this.skillId = skillId;
+    this.maintain = maintain;
+};
+
+RequeueRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.REQUEUE,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "uii":{
+                "#text":UIModel.getInstance().currentCall.uii
+            },
+            "gate_id":{
+                "#text":utils.toString(this.queueId)
+            },
+            "skill_id":{
+                "#text":utils.toString(this.skillId)
+            },
+            "maintain_agent":{
+                "#text":this.maintain === true ? "TRUE" : "FALSE"
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes RE-QUEUE packets rec'd from IQ.
+ *
+ * <ui_response message_id="IQ982008082817165103291"  response_to="UIV220088281716486" type="RE-QUEUE">
+ *   <agent_id>1856</agent_id>
+ *   <uii>200808281716090000000900028070</uii>
+ *   <status>OK</status>
+ *   <gate_number>19</gate_number>
+ *   <message>Success.</message>
+ *   <detail>The re-queue request was successfully processed.</detail>
+ * </ui_response>
+ */
+RequeueRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    formattedResponse.agentId = utils.getText(resp, 'agent_id');
+    formattedResponse.uii = utils.getText(resp, 'uii');
+    formattedResponse.queueId = utils.getText(resp, 'gate_number');
+
+    if(formattedResponse.status === "OK"){
+        console.log("AgentLibrary: Requeue successfull." );
+    }else{
+        console.warn("AgentLibrary: There was an error processing the requeue request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+    }
+
+    return formattedResponse;
+};
+
+
 var TcpaSafeRequest = function(action, searchFields, requestId) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
     this.searchFields = searchFields || [];
@@ -1496,6 +1627,106 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
     }
 
     return formattedResponse;
+};
+
+
+var XferWarmRequest = function(dialDest, callerId) {
+    this.dialDest = dialDest;
+    this.callerId = callerId || "";
+};
+
+XferWarmRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.XFER_WARM,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "uii":{
+                "#text":UIModel.getInstance().currentCall.uii
+            },
+            "dial_dest":{
+                "#text":utils.toString(this.dialDest)
+            },
+            "caller_id":{
+                "#text":utils.toString(this.callerId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes WARM-XFER packets rec'd from IQ.
+ * <ui_response message_id="IQ10012016082314475000219" response_to="" type="WARM-XFER">
+ *   <agent_id>1</agent_id>
+ *   <uii>201608231447590139000000000200</uii>
+ *   <session_id>3</session_id>
+ *   <status>OK</status>
+ *   <dial_dest>3038593775</dial_dest>
+ *   <message>OK</message>
+ *   <detail/>
+ * </ui_response>
+ *
+ * Response on CANCEL:
+ * <ui_response message_id="IQ10012016082315005000264" response_to="" type="WARM-XFER">
+ *   <agent_id>1</agent_id>
+ *   <uii>201608231501090139000000000204</uii>
+ *   <session_id/>
+ *   <status>FAILURE</status>
+ *   <dial_dest>3038593775</dial_dest>
+ *   <message>Transfer CANCELED</message>
+ *   <detail>NOANSWER after 3 seconds.</detail>
+ * </ui_response>
+ */
+XferWarmRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    formattedResponse.agentId = utils.getText(resp, 'agent_id');
+    formattedResponse.uii = utils.getText(resp, 'uii');
+    formattedResponse.sessionId = utils.getText(resp, 'session_id');
+    formattedResponse.dialDest = utils.getText(resp, 'dial_dest');
+
+    if(formattedResponse.status === "OK"){
+        console.log("AgentLibrary: Warm Xfer to " + formattedResponse.dialDest + " processed successfully." );
+    }else{
+
+        console.warn("AgentLibrary: There was an error processing the Warm Xfer request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+    }
+
+    return formattedResponse;
+};
+
+
+var XferWarmCancelRequest = function(number) {
+    this.number = number;
+};
+
+XferWarmCancelRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.XFER_WARM_CANCEL,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "uii":{
+                "#text":UIModel.getInstance().currentCall.uii
+            },
+            "dial_dest":{
+                "#text":utils.toString(this.number)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
 };
 
 
@@ -2138,6 +2369,7 @@ var UIModel = (function() {
             callbacksPendingRequest : null,
             campaignDispositionsRequest : null,
             configRequest : null,
+            coldXferRequest : null,
             dispositionRequest : null,
             dispositionManualPassRequest : null,
             hangupRequest : null,
@@ -2148,7 +2380,10 @@ var UIModel = (function() {
             oneToOneOutdialRequest : null,
             oneToOneOutdialCancelRequest : null,
             previewDialRequest : null,
+            requeueRequest : null,
             tcpaSafeRequest : null,
+            warmXferRequest : null,
+            warmXferCancelRequest : null,
 
             // response packets
             agentStatePacket : null,
@@ -2888,7 +3123,11 @@ const CALLBACK_TYPES = {
     "OFFHOOK_TERM":"offhookTermResponse",
     "OPEN_SOCKET":"openResponse",
     "PREVIEW_DIAL":"previewDialResponse",
-    "TCPA_SAFE":"tcpaSafeResponse"
+    "REQUEUE":"requeueResponse",
+    "TCPA_SAFE":"tcpaSafeResponse",
+    "XFER_COLD":"coldXferResponse",
+    "XFER_WARM":"warmXferResponse"
+
 };
 
 const MESSAGE_TYPES = {
@@ -2918,8 +3157,12 @@ const MESSAGE_TYPES = {
     "OUTDIAL_DISPOSITION":"OUTDIAL-DISPOSITION",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
+    "REQUEUE":"RE-QUEUE",
     "TCPA_SAFE":"TCPA-SAFE",
-    "TCPA_SAFE_ID":"TCPA_SAFE"
+    "TCPA_SAFE_ID":"TCPA_SAFE",
+    "XFER_COLD":"COLD-XFER",
+    "XFER_WARM":"WARM-XFER",
+    "XFER_WARM_CANCEL":"WARM-XFER-CANCEL"
 };
 
 
@@ -3154,6 +3397,38 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getDispositionManualPassRequest = function() {
         return UIModel.getInstance().dispositionManualPassRequest;
+    };
+    /**
+     * Get latest Warm Transfer Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getWarmTransferRequest = function() {
+        return UIModel.getInstance().warmXferRequest;
+    };
+    /**
+     * Get latest Cold Transfer Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getColdTransferRequest = function() {
+        return UIModel.getInstance().coldXferRequest;
+    };
+    /**
+     * Get latest Warm Transfer Cancel Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getWarmTransferCancelRequest = function() {
+        return UIModel.getInstance().warmXferCancelRequest;
+    };
+    /**
+     * Get latest Requeue Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getRequeueRequest = function() {
+        return UIModel.getInstance().requeueRequest;
     };
     /**
      * Get packet received on successful Login
@@ -3536,89 +3811,6 @@ function initAgentLibraryCall (context) {
     var AgentLibrary = context.AgentLibrary;
 
     /**
-     * Sends a manual outdial request message
-     * @memberof AgentLibrary
-     * @param {string} destination Number to call - ANI
-     * @param {number} [ringTime=60] Time in seconds to ring call
-     * @param {number} callerId Number displayed to callee, DNIS
-     * @param {string} [countryId='USA'] Country for the destination number
-     * @param {number} [queueId=''] Queue id to tie manual call to
-     */
-    AgentLibrary.prototype.manualOutdial = function(destination, ringTime, callerId, countryId, queueId){
-        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, ringTime, callerId, countryId, queueId);
-        var msg = UIModel.getInstance().oneToOneOutdialRequest.formatJSON();
-        utils.sendMessage(this, msg);
-    };
-
-    /**
-     * Sends a manual outdial request message
-     * @memberof AgentLibrary
-     * @param {string} destination Number to call - ANI
-     * @param {number} [ringTime=60] Time in seconds to ring call
-     * @param {number} callerId Number displayed to callee, DNIS
-     * @param {string} [countryId='USA'] Country for the destination number
-     * @param {number} [queueId=''] Queue id to tie manual call to
-     */
-    AgentLibrary.prototype.manualOutdialCancel = function(uii){
-        UIModel.getInstance().oneToOneOutdialCancelRequest = new OneToOneOutdialCancelRequest(uii);
-        var msg = UIModel.getInstance().oneToOneOutdialCancelRequest.formatJSON();
-        utils.sendMessage(this, msg);
-    };
-
-    /**
-     * Sends a hangup request message
-     * @memberof AgentLibrary
-     * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
-     */
-    AgentLibrary.prototype.hangup = function(sessionId){
-        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
-        var msg = UIModel.getInstance().hangupRequest.formatJSON();
-        utils.sendMessage(this, msg);
-    };
-
-    /**
-     * Sends a preview dial request message
-     * @memberof AgentLibrary
-     * @param {string} [action=""] Action to take
-     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
-     * e.g. [ {key: "name", value: "Geoff"} ]
-     * @param {number} [requestId=""] Number displayed to callee, DNIS
-     */
-    AgentLibrary.prototype.previewDial = function(action, searchFields, requestId){
-        UIModel.getInstance().previewDialRequest = new PreviewDialRequest(action, searchFields, requestId);
-        var msg = UIModel.getInstance().previewDialRequest.formatJSON();
-        utils.sendMessage(this, msg);
-    };
-
-    /**
-     * Sends a TCPA Safe call request message
-     * @memberof AgentLibrary
-     * @param {string} [action=""] Action to take
-     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
-     * e.g. [ {key: "name", value: "Geoff"} ]
-     * @param {number} [requestId=""] Number displayed to callee, DNIS
-     */
-    AgentLibrary.prototype.tcpaSafeCall = function(action, searchFields, requestId){
-        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest(action, searchFields, requestId);
-        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
-        utils.sendMessage(this, msg);
-    };
-
-    /**
-     * Get a list of all campaign dispositions for given campaign id
-     * @memberof AgentLibrary
-     * @param {string} campaignId Id for campaign to get dispositions for
-     * @param {function} [callback=null] Callback function when campaign dispositions response received
-     */
-    AgentLibrary.prototype.getCampaignDispositions = function(campaignId, callback){
-        UIModel.getInstance().campaignDispositionsRequest = new CampaignDispositionsRequest(campaignId);
-        var msg = UIModel.getInstance().campaignDispositionsRequest.formatJSON();
-
-        utils.setCallback(this, CALLBACK_TYPES.CAMPAIGN_DISPOSITIONS, callback);
-        utils.sendMessage(this, msg);
-    };
-
-    /**
      * Send a disposition for an inbound or outbound call
      * @memberof AgentLibrary
      * @param {string} uii UII (unique id) for call
@@ -3654,6 +3846,90 @@ function initAgentLibraryCall (context) {
     };
 
     /**
+     * Get a list of all campaign dispositions for given campaign id
+     * @memberof AgentLibrary
+     * @param {string} campaignId Id for campaign to get dispositions for
+     * @param {function} [callback=null] Callback function when campaign dispositions response received
+     */
+    AgentLibrary.prototype.getCampaignDispositions = function(campaignId, callback){
+        UIModel.getInstance().campaignDispositionsRequest = new CampaignDispositionsRequest(campaignId);
+        var msg = UIModel.getInstance().campaignDispositionsRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CAMPAIGN_DISPOSITIONS, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer to another number and end the call for the original agent (cold transfer).
+     * @memberof AgentLibrary
+     * @param {number} dialDest Number to transfer to
+     * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {function} [callback=null] Callback function when call notes response received
+     */
+    AgentLibrary.prototype.coldXfer = function(dialDest, callerId, callback){
+        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId);
+        var msg = UIModel.getInstance().coldXferRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a hangup request message
+     * @memberof AgentLibrary
+     * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
+     */
+    AgentLibrary.prototype.hangup = function(sessionId){
+        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
+        var msg = UIModel.getInstance().hangupRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a manual outdial request message
+     * @memberof AgentLibrary
+     * @param {string} destination Number to call - ANI
+     * @param {number} [ringTime=60] Time in seconds to ring call
+     * @param {number} callerId Number displayed to callee, DNIS
+     * @param {string} [countryId='USA'] Country for the destination number
+     * @param {number} [queueId=''] Queue id to tie manual call to
+     */
+    AgentLibrary.prototype.manualOutdial = function(destination, ringTime, callerId, countryId, queueId){
+        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, ringTime, callerId, countryId, queueId);
+        var msg = UIModel.getInstance().oneToOneOutdialRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a manual outdial request message
+     * @memberof AgentLibrary
+     * @param {string} destination Number to call - ANI
+     * @param {number} [ringTime=60] Time in seconds to ring call
+     * @param {number} callerId Number displayed to callee, DNIS
+     * @param {string} [countryId='USA'] Country for the destination number
+     * @param {number} [queueId=''] Queue id to tie manual call to
+     */
+    AgentLibrary.prototype.manualOutdialCancel = function(uii){
+        UIModel.getInstance().oneToOneOutdialCancelRequest = new OneToOneOutdialCancelRequest(uii);
+        var msg = UIModel.getInstance().oneToOneOutdialCancelRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a preview dial request message
+     * @memberof AgentLibrary
+     * @param {string} [action=""] Action to take
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     */
+    AgentLibrary.prototype.previewDial = function(action, searchFields, requestId){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest(action, searchFields, requestId);
+        var msg = UIModel.getInstance().previewDialRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * Set agent notes for a call
      * @memberof AgentLibrary
      * @param {string} notes Agent notes to add to call
@@ -3664,6 +3940,62 @@ function initAgentLibraryCall (context) {
         var msg = UIModel.getInstance().callNotesRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CALL_NOTES, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Requeue a call
+     * @memberof AgentLibrary
+     * @param {number} queueId Queue Id to send the call to
+     * @param {number} skillId Skill Id for the requeued call
+     * @param {boolean} maintain Whether or not to maintain the current agent
+     * @param {function} [callback=null] Callback function when call notes response received
+     */
+    AgentLibrary.prototype.requeueCall = function(queueId, skillId, maintain, callback){
+        UIModel.getInstance().requeueRequest = new RequeueRequest(queueId, skillId, maintain);
+        var msg = UIModel.getInstance().requeueRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.REQUEUE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a TCPA Safe call request message
+     * @memberof AgentLibrary
+     * @param {string} [action=""] Action to take
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     */
+    AgentLibrary.prototype.tcpaSafeCall = function(action, searchFields, requestId){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest(action, searchFields, requestId);
+        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer to another number while keeping the original agent on the line (warm transfer).
+     * @memberof AgentLibrary
+     * @param {number} dialDest Number to transfer to
+     * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {function} [callback=null] Callback function when call notes response received
+     */
+    AgentLibrary.prototype.warmXfer = function(dialDest, callerId, callback){
+        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId);
+        var msg = UIModel.getInstance().warmXferRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.XFER_WARM, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Cancel a warm transfer
+     * @memberof AgentLibrary
+     * @param {number} dialDest Number that was transfered to
+     */
+    AgentLibrary.prototype.warmXferCancel = function(dialDest){
+        UIModel.getInstance().warmXferCancelRequest = new XferWarmCancelRequest(dialDest);
+        var msg = UIModel.getInstance().warmXferCancelRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 

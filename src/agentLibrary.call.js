@@ -5,89 +5,6 @@ function initAgentLibraryCall (context) {
     var AgentLibrary = context.AgentLibrary;
 
     /**
-     * Sends a manual outdial request message
-     * @memberof AgentLibrary
-     * @param {string} destination Number to call - ANI
-     * @param {number} [ringTime=60] Time in seconds to ring call
-     * @param {number} callerId Number displayed to callee, DNIS
-     * @param {string} [countryId='USA'] Country for the destination number
-     * @param {number} [queueId=''] Queue id to tie manual call to
-     */
-    AgentLibrary.prototype.manualOutdial = function(destination, ringTime, callerId, countryId, queueId){
-        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, ringTime, callerId, countryId, queueId);
-        var msg = UIModel.getInstance().oneToOneOutdialRequest.formatJSON();
-        utils.sendMessage(this, msg);
-    };
-
-    /**
-     * Sends a manual outdial request message
-     * @memberof AgentLibrary
-     * @param {string} destination Number to call - ANI
-     * @param {number} [ringTime=60] Time in seconds to ring call
-     * @param {number} callerId Number displayed to callee, DNIS
-     * @param {string} [countryId='USA'] Country for the destination number
-     * @param {number} [queueId=''] Queue id to tie manual call to
-     */
-    AgentLibrary.prototype.manualOutdialCancel = function(uii){
-        UIModel.getInstance().oneToOneOutdialCancelRequest = new OneToOneOutdialCancelRequest(uii);
-        var msg = UIModel.getInstance().oneToOneOutdialCancelRequest.formatJSON();
-        utils.sendMessage(this, msg);
-    };
-
-    /**
-     * Sends a hangup request message
-     * @memberof AgentLibrary
-     * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
-     */
-    AgentLibrary.prototype.hangup = function(sessionId){
-        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
-        var msg = UIModel.getInstance().hangupRequest.formatJSON();
-        utils.sendMessage(this, msg);
-    };
-
-    /**
-     * Sends a preview dial request message
-     * @memberof AgentLibrary
-     * @param {string} [action=""] Action to take
-     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
-     * e.g. [ {key: "name", value: "Geoff"} ]
-     * @param {number} [requestId=""] Number displayed to callee, DNIS
-     */
-    AgentLibrary.prototype.previewDial = function(action, searchFields, requestId){
-        UIModel.getInstance().previewDialRequest = new PreviewDialRequest(action, searchFields, requestId);
-        var msg = UIModel.getInstance().previewDialRequest.formatJSON();
-        utils.sendMessage(this, msg);
-    };
-
-    /**
-     * Sends a TCPA Safe call request message
-     * @memberof AgentLibrary
-     * @param {string} [action=""] Action to take
-     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
-     * e.g. [ {key: "name", value: "Geoff"} ]
-     * @param {number} [requestId=""] Number displayed to callee, DNIS
-     */
-    AgentLibrary.prototype.tcpaSafeCall = function(action, searchFields, requestId){
-        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest(action, searchFields, requestId);
-        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
-        utils.sendMessage(this, msg);
-    };
-
-    /**
-     * Get a list of all campaign dispositions for given campaign id
-     * @memberof AgentLibrary
-     * @param {string} campaignId Id for campaign to get dispositions for
-     * @param {function} [callback=null] Callback function when campaign dispositions response received
-     */
-    AgentLibrary.prototype.getCampaignDispositions = function(campaignId, callback){
-        UIModel.getInstance().campaignDispositionsRequest = new CampaignDispositionsRequest(campaignId);
-        var msg = UIModel.getInstance().campaignDispositionsRequest.formatJSON();
-
-        utils.setCallback(this, CALLBACK_TYPES.CAMPAIGN_DISPOSITIONS, callback);
-        utils.sendMessage(this, msg);
-    };
-
-    /**
      * Send a disposition for an inbound or outbound call
      * @memberof AgentLibrary
      * @param {string} uii UII (unique id) for call
@@ -123,6 +40,90 @@ function initAgentLibraryCall (context) {
     };
 
     /**
+     * Get a list of all campaign dispositions for given campaign id
+     * @memberof AgentLibrary
+     * @param {string} campaignId Id for campaign to get dispositions for
+     * @param {function} [callback=null] Callback function when campaign dispositions response received
+     */
+    AgentLibrary.prototype.getCampaignDispositions = function(campaignId, callback){
+        UIModel.getInstance().campaignDispositionsRequest = new CampaignDispositionsRequest(campaignId);
+        var msg = UIModel.getInstance().campaignDispositionsRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CAMPAIGN_DISPOSITIONS, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer to another number and end the call for the original agent (cold transfer).
+     * @memberof AgentLibrary
+     * @param {number} dialDest Number to transfer to
+     * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {function} [callback=null] Callback function when call notes response received
+     */
+    AgentLibrary.prototype.coldXfer = function(dialDest, callerId, callback){
+        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId);
+        var msg = UIModel.getInstance().coldXferRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a hangup request message
+     * @memberof AgentLibrary
+     * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
+     */
+    AgentLibrary.prototype.hangup = function(sessionId){
+        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
+        var msg = UIModel.getInstance().hangupRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a manual outdial request message
+     * @memberof AgentLibrary
+     * @param {string} destination Number to call - ANI
+     * @param {number} [ringTime=60] Time in seconds to ring call
+     * @param {number} callerId Number displayed to callee, DNIS
+     * @param {string} [countryId='USA'] Country for the destination number
+     * @param {number} [queueId=''] Queue id to tie manual call to
+     */
+    AgentLibrary.prototype.manualOutdial = function(destination, ringTime, callerId, countryId, queueId){
+        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, ringTime, callerId, countryId, queueId);
+        var msg = UIModel.getInstance().oneToOneOutdialRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a manual outdial request message
+     * @memberof AgentLibrary
+     * @param {string} destination Number to call - ANI
+     * @param {number} [ringTime=60] Time in seconds to ring call
+     * @param {number} callerId Number displayed to callee, DNIS
+     * @param {string} [countryId='USA'] Country for the destination number
+     * @param {number} [queueId=''] Queue id to tie manual call to
+     */
+    AgentLibrary.prototype.manualOutdialCancel = function(uii){
+        UIModel.getInstance().oneToOneOutdialCancelRequest = new OneToOneOutdialCancelRequest(uii);
+        var msg = UIModel.getInstance().oneToOneOutdialCancelRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a preview dial request message
+     * @memberof AgentLibrary
+     * @param {string} [action=""] Action to take
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     */
+    AgentLibrary.prototype.previewDial = function(action, searchFields, requestId){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest(action, searchFields, requestId);
+        var msg = UIModel.getInstance().previewDialRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * Set agent notes for a call
      * @memberof AgentLibrary
      * @param {string} notes Agent notes to add to call
@@ -133,6 +134,62 @@ function initAgentLibraryCall (context) {
         var msg = UIModel.getInstance().callNotesRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CALL_NOTES, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Requeue a call
+     * @memberof AgentLibrary
+     * @param {number} queueId Queue Id to send the call to
+     * @param {number} skillId Skill Id for the requeued call
+     * @param {boolean} maintain Whether or not to maintain the current agent
+     * @param {function} [callback=null] Callback function when call notes response received
+     */
+    AgentLibrary.prototype.requeueCall = function(queueId, skillId, maintain, callback){
+        UIModel.getInstance().requeueRequest = new RequeueRequest(queueId, skillId, maintain);
+        var msg = UIModel.getInstance().requeueRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.REQUEUE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a TCPA Safe call request message
+     * @memberof AgentLibrary
+     * @param {string} [action=""] Action to take
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     */
+    AgentLibrary.prototype.tcpaSafeCall = function(action, searchFields, requestId){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest(action, searchFields, requestId);
+        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer to another number while keeping the original agent on the line (warm transfer).
+     * @memberof AgentLibrary
+     * @param {number} dialDest Number to transfer to
+     * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {function} [callback=null] Callback function when call notes response received
+     */
+    AgentLibrary.prototype.warmXfer = function(dialDest, callerId, callback){
+        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId);
+        var msg = UIModel.getInstance().warmXferRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.XFER_WARM, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Cancel a warm transfer
+     * @memberof AgentLibrary
+     * @param {number} dialDest Number that was transfered to
+     */
+    AgentLibrary.prototype.warmXferCancel = function(dialDest){
+        UIModel.getInstance().warmXferCancelRequest = new XferWarmCancelRequest(dialDest);
+        var msg = UIModel.getInstance().warmXferCancelRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 

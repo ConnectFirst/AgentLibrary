@@ -1,0 +1,26 @@
+{
+  "ui_response":{
+    "@message_id":"",
+    "@response_to":"",
+    "@type":"WARM-XFER",
+    "agent_id":{
+      "#text":"1"
+    },
+    "uii":{
+      "#text":"1111"
+    },
+    "session_id":{
+      "#text":"3"
+    },
+    "status":{
+      "#text":"OK"
+    },
+    "dial_dest":{
+      "#text":"5555555555"
+    },
+    "message":{
+      "#text":"OK"
+    },
+    "detail":{}
+  }
+}

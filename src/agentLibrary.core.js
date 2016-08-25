@@ -36,7 +36,11 @@ const CALLBACK_TYPES = {
     "OFFHOOK_TERM":"offhookTermResponse",
     "OPEN_SOCKET":"openResponse",
     "PREVIEW_DIAL":"previewDialResponse",
-    "TCPA_SAFE":"tcpaSafeResponse"
+    "REQUEUE":"requeueResponse",
+    "TCPA_SAFE":"tcpaSafeResponse",
+    "XFER_COLD":"coldXferResponse",
+    "XFER_WARM":"warmXferResponse"
+
 };
 
 const MESSAGE_TYPES = {
@@ -66,8 +70,12 @@ const MESSAGE_TYPES = {
     "OUTDIAL_DISPOSITION":"OUTDIAL-DISPOSITION",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
+    "REQUEUE":"RE-QUEUE",
     "TCPA_SAFE":"TCPA-SAFE",
-    "TCPA_SAFE_ID":"TCPA_SAFE"
+    "TCPA_SAFE_ID":"TCPA_SAFE",
+    "XFER_COLD":"COLD-XFER",
+    "XFER_WARM":"WARM-XFER",
+    "XFER_WARM_CANCEL":"WARM-XFER-CANCEL"
 };
 
 
@@ -302,6 +310,38 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getDispositionManualPassRequest = function() {
         return UIModel.getInstance().dispositionManualPassRequest;
+    };
+    /**
+     * Get latest Warm Transfer Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getWarmTransferRequest = function() {
+        return UIModel.getInstance().warmXferRequest;
+    };
+    /**
+     * Get latest Cold Transfer Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getColdTransferRequest = function() {
+        return UIModel.getInstance().coldXferRequest;
+    };
+    /**
+     * Get latest Warm Transfer Cancel Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getWarmTransferCancelRequest = function() {
+        return UIModel.getInstance().warmXferCancelRequest;
+    };
+    /**
+     * Get latest Requeue Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getRequeueRequest = function() {
+        return UIModel.getInstance().requeueRequest;
     };
     /**
      * Get packet received on successful Login

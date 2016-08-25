@@ -21,6 +21,7 @@ var UIModel = (function() {
             callbacksPendingRequest : null,
             campaignDispositionsRequest : null,
             configRequest : null,
+            coldXferRequest : null,
             dispositionRequest : null,
             dispositionManualPassRequest : null,
             hangupRequest : null,
@@ -31,7 +32,10 @@ var UIModel = (function() {
             oneToOneOutdialRequest : null,
             oneToOneOutdialCancelRequest : null,
             previewDialRequest : null,
+            requeueRequest : null,
             tcpaSafeRequest : null,
+            warmXferRequest : null,
+            warmXferCancelRequest : null,
 
             // response packets
             agentStatePacket : null,
