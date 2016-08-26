@@ -28,11 +28,15 @@ OffhookInitRequest.prototype.formatJSON = function() {
  * If the offhookinit is successful, it will go into the UIModel and set the isOffhook variable
  * to true.
  *
- * <ui_response type="OFF-HOOK-INIT" message_id="UI2005" response_to="">
- * 		<status>OK|FAILURE</status>
- * 		<message></message>
- * 		<detail></detail>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"UI2005",
+ *      "@response_to":"",
+ *      "@type":"OFF-HOOK-INIT",
+ *      "status":{"#text":"OK|FAILURE"},
+ *      "message":{},
+ *      "detail":{}
+ *    }
+ * }
  */
 OffhookInitRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];

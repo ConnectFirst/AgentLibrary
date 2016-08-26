@@ -23,24 +23,39 @@ CallbacksPendingRequest.prototype.formatJSON = function() {
 /*
  * This class is responsible for handling an PENDING-CALLBACKS response packet from IntelliQueue.
  *
- * <ui_response message_id="IQ982008091512353000875"  response_to="UIV220089151235539" type="PENDING-CALLBACKS">
- *    <lead lead_id="" destination="5555555555" aux_data1="" aux_data2="" aux_data3="" aux_data4="" aux_data5=""
- *       extern_id="" dial_time="2016-08-03 10:00" dial_group_name="" dial_group_id="" lead_id="">
- *       <lead_id/>
- *       <extern_id/>
- *       <first_name/>
- *       <mid_name/>
- *       <last_name/>
- *       <suffix/>
- *       <title/>
- *       <address1/>
- *       <address2/>
- *       <city/>
- *       <state/>
- *       <zip/>
- *       <gate_keeper/>
- *    </lead>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ982008091512353000875",
+ *      "@response_to":"UIV220089151235539",
+ *      "@type":"PENDING-CALLBACKS",
+ *      "lead":{
+ *          "@aux_data1":"",
+ *          "@aux_data2":"",
+ *          "@aux_data3":"",
+ *          "@aux_data4":"",
+ *          "@aux_data5":"",
+ *          "@destination":"5555555555",
+ *          "@dial_group_id":"",
+ *          "@dial_group_name":"",
+ *          "@dial_time":"2016-08-03 10:00",
+ *          "@extern_id":"",
+ *          "@lead_id":"",
+ *          "lead_id":{},
+ *          "extern_id":{},
+ *          "extern_id":{},
+ *          "first_name":{},
+ *          "mid_name":{},
+ *          "last_name":{},
+ *          "suffix":{},
+ *          "title":{},
+ *          "address1":{},
+ *          "address2":{},
+ *          "city":{},
+ *          "state":{},
+ *          "zip":{},
+ *          "gate_keeper":{}
+ *      }
+ *   }
+ * }
  */
 CallbacksPendingRequest.prototype.processResponse = function(response) {
     var leadsRaw = response.ui_response.lead;

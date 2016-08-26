@@ -9,83 +9,91 @@ var NewCallNotification = function() {
  * 		@Monitoring==true:  set state to ACTIVE-MONITORING, send NewMonitoringCall event
  * 		@Monitoring==false: set state to ACTIVE, send newcall packet and increment total calls
  *
- *  <ui_notification message_id="IQ982010020911335300027" response_to="" type="NEW-CALL">
- *      <uii>201002091133350139990000000010</uii>
- *      <agent_id>657</agent_id>
- *      <dial_dest>sip:+16789050673@sip.connectfirst.com</dial_dest>
- *      <queue_dts>2010-02-09 11:33:53</queue_dts>
- *      <queue_time>-1</queue_time>
- *      <ani>9548298548</ani>
- *      <dnis/>
- *      <call_type>OUTBOUND</call_type>
- *      <app_url><![CDATA[]]></app_url>
- *      <is_monitoring>FALSE</is_monitoring>
- *      <gate number="17038">
- *          <name>AM Campaign</name>
- *      <description/>
- *      </gate>
- *      <message/>
- *      <survey_id/>
- *      <survey_pop_type>SUPPRESS</survey_pop_type>
- *      <agent_recording default="ON" pause="10">TRUE</agent_recording>
- *      <outdial_dispositions type="CAMPAIGN|GATE">
- *          <disposition disposition_id="20556" contact_forwarding="FALSE">Not Available</disposition>
- *          <disposition disposition_id="20559" contact_forwarding="FALSE">Transfer Not Available</disposition>
- *          <disposition disposition_id="20560" contact_forwarding="FALSE">Transfer Not Available - Ringing (no answer)</disposition>
- *          <disposition disposition_id="20561" contact_forwarding="TRUE">Succesfull Transfer</disposition>
- *          <disposition disposition_id="20562" contact_forwarding="TRUE">High School Senior</disposition>
- *          <disposition disposition_id="20563" contact_forwarding="FALSE">Transfer Not Available - Voicemail</disposition>
- *          <disposition disposition_id="20564" contact_forwarding="FALSE">Transfer Not Available - On Hold Too Long</disposition>
- *          <disposition disposition_id="20565" contact_forwarding="FALSE">Transfer Not Available - Busy</disposition>
- *          <disposition disposition_id="20557" contact_forwarding="FALSE">Not Available</disposition>
- *      </outdial_dispositions>
- *      <baggage allow_updates="TRUE" show_lead_passes="TRUE" show_list_name="TRUE">
- *          <state>OH</state>
- *          <aux_data4/>
- *          <address2/>
- *          <mid_name/>
- *          <extern_id>9548298548</extern_id>
- *          <aux_data1>BMAK</aux_data1>
- *          <aux_external_url/>
- *          <lead_id>64306</lead_id>
- *          <aux_data5/>
- *          <aux_data2>BMAK-041653-934</aux_data2>
- *          <last_name>Taylor</last_name>
- *          <lead_passes>1</lead_passes>
- *          <first_name>Ryant</first_name>
- *          <city>Cleveland</city>
- *          <aux_greeting/>
- *          <address1>8010 Maryland Ave</address1>
- *      <zip>44105</zip>
- *      <aux_data3>Call Ctr 1</aux_data3>
- *      <aux_phone/>
- *      <custom_labels>
- *      <aux_1_label/>
- *      <aux_2_label/>
- *      <aux_3_label/>
- *      <aux_4_label/>
- *      <aux_5_label/>
- *      </custom_labels>
- *      </baggage>
- *      <survey_response response_id="24" survey_id="1775">
- *          <details>
- *              <detail element_id="9001" option_id="0"><![CDATA[Box 1]]></detail>
- *              <detail element_id="9002" option_id="0"><![CDATA[Area 1]]></detail>
- *              <detail element_id="9003" option_id="6439"/>
- *              <detail element_id="9004" option_id="6443"/>
- *              <detail element_id="9004" option_id="6444"/>
- *              <detail element_id="9005" option_id="6447"/>
- *              <detail element_id="9006" option_id="0"><![CDATA[11/20/2013]]></detail>
- *              <detail element_id="9015" option_id="0"><![CDATA[Box 2]]></detail>
- *              <detail element_id="9016" option_id="0"><![CDATA[Area 2]]></detail>
- *              <detail element_id="9017" option_id="6466"/>
- *              <detail element_id="9018" option_id="6471"/>
- *              <detail element_id="9018" option_id="6472"/>
- *              <detail element_id="9019" option_id="6477"/>
- *              <detail element_id="9020" option_id="0"><![CDATA[11/21/2013]]></detail>
- *          </details>
- *      </survey_response>
- *  </ui_notification>
+ *  {"ui_notification":{
+ *      "@message_id":"IQ982010020911335300027",
+ *      "@response_to":"",
+ *      "@type":"NEW-CALL",
+ *      "uii":{"#text":"201002091133350139990000000010"},
+ *      "agent_id":{"#text":"657"},
+ *      "dial_dest":{"#text":"sip:+16789050673@sip.connectfirst.com"},
+ *      "queue_dts":{"#text":"2010-02-09 11:33:53"},
+ *      "queue_time":{"#text":"-1"},
+ *      "ani":{"#text":"9548298548"},
+ *      "dnis":{},
+ *      "call_type":{"#text":"OUTBOUND"},
+ *      "app_url":{},
+ *      "is_monitoring":{"#text":"FALSE"},
+ *      "gate":{
+ *          "@number":"17038",
+ *          "name":{"#text":"AM Campaign"},
+ *          "description":{}
+ *      },
+ *      "message":{},
+ *      "survey_id":{},
+ *      "survey_pop_type":{"#text":"SUPPRESS"},
+ *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
+ *      "outdial_dispositions":{
+ *      "@type":"CAMPAIGN|GATE",
+ *          "disposition":[
+ *              { "@contact_forwarding":"FALSE", "@disposition_id":"20556", "#text":"Not Available"},
+ *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "#text":"Transfer Not Available"}
+ *          ]
+ *      },
+ *      "baggage":{
+ *          "@allow_updates":"TRUE",
+ *          "@show_lead_passes":"TRUE",
+ *          "@show_list_name":"TRUE",
+ *          "state":{"#text":"OH"},
+ *          "aux_data4":{},
+ *          "address2":{},
+ *          "mid_name":{},
+ *          "extern_id":{"#text":"9548298548"},
+ *          "aux_data1":{"#text":"BMAK"},
+ *          "aux_external_url":{},
+ *          "lead_id":{"#text":"64306"},
+ *          "aux_data5":{},
+ *          "aux_data2":{"#text":"BMAK-041653-934"},
+ *          "last_name":{"#text":"Taylor"},
+ *          "lead_passes":{"#text":"1"},
+ *          "first_name":{"#text":"Ryant"},
+ *          "city":{"#text":"Cleveland"},
+ *          "aux_greeting":{},
+ *          "address1":{"#text":"8010 Maryland Ave"},
+ *          "zip":{"#text":"44105"},
+ *          "aux_data3":{"#text":"Call Ctr 1"},
+ *          "aux_phone":{},
+ *          "custom_labels":{
+ *              "aux_1_label":{},
+ *              "aux_2_label":{},
+ *              "aux_3_label":{},
+ *              "aux_4_label":{},
+ *              "aux_5_label":{}
+ *          }
+ *      },
+ *      "survey_response":{
+ *          "@response_id":"24",
+ *          "@survey_id":"1775",
+ *          "details":{
+ *              "detail":[
+ *                  {"@element_id":"9001","@option_id":"0","#text":"Box 1"},
+ *                  {"@element_id":"9002","@option_id":"0","#text":"Area 1"},
+ *                  {"@element_id":"9003","@option_id":"6439"},
+ *                  {"@element_id":"9004","@option_id":"6443"},
+ *                  {"@element_id":"9004","@option_id":"6444"},
+ *                  {"@element_id":"9005","@option_id":"6447"},
+ *                  {"@element_id":"9006","@option_id":"0","#text":"11/20/2013"},
+ *                  {"@element_id":"9015","@option_id":"0","#text":"Box 2"},
+ *                  {"@element_id":"9016","@option_id":"0","#text":"Area 2"},
+ *                  {"@element_id":"9017","@option_id":"6466"},
+ *                  {"@element_id":"9018","@option_id":"6471"},
+ *                  {"@element_id":"9018","@option_id":"6472"},
+ *                  {"@element_id":"9019","@option_id":"6477"},
+ *                  {"@element_id":"9020","@option_id":"0","#text":"11/21/2013"}
+ *             ]
+ *          }
+ *      }
+ *    }
+ *  }
  */
 NewCallNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();

@@ -7,16 +7,21 @@ var AddSessionNotification = function() {
  * This class is responsible for handling "ADD-SESSION" packets from IntelliQueue.  This is used by
  * the CallControlForm. Then it will increment the total_calls count.
  *
- * <ui_notification message_id="IQ982008082918151403727" response_to="" type="ADD-SESSION">
- *     <session_id>2</session_id>
- *     <uii>200808291814560000000900016558</uii>
- *     <phone>200808291814370000000900016555</phone>
- *     <session_type>AGENT</session_type>
- *     <session_label>Primary Agents Call Session</session_label>
- *     <allow_control>TRUE</allow_control>
- *     <monitoring>FALSE</monitoring>
- *     <agent_id>1856</agent_id>
- * </ui_notification>
+ * {
+ *   "ui_notification": {
+ *       "@message_id": "IQ982008082918151403727",
+ *       "@response_to": "",
+ *       "@type": "ADD-SESSION",
+ *       "session_id": { "#text": "2" },
+ *       "uii": { "#text": "200808291814560000000900016558" },
+ *       "phone": { "#text": "200808291814370000000900016555" },
+ *       "session_type": { "#text": "AGENT" },
+ *       "session_label": { "#text": "Primary Agents Call Session" },
+ *       "allow_control": { "#text": "TRUE" },
+ *       "monitoring": { "#text": "FALSE" },
+ *       "agent_id": { "#text": "1856" }
+ *   }
+ *  }
  */
 AddSessionNotification.prototype.processResponse = function(notification) {
     var formattedResponse = utils.buildDefaultResponse(notification);

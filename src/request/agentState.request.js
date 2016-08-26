@@ -36,16 +36,19 @@ AgentStateRequest.prototype.formatJSON = function() {
  * packet and then set the state on the model. It will also check for deferred surveys,
  * if one is found it will load it at this point.
  *
- * <ui_response message_id="IQ982008082817165103294" type="AGENT-STATE">
- *	  <status>OK</status>
- * 	  <message/>
- *	  <detail/>
- *	  <agent_id>1856</agent_id>
- *	  <prev_state>ENGAGED</prev_state>
- *	  <current_state>WORKING</current_state>
- * 	  <agent_aux_state>Offhook Work</agent_aux_state>
- * 	  <prev_aux_state></prev_aux_state>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082817165103294",
+ *      "@type":"AGENT-STATE",
+ *      "status":{"#text":"OK"},
+ *      "message":{},
+ *      "detail":{},
+ *      "agent_id":{"#text":"1856"},
+ *      "prev_state":{"#text":"ENGAGED"},
+ *      "current_state":{"#text":"WORKING"},
+ *      "agent_aux_state":{"#text":"Offhook Work"},
+ *      "prev_aux_state":{}
+ *   }
+ * }
  */
 AgentStateRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;

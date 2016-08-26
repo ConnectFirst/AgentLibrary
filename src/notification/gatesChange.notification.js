@@ -6,10 +6,14 @@ var GatesChangeNotification = function() {
 /*
  * This class is responsible for handling a gates change notification
  *
- * <ui_notification message_id="IQ10012016080815372800837" type="GATES_CHANGE">
- *    <agent_id>1180958</agent_id>
- *    <gate_ids>11117,3</gate_ids>
- * </ui_notification>
+ * {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016080817344100936",
+ *          "@type":"GATES_CHANGE",
+ *          "agent_id":{"#text":"1180958"},
+ *          "gate_ids":{"#text":"11117,3"}
+ *      }
+ * }
  */
 GatesChangeNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();

@@ -32,15 +32,19 @@ XferColdRequest.prototype.formatJSON = function() {
 /*
  * This class processes COLD-XFER packets rec'd from IQ.
  *
- * <ui_response message_id="IQ10012016082314475000219" response_to="" type="COLD-XFER">
- *   <agent_id>1</agent_id>
- *   <uii>201608231447590139000000000200</uii>
- *   <session_id>3</session_id>
- *   <status>OK</status>
- *   <dial_dest>3038593775</dial_dest>
- *   <message>OK</message>
- *   <detail/>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ10012016082314475000219",
+ *      "@response_to":"",
+ *      "@type":"COLD-XFER",
+ *      "agent_id":{"#text":"1"},
+ *      "uii":{"#text":"201608231447590139000000000200"},
+ *      "session_id":{"#text":"3"},
+ *      "status":{"#text":"OK"},
+ *      "dial_dest":{"#text":"3038593775"},
+ *      "message":{"#text":"OK"},
+ *      "detail":{}
+ *   }
+ * }
  */
 XferColdRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;

@@ -106,22 +106,29 @@ ConfigRequest.prototype.formatJSON = function() {
 /*
  * This function is responsible for handling the response to Login from IntelliQueue.
  *
- * <ui_response message_id="IQ982008100319095501435"  response_to="IQ200810319947384" type="LOGIN">
- * 		<agent_id>1810</agent_id>
- * 		<status>SUCCESS</status>
- * 		<message>Hello Geoff Mina!</message>
- * 		<detail>Logon request processed successfully!</detail>
- * 		<hash_code>117800988</hash_code>
- * 		<login_type>OUTBOUND</login_type>
- * 		<outdial_group_id>200018</outdial_group_id>
- * 	    <skill_profile_id>1513</skill_profile_id>
- * 		<gates>
- *          <gate_id>3</gate_id>
- *      </gates>
- *      <chat_queues>
- *          <chat_queue_id>30</chat_queue_id>
- *      </chat_queues>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ10012016082513212000447",
+ *      "@response_to":"IQ201608251121200",
+ *      "@type":"LOGIN",
+ *      "agent_id":{"#text":"1"},
+ *      "status":{"#text":"SUCCESS"},
+ *      "message":{"#text":"Hello Geoffrey Mina!"},
+ *      "detail":{"#text":"Logon request processed successfully!"},
+ *      "hash_code":{"#text":"404946966"},
+ *      "login_type":{"#text":"BLENDED"},
+ *      "outdial_group_id":{"#text":"50692"},
+ *      "skill_profile_id":{"#text":"1513"},
+ *      "gates":{
+ *          "gate_id":[
+ *              {"#text":"11116"},
+ *              {"#text":"11117"}
+ *          ]
+ *      },
+ *      "chat_queues":{
+ *          "chat_queue_id":{"#text":"30"}
+ *      }
+ *    }
+ * }
  */
 ConfigRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;

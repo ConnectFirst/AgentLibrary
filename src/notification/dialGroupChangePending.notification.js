@@ -7,11 +7,15 @@ var DialGroupChangePendingNotification = function() {
  * This class is responsible for handling a DIAL_GROUP_CHANGE_PENDING notification.
  * This event is sent from IQ when an agent's dial group is changed and the agent is on a call.
  *
- * <ui_notification message_id="IQ10012016080515294800318" type="DIAL_GROUP_CHANGE_PENDING">
- *   <agent_id>1180958</agent_id>
- *   <dial_group_id>50354</dial_group_id>
- *   <update_from_adminui>TRUE</update_from_adminui>
- * </ui_notification>
+ * {
+ *     "ui_notification": {
+ *         "@message_id": "IQ10012016080515294800318",
+ *         "@type": "DIAL_GROUP_CHANGE_PENDING",
+ *         "agent_id": { "#text": "1180958" },
+ *         "dial_group_id": { "#text": "50354" },
+ *         "update_from_adminui": { "#text": "TRUE" }
+ *     }
+ * }
  */
 DialGroupChangePendingNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();

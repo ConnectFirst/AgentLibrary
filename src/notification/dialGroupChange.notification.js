@@ -7,12 +7,16 @@ var DialGroupChangeNotification = function() {
  * This class is responsible for handling a DIAL_GROUP_CHANGE notification.
  * This event is sent from IQ when an agent's dial group is changed in through the AdminUI.
  *
- *  <ui_notification message_id="IQ10012016080413085500263" type="DIAL_GROUP_CHANGE">
- *      <agent_id>1180958</agent_id>
- *      <dial_group_id>50354</dial_group_id>
- *      <dialGroupName>Preview Dial Mode</dialGroupName>
- *      <dial_group_desc/>
- *  </ui_notification>
+ *   {
+ *       "ui_notification": {
+ *           "@message_id": "IQ10012016080413085500263",
+ *           "@type": "DIAL_GROUP_CHANGE",
+ *           "agent_id": { "#text": "1180958" },
+ *           "dial_group_id": { "#text": "50354" },
+ *           "dialGroupName": { "#text": "Preview Dial Mode" },
+ *           "dial_group_desc": {}
+ *       }
+ *   }
  */
 DialGroupChangeNotification.prototype.processResponse = function(notification) {
     //Modify configRequest with new DialGroupId

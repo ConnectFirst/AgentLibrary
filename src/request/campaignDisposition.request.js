@@ -2,6 +2,7 @@
 /*
  * This request is used to get the list of dispositions for a given campaign
  * E.g. in the lead search form for manual passes
+ *
  */
 var CampaignDispositionsRequest = function(campaignId) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
@@ -31,14 +32,19 @@ CampaignDispositionsRequest.prototype.formatJSON = function() {
  * This class is responsible for handling CAMPAIGN-DISPOSITIONS packets received
  * from IntelliQueue. It will save a copy of it in the UIModel.
  *
-  <ui_response message_id="IQ982008091512353000875"  response_to="UIV220089151235539" type="CAMPAIGN-DISPOSITIONS">
-  		<outdial_dispositions>
-     		<disposition disposition_id="130">complete</disposition>
-     		<disposition disposition_id="131">incomplete</disposition>
-     		<disposition disposition_id="132">warm xfer</disposition>
-     		<disposition disposition_id="133">cold xfer</disposition>
-   	</outdial_dispositions>
-  </ui_response>
+ * {"ui_response":{
+ *      "@campaign_id":"60403",
+ *      "@message_id":"IQ10012016081813480400006",
+ *      "@response_to":"0b61c3ca-c4fc-9942-c139-da4978053c9d",
+ *      "@type":"CAMPAIGN-DISPOSITIONS",
+ *      "outdial_dispositions":{
+ *          "disposition":[
+ *              {"@disposition_id":"1","#text":"requeue"},
+ *              {"@disposition_id":"2","#text":"complete"}
+ *          ]
+ *       }
+ *    }
+ * }
  */
 CampaignDispositionsRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;

@@ -44,26 +44,30 @@ TcpaSafeRequest.prototype.formatJSON = function() {
  * This class is responsible for handling TCPA-SAFE packets received
  * from the dialer. It will save a copy of it in the UIModel.
  *
- * <dialer_request message_id="ID2008091513163400220" response_to="" type="TCPA_SAFE" callbacks="TRUE|FALSE">
- * 		<dial_group_id>200018</dial_group_id>
- * 		<account_id>99999999</account_id>
- * 		<agent_id>1810</agent_id>
- * 		<destinations>
- * 			<lead aux_data1="" aux_data2="" aux_data3="" aux_data4="" aux_data5="" aux_phone="" campaign_id="51" destination="9548298548" dnis="1112223333" extern_id="amanda" lead_id="2646" lead_state="PENDING" live_answer_msg="" mach_answer_msg="" machine_detect="FALSE" request_key="IQ982008091516241101125" valid_until="2008-09-15 17:24:11">
- * 				<extern_id><![CDATA[9548298548]]></extern_id>
- * 				<first_name><![CDATA[Amanda]]></first_name>
- * 				<mid_name><![CDATA[Amanda]]></mid_name>
- * 				<last_name><![CDATA[Machutta2]]></last_name>
- * 				<address1/>
- * 				<address2/>
- * 				<city/>
- * 				<state/>
- * 				<zip/>
- * 				<aux_greeting/>
- * 				<aux_external_url/>
- * 			</lead>
- * 		</destinations>
- * </dialer_request>
+ * {"dialer_request":{
+ *      "@callbacks":"TRUE|FALSE"
+ *      ,"@message_id":"ID2008091513163400220",
+ *      "@response_to":"",
+ *      "@type":"TCPA_SAFE",
+ *      "dial_group_id":{"#text":"200018"},
+ *      "account_id":{"#text":"99999999"},
+ *      "agent_id":{"#text":"1810"},
+ *      "destinations":{
+ *          "lead":[
+ *              {
+ *                  "@aux_data1":"","@aux_data2":"","@aux_data3":"","@aux_data4":"","@aux_data5":"",
+ *                  "@aux_phone":"","@campaign_id":"51","@destination":"9548298548","@dnis":"1112223333",
+ *                  "@extern_id":"amanda","@lead_id":"2646","@lead_state":"PENDING","@live_answer_msg":"",
+ *                  "@mach_answer_msg":"","@machine_detect":"FALSE","@request_key":"IQ982008091516241101125",
+ *                  "@valid_until":"2008-09-15 17:24:11","extern_id":{"#text":"9548298548"},
+ *                  "first_name":{"#text":"Amanda"},"mid_name":{"#text":"Amanda"},"last_name":{"#text":"Machutta2"},
+ *                  "address1":{},"address2":{},"city":{},"state":{},"zip":{},"aux_greeting":{},
+ *                  "aux_external_url":{}
+ *              },
+ *          ]
+ *      }
+ *    }
+ * }
  *
  */
 TcpaSafeRequest.prototype.processResponse = function(notification) {

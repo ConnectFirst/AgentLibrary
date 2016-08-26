@@ -13,21 +13,24 @@ var DispositionManualPassRequest = function(dispId, notes, callback, callbackDTS
  * Sends an OUTDIAL-DISPOSITION request, just a separate class
  * specifically for dispositions on manual pass.
  *
- * <ui_request response_to="" message_id="UIV220089241119416" type="OUTDIAL-DISPOSITION">
- *      <manual_disp>TRUE</manual_disp>
- *      <request_key>IQ10012016081719070100875</request_key>
- *      <session_id/>
- * 		<uii/>
- * 	    <agent_id>1810</agent_id>
- * 		<lead_id>213215</lead_id>
- * 		<outbound_externid>909809</outbound_externid>
- * 		<disposition_id>126</disposition_id>
- * 		<notes>here are my notes :)</notes>
- * 		<call_back>TRUE | FALSE</call_back>
- * 		<call_back_DTS>2008-09-30 22:30:00 | null</call_back_DTS>
- * 	    <contact_forwarding>null</contact_forwarding>
- * </ui_request>
- *
+ * {"ui_request":{
+ *      "@message_id":"UIV220089241119416",
+ *      "@response_to":"",
+ *      "@type":"OUTDIAL-DISPOSITION",
+ *      "manual_disp":{"#text":"TRUE"},
+ *      "request_key":{"#text":"IQ10012016081719070100875"},
+ *      "session_id":{},
+ *      "uii":{},
+ *      "agent_id":{"#text":"1810"},
+ *      "lead_id":{"#text":"213215"},
+ *      "outbound_externid":{"#text":"909809"},
+ *      "disposition_id":{"#text":"126"},
+ *      "notes":{"#text":"here are my notes :)"},
+ *      "call_back":{"#text":"TRUE | FALSE"},
+ *      "call_back_DTS":{"#text":"2008-09-30 22:30:00 | null"},
+ *      "contact_forwarding":{"#text":"null"}
+ *    }
+ * }
  */
 DispositionManualPassRequest.prototype.formatJSON = function() {
     var model = UIModel.getInstance();

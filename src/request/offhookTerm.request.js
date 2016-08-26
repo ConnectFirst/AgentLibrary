@@ -23,12 +23,16 @@ OffhookTermRequest.prototype.formatJSON = function() {
 /*
  * Process an OFF-HOOK-TERM packet and update various variables in the UI
  *
- * <ui_notification message_id="IQ10012016080217135001344" response_to="" type="OFF-HOOK-TERM">
- *    <agent_id>1</agent_id>
- *    <start_dts>2016-08-02 17:11:38</start_dts>
- *    <end_dts>2016-08-02 17:14:07</end_dts>
- *    <monitoring>0</monitoring>
- * </ui_notification>
+ * {"ui_notification":{
+ *      "@message_id":"IQ10012016080217135001344",
+ *      "@response_to":"",
+ *      "@type":"OFF-HOOK-TERM",
+ *      "agent_id":{"#text":"1"},
+ *      "start_dts":{"#text":"2016-08-02 17:11:38"},
+ *      "end_dts":{"#text":"2016-08-02 17:14:07"},
+ *      "monitoring":{"#text":"0"}
+ *    }
+ * }
  */
 OffhookTermRequest.prototype.processResponse = function(data) {
     var notif = data.ui_notification;

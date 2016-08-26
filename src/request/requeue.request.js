@@ -36,14 +36,18 @@ RequeueRequest.prototype.formatJSON = function() {
 /*
  * This class processes RE-QUEUE packets rec'd from IQ.
  *
- * <ui_response message_id="IQ982008082817165103291"  response_to="UIV220088281716486" type="RE-QUEUE">
- *   <agent_id>1856</agent_id>
- *   <uii>200808281716090000000900028070</uii>
- *   <status>OK</status>
- *   <gate_number>19</gate_number>
- *   <message>Success.</message>
- *   <detail>The re-queue request was successfully processed.</detail>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082817165103291",
+ *      "@response_to":"UIV220088281716486",
+ *      "@type":"RE-QUEUE",
+ *      "agent_id":{"#text":"1856"},
+ *      "uii":{"#text":"200808281716090000000900028070"},
+ *      "status":{"#text":"OK"},
+ *      "gate_number":{"#text":"19"},
+ *      "message":{"#text":"Success."},
+ *      "detail":{"#text":"The re-queue request was successfully processed."}
+ *    }
+ * }
  */
 RequeueRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;

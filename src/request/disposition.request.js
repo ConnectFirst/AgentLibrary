@@ -21,19 +21,29 @@ var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, con
  * in the UIModel. Then, using the information passed in, it will
  * create the remainder of the packet. This class is called from the ExtendedCallForm
  *
- * <ui_request response_to="" message_id="UIV220089241119416" type="OUTDIAL-DISPOSITION|INBOUND-DISPOSITION">
- * 		<uii>200809241119590139990000000069</uii>
- * 		<lead_id>213215</lead_id>
- * 		<outbound_externid>909809</outbound_externid>
- * 		<agent_id>1810</agent_id>
- * 		<disposition_id>126</disposition_id>
- * 		<notes>here are my notes :)</notes>
- * 		<call_back>TRUE | FALSE</call_back>
- * 		<call_back_DTS>2008-09-30 22:30:00 | null</call_back_DTS>
- * 		<contact_forward_number>5555555555 | null</contact_forward_number>
- * 		<session_id>2</session_id>  ONLY WHEN AVAILABLE otherwise the node is left blank. this is the AGENT session_id
- * </ui_request>
- *
+ * {"ui_request":{
+ *      "@message_id":"IQ20160817145840132",
+ *      "@response_to":"",
+ *      "@type":"OUTDIAL-DISPOSITION|INBOUND-DISPOSITION",
+ *      "session_id":{"#text":"2"},  <-- ONLY WHEN AVAILABLE otherwise the node is left blank. this is the AGENT session_id
+ *      "uii":{"#text":"201608171658440139000000000165"},
+ *      "agent_id":{"#text":"1180958"},
+ *      "lead_id":{"#text":"1800"},
+ *      "outbound_externid":{"#text":"3038593775"},
+ *      "disposition_id":{"#text":"5950"},
+ *      "notes":{"#text":"note here"},
+ *      "call_back":{"#text":"FALSE"},
+ *      "call_back_DTS":{},
+ *      "contact_forwarding":{},
+ *      "survey":{
+ *          "response":[
+ *              {"@extern_id":"text_box","@lead_update_column":"","#text":"hello"},
+ *              {"@extern_id":"check_box","@lead_update_column":"","#text":"20"},
+ *              {"@extern_id":"radio_save","@lead_update_column":"","#text":"23"}
+ *          ]
+ *      }
+ *   }
+ * }
  */
 DispositionRequest.prototype.formatJSON = function() {
     var model = UIModel.getInstance();

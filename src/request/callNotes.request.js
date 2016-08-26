@@ -5,11 +5,7 @@ var CallNotesRequest = function(notes) {
 
 /*
 * This event is responsible for allowing an agent to tag a call with notes
-*
-* <ui_request type="CALL-NOTES" uii="" response_to="" message_id="IQ20081027151806763">
-* 		<notes><![[BLAH]]></notes>
-* </ui_request>
-* */
+*/
 CallNotesRequest.prototype.formatJSON = function() {
     var model = UIModel.getInstance();
     var msg = {
@@ -37,11 +33,14 @@ CallNotesRequest.prototype.formatJSON = function() {
 /*
  * This class process CALL-NOTES packets rec'd from IntelliQueue.
  *
- * <ui_response message_id="IQ982008082817165103294" type="CALL-NOTES">
- *	  <status>OK</status>
- * 	  <message/>
- *	  <detail/>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082817165103294",
+ *      "@type":"CALL-NOTES",
+ *      "status":{"#text":"OK"},
+ *      "message":{},
+ *      "detail":{}
+ *   }
+ * }
  */
 CallNotesRequest.prototype.processResponse = function(response) {
     var formattedResponse = utils.buildDefaultResponse(response);

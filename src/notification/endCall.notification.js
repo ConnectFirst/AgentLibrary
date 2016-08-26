@@ -8,17 +8,22 @@ var EndCallNotification = function(libInstance) {
  * Save the packet in the UIModel by appending it to the currentCall packet.
  * Update the CallState field in the UIModel to "CALL-ENDED"
  *
- *  <ui_notification message_id="IQ982008082910362203349" response_to="" type="END-CALL">
- *       <agent_id>1856</agent_id>
- *       <uii>200808291035510000000900029412</uii>
- *       <session_id>2</session_id>
- *       <call_dts>2008-08-29 10:36:04</call_dts>
- *       <call_duration>16</call_duration>
- *       <term_party>CALLER</term_party>
- *       <term_reason/>
- *       <recording_url/>
- *       <disposition_timeout>60</disposition_timeout>
- *  </ui_notification>
+ * {
+ *  "ui_notification":{
+ *      "@message_id":"IQ982008082910362203349",
+ *      "@response_to":"",
+ *      "@type":"END-CALL",
+ *      "agent_id":{"#text":"1856"},
+ *      "uii":{"#text":"200808291035510000000900029412"},
+ *      "session_id":{"#text":"2"},
+ *      "call_dts":{"#text":"2008-08-29 10:36:04"},
+ *      "call_duration":{"#text":"16"},
+ *      "term_party":{"#text":"CALLER"},
+ *      "term_reason":{},
+ *      "recording_url":{},
+ *      "disposition_timeout:{"#text":"60"}
+ *  }
+ * }
  */
 EndCallNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
