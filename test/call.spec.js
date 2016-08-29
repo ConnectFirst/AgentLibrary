@@ -75,6 +75,70 @@ describe( 'Tests for Agent Library agent methods', function() {
         fixture.cleanup()
     });
 
+    it( 'should build a barge-in message and send message over socket', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        Lib.bargeIn("FULL");
+        var msg = Lib.getBargeInRequest().formatJSON();
+        var requestMsg = JSON.parse(msg);
+        delete requestMsg.ui_request['@message_id']; // won't match
+
+        Lib.socket._message(msg);
+
+        var expectedBargeInRequest = {
+            "ui_request":{
+                "@destination":"IQ",
+                "@type":"BARGE-IN",
+                "@response_to":"",
+                "agent_id":{"#text":"1"},
+                "uii":{"#text":""},
+                "audio_state":{"#text":"FULL"},
+                "monitor_agent_id":{"#text":""}
+            }
+        };
+
+        expect(requestMsg).toEqual(expectedBargeInRequest);
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
+    it( 'should process a barge-in response message', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.bargeIn("FULL");
+
+        var bargeInResponse =   {
+            "ui_response":{
+                "@response_to":"",
+                "@type":"BARGE-IN",
+                "agent_id":{"#text":""},
+                "uii":{},
+                "status":{"#text":"OK"},
+                "message":{"#text":"Barge-In processed successfully!"},
+                "detail":{}
+            }
+        };
+        var response = Lib.getBargeInRequest().processResponse(bargeInResponse);
+        var expectedResponse = {
+            message: "Barge-In processed successfully!",
+            detail: "",
+            status: "OK",
+            agentId: "",
+            uii:""
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
     it( 'should process a call-notes response message', function() {
         var Lib = new AgentLibrary();
         Lib.socket = windowMock.WebSocket(address);
@@ -196,6 +260,74 @@ describe( 'Tests for Agent Library agent methods', function() {
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
 
+    it( 'should build a hold message and send message over socket', function() {
+        var Lib = new AgentLibrary();
+        var holdState = "ON";
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        Lib.hold(holdState);
+        var msg = Lib.getHoldRequest().formatJSON();
+        var requestMsg = JSON.parse(msg);
+        delete requestMsg.ui_request['@message_id']; // won't match
+
+        Lib.socket._message(msg);
+
+        var expectedRequest =   {
+            "ui_request":{
+                "@destination":"IQ",
+                "@type":"HOLD",
+                "@response_to":"",
+                "agent_id":{"#text":""},
+                "uii":{"#text":""},
+                "session_id":{"#text":"1"},
+                "hold_state":{"#text":"ON"}
+            }
+        };
+
+        expect(requestMsg).toEqual(expectedRequest);
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
+    it( 'should process a hold response message', function() {
+        var Lib = new AgentLibrary();
+        var holdState = "ON";
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.hold(holdState);
+
+        var holdResponse = {
+            "ui_response":{
+                "@response_to":"",
+                "@type":"HOLD",
+                "uii":{"#text":""},
+                "session_id":{"#text":"1"},
+                "status":{"#text":"OK"},
+                "message":{},
+                "detail":{},
+                "hold_state":{"#text":"ON"}
+            }
+        };
+        var response = Lib.getHoldRequest().processResponse(holdResponse);
+        var expectedResponse = {
+            message: "Broadcasting new hold state of ON",
+            detail: "",
+            status: "OK",
+            holdState: "ON",
+            sessionId: "1",
+            uii:""
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
     it( 'should build a one-to-one-outdial message and send message over socket', function() {
         var Lib = new AgentLibrary();
         var destination = "55555555555";
@@ -279,6 +411,74 @@ describe( 'Tests for Agent Library agent methods', function() {
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
 
+    it( 'should build a pause-record message and send message over socket', function() {
+        var Lib = new AgentLibrary();
+        var record = true;
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        Lib.pauseRecord(record);
+        var msg = Lib.getPauseRecordRequest().formatJSON();
+        var requestMsg = JSON.parse(msg);
+        delete requestMsg.ui_request['@message_id']; // won't match
+
+        Lib.socket._message(msg);
+
+        var expectedRequest = {
+            "ui_request":{
+                "@destination":"IQ",
+                "@type":"PAUSE-RECORD",
+                "@response_to":"",
+                "agent_id":{"#text":""},
+                "uii":{"#text":""},
+                "record":{"#text":"TRUE"},
+                "pause":{"#text":"10"}
+            }
+        };
+
+        expect(requestMsg).toEqual(expectedRequest);
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
+    it( 'should process a pause-record response message', function() {
+        var Lib = new AgentLibrary();
+        var record = true;
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.pauseRecord(record);
+
+        var pauseResponse =  {
+            "ui_response":{
+                "@response_to":"",
+                "@type":"PAUSE-RECORD",
+                "uii":{"#text":""},
+                "status":{"#text":"OK"},
+                "message":{},
+                "detail":{},
+                "state":{"#text":"PAUSED"},
+                "pause":{"#text":"10"}
+            }
+        };
+        var response = Lib.getPauseRecordRequest().processResponse(pauseResponse);
+        var expectedResponse = {
+            message: "Broadcasting new record state of PAUSED",
+            detail: "",
+            status: "OK",
+            uii: "",
+            state: "PAUSED",
+            pause:"10"
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
     it( 'should build a preview-dial message and send message over socket', function() {
         var Lib = new AgentLibrary();
         var action = "";
@@ -315,6 +515,71 @@ describe( 'Tests for Agent Library agent methods', function() {
         var previewDialResponse = JSON.parse(JSON.stringify(this.previewDialResponseRaw));
         var response = Lib.getPreviewDialRequest().processResponse(previewDialResponse);
         var expectedResponse = this.expectedPreviewDialResponse;
+
+        expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should build a record message and send message over socket', function() {
+        var Lib = new AgentLibrary();
+        var record = true;
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        Lib.record(record);
+        var msg = Lib.getRecordRequest().formatJSON();
+        var requestMsg = JSON.parse(msg);
+        delete requestMsg.ui_request['@message_id']; // won't match
+
+        Lib.socket._message(msg);
+
+        var expectedRequest = {
+            "ui_request":{
+                "@destination":"IQ",
+                "@type":"RECORD",
+                "@response_to":"",
+                "agent_id":{"#text":""},
+                "uii":{"#text":""},
+                "record":{"#text":"TRUE"}
+            }
+        };
+
+        expect(requestMsg).toEqual(expectedRequest);
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
+    it( 'should process a record response message', function() {
+        var Lib = new AgentLibrary();
+        var record = true;
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.record(record);
+
+        var recordResponse =  {
+            "ui_response":{
+                "@response_to":"",
+                "@type":"RECORD",
+                "uii":{"#text":""},
+                "status":{"#text":"OK"},
+                "message":{},
+                "detail":{},
+                "state":{"#text":"RECORDING"}
+            }
+        };
+        var response = Lib.getRecordRequest().processResponse(recordResponse);
+        var expectedResponse = {
+            message: "Broadcasting new record state of RECORDING",
+            detail: "",
+            status: "OK",
+            uii: "",
+            state: "RECORDING"
+        };
 
         expect(response).toEqual(expectedResponse);
     });

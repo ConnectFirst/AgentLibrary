@@ -5,6 +5,47 @@ function initAgentLibraryCall (context) {
     var AgentLibrary = context.AgentLibrary;
 
     /**
+     * Barge in on a call, can hear all parties and be heard by all
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when barge in response received
+     */
+    AgentLibrary.prototype.bargeIn = function(callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("FULL");
+        var msg = UIModel.getInstance().bargeInRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.BARGE_IN, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Add a coaching session to the call, can hear all parties but only able to speak on agent channel
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when coaching session response received
+     */
+    AgentLibrary.prototype.coachCall = function(callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("COACHING");
+        var msg = UIModel.getInstance().bargeInRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.COACH_CALL, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer to another number and end the call for the original agent (cold transfer).
+     * @memberof AgentLibrary
+     * @param {number} dialDest Number to transfer to
+     * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {function} [callback=null] Callback function when cold transfer response received
+     */
+    AgentLibrary.prototype.coldXfer = function(dialDest, callerId, callback){
+        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId);
+        var msg = UIModel.getInstance().coldXferRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * Send a disposition for an inbound or outbound call
      * @memberof AgentLibrary
      * @param {string} uii UII (unique id) for call
@@ -54,21 +95,6 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Transfer to another number and end the call for the original agent (cold transfer).
-     * @memberof AgentLibrary
-     * @param {number} dialDest Number to transfer to
-     * @param {number} [callerId=""] Caller Id for caller (DNIS)
-     * @param {function} [callback=null] Callback function when call notes response received
-     */
-    AgentLibrary.prototype.coldXfer = function(dialDest, callerId, callback){
-        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId);
-        var msg = UIModel.getInstance().coldXferRequest.formatJSON();
-
-        utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
-        utils.sendMessage(this, msg);
-    };
-
-    /**
      * Sends a hangup request message
      * @memberof AgentLibrary
      * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
@@ -76,6 +102,20 @@ function initAgentLibraryCall (context) {
     AgentLibrary.prototype.hangup = function(sessionId){
         UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
         var msg = UIModel.getInstance().hangupRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Place a call on hold
+     * @memberof AgentLibrary
+     * @param {string} holdState Whether we are putting call on hold or taking off hold - values "ON" | "OFF"
+     * @param {function} [callback=null] Callback function when hold response received
+     */
+    AgentLibrary.prototype.hold = function(holdState, callback){
+        UIModel.getInstance().holdRequest = new HoldRequest(holdState);
+        var msg = UIModel.getInstance().holdRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.HOLD, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -110,6 +150,20 @@ function initAgentLibraryCall (context) {
     };
 
     /**
+     * Pause call recording
+     * @memberof AgentLibrary
+     * @param {boolean} record Whether we are recording or not
+     * @param {function} [callback=null] Callback function when pause record response received
+     */
+    AgentLibrary.prototype.pauseRecord = function(record, callback){
+        UIModel.getInstance().pauseRecordRequest = new PauseRecordRequest(record);
+        var msg = UIModel.getInstance().pauseRecordRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.PAUSE_RECORD, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * Sends a preview dial request message
      * @memberof AgentLibrary
      * @param {string} [action=""] Action to take
@@ -138,12 +192,39 @@ function initAgentLibraryCall (context) {
     };
 
     /**
+     * Add a silent monitor session to a call, can hear all channels but can't be heard by any party
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when silent monitor response received
+     */
+    AgentLibrary.prototype.silentMonitor = function(callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE");
+        var msg = UIModel.getInstance().bargeInRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.SILENT_MONITOR, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Pause call recording
+     * @memberof AgentLibrary
+     * @param {boolean} record Whether we are recording or not
+     * @param {function} [callback=null] Callback function when record response received
+     */
+    AgentLibrary.prototype.record = function(record, callback){
+        UIModel.getInstance().recordRequest = new RecordRequest(record);
+        var msg = UIModel.getInstance().recordRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.RECORD, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * Requeue a call
      * @memberof AgentLibrary
      * @param {number} queueId Queue Id to send the call to
      * @param {number} skillId Skill Id for the requeued call
      * @param {boolean} maintain Whether or not to maintain the current agent
-     * @param {function} [callback=null] Callback function when call notes response received
+     * @param {function} [callback=null] Callback function when requeue response received
      */
     AgentLibrary.prototype.requeueCall = function(queueId, skillId, maintain, callback){
         UIModel.getInstance().requeueRequest = new RequeueRequest(queueId, skillId, maintain);
@@ -172,7 +253,7 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
-     * @param {function} [callback=null] Callback function when call notes response received
+     * @param {function} [callback=null] Callback function when warm transfer response received
      */
     AgentLibrary.prototype.warmXfer = function(dialDest, callerId, callback){
         UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId);

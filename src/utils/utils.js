@@ -29,6 +29,24 @@ var utils = {
                 var stateChangeResposne = UIModel.getInstance().agentStateRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResposne);
                 break;
+            case MESSAGE_TYPES.BARGE_IN:
+                var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
+                var responseTo = data.ui_response['@response_to'];
+                if(instance._requests[responseTo]){
+                    // found corresponding request, fire registered callback for type
+                    var audioState = instance._requests[responseTo].msg.audioState;
+                    if(audioState === "MUTE"){
+                        utils.fireCallback(instance, CALLBACK_TYPES.SILENT_MONITOR, resp);
+                    }else if(audioState === "COACHING"){
+                        utils.fireCallback(instance, CALLBACK_TYPES.COACH_CALL, resp);
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.BARGE_IN, resp);
+                    }
+                }else{
+                    // no corresponding request, just fire FULL audio type BARGE-IN callback
+                    utils.fireCallback(instance, CALLBACK_TYPES.BARGE_IN, resp);
+                }
+                break;
             case MESSAGE_TYPES.CAMPAIGN_DISPOSITIONS:
                 var campaignDispsResposne = UIModel.getInstance().campaignDispositionsRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CAMPAIGN_DISPOSITIONS, campaignDispsResposne);
@@ -40,6 +58,10 @@ var utils = {
             case MESSAGE_TYPES.CALLBACK_PENDING:
                 var pendingCallbacks = UIModel.getInstance().callbacksPendingRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CALLBACK_PENDING, pendingCallbacks);
+                break;
+            case MESSAGE_TYPES.HOLD:
+                var hold = UIModel.getInstance().holdRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.HOLD, hold);
                 break;
             case MESSAGE_TYPES.LOGIN:
                 if (dest === "IS") {
@@ -57,6 +79,14 @@ var utils = {
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
+                break;
+            case MESSAGE_TYPES.PAUSE_RECORD:
+                var pauseRec = UIModel.getInstance().pauseRecordRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.PAUSE_RECORD, pauseRec);
+                break;
+            case MESSAGE_TYPES.RECORD:
+                var record = UIModel.getInstance().recordRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.RECORD, record);
                 break;
             case MESSAGE_TYPES.REQUEUE:
                 var requeue = UIModel.getInstance().requeueRequest.processResponse(response);

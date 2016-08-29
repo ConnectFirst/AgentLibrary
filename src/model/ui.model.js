@@ -17,6 +17,7 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            bargeInRequest : null,
             callNotesRequest : null,
             callbacksPendingRequest : null,
             campaignDispositionsRequest : null,
@@ -25,13 +26,16 @@ var UIModel = (function() {
             dispositionRequest : null,
             dispositionManualPassRequest : null,
             hangupRequest : null,
+            holdRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
             offhookInitRequest : null,
             offhookTermRequest : null,
             oneToOneOutdialRequest : null,
             oneToOneOutdialCancelRequest : null,
+            pauseRecordRequest : null,
             previewDialRequest : null,
+            recordRequest : null,
             requeueRequest : null,
             tcpaSafeRequest : null,
             warmXferRequest : null,

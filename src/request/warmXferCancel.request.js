@@ -9,7 +9,7 @@ XferWarmCancelRequest.prototype.formatJSON = function() {
             "@destination":"IQ",
             "@type":MESSAGE_TYPES.XFER_WARM_CANCEL,
             "@message_id":utils.getMessageId(),
-            "response_to":"",
+            "@response_to":"",
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
             },

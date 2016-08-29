@@ -16,7 +16,9 @@
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionResponse",
     "AGENT_STATE":"agentStateResponse",
+    "BARGE_IN":"bargeResponse",
     "CLOSE_SOCKET":"closeResponse",
+    "COACH_CALL":"coachResponse",
     "CONFIG":"configureResponse",
     "CALL_NOTES":"callNotesResponse",
     "CALLBACK_PENDING":"callbacksPendingResponse",
@@ -30,11 +32,14 @@ const CALLBACK_TYPES = {
     "GATES_CHANGE":"gatesChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
+    "HOLD":"holdResponse",
     "LOGIN":"loginResponse",
+    "SILENT_MONITOR":"silentMonitorResponse",
     "NEW_CALL":"newCallNotification",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
     "OPEN_SOCKET":"openResponse",
+    "PAUSE_RECORD":"pauseRecordResponse",
     "PREVIEW_DIAL":"previewDialResponse",
     "REQUEUE":"requeueResponse",
     "TCPA_SAFE":"tcpaSafeResponse",
@@ -45,6 +50,7 @@ const CALLBACK_TYPES = {
 
 const MESSAGE_TYPES = {
     "ADD_SESSION":"ADD-SESSION",
+    "BARGE_IN":"BARGE-IN",
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
@@ -52,14 +58,15 @@ const MESSAGE_TYPES = {
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
     "CAMPAIGN_DISPOSITIONS":"CAMPAIGN-DISPOSITIONS",
-    "EARLY_UII":"EARLY_UII",
-    "END_CALL":"END-CALL",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
+    "EARLY_UII":"EARLY_UII",
+    "END_CALL":"END-CALL",
     "GATES_CHANGE":"GATES_CHANGE",
     "GENERIC":"GENERIC",
     "HANGUP":"HANGUP",
+    "HOLD":"HOLD",
     "INBOUND_DISPOSITION":"INBOUND-DISPOSITION",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
@@ -68,8 +75,11 @@ const MESSAGE_TYPES = {
     "ONE_TO_ONE_OUTDIAL":"ONE-TO-ONE-OUTDIAL",
     "ONE_TO_ONE_OUTDIAL_CANCEL":"ONE-TO-ONE-OUTDIAL-CANCEL",
     "OUTDIAL_DISPOSITION":"OUTDIAL-DISPOSITION",
+    "PAUSE_RECORD":"PAUSE-RECORD",
+    "PING_CALL":"PING-CALL",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
+    "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
@@ -342,6 +352,38 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getRequeueRequest = function() {
         return UIModel.getInstance().requeueRequest;
+    };
+    /**
+     * Get latest Barge-In Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getBargeInRequest = function() {
+        return UIModel.getInstance().bargeInRequest;
+    };
+    /**
+     * Get latest Hold Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getHoldRequest = function() {
+        return UIModel.getInstance().holdRequest;
+    };
+    /**
+     * Get latest Pause Record Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getPauseRecordRequest = function() {
+        return UIModel.getInstance().pauseRecordRequest;
+    };
+    /**
+     * Get latest Record Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getRecordRequest = function() {
+        return UIModel.getInstance().recordRequest;
     };
     /**
      * Get packet received on successful Login

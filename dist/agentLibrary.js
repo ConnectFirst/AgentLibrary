@@ -108,6 +108,83 @@ AgentStateRequest.prototype.processResponse = function(response) {
 
 
 
+var BargeInRequest = function(audioType) {
+    this.audioType = audioType || "FULL";
+};
+
+/*
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@message_id":"UIV22008931055822",
+ *      "@response_to":"",
+ *      "@type":"BARGE-IN",
+ *      "agent_id":{"#text":"94"},
+ *      "uii":{"#text":"200809031054510000000900020961"},
+ *      "audio_state":{"#text":"FULL"},
+ *      "monitor_agent_id":{"#text":"1856"}
+ *    }
+ * }
+ */
+BargeInRequest.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.BARGE_IN,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(model.agentSettings.agentId)
+            },
+            "uii":{
+                "#text":utils.toString(model.currentCall.uii)
+            },
+            "audio_state":{
+                "#text":utils.toString(this.audioType)
+            },
+            "monitor_agent_id":{
+                "#text":utils.toString(model.currentCall.monitorAgentId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes BARGE-IN packets rec'd from IQ.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008090317393001252",
+ *      "@response_to":"",
+ *      "@type":"BARGE-IN",
+ *      "agent_id":{"#text":"94"},
+ *      "uii":{},
+ *      "status":{"#text":"OK"},
+ *      "message":{"#text":"Barge-In processed successfully!"},
+ *      "detail":{}
+ *    }
+ * }
+ */
+BargeInRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    formattedResponse.agentId = utils.getText(resp, 'agent_id');
+    formattedResponse.uii = utils.getText(resp, 'uii');
+
+    if(formattedResponse.status === "OK"){
+        console.log("AgentLibrary: Barge-in successful.", formattedResponse.message );
+    }else{
+
+        console.warn("AgentLibrary: There was an error processing the Barge-In request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+    }
+
+    return formattedResponse;
+};
+
+
 var CallNotesRequest = function(notes) {
     this.notes = notes;
 };
@@ -367,7 +444,7 @@ XferColdRequest.prototype.formatJSON = function() {
             "@destination":"IQ",
             "@type":MESSAGE_TYPES.XFER_COLD,
             "@message_id":utils.getMessageId(),
-            "response_to":"",
+            "@response_to":"",
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
             },
@@ -925,6 +1002,99 @@ HangupRequest.prototype.formatJSON = function() {
 };
 
 
+var HoldRequest = function(holdState) {
+    this.holdState = holdState;
+};
+
+/*
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@message_id":"UI200809291036128",
+ *      "@response_to":"",
+ *      "@type":"HOLD",
+ *      "agent_id":{"#text":"1856"},
+ *      "uii":{"#text":"200808291035510000000900029412"},
+ *      "session_id":{"#text":"1"},
+ *      "hold_state":{"#text":"ON"}
+ *    }
+ * }
+ */
+HoldRequest.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.HOLD,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(model.currentCall.agentId)
+            },
+            "uii":{
+                "#text":utils.toString(model.currentCall.uii)
+            },
+            "session_id":{
+                "#text":"1"
+            },
+            "hold_state":{
+                "#text":utils.toString(this.holdState)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes HOLD packets rec'd from IQ.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082910361503344",
+ *      "@response_to":"",
+ *      "@type":"HOLD",
+ *      "uii":{"#text":"200808291035510000000900029412"},
+ *      "session_id":{"#text":"1"},
+ *      "status":{"#text":"OK"},
+ *      "message":{},
+ *      "detail":{},
+ *      "hold_state":{"#text":"ON"}
+ *    }
+ * }
+ */
+HoldRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+    var currUII = "";
+    if(UIModel.getInstance().currentCall.uii){
+       currUII = UIModel.getInstance().currentCall.uii;
+    }
+
+    formattedResponse.holdState = utils.getText(resp, 'hold_state');
+    formattedResponse.sessionId = utils.getText(resp, 'session_id');
+    formattedResponse.uii = utils.getText(resp, 'uii');
+
+    if(formattedResponse.status === "OK"){
+        // make sure we are talking about the same call
+        if(formattedResponse.uii === currUII){
+            if(formattedResponse.message === ""){
+                formattedResponse.message = "Broadcasting new hold state of " + formattedResponse.holdState;
+            }
+            console.log("AgentLibrary: Broadcasting new hold state of " + formattedResponse.holdState);
+        }
+        else{
+            console.log("AgentLibrary: Hold Response is for a different call...discarding");
+        }
+    }else{
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Error processing HOLD request. " +  + formattedResponse.message + "\n" + formattedResponse.detail;
+        }
+        console.warn("AgentLibrary: Error processing HOLD request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+    }
+
+    return formattedResponse;
+};
+
+
 var LoginRequest = function(username, password) {
     this.username = username;
     this.password = password;
@@ -1460,6 +1630,102 @@ OneToOneOutdialCancelRequest.prototype.formatJSON = function() {
 
 
 
+var PauseRecordRequest = function(record) {
+    this.record = record;
+};
+
+/*
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@message_id":"UI200809291036128",
+ *      "@response_to":"",
+ *      "@type":"PAUSE-RECORD",
+ *      "agent_id":{"#text":"1856"},
+ *      "uii":{"#text":"200808291035510000000900029412"},
+ *      "record":{"#text":"TRUE | FALSE"},
+ *      "pause":{"#text":"10"}
+ *    }
+ * }
+ */
+PauseRecordRequest.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var pauseTime = "10";
+    if(model.currentCall.agentRecording && model.currentCall.agentRecording.pause){
+        pauseTime = model.currentCall.agentRecording.pause;
+    }
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.PAUSE_RECORD,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(model.currentCall.agentId)
+            },
+            "uii":{
+                "#text":utils.toString(model.currentCall.uii)
+            },
+            "record":{
+                "#text":utils.toString(this.record === true ? "TRUE" : "FALSE")
+            },
+            "pause":{
+                "#text":utils.toString(pauseTime)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes PAUSE-RECORD packets rec'd from IQ.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082910361503344",
+ *      "@response_to":"",
+ *      "@type":"PAUSE-RECORD",
+ *      "uii":{"#text":"200808291035510000000900029412"},
+ *      "status":{"#text":"OK | FAILURE"},
+ *      "message":{},
+ *      "detail":{},
+ *      "state":{"#text":"RECORDING | PAUSED"},
+ *      "pause":{"#text":"10"}
+ *    }
+ * }
+ */
+PauseRecordRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+    var currUII = "";
+    if(UIModel.getInstance().currentCall.uii){
+        currUII = UIModel.getInstance().currentCall.uii;
+    }
+
+    formattedResponse.uii = utils.getText(resp, 'uii');
+    formattedResponse.state = utils.getText(resp, 'state');
+    formattedResponse.pause = utils.getText(resp, 'pause');
+
+    if(formattedResponse.status === "OK"){
+        // make sure we are talking about the same call
+        if(formattedResponse.uii === currUII) {
+            if(formattedResponse.message === ""){
+                formattedResponse.message = "Broadcasting new record state of " + formattedResponse.state;
+            }
+            console.log("AgentLibrary: Broadcasting new record state of " + formattedResponse.state);
+        }else{
+            console.log("AgentLibrary: Pause Record Response is for a different call...discarding");
+        }
+    }else{
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Error processing PAUSE-RECORD request." + formattedResponse.message + "\n" + formattedResponse.detail;
+        }
+        console.warn("AgentLibrary: Error processing PAUSE-RECORD request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+    }
+
+    return formattedResponse;
+};
+
+
 var PreviewDialRequest = function(action, searchFields, requestId) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
     this.searchFields = searchFields || [];
@@ -1552,6 +1818,92 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
     }else{
         console.log("AgentLibrary: New PREVIEW-DIAL packet rec'd from dialer");
         model.outboundSettings.previewDialLeads = leads;
+    }
+
+    return formattedResponse;
+};
+
+
+var RecordRequest = function(record) {
+    this.record = record;
+};
+
+/*
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@message_id":"UI200809291036128",
+ *      "@response_to":"",
+ *      "@type":"RECORD",
+ *      "agent_id":{"#text":"1856"},
+ *      "uii":{"#text":"200808291035510000000900029412"},
+ *      "record":{"#text":"TRUE | FALSE"}
+ *    }
+ * }
+ */
+RecordRequest.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.RECORD,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(model.currentCall.agentId)
+            },
+            "uii":{
+                "#text":utils.toString(model.currentCall.uii)
+            },
+            "record":{
+                "#text": this.record === true ? "TRUE" : "FALSE"
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes RECORD packets rec'd from IQ.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082910361503344",
+ *      "@response_to":"",
+ *      "@type":"RECORD",
+ *      "uii":{"#text":"200808291035510000000900029412"},
+ *      "status":{"#text":"OK"},
+ *      "message":{},
+ *      "detail":{},
+ *      "state":{"#text":"RECORDING | STOPPED"}
+ *    }
+ * }
+ */
+RecordRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+    var currUII = "";
+    if(UIModel.getInstance().currentCall.uii){
+        currUII = UIModel.getInstance().currentCall.uii;
+    }
+
+    formattedResponse.uii = utils.getText(resp, 'uii');
+    formattedResponse.state = utils.getText(resp, 'state');
+
+    if(formattedResponse.status === "OK"){
+        // make sure we are talking about the same call
+        if(formattedResponse.uii === currUII) {
+            if(formattedResponse.message === ""){
+                formattedResponse.message = "Broadcasting new record state of " + formattedResponse.state;
+            }
+            console.log("AgentLibrary: Broadcasting new record state of " + formattedResponse.state);
+        }else{
+            console.log("AgentLibrary: Record Response is for a different call...discarding");
+        }
+    }else{
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Error processing RECORD request." + formattedResponse.message + "\n" + formattedResponse.detail;
+        }
+        console.warn("AgentLibrary: Error processing RECORD request. " + formattedResponse.message + "\n" + formattedResponse.detail);
     }
 
     return formattedResponse;
@@ -1736,7 +2088,7 @@ XferWarmRequest.prototype.formatJSON = function() {
             "@destination":"IQ",
             "@type":MESSAGE_TYPES.XFER_WARM,
             "@message_id":utils.getMessageId(),
-            "response_to":"",
+            "@response_to":"",
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
             },
@@ -1815,7 +2167,7 @@ XferWarmCancelRequest.prototype.formatJSON = function() {
             "@destination":"IQ",
             "@type":MESSAGE_TYPES.XFER_WARM_CANCEL,
             "@message_id":utils.getMessageId(),
-            "response_to":"",
+            "@response_to":"",
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
             },
@@ -2510,6 +2862,7 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            bargeInRequest : null,
             callNotesRequest : null,
             callbacksPendingRequest : null,
             campaignDispositionsRequest : null,
@@ -2518,13 +2871,16 @@ var UIModel = (function() {
             dispositionRequest : null,
             dispositionManualPassRequest : null,
             hangupRequest : null,
+            holdRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
             offhookInitRequest : null,
             offhookTermRequest : null,
             oneToOneOutdialRequest : null,
             oneToOneOutdialCancelRequest : null,
+            pauseRecordRequest : null,
             previewDialRequest : null,
+            recordRequest : null,
             requeueRequest : null,
             tcpaSafeRequest : null,
             warmXferRequest : null,
@@ -2722,6 +3078,24 @@ var utils = {
                 var stateChangeResposne = UIModel.getInstance().agentStateRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResposne);
                 break;
+            case MESSAGE_TYPES.BARGE_IN:
+                var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
+                var responseTo = data.ui_response['@response_to'];
+                if(instance._requests[responseTo]){
+                    // found corresponding request, fire registered callback for type
+                    var audioState = instance._requests[responseTo].msg.audioState;
+                    if(audioState === "MUTE"){
+                        utils.fireCallback(instance, CALLBACK_TYPES.SILENT_MONITOR, resp);
+                    }else if(audioState === "COACHING"){
+                        utils.fireCallback(instance, CALLBACK_TYPES.COACH_CALL, resp);
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.BARGE_IN, resp);
+                    }
+                }else{
+                    // no corresponding request, just fire FULL audio type BARGE-IN callback
+                    utils.fireCallback(instance, CALLBACK_TYPES.BARGE_IN, resp);
+                }
+                break;
             case MESSAGE_TYPES.CAMPAIGN_DISPOSITIONS:
                 var campaignDispsResposne = UIModel.getInstance().campaignDispositionsRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CAMPAIGN_DISPOSITIONS, campaignDispsResposne);
@@ -2733,6 +3107,10 @@ var utils = {
             case MESSAGE_TYPES.CALLBACK_PENDING:
                 var pendingCallbacks = UIModel.getInstance().callbacksPendingRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CALLBACK_PENDING, pendingCallbacks);
+                break;
+            case MESSAGE_TYPES.HOLD:
+                var hold = UIModel.getInstance().holdRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.HOLD, hold);
                 break;
             case MESSAGE_TYPES.LOGIN:
                 if (dest === "IS") {
@@ -2750,6 +3128,14 @@ var utils = {
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
+                break;
+            case MESSAGE_TYPES.PAUSE_RECORD:
+                var pauseRec = UIModel.getInstance().pauseRecordRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.PAUSE_RECORD, pauseRec);
+                break;
+            case MESSAGE_TYPES.RECORD:
+                var record = UIModel.getInstance().recordRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.RECORD, record);
                 break;
             case MESSAGE_TYPES.REQUEUE:
                 var requeue = UIModel.getInstance().requeueRequest.processResponse(response);
@@ -3264,7 +3650,9 @@ var utils = {
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionResponse",
     "AGENT_STATE":"agentStateResponse",
+    "BARGE_IN":"bargeResponse",
     "CLOSE_SOCKET":"closeResponse",
+    "COACH_CALL":"coachResponse",
     "CONFIG":"configureResponse",
     "CALL_NOTES":"callNotesResponse",
     "CALLBACK_PENDING":"callbacksPendingResponse",
@@ -3278,11 +3666,14 @@ const CALLBACK_TYPES = {
     "GATES_CHANGE":"gatesChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
+    "HOLD":"holdResponse",
     "LOGIN":"loginResponse",
+    "SILENT_MONITOR":"silentMonitorResponse",
     "NEW_CALL":"newCallNotification",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
     "OPEN_SOCKET":"openResponse",
+    "PAUSE_RECORD":"pauseRecordResponse",
     "PREVIEW_DIAL":"previewDialResponse",
     "REQUEUE":"requeueResponse",
     "TCPA_SAFE":"tcpaSafeResponse",
@@ -3293,6 +3684,7 @@ const CALLBACK_TYPES = {
 
 const MESSAGE_TYPES = {
     "ADD_SESSION":"ADD-SESSION",
+    "BARGE_IN":"BARGE-IN",
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
@@ -3300,14 +3692,15 @@ const MESSAGE_TYPES = {
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
     "CAMPAIGN_DISPOSITIONS":"CAMPAIGN-DISPOSITIONS",
-    "EARLY_UII":"EARLY_UII",
-    "END_CALL":"END-CALL",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
+    "EARLY_UII":"EARLY_UII",
+    "END_CALL":"END-CALL",
     "GATES_CHANGE":"GATES_CHANGE",
     "GENERIC":"GENERIC",
     "HANGUP":"HANGUP",
+    "HOLD":"HOLD",
     "INBOUND_DISPOSITION":"INBOUND-DISPOSITION",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
@@ -3316,8 +3709,11 @@ const MESSAGE_TYPES = {
     "ONE_TO_ONE_OUTDIAL":"ONE-TO-ONE-OUTDIAL",
     "ONE_TO_ONE_OUTDIAL_CANCEL":"ONE-TO-ONE-OUTDIAL-CANCEL",
     "OUTDIAL_DISPOSITION":"OUTDIAL-DISPOSITION",
+    "PAUSE_RECORD":"PAUSE-RECORD",
+    "PING_CALL":"PING-CALL",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
+    "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
@@ -3590,6 +3986,46 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getRequeueRequest = function() {
         return UIModel.getInstance().requeueRequest;
+    };
+    /**
+     * Get latest Barge-In Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getBargeInRequest = function() {
+        return UIModel.getInstance().bargeInRequest;
+    };
+    /**
+     * Get latest Hold Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getHoldRequest = function() {
+        return UIModel.getInstance().holdRequest;
+    };
+    /**
+     * Get latest Pause Record Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getPauseRecordRequest = function() {
+        return UIModel.getInstance().pauseRecordRequest;
+    };
+    /**
+     * Get latest Record Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getRecordRequest = function() {
+        return UIModel.getInstance().recordRequest;
+    };
+    /**
+     * Get latest Barge In Request object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getBargeInRequest = function() {
+        return UIModel.getInstance().bargeInRequest;
     };
     /**
      * Get packet received on successful Login
@@ -3972,6 +4408,47 @@ function initAgentLibraryCall (context) {
     var AgentLibrary = context.AgentLibrary;
 
     /**
+     * Barge in on a call, can hear all parties and be heard by all
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when barge in response received
+     */
+    AgentLibrary.prototype.bargeIn = function(callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("FULL");
+        var msg = UIModel.getInstance().bargeInRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.BARGE_IN, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Add a coaching session to the call, can hear all parties but only able to speak on agent channel
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when coaching session response received
+     */
+    AgentLibrary.prototype.coachCall = function(callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("FULL");
+        var msg = UIModel.getInstance().bargeInRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.BARGE_IN, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer to another number and end the call for the original agent (cold transfer).
+     * @memberof AgentLibrary
+     * @param {number} dialDest Number to transfer to
+     * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {function} [callback=null] Callback function when cold transfer response received
+     */
+    AgentLibrary.prototype.coldXfer = function(dialDest, callerId, callback){
+        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId);
+        var msg = UIModel.getInstance().coldXferRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * Send a disposition for an inbound or outbound call
      * @memberof AgentLibrary
      * @param {string} uii UII (unique id) for call
@@ -4021,21 +4498,6 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Transfer to another number and end the call for the original agent (cold transfer).
-     * @memberof AgentLibrary
-     * @param {number} dialDest Number to transfer to
-     * @param {number} [callerId=""] Caller Id for caller (DNIS)
-     * @param {function} [callback=null] Callback function when call notes response received
-     */
-    AgentLibrary.prototype.coldXfer = function(dialDest, callerId, callback){
-        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId);
-        var msg = UIModel.getInstance().coldXferRequest.formatJSON();
-
-        utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
-        utils.sendMessage(this, msg);
-    };
-
-    /**
      * Sends a hangup request message
      * @memberof AgentLibrary
      * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
@@ -4043,6 +4505,20 @@ function initAgentLibraryCall (context) {
     AgentLibrary.prototype.hangup = function(sessionId){
         UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
         var msg = UIModel.getInstance().hangupRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Place a call on hold
+     * @memberof AgentLibrary
+     * @param {string} holdState Whether we are putting call on hold or taking off hold - values "ON" | "OFF"
+     * @param {function} [callback=null] Callback function when hold response received
+     */
+    AgentLibrary.prototype.hold = function(holdState, callback){
+        UIModel.getInstance().holdRequest = new HoldRequest(holdState);
+        var msg = UIModel.getInstance().holdRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.HOLD, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -4077,6 +4553,20 @@ function initAgentLibraryCall (context) {
     };
 
     /**
+     * Pause call recording
+     * @memberof AgentLibrary
+     * @param {boolean} record Whether we are recording or not
+     * @param {function} [callback=null] Callback function when pause record response received
+     */
+    AgentLibrary.prototype.pauseRecord = function(record, callback){
+        UIModel.getInstance().pauseRecordRequest = new PauseRecordRequest(record);
+        var msg = UIModel.getInstance().pauseRecordRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.PAUSE_RECORD, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * Sends a preview dial request message
      * @memberof AgentLibrary
      * @param {string} [action=""] Action to take
@@ -4105,12 +4595,39 @@ function initAgentLibraryCall (context) {
     };
 
     /**
+     * Add a silent monitor session to a call, can hear all channels but can't be heard by any party
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when silent monitor response received
+     */
+    AgentLibrary.prototype.silentMonitor = function(callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE");
+        var msg = UIModel.getInstance().bargeInRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.BARGE_IN, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Pause call recording
+     * @memberof AgentLibrary
+     * @param {boolean} record Whether we are recording or not
+     * @param {function} [callback=null] Callback function when record response received
+     */
+    AgentLibrary.prototype.record = function(record, callback){
+        UIModel.getInstance().recordRequest = new RecordRequest(record);
+        var msg = UIModel.getInstance().recordRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.RECORD, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * Requeue a call
      * @memberof AgentLibrary
      * @param {number} queueId Queue Id to send the call to
      * @param {number} skillId Skill Id for the requeued call
      * @param {boolean} maintain Whether or not to maintain the current agent
-     * @param {function} [callback=null] Callback function when call notes response received
+     * @param {function} [callback=null] Callback function when requeue response received
      */
     AgentLibrary.prototype.requeueCall = function(queueId, skillId, maintain, callback){
         UIModel.getInstance().requeueRequest = new RequeueRequest(queueId, skillId, maintain);
@@ -4139,7 +4656,7 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
-     * @param {function} [callback=null] Callback function when call notes response received
+     * @param {function} [callback=null] Callback function when warm transfer response received
      */
     AgentLibrary.prototype.warmXfer = function(dialDest, callerId, callback){
         UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId);
