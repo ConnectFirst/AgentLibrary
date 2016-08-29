@@ -58,6 +58,22 @@ var utils = {
                 var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
+            case MESSAGE_TYPES.REQUEUE:
+                var requeue = UIModel.getInstance().requeueRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.REQUEUE, requeue);
+                break;
+            case MESSAGE_TYPES.XFER_COLD:
+                var coldXfer = UIModel.getInstance().coldXferRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.XFER_COLD, coldXfer);
+                break;
+            case MESSAGE_TYPES.XFER_WARM:
+                var warmXfer = UIModel.getInstance().warmXferRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.XFER_WARM, warmXfer);
+                break;
+            case MESSAGE_TYPES.XFER_WARM_CANCEL:
+                var warmXferCancel = UIModel.getInstance().warmXferCancelRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.XFER_WARM_CANCEL, warmXferCancel);
+                break;
 
         }
 

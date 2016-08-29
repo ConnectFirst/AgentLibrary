@@ -1,6 +1,6 @@
 
-var XferWarmCancelRequest = function(number) {
-    this.number = number;
+var XferWarmCancelRequest = function(dialDest) {
+    this.dialDest = dialDest;
 };
 
 XferWarmCancelRequest.prototype.formatJSON = function() {
@@ -17,7 +17,7 @@ XferWarmCancelRequest.prototype.formatJSON = function() {
                 "#text":UIModel.getInstance().currentCall.uii
             },
             "dial_dest":{
-                "#text":utils.toString(this.number)
+                "#text":utils.toString(this.dialDest)
             }
         }
     };

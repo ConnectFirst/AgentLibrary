@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-25 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-29 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -45,16 +45,19 @@ AgentStateRequest.prototype.formatJSON = function() {
  * packet and then set the state on the model. It will also check for deferred surveys,
  * if one is found it will load it at this point.
  *
- * <ui_response message_id="IQ982008082817165103294" type="AGENT-STATE">
- *	  <status>OK</status>
- * 	  <message/>
- *	  <detail/>
- *	  <agent_id>1856</agent_id>
- *	  <prev_state>ENGAGED</prev_state>
- *	  <current_state>WORKING</current_state>
- * 	  <agent_aux_state>Offhook Work</agent_aux_state>
- * 	  <prev_aux_state></prev_aux_state>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082817165103294",
+ *      "@type":"AGENT-STATE",
+ *      "status":{"#text":"OK"},
+ *      "message":{},
+ *      "detail":{},
+ *      "agent_id":{"#text":"1856"},
+ *      "prev_state":{"#text":"ENGAGED"},
+ *      "current_state":{"#text":"WORKING"},
+ *      "agent_aux_state":{"#text":"Offhook Work"},
+ *      "prev_aux_state":{}
+ *   }
+ * }
  */
 AgentStateRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;
@@ -111,11 +114,7 @@ var CallNotesRequest = function(notes) {
 
 /*
 * This event is responsible for allowing an agent to tag a call with notes
-*
-* <ui_request type="CALL-NOTES" uii="" response_to="" message_id="IQ20081027151806763">
-* 		<notes><![[BLAH]]></notes>
-* </ui_request>
-* */
+*/
 CallNotesRequest.prototype.formatJSON = function() {
     var model = UIModel.getInstance();
     var msg = {
@@ -143,11 +142,14 @@ CallNotesRequest.prototype.formatJSON = function() {
 /*
  * This class process CALL-NOTES packets rec'd from IntelliQueue.
  *
- * <ui_response message_id="IQ982008082817165103294" type="CALL-NOTES">
- *	  <status>OK</status>
- * 	  <message/>
- *	  <detail/>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082817165103294",
+ *      "@type":"CALL-NOTES",
+ *      "status":{"#text":"OK"},
+ *      "message":{},
+ *      "detail":{}
+ *   }
+ * }
  */
 CallNotesRequest.prototype.processResponse = function(response) {
     var formattedResponse = utils.buildDefaultResponse(response);
@@ -215,24 +217,39 @@ CallbacksPendingRequest.prototype.formatJSON = function() {
 /*
  * This class is responsible for handling an PENDING-CALLBACKS response packet from IntelliQueue.
  *
- * <ui_response message_id="IQ982008091512353000875"  response_to="UIV220089151235539" type="PENDING-CALLBACKS">
- *    <lead lead_id="" destination="5555555555" aux_data1="" aux_data2="" aux_data3="" aux_data4="" aux_data5=""
- *       extern_id="" dial_time="2016-08-03 10:00" dial_group_name="" dial_group_id="" lead_id="">
- *       <lead_id/>
- *       <extern_id/>
- *       <first_name/>
- *       <mid_name/>
- *       <last_name/>
- *       <suffix/>
- *       <title/>
- *       <address1/>
- *       <address2/>
- *       <city/>
- *       <state/>
- *       <zip/>
- *       <gate_keeper/>
- *    </lead>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ982008091512353000875",
+ *      "@response_to":"UIV220089151235539",
+ *      "@type":"PENDING-CALLBACKS",
+ *      "lead":{
+ *          "@aux_data1":"",
+ *          "@aux_data2":"",
+ *          "@aux_data3":"",
+ *          "@aux_data4":"",
+ *          "@aux_data5":"",
+ *          "@destination":"5555555555",
+ *          "@dial_group_id":"",
+ *          "@dial_group_name":"",
+ *          "@dial_time":"2016-08-03 10:00",
+ *          "@extern_id":"",
+ *          "@lead_id":"",
+ *          "lead_id":{},
+ *          "extern_id":{},
+ *          "extern_id":{},
+ *          "first_name":{},
+ *          "mid_name":{},
+ *          "last_name":{},
+ *          "suffix":{},
+ *          "title":{},
+ *          "address1":{},
+ *          "address2":{},
+ *          "city":{},
+ *          "state":{},
+ *          "zip":{},
+ *          "gate_keeper":{}
+ *      }
+ *   }
+ * }
  */
 CallbacksPendingRequest.prototype.processResponse = function(response) {
     var leadsRaw = response.ui_response.lead;
@@ -285,6 +302,7 @@ function parseLead(leadRaw){
 /*
  * This request is used to get the list of dispositions for a given campaign
  * E.g. in the lead search form for manual passes
+ *
  */
 var CampaignDispositionsRequest = function(campaignId) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
@@ -314,14 +332,19 @@ CampaignDispositionsRequest.prototype.formatJSON = function() {
  * This class is responsible for handling CAMPAIGN-DISPOSITIONS packets received
  * from IntelliQueue. It will save a copy of it in the UIModel.
  *
-  <ui_response message_id="IQ982008091512353000875"  response_to="UIV220089151235539" type="CAMPAIGN-DISPOSITIONS">
-  		<outdial_dispositions>
-     		<disposition disposition_id="130">complete</disposition>
-     		<disposition disposition_id="131">incomplete</disposition>
-     		<disposition disposition_id="132">warm xfer</disposition>
-     		<disposition disposition_id="133">cold xfer</disposition>
-   	</outdial_dispositions>
-  </ui_response>
+ * {"ui_response":{
+ *      "@campaign_id":"60403",
+ *      "@message_id":"IQ10012016081813480400006",
+ *      "@response_to":"0b61c3ca-c4fc-9942-c139-da4978053c9d",
+ *      "@type":"CAMPAIGN-DISPOSITIONS",
+ *      "outdial_dispositions":{
+ *          "disposition":[
+ *              {"@disposition_id":"1","#text":"requeue"},
+ *              {"@disposition_id":"2","#text":"complete"}
+ *          ]
+ *       }
+ *    }
+ * }
  */
 CampaignDispositionsRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;
@@ -366,15 +389,19 @@ XferColdRequest.prototype.formatJSON = function() {
 /*
  * This class processes COLD-XFER packets rec'd from IQ.
  *
- * <ui_response message_id="IQ10012016082314475000219" response_to="" type="COLD-XFER">
- *   <agent_id>1</agent_id>
- *   <uii>201608231447590139000000000200</uii>
- *   <session_id>3</session_id>
- *   <status>OK</status>
- *   <dial_dest>3038593775</dial_dest>
- *   <message>OK</message>
- *   <detail/>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ10012016082314475000219",
+ *      "@response_to":"",
+ *      "@type":"COLD-XFER",
+ *      "agent_id":{"#text":"1"},
+ *      "uii":{"#text":"201608231447590139000000000200"},
+ *      "session_id":{"#text":"3"},
+ *      "status":{"#text":"OK"},
+ *      "dial_dest":{"#text":"3038593775"},
+ *      "message":{"#text":"OK"},
+ *      "detail":{}
+ *   }
+ * }
  */
 XferColdRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;
@@ -503,22 +530,29 @@ ConfigRequest.prototype.formatJSON = function() {
 /*
  * This function is responsible for handling the response to Login from IntelliQueue.
  *
- * <ui_response message_id="IQ982008100319095501435"  response_to="IQ200810319947384" type="LOGIN">
- * 		<agent_id>1810</agent_id>
- * 		<status>SUCCESS</status>
- * 		<message>Hello Geoff Mina!</message>
- * 		<detail>Logon request processed successfully!</detail>
- * 		<hash_code>117800988</hash_code>
- * 		<login_type>OUTBOUND</login_type>
- * 		<outdial_group_id>200018</outdial_group_id>
- * 	    <skill_profile_id>1513</skill_profile_id>
- * 		<gates>
- *          <gate_id>3</gate_id>
- *      </gates>
- *      <chat_queues>
- *          <chat_queue_id>30</chat_queue_id>
- *      </chat_queues>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ10012016082513212000447",
+ *      "@response_to":"IQ201608251121200",
+ *      "@type":"LOGIN",
+ *      "agent_id":{"#text":"1"},
+ *      "status":{"#text":"SUCCESS"},
+ *      "message":{"#text":"Hello Geoffrey Mina!"},
+ *      "detail":{"#text":"Logon request processed successfully!"},
+ *      "hash_code":{"#text":"404946966"},
+ *      "login_type":{"#text":"BLENDED"},
+ *      "outdial_group_id":{"#text":"50692"},
+ *      "skill_profile_id":{"#text":"1513"},
+ *      "gates":{
+ *          "gate_id":[
+ *              {"#text":"11116"},
+ *              {"#text":"11117"}
+ *          ]
+ *      },
+ *      "chat_queues":{
+ *          "chat_queue_id":{"#text":"30"}
+ *      }
+ *    }
+ * }
  */
 ConfigRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;
@@ -691,19 +725,29 @@ var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, con
  * in the UIModel. Then, using the information passed in, it will
  * create the remainder of the packet. This class is called from the ExtendedCallForm
  *
- * <ui_request response_to="" message_id="UIV220089241119416" type="OUTDIAL-DISPOSITION|INBOUND-DISPOSITION">
- * 		<uii>200809241119590139990000000069</uii>
- * 		<lead_id>213215</lead_id>
- * 		<outbound_externid>909809</outbound_externid>
- * 		<agent_id>1810</agent_id>
- * 		<disposition_id>126</disposition_id>
- * 		<notes>here are my notes :)</notes>
- * 		<call_back>TRUE | FALSE</call_back>
- * 		<call_back_DTS>2008-09-30 22:30:00 | null</call_back_DTS>
- * 		<contact_forward_number>5555555555 | null</contact_forward_number>
- * 		<session_id>2</session_id>  ONLY WHEN AVAILABLE otherwise the node is left blank. this is the AGENT session_id
- * </ui_request>
- *
+ * {"ui_request":{
+ *      "@message_id":"IQ20160817145840132",
+ *      "@response_to":"",
+ *      "@type":"OUTDIAL-DISPOSITION|INBOUND-DISPOSITION",
+ *      "session_id":{"#text":"2"},  <-- ONLY WHEN AVAILABLE otherwise the node is left blank. this is the AGENT session_id
+ *      "uii":{"#text":"201608171658440139000000000165"},
+ *      "agent_id":{"#text":"1180958"},
+ *      "lead_id":{"#text":"1800"},
+ *      "outbound_externid":{"#text":"3038593775"},
+ *      "disposition_id":{"#text":"5950"},
+ *      "notes":{"#text":"note here"},
+ *      "call_back":{"#text":"FALSE"},
+ *      "call_back_DTS":{},
+ *      "contact_forwarding":{},
+ *      "survey":{
+ *          "response":[
+ *              {"@extern_id":"text_box","@lead_update_column":"","#text":"hello"},
+ *              {"@extern_id":"check_box","@lead_update_column":"","#text":"20"},
+ *              {"@extern_id":"radio_save","@lead_update_column":"","#text":"23"}
+ *          ]
+ *      }
+ *   }
+ * }
  */
 DispositionRequest.prototype.formatJSON = function() {
     var model = UIModel.getInstance();
@@ -788,21 +832,24 @@ var DispositionManualPassRequest = function(dispId, notes, callback, callbackDTS
  * Sends an OUTDIAL-DISPOSITION request, just a separate class
  * specifically for dispositions on manual pass.
  *
- * <ui_request response_to="" message_id="UIV220089241119416" type="OUTDIAL-DISPOSITION">
- *      <manual_disp>TRUE</manual_disp>
- *      <request_key>IQ10012016081719070100875</request_key>
- *      <session_id/>
- * 		<uii/>
- * 	    <agent_id>1810</agent_id>
- * 		<lead_id>213215</lead_id>
- * 		<outbound_externid>909809</outbound_externid>
- * 		<disposition_id>126</disposition_id>
- * 		<notes>here are my notes :)</notes>
- * 		<call_back>TRUE | FALSE</call_back>
- * 		<call_back_DTS>2008-09-30 22:30:00 | null</call_back_DTS>
- * 	    <contact_forwarding>null</contact_forwarding>
- * </ui_request>
- *
+ * {"ui_request":{
+ *      "@message_id":"UIV220089241119416",
+ *      "@response_to":"",
+ *      "@type":"OUTDIAL-DISPOSITION",
+ *      "manual_disp":{"#text":"TRUE"},
+ *      "request_key":{"#text":"IQ10012016081719070100875"},
+ *      "session_id":{},
+ *      "uii":{},
+ *      "agent_id":{"#text":"1810"},
+ *      "lead_id":{"#text":"213215"},
+ *      "outbound_externid":{"#text":"909809"},
+ *      "disposition_id":{"#text":"126"},
+ *      "notes":{"#text":"here are my notes :)"},
+ *      "call_back":{"#text":"TRUE | FALSE"},
+ *      "call_back_DTS":{"#text":"2008-09-30 22:30:00 | null"},
+ *      "contact_forwarding":{"#text":"null"}
+ *    }
+ * }
  */
 DispositionManualPassRequest.prototype.formatJSON = function() {
     var model = UIModel.getInstance();
@@ -908,94 +955,123 @@ LoginRequest.prototype.formatJSON = function() {
  * a copy of it in the UIModel as loginPacket, as well as set the isLoggedInIS variable to
  * true (for reconnect purposes) and the loginDTS with the current date/time.
  *
- * <ui_response type="login">
- * 		<status>OK</status>
- * 		<agent_id>1810</agent_id>
- * 		<agent_pwd>bound25</agent_pwd>
- * 		<first_name>mandy</first_name>
- * 		<last_name>pants</last_name>
- * 		<email>mandypants@aol.coim</email>
- * 		<agent_type>AGENT</agent_type>
- *      <external_agent_id>blahblah</external_agent_id>
- * 		<default_login_dest>9548298548|123</default_login_dest>
- * 		<alt_default_login_dest>9548298548|123</alt_default_login_dest>
- * 		<iq_url>dev.connectfirst.com</iq_url>
- * 		<iq_port>1313</iq_port>
- * 		<iq_ssl_port>1213</iq_ssl_port>
- * 		<iq_secret_key>F-OFF</iq_secret_key>
- * 		<allow_inbound>1</allow_inbound>
- * 		<allow_outbound>1</allow_outbound>
- * 		<allow_chat>1</allow_chat>
- * 		<allow_blended>0</allow_blended>
- * 		<allow_off_hook>1</allow_off_hook>
- * 		<allow_call_control>1</allow_call_control>
- * 		<allow_login_control>1</allow_login_control>
- * 		<allow_login_updates>1</allow_login_updates>
- * 		<allow_lead_inserts>1</allow_lead_inserts>
- * 		<show_lead_history>1</show_lead_history>
- * 		<allow_cross_gate_requeue>1</allow_cross_gate_requeue>
- * 		<phone_login_dial_group>44</phone_login_dial_group>
- * 		<phone_login_pin>1234</phone_login_pin>
- *      <allow_manual_calls>1</allow_manual_calls>
- * 		<allow_manual_intl_calls>0</allow_manual_intl_calls>
- * 		<init_login_state>ON-BREAK</init_login_state>
- * 		<init_login_state_label>Morning Break</init_login_state_label>
- * 		<outbound_prepay>0</outbound_prepay>
- * 		<max_break_time>-1</max_break_time>
- * 		<max_lunch_time>-1</max_lunch_time>
- *      <allow_lead_search>YES_ALL</allow_lead_search>
- * 		<tcpa_safe_mode>1|0</tcpa_safe_mode>
- * 		<login_gates>
- * 			<gate default_dest_override="" gate_desc="" gate_id="37" gate_name="test"/>
- * 			<gate default_dest_override="" gate_desc="" gate_id="42" gate_name="test gate two"/>
- * 			<gate default_dest_override="" gate_desc="Amandas Other Gate" gate_id="46" gate_name="You know it!"/>
- * 		</login_gates>
- *		<login_chat_queues>
- *			<chat_queue chat_queue_id="" chat_queue_name="" chat_queue_description=""/>
- *			<chat_queue chat_queue_id="" chat_queue_name="" chat_queue_description=""/>
- *		</login_chat_queues>
- * 		<outdial_groups>
- * 			<group billing_key="" dial_group_desc="" dial_group_id="44"  dial_group_name="Geoff Dial Test" dial_mode="PREDICTIVE"/>
- * 			<group billing_key="2" dial_group_desc="AutoDial Configured Dial Group"  dial_group_id="46" dial_group_name="Phone Only test5" dial_mode="PREDICTIVE"/>
- * 		</outdial_groups>
- * 		<skill_profiles>
- * 			<profile profile_desc="" profile_id="571" profile_name="skill1"/>
- * 			<profile profile_desc="" profile_id="572" profile_name="skill2"/>
- * 		</skill_profiles>
- * 		<requeue_gates>
- * 			<gate_group gate_group_id="18" group_name="new gate group">
- * 				<gates>
- * 					<gate gate_desc="" gate_id="37" gate_name="test"/>
- * 					<gate gate_desc="" gate_id="42" gate_name="test gate two"/>
- * 				</gates>
- * 				<skills>
- * 					<skill skill_desc="" skill_id="58" skill_name="one"/>
- * 					<skill skill_desc="" skill_id="59" skill_name="two"/>
- * 				</skills>
- * 			</gate_group>
- * 			<gate_group gate_group_id="19" group_name="gate group 2">
- * 				<gates>
- * 					<gate gate_desc="Amandas Other Gate" gate_id="46" gate_name="You know it!"/>
- * 				</gates>
- * 				<skills/>
- * 			</gate_group>
- *		</requeue_gates>
- * 		<chat_rooms/>
- * 		<surveys>
- * 			<survey survey_id="15" survey_name="Don't Read This Survey"/>
- * 		</surveys>
- *      <campaigns>
- * 			<campaign campaign_id="" campaign_name="" survey_id="" survey_name="" allow_lead_updates="">
- * 				<custom_labels aux_1_label="" aux_2_label="" aux_3_label="" aux_4_label="" aux_5_label=""/>
- * 				<generic_key_value_pairs/>
- * 			</campaign>
- * 		</campaigns>
- * 		<account_countries>
- *   		<country country_id="BRA"/>
- *   		<country country_id="FRA"/>
- * 		</account_countries>
- * </ui_response>
- *
+ * {"ui_response":{
+ *      "@type":"login",
+ *      "status":{"#text":"OK"},
+ *      "agent_id":{"#text":"1810"},
+ *      "agent_pwd":{"#text":"bound25"},
+ *      "first_name":{"#text":"mandy"},
+ *      "last_name":{"#text":"pants"},
+ *      "email":{"#text":"mandypants@aol.coim"},
+ *      "agent_type":{"#text":"AGENT"},
+ *      "external_agent_id":{"#text":"blahblah"},
+ *      "default_login_dest":{"#text":"9548298548|123"},
+ *      "alt_default_login_dest":{"#text":"9548298548|123"},
+ *      "iq_url":{"#text":"dev.connectfirst.com"},
+ *      "iq_port":{"#text":"1313"},
+ *      "iq_ssl_port":{"#text":"1213"},
+ *      "iq_secret_key":{"#text":"F-OFF"},
+ *      "allow_inbound":{"#text":"1"},
+ *      "allow_outbound":{"#text":"1"},
+ *      "allow_chat":{"#text":"1"},
+ *      "allow_blended":{"#text":"0"},
+ *      "allow_off_hook":{"#text":"1"},
+ *      "allow_call_control":{"#text":"1"},
+ *      "allow_login_control":{"#text":"1"},
+ *      "allow_login_updates":{"#text":"1"},
+ *      "allow_lead_inserts":{"#text":"1"},
+ *      "show_lead_history":{"#text":"1"},
+ *      "allow_cross_gate_requeue":{"#text":"1"},
+ *      "phone_login_dial_group":{"#text":"44"},
+ *      "phone_login_pin":{"#text":"1234"},
+ *      "allow_manual_calls":{"#text":"1"},
+ *      "allow_manual_intl_calls":{"#text":"0"},
+ *      "init_login_state":{"#text":"ON-BREAK"},
+ *      "init_login_state_label":{"#text":"Morning Break"},
+ *      "outbound_prepay":{"#text":"0"},
+ *      "max_break_time":{"#text":"-1"},
+ *      "max_lunch_time":{"#text":"-1"},
+ *      "allow_lead_search":{"#text":"YES_ALL"},
+ *      "tcpa_safe_mode":{"#text":"1|0"},
+ *      "login_gates":{
+ *          "gate":[
+ *              {"@default_dest_override":"","@gate_desc":"","@gate_id":"37","@gate_name":"test"},
+ *              {"@default_dest_override":"","@gate_desc":"","@gate_id":"42","@gate_name":"test gate two"},
+ *              {"@default_dest_override":"","@gate_desc":"","@gate_id":"43","@gate_name":"test gate three"},
+ *              {"@default_dest_override":"","@gate_desc":"Amandas Other Gate","@gate_id":"46","@gate_name":"You know it!"}
+ *          ]
+ *      },
+ *      "login_chat_queues":{
+ *          "chat_queue":[
+ *              {"@chat_queue_description":"","@chat_queue_id":"","@chat_queue_name":""},
+ *              {"@chat_queue_description":"","@chat_queue_id":"","@chat_queue_name":""}
+ *          ]
+ *      },
+ *      "outdial_groups":{
+ *          "group":[
+ *              {"@billing_key":"","@dial_group_desc":"","@dial_group_id":"44","@dial_group_name":"Geoff Dial Test","@dial_mode":"PREDICTIVE"},
+ *              {"@billing_key":"2","@dial_group_desc":"AutoDial Configured Dial Group","@dial_group_id":"46","@dial_group_name":"Phone Only test5","@dial_mode":"PREDICTIVE"},
+ *              {"@billing_key":"","@dial_group_desc":"Test","@dial_group_id":"200000","@dial_group_name":"Test","@dial_mode":"PREDICTIVE"},
+ *              {"@billing_key":"","@dial_group_desc":"Test","@dial_group_id":"200010","@dial_group_name":"Carissa's Test Group","@dial_mode":"PREDICTIVE"}
+ *          ]
+ *      },"skill_profiles":{
+ *          "profile":[
+ *              {"@profile_desc":"","@profile_id":"571","@profile_name":"skill1"},
+ *              {"@profile_desc":"","@profile_id":"572","@profile_name":"skill2"}
+ *          ]
+ *      },
+ *      "requeue_gates":{
+ *          "gate_group":[
+ *              {
+ *                  "@gate_group_id":"18",
+ *                  "@group_name":"new gate group",
+ *                  "gates":{
+ *                      "gate":[
+ *                          {"@gate_desc":"","@gate_id":"37","@gate_name":"test"},
+ *                          {"@gate_desc":"","@gate_id":"43","@gate_name":"test gate three"},
+ *                          {"@gate_desc":"","@gate_id":"42","@gate_name":"test gate two"}
+ *                      ]
+ *                  },
+ *                  "skills":{
+ *                      "skill":[
+ *                          {"@skill_desc":"","@skill_id":"58","@skill_name":"one"},
+ *                          {"@skill_desc":"","@skill_id":"59","@skill_name":"two"},
+ *                      ]
+ *                  }
+ *              }
+ *          ]
+ *      },
+ *      "chat_rooms":{},
+ *      "surveys": {
+ *           "survey": {
+ *               "@survey_id": "15",
+ *               "@survey_name": "Don't Read This Survey"
+ *           }
+ *      },
+ *      "campaigns": {
+ *          "campaign": {
+ *              "@allow_lead_updates": "",
+ *              "@campaign_id": "",
+ *              "@campaign_name": "",
+ *              "@survey_id": "",
+ *              "@survey_name": "",
+ *              "custom_labels": {
+ *                  "@aux_1_label": "",
+ *                  "@aux_2_label": "",
+ *                  "@aux_3_label": "",
+ *                  "@aux_4_label": "",
+ *                  "@aux_5_label": ""
+ *              },
+ *              "generic_key_value_pairs": {}
+ *          }
+ *      },
+ *      "account_countries":{
+ *          "country":[
+ *              {"@country_id":"BRA"},{"@country_id":"FRA"},{"@country_id":"GER"}
+ *          ]
+ *      }
+ *   }
+ * }
  */
 LoginRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;
@@ -1227,11 +1303,15 @@ OffhookInitRequest.prototype.formatJSON = function() {
  * If the offhookinit is successful, it will go into the UIModel and set the isOffhook variable
  * to true.
  *
- * <ui_response type="OFF-HOOK-INIT" message_id="UI2005" response_to="">
- * 		<status>OK|FAILURE</status>
- * 		<message></message>
- * 		<detail></detail>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"UI2005",
+ *      "@response_to":"",
+ *      "@type":"OFF-HOOK-INIT",
+ *      "status":{"#text":"OK|FAILURE"},
+ *      "message":{},
+ *      "detail":{}
+ *    }
+ * }
  */
 OffhookInitRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
@@ -1276,12 +1356,16 @@ OffhookTermRequest.prototype.formatJSON = function() {
 /*
  * Process an OFF-HOOK-TERM packet and update various variables in the UI
  *
- * <ui_notification message_id="IQ10012016080217135001344" response_to="" type="OFF-HOOK-TERM">
- *    <agent_id>1</agent_id>
- *    <start_dts>2016-08-02 17:11:38</start_dts>
- *    <end_dts>2016-08-02 17:14:07</end_dts>
- *    <monitoring>0</monitoring>
- * </ui_notification>
+ * {"ui_notification":{
+ *      "@message_id":"IQ10012016080217135001344",
+ *      "@response_to":"",
+ *      "@type":"OFF-HOOK-TERM",
+ *      "agent_id":{"#text":"1"},
+ *      "start_dts":{"#text":"2016-08-02 17:11:38"},
+ *      "end_dts":{"#text":"2016-08-02 17:14:07"},
+ *      "monitoring":{"#text":"0"}
+ *    }
+ * }
  */
 OffhookTermRequest.prototype.processResponse = function(data) {
     var notif = data.ui_notification;
@@ -1421,27 +1505,30 @@ PreviewDialRequest.prototype.formatJSON = function() {
  * This class is responsible for handling PREVIEW-DIAL packets received
  * from the dialer. It will save a copy of it in the UIModel.
  *
- * <dialer_request message_id="ID2008091513163400220" response_to="" type="PREVIEW_DIAL" callbacks="TRUE|FALSE">
- * 		<dial_group_id>200018</dial_group_id>
- * 		<account_id>99999999</account_id>
- * 		<agent_id>1810</agent_id>
- * 		<destinations>
- * 			<lead aux_data1="" aux_data2="" aux_data3="" aux_data4="" aux_data5="" aux_phone="" campaign_id="51" destination="9548298548" dnis="1112223333" extern_id="amanda" lead_id="2646" lead_state="PENDING" live_answer_msg="" mach_answer_msg="" machine_detect="FALSE" request_key="IQ982008091516241101125" valid_until="2008-09-15 17:24:11">
- * 				<extern_id><![CDATA[9548298548]]></extern_id>
- * 				<first_name><![CDATA[Amanda]]></first_name>
- * 				<mid_name><![CDATA[Amanda]]></mid_name>
- * 				<last_name><![CDATA[Machutta2]]></last_name>
- * 				<address1/>
- * 				<address2/>
- * 				<city/>
- * 				<state/>
- * 				<zip/>
- * 				<aux_greeting/>
- * 				<aux_external_url/>
- * 			</lead>
- * 		</destinations>
- * </dialer_request>
- *
+ * {"dialer_request":{
+ *      "@callbacks":"TRUE|FALSE"
+ *      ,"@message_id":"ID2008091513163400220",
+ *      "@response_to":"",
+ *      "@type":"PREVIEW_DIAL",
+ *      "dial_group_id":{"#text":"200018"},
+ *      "account_id":{"#text":"99999999"},
+ *      "agent_id":{"#text":"1810"},
+ *      "destinations":{
+ *          "lead":[
+ *              {
+ *                  "@aux_data1":"","@aux_data2":"","@aux_data3":"","@aux_data4":"","@aux_data5":"",
+ *                  "@aux_phone":"","@campaign_id":"51","@destination":"9548298548","@dnis":"1112223333",
+ *                  "@extern_id":"amanda","@lead_id":"2646","@lead_state":"PENDING","@live_answer_msg":"",
+ *                  "@mach_answer_msg":"","@machine_detect":"FALSE","@request_key":"IQ982008091516241101125",
+ *                  "@valid_until":"2008-09-15 17:24:11","extern_id":{"#text":"9548298548"},
+ *                  "first_name":{"#text":"Amanda"},"mid_name":{"#text":"Amanda"},"last_name":{"#text":"Machutta2"},
+ *                  "address1":{},"address2":{},"city":{},"state":{},"zip":{},"aux_greeting":{},
+ *                  "aux_external_url":{}
+ *              },
+ *          ]
+ *      }
+ *    }
+ * }
  */
 PreviewDialRequest.prototype.processResponse = function(notification) {
     var notif = notification.dialer_request;
@@ -1508,14 +1595,18 @@ RequeueRequest.prototype.formatJSON = function() {
 /*
  * This class processes RE-QUEUE packets rec'd from IQ.
  *
- * <ui_response message_id="IQ982008082817165103291"  response_to="UIV220088281716486" type="RE-QUEUE">
- *   <agent_id>1856</agent_id>
- *   <uii>200808281716090000000900028070</uii>
- *   <status>OK</status>
- *   <gate_number>19</gate_number>
- *   <message>Success.</message>
- *   <detail>The re-queue request was successfully processed.</detail>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082817165103291",
+ *      "@response_to":"UIV220088281716486",
+ *      "@type":"RE-QUEUE",
+ *      "agent_id":{"#text":"1856"},
+ *      "uii":{"#text":"200808281716090000000900028070"},
+ *      "status":{"#text":"OK"},
+ *      "gate_number":{"#text":"19"},
+ *      "message":{"#text":"Success."},
+ *      "detail":{"#text":"The re-queue request was successfully processed."}
+ *    }
+ * }
  */
 RequeueRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;
@@ -1580,26 +1671,30 @@ TcpaSafeRequest.prototype.formatJSON = function() {
  * This class is responsible for handling TCPA-SAFE packets received
  * from the dialer. It will save a copy of it in the UIModel.
  *
- * <dialer_request message_id="ID2008091513163400220" response_to="" type="TCPA_SAFE" callbacks="TRUE|FALSE">
- * 		<dial_group_id>200018</dial_group_id>
- * 		<account_id>99999999</account_id>
- * 		<agent_id>1810</agent_id>
- * 		<destinations>
- * 			<lead aux_data1="" aux_data2="" aux_data3="" aux_data4="" aux_data5="" aux_phone="" campaign_id="51" destination="9548298548" dnis="1112223333" extern_id="amanda" lead_id="2646" lead_state="PENDING" live_answer_msg="" mach_answer_msg="" machine_detect="FALSE" request_key="IQ982008091516241101125" valid_until="2008-09-15 17:24:11">
- * 				<extern_id><![CDATA[9548298548]]></extern_id>
- * 				<first_name><![CDATA[Amanda]]></first_name>
- * 				<mid_name><![CDATA[Amanda]]></mid_name>
- * 				<last_name><![CDATA[Machutta2]]></last_name>
- * 				<address1/>
- * 				<address2/>
- * 				<city/>
- * 				<state/>
- * 				<zip/>
- * 				<aux_greeting/>
- * 				<aux_external_url/>
- * 			</lead>
- * 		</destinations>
- * </dialer_request>
+ * {"dialer_request":{
+ *      "@callbacks":"TRUE|FALSE"
+ *      ,"@message_id":"ID2008091513163400220",
+ *      "@response_to":"",
+ *      "@type":"TCPA_SAFE",
+ *      "dial_group_id":{"#text":"200018"},
+ *      "account_id":{"#text":"99999999"},
+ *      "agent_id":{"#text":"1810"},
+ *      "destinations":{
+ *          "lead":[
+ *              {
+ *                  "@aux_data1":"","@aux_data2":"","@aux_data3":"","@aux_data4":"","@aux_data5":"",
+ *                  "@aux_phone":"","@campaign_id":"51","@destination":"9548298548","@dnis":"1112223333",
+ *                  "@extern_id":"amanda","@lead_id":"2646","@lead_state":"PENDING","@live_answer_msg":"",
+ *                  "@mach_answer_msg":"","@machine_detect":"FALSE","@request_key":"IQ982008091516241101125",
+ *                  "@valid_until":"2008-09-15 17:24:11","extern_id":{"#text":"9548298548"},
+ *                  "first_name":{"#text":"Amanda"},"mid_name":{"#text":"Amanda"},"last_name":{"#text":"Machutta2"},
+ *                  "address1":{},"address2":{},"city":{},"state":{},"zip":{},"aux_greeting":{},
+ *                  "aux_external_url":{}
+ *              },
+ *          ]
+ *      }
+ *    }
+ * }
  *
  */
 TcpaSafeRequest.prototype.processResponse = function(notification) {
@@ -1662,26 +1757,33 @@ XferWarmRequest.prototype.formatJSON = function() {
 
 /*
  * This class processes WARM-XFER packets rec'd from IQ.
- * <ui_response message_id="IQ10012016082314475000219" response_to="" type="WARM-XFER">
- *   <agent_id>1</agent_id>
- *   <uii>201608231447590139000000000200</uii>
- *   <session_id>3</session_id>
- *   <status>OK</status>
- *   <dial_dest>3038593775</dial_dest>
- *   <message>OK</message>
- *   <detail/>
- * </ui_response>
  *
- * Response on CANCEL:
- * <ui_response message_id="IQ10012016082315005000264" response_to="" type="WARM-XFER">
- *   <agent_id>1</agent_id>
- *   <uii>201608231501090139000000000204</uii>
- *   <session_id/>
- *   <status>FAILURE</status>
- *   <dial_dest>3038593775</dial_dest>
- *   <message>Transfer CANCELED</message>
- *   <detail>NOANSWER after 3 seconds.</detail>
- * </ui_response>
+ * {"ui_response":{
+ *      "@message_id":"IQ10012016082314475000219",
+ *      "@response_to":"",
+ *      "@type":"WARM-XFER",
+ *      "agent_id":{"#text":"1"},
+ *      "uii":{"#text":"201608231447590139000000000200"},
+ *      "session_id":{"#text":"3"},
+ *      "status":{"#text":"OK"},
+ *      "dial_dest":{"#text":"3038593775"},
+ *      "message":{"#text":"OK"},"detail":{}
+ *    }
+ * }
+ *  Response on CANCEL:
+ *  {"ui_response":{
+ *      "@message_id":"IQ10012016082315005000264",
+ *      "@response_to":"",
+ *      "@type":"WARM-XFER",
+ *      "agent_id":{"#text":"1"},
+ *      "uii":{"#text":"201608231501090139000000000204"},
+ *      "session_id":{},
+ *      "status":{"#text":"FAILURE"},
+ *      "dial_dest":{"#text":"3038593775"},
+ *      "message":{"#text":"Transfer CANCELED"},
+ *      "detail":{"#text":"NOANSWER after 3 seconds."}
+ *    }
+ * }
  */
 XferWarmRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;
@@ -1703,8 +1805,8 @@ XferWarmRequest.prototype.processResponse = function(response) {
 };
 
 
-var XferWarmCancelRequest = function(number) {
-    this.number = number;
+var XferWarmCancelRequest = function(dialDest) {
+    this.dialDest = dialDest;
 };
 
 XferWarmCancelRequest.prototype.formatJSON = function() {
@@ -1721,7 +1823,7 @@ XferWarmCancelRequest.prototype.formatJSON = function() {
                 "#text":UIModel.getInstance().currentCall.uii
             },
             "dial_dest":{
-                "#text":utils.toString(this.number)
+                "#text":utils.toString(this.dialDest)
             }
         }
     };
@@ -1738,16 +1840,21 @@ var AddSessionNotification = function() {
  * This class is responsible for handling "ADD-SESSION" packets from IntelliQueue.  This is used by
  * the CallControlForm. Then it will increment the total_calls count.
  *
- * <ui_notification message_id="IQ982008082918151403727" response_to="" type="ADD-SESSION">
- *     <session_id>2</session_id>
- *     <uii>200808291814560000000900016558</uii>
- *     <phone>200808291814370000000900016555</phone>
- *     <session_type>AGENT</session_type>
- *     <session_label>Primary Agents Call Session</session_label>
- *     <allow_control>TRUE</allow_control>
- *     <monitoring>FALSE</monitoring>
- *     <agent_id>1856</agent_id>
- * </ui_notification>
+ * {
+ *   "ui_notification": {
+ *       "@message_id": "IQ982008082918151403727",
+ *       "@response_to": "",
+ *       "@type": "ADD-SESSION",
+ *       "session_id": { "#text": "2" },
+ *       "uii": { "#text": "200808291814560000000900016558" },
+ *       "phone": { "#text": "200808291814370000000900016555" },
+ *       "session_type": { "#text": "AGENT" },
+ *       "session_label": { "#text": "Primary Agents Call Session" },
+ *       "allow_control": { "#text": "TRUE" },
+ *       "monitoring": { "#text": "FALSE" },
+ *       "agent_id": { "#text": "1856" }
+ *   }
+ *  }
  */
 AddSessionNotification.prototype.processResponse = function(notification) {
     var formattedResponse = utils.buildDefaultResponse(notification);
@@ -1797,12 +1904,16 @@ var DialGroupChangeNotification = function() {
  * This class is responsible for handling a DIAL_GROUP_CHANGE notification.
  * This event is sent from IQ when an agent's dial group is changed in through the AdminUI.
  *
- *  <ui_notification message_id="IQ10012016080413085500263" type="DIAL_GROUP_CHANGE">
- *      <agent_id>1180958</agent_id>
- *      <dial_group_id>50354</dial_group_id>
- *      <dialGroupName>Preview Dial Mode</dialGroupName>
- *      <dial_group_desc/>
- *  </ui_notification>
+ *   {
+ *       "ui_notification": {
+ *           "@message_id": "IQ10012016080413085500263",
+ *           "@type": "DIAL_GROUP_CHANGE",
+ *           "agent_id": { "#text": "1180958" },
+ *           "dial_group_id": { "#text": "50354" },
+ *           "dialGroupName": { "#text": "Preview Dial Mode" },
+ *           "dial_group_desc": {}
+ *       }
+ *   }
  */
 DialGroupChangeNotification.prototype.processResponse = function(notification) {
     //Modify configRequest with new DialGroupId
@@ -1848,11 +1959,15 @@ var DialGroupChangePendingNotification = function() {
  * This class is responsible for handling a DIAL_GROUP_CHANGE_PENDING notification.
  * This event is sent from IQ when an agent's dial group is changed and the agent is on a call.
  *
- * <ui_notification message_id="IQ10012016080515294800318" type="DIAL_GROUP_CHANGE_PENDING">
- *   <agent_id>1180958</agent_id>
- *   <dial_group_id>50354</dial_group_id>
- *   <update_from_adminui>TRUE</update_from_adminui>
- * </ui_notification>
+ * {
+ *     "ui_notification": {
+ *         "@message_id": "IQ10012016080515294800318",
+ *         "@type": "DIAL_GROUP_CHANGE_PENDING",
+ *         "agent_id": { "#text": "1180958" },
+ *         "dial_group_id": { "#text": "50354" },
+ *         "update_from_adminui": { "#text": "TRUE" }
+ *     }
+ * }
  */
 DialGroupChangePendingNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
@@ -1886,10 +2001,15 @@ var DropSessionNotification = function() {
  * This class handles the DROP-SESSION packet from IQ. It doesn't really do anything
  * besides format a response for the callback notification since there isn't any action needed.
  *
-  <ui_notification message_id="IQ10012016081613222800341" response_to="" type="DROP-SESSION">
-     <session_id>3</session_id>
-     <uii>201608161322180139000000000124</uii>
-  </ui_notification>
+ *  {
+ *      "ui_notification": {
+ *          "@message_id":"IQ10012016081613222800341",
+ *          "@response_to":"",
+ *          "@type":"DROP-SESSION",
+ *          "session_id":{"#text":"3"},
+ *          "uii":{"#text":"201608161322180139000000000124"}
+ *      }
+ *  }
  */
 DropSessionNotification.prototype.processResponse = function(notification) {
     var formattedResponse = utils.buildDefaultResponse(notification);
@@ -1912,10 +2032,14 @@ var EarlyUiiNotification = function() {
  * This class is responsible for handling "EARLY_UII" packets from IntelliQueue.
  * For manual outdials, this gives the uii to cancel a ringing line.
  *
- * <ui_notification message_id="IQ10012016081611595000289" type="EARLY_UII">
- *      <agent_id>1180958</agent_id>
- *      <uii>201608161200240139000000000120</uii>
- *  </ui_notification>
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"EARLY_UII",
+ *          "agent_id":{"#text":"1180958"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
  */
 EarlyUiiNotification.prototype.processResponse = function(notification) {
     var formattedResponse = utils.buildDefaultResponse(notification);
@@ -1939,17 +2063,22 @@ var EndCallNotification = function(libInstance) {
  * Save the packet in the UIModel by appending it to the currentCall packet.
  * Update the CallState field in the UIModel to "CALL-ENDED"
  *
- *  <ui_notification message_id="IQ982008082910362203349" response_to="" type="END-CALL">
- *       <agent_id>1856</agent_id>
- *       <uii>200808291035510000000900029412</uii>
- *       <session_id>2</session_id>
- *       <call_dts>2008-08-29 10:36:04</call_dts>
- *       <call_duration>16</call_duration>
- *       <term_party>CALLER</term_party>
- *       <term_reason/>
- *       <recording_url/>
- *       <disposition_timeout>60</disposition_timeout>
- *  </ui_notification>
+ * {
+ *  "ui_notification":{
+ *      "@message_id":"IQ982008082910362203349",
+ *      "@response_to":"",
+ *      "@type":"END-CALL",
+ *      "agent_id":{"#text":"1856"},
+ *      "uii":{"#text":"200808291035510000000900029412"},
+ *      "session_id":{"#text":"2"},
+ *      "call_dts":{"#text":"2008-08-29 10:36:04"},
+ *      "call_duration":{"#text":"16"},
+ *      "term_party":{"#text":"CALLER"},
+ *      "term_reason":{},
+ *      "recording_url":{},
+ *      "disposition_timeout:{"#text":"60"}
+ *  }
+ * }
  */
 EndCallNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
@@ -2005,10 +2134,14 @@ var GatesChangeNotification = function() {
 /*
  * This class is responsible for handling a gates change notification
  *
- * <ui_notification message_id="IQ10012016080815372800837" type="GATES_CHANGE">
- *    <agent_id>1180958</agent_id>
- *    <gate_ids>11117,3</gate_ids>
- * </ui_notification>
+ * {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016080817344100936",
+ *          "@type":"GATES_CHANGE",
+ *          "agent_id":{"#text":"1180958"},
+ *          "gate_ids":{"#text":"11117,3"}
+ *      }
+ * }
  */
 GatesChangeNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
@@ -2058,12 +2191,16 @@ var GenericNotification = function() {
 /*
  * This class is responsible for handling a generic notification
  *
- *  <ui_notification message_id="IQ10012016080317400400011"
- *      response_to="1c2fe39f-a31e-aff8-8d23-92a61c88270f" type="GENERIC">
- *      <message_code>0</message_code>
- *      <message>OK</message>
- *      <detail>Pending Callback Successfully Cancelled.</detail>
- *  </ui_notification>
+ * {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016080317400400011",
+ *          "@response_to":"1c2fe39f-a31e-aff8-8d23-92a61c88270f",
+ *          "@type":"GENERIC",
+ *          "message_code":{"#text":"0"},
+ *          "message":{"#text":"OK"},
+ *          "detail":{"#text":"Pending Callback Successfully Cancelled."}
+ *      }
+ * }
  */
 GenericNotification.prototype.processResponse = function(notification) {
     var formattedResponse = utils.buildDefaultResponse(notification);
@@ -2085,83 +2222,91 @@ var NewCallNotification = function() {
  * 		@Monitoring==true:  set state to ACTIVE-MONITORING, send NewMonitoringCall event
  * 		@Monitoring==false: set state to ACTIVE, send newcall packet and increment total calls
  *
- *  <ui_notification message_id="IQ982010020911335300027" response_to="" type="NEW-CALL">
- *      <uii>201002091133350139990000000010</uii>
- *      <agent_id>657</agent_id>
- *      <dial_dest>sip:+16789050673@sip.connectfirst.com</dial_dest>
- *      <queue_dts>2010-02-09 11:33:53</queue_dts>
- *      <queue_time>-1</queue_time>
- *      <ani>9548298548</ani>
- *      <dnis/>
- *      <call_type>OUTBOUND</call_type>
- *      <app_url><![CDATA[]]></app_url>
- *      <is_monitoring>FALSE</is_monitoring>
- *      <gate number="17038">
- *          <name>AM Campaign</name>
- *      <description/>
- *      </gate>
- *      <message/>
- *      <survey_id/>
- *      <survey_pop_type>SUPPRESS</survey_pop_type>
- *      <agent_recording default="ON" pause="10">TRUE</agent_recording>
- *      <outdial_dispositions type="CAMPAIGN|GATE">
- *          <disposition disposition_id="20556" contact_forwarding="FALSE">Not Available</disposition>
- *          <disposition disposition_id="20559" contact_forwarding="FALSE">Transfer Not Available</disposition>
- *          <disposition disposition_id="20560" contact_forwarding="FALSE">Transfer Not Available - Ringing (no answer)</disposition>
- *          <disposition disposition_id="20561" contact_forwarding="TRUE">Succesfull Transfer</disposition>
- *          <disposition disposition_id="20562" contact_forwarding="TRUE">High School Senior</disposition>
- *          <disposition disposition_id="20563" contact_forwarding="FALSE">Transfer Not Available - Voicemail</disposition>
- *          <disposition disposition_id="20564" contact_forwarding="FALSE">Transfer Not Available - On Hold Too Long</disposition>
- *          <disposition disposition_id="20565" contact_forwarding="FALSE">Transfer Not Available - Busy</disposition>
- *          <disposition disposition_id="20557" contact_forwarding="FALSE">Not Available</disposition>
- *      </outdial_dispositions>
- *      <baggage allow_updates="TRUE" show_lead_passes="TRUE" show_list_name="TRUE">
- *          <state>OH</state>
- *          <aux_data4/>
- *          <address2/>
- *          <mid_name/>
- *          <extern_id>9548298548</extern_id>
- *          <aux_data1>BMAK</aux_data1>
- *          <aux_external_url/>
- *          <lead_id>64306</lead_id>
- *          <aux_data5/>
- *          <aux_data2>BMAK-041653-934</aux_data2>
- *          <last_name>Taylor</last_name>
- *          <lead_passes>1</lead_passes>
- *          <first_name>Ryant</first_name>
- *          <city>Cleveland</city>
- *          <aux_greeting/>
- *          <address1>8010 Maryland Ave</address1>
- *      <zip>44105</zip>
- *      <aux_data3>Call Ctr 1</aux_data3>
- *      <aux_phone/>
- *      <custom_labels>
- *      <aux_1_label/>
- *      <aux_2_label/>
- *      <aux_3_label/>
- *      <aux_4_label/>
- *      <aux_5_label/>
- *      </custom_labels>
- *      </baggage>
- *      <survey_response response_id="24" survey_id="1775">
- *          <details>
- *              <detail element_id="9001" option_id="0"><![CDATA[Box 1]]></detail>
- *              <detail element_id="9002" option_id="0"><![CDATA[Area 1]]></detail>
- *              <detail element_id="9003" option_id="6439"/>
- *              <detail element_id="9004" option_id="6443"/>
- *              <detail element_id="9004" option_id="6444"/>
- *              <detail element_id="9005" option_id="6447"/>
- *              <detail element_id="9006" option_id="0"><![CDATA[11/20/2013]]></detail>
- *              <detail element_id="9015" option_id="0"><![CDATA[Box 2]]></detail>
- *              <detail element_id="9016" option_id="0"><![CDATA[Area 2]]></detail>
- *              <detail element_id="9017" option_id="6466"/>
- *              <detail element_id="9018" option_id="6471"/>
- *              <detail element_id="9018" option_id="6472"/>
- *              <detail element_id="9019" option_id="6477"/>
- *              <detail element_id="9020" option_id="0"><![CDATA[11/21/2013]]></detail>
- *          </details>
- *      </survey_response>
- *  </ui_notification>
+ *  {"ui_notification":{
+ *      "@message_id":"IQ982010020911335300027",
+ *      "@response_to":"",
+ *      "@type":"NEW-CALL",
+ *      "uii":{"#text":"201002091133350139990000000010"},
+ *      "agent_id":{"#text":"657"},
+ *      "dial_dest":{"#text":"sip:+16789050673@sip.connectfirst.com"},
+ *      "queue_dts":{"#text":"2010-02-09 11:33:53"},
+ *      "queue_time":{"#text":"-1"},
+ *      "ani":{"#text":"9548298548"},
+ *      "dnis":{},
+ *      "call_type":{"#text":"OUTBOUND"},
+ *      "app_url":{},
+ *      "is_monitoring":{"#text":"FALSE"},
+ *      "gate":{
+ *          "@number":"17038",
+ *          "name":{"#text":"AM Campaign"},
+ *          "description":{}
+ *      },
+ *      "message":{},
+ *      "survey_id":{},
+ *      "survey_pop_type":{"#text":"SUPPRESS"},
+ *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
+ *      "outdial_dispositions":{
+ *      "@type":"CAMPAIGN|GATE",
+ *          "disposition":[
+ *              { "@contact_forwarding":"FALSE", "@disposition_id":"20556", "#text":"Not Available"},
+ *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "#text":"Transfer Not Available"}
+ *          ]
+ *      },
+ *      "baggage":{
+ *          "@allow_updates":"TRUE",
+ *          "@show_lead_passes":"TRUE",
+ *          "@show_list_name":"TRUE",
+ *          "state":{"#text":"OH"},
+ *          "aux_data4":{},
+ *          "address2":{},
+ *          "mid_name":{},
+ *          "extern_id":{"#text":"9548298548"},
+ *          "aux_data1":{"#text":"BMAK"},
+ *          "aux_external_url":{},
+ *          "lead_id":{"#text":"64306"},
+ *          "aux_data5":{},
+ *          "aux_data2":{"#text":"BMAK-041653-934"},
+ *          "last_name":{"#text":"Taylor"},
+ *          "lead_passes":{"#text":"1"},
+ *          "first_name":{"#text":"Ryant"},
+ *          "city":{"#text":"Cleveland"},
+ *          "aux_greeting":{},
+ *          "address1":{"#text":"8010 Maryland Ave"},
+ *          "zip":{"#text":"44105"},
+ *          "aux_data3":{"#text":"Call Ctr 1"},
+ *          "aux_phone":{},
+ *          "custom_labels":{
+ *              "aux_1_label":{},
+ *              "aux_2_label":{},
+ *              "aux_3_label":{},
+ *              "aux_4_label":{},
+ *              "aux_5_label":{}
+ *          }
+ *      },
+ *      "survey_response":{
+ *          "@response_id":"24",
+ *          "@survey_id":"1775",
+ *          "details":{
+ *              "detail":[
+ *                  {"@element_id":"9001","@option_id":"0","#text":"Box 1"},
+ *                  {"@element_id":"9002","@option_id":"0","#text":"Area 1"},
+ *                  {"@element_id":"9003","@option_id":"6439"},
+ *                  {"@element_id":"9004","@option_id":"6443"},
+ *                  {"@element_id":"9004","@option_id":"6444"},
+ *                  {"@element_id":"9005","@option_id":"6447"},
+ *                  {"@element_id":"9006","@option_id":"0","#text":"11/20/2013"},
+ *                  {"@element_id":"9015","@option_id":"0","#text":"Box 2"},
+ *                  {"@element_id":"9016","@option_id":"0","#text":"Area 2"},
+ *                  {"@element_id":"9017","@option_id":"6466"},
+ *                  {"@element_id":"9018","@option_id":"6471"},
+ *                  {"@element_id":"9018","@option_id":"6472"},
+ *                  {"@element_id":"9019","@option_id":"6477"},
+ *                  {"@element_id":"9020","@option_id":"0","#text":"11/21/2013"}
+ *             ]
+ *          }
+ *      }
+ *    }
+ *  }
  */
 NewCallNotification.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
@@ -2605,6 +2750,22 @@ var utils = {
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
+                break;
+            case MESSAGE_TYPES.REQUEUE:
+                var requeue = UIModel.getInstance().requeueRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.REQUEUE, requeue);
+                break;
+            case MESSAGE_TYPES.XFER_COLD:
+                var coldXfer = UIModel.getInstance().coldXferRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.XFER_COLD, coldXfer);
+                break;
+            case MESSAGE_TYPES.XFER_WARM:
+                var warmXfer = UIModel.getInstance().warmXferRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.XFER_WARM, warmXfer);
+                break;
+            case MESSAGE_TYPES.XFER_WARM_CANCEL:
+                var warmXferCancel = UIModel.getInstance().warmXferCancelRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.XFER_WARM_CANCEL, warmXferCancel);
                 break;
 
         }
