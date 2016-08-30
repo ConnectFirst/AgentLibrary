@@ -42,6 +42,10 @@ const CALLBACK_TYPES = {
     "PAUSE_RECORD":"pauseRecordResponse",
     "PREVIEW_DIAL":"previewDialResponse",
     "REQUEUE":"requeueResponse",
+    "STATS_AGENT":"agentStats",
+    "STATS_AGENTDAILY":"agentDailyStats",
+    "STATS_CAMPAIGN":"campaignStats",
+    "STATS_QUEUE":"queueStats",
     "TCPA_SAFE":"tcpaSafeResponse",
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse"
@@ -81,6 +85,10 @@ const MESSAGE_TYPES = {
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
+    "STATS_AGENT":"AGENT",
+    "STATS_AGENT_DAILY":"AGENTDAILY",
+    "STATS_CAMPAIGN":"CAMPAIGN",
+    "STATS_QUEUE":"GATE",
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
     "XFER_COLD":"COLD-XFER",
@@ -389,6 +397,38 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().recordRequest;
     };
     /**
+     * Get latest Agent Stats object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentStatsPacket = function() {
+        return UIModel.getInstance().agentStatsPacket;
+    };
+    /**
+     * Get latest Agent Daily Stats object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentDailyStatsPacket = function() {
+        return UIModel.getInstance().agentDailyStatsPacket;
+    };
+    /**
+     * Get latest Queue Stats object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getQueueStatsPacket = function() {
+        return UIModel.getInstance().queueStatsPacket;
+    };
+    /**
+     * Get latest Campaign Stats object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCampaignStatsPacket = function() {
+        return UIModel.getInstance().campaignStatsPacket;
+    };
+    /**
      * Get packet received on successful Login
      * @memberof AgentLibrary
      * @returns {object}
@@ -580,6 +620,38 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getAgentPermissions = function() {
         return UIModel.getInstance().agentPermissions;
+    };
+    /**
+     * Get the Agent stats object containing the current state of agent stats
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentStats = function() {
+        return UIModel.getInstance().agentStats;
+    };
+    /**
+     * Get the Agent Daily stats object containing the current state of agent daily stats
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentDailyStats = function() {
+        return UIModel.getInstance().agentDailyStats;
+    };
+    /**
+     * Get the Queue stats object containing the current state of queue stats
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getQueueStats = function() {
+        return UIModel.getInstance().queueStats;
+    };
+    /**
+     * Get the Campaign stats object containing the current state of campaign stats
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCampaignStats = function() {
+        return UIModel.getInstance().campaignStats;
     };
 
 }

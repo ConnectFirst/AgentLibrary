@@ -17,16 +17,16 @@ describe( 'Tests for Agent Library agent methods', function() {
         fixture.setBase('mock');  // If base path is different from the default `spec/fixtures`
         this.loginResponseRaw = fixture.load('loginResponseRaw.json');
         this.configResponseRaw = fixture.load('configResponseRaw.json');
-        this.previewDialResponseRaw = fixture.load('previewDialResponseRaw.json');
-        this.expectedPreviewDialResponse = fixture.load('expectedPreviewDialResponse.json');
-        this.campaignDispositionsRaw = fixture.load('campaignDispositionsRaw.json');
-        this.expectedOutdialDispositionRequest = fixture.load('expectedOutdialDispositionRequest.json');
-        this.expectedDispositionManualPassRequest = fixture.load('expectedDispositionManualPassRequest.json');
-        this.expectedWarmXferRequest = fixture.load('expectedWarmXferRequest.json');
-        this.expectedColdXferRequest = fixture.load('expectedColdXferRequest.json');
-        this.expectedWarmXferCancelRequest = fixture.load('expectedWarmXferCancelRequest.json');
-        this.warmXferResponseRaw = fixture.load('warmXferResponseRaw.json');
-        this.coldXferResponseRaw = fixture.load('coldXferResponseRaw.json');
+        this.previewDialResponseRaw = fixture.load('call/previewDialResponseRaw.json');
+        this.expectedPreviewDialResponse = fixture.load('call/expectedPreviewDialResponse.json');
+        this.campaignDispositionsRaw = fixture.load('call/campaignDispositionsRaw.json');
+        this.expectedOutdialDispositionRequest = fixture.load('call/expectedOutdialDispositionRequest.json');
+        this.expectedDispositionManualPassRequest = fixture.load('call/expectedDispositionManualPassRequest.json');
+        this.expectedWarmXferRequest = fixture.load('call/expectedWarmXferRequest.json');
+        this.expectedColdXferRequest = fixture.load('call/expectedColdXferRequest.json');
+        this.expectedWarmXferCancelRequest = fixture.load('call/expectedWarmXferCancelRequest.json');
+        this.warmXferResponseRaw = fixture.load('call/warmXferResponseRaw.json');
+        this.coldXferResponseRaw = fixture.load('call/coldXferResponseRaw.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {

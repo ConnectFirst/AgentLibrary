@@ -8,6 +8,666 @@
 
 ;(function (global) {
 
+var AddSessionNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling "ADD-SESSION" packets from IntelliQueue.  This is used by
+ * the CallControlForm. Then it will increment the total_calls count.
+ *
+ * {
+ *   "ui_notification": {
+ *       "@message_id": "IQ982008082918151403727",
+ *       "@response_to": "",
+ *       "@type": "ADD-SESSION",
+ *       "session_id": { "#text": "2" },
+ *       "uii": { "#text": "200808291814560000000900016558" },
+ *       "phone": { "#text": "200808291814370000000900016555" },
+ *       "session_type": { "#text": "AGENT" },
+ *       "session_label": { "#text": "Primary Agents Call Session" },
+ *       "allow_control": { "#text": "TRUE" },
+ *       "monitoring": { "#text": "FALSE" },
+ *       "agent_id": { "#text": "1856" }
+ *   }
+ *  }
+ */
+AddSessionNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+    var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
+    var sessionAgentId = utils.getText(notif, "agent_id");
+
+    if(utils.getText(notif, "session_type") === "AGENT"){
+        model.incrementTotalCalls();
+    }
+
+    if(sessionAgentId === model.agentSettings.agentId){
+        // add the session_id of this leg to the current call packet -
+        // this way we can use it for hangups later.
+        model.currentCall.sessionId = utils.getText(notif, "session_id");
+
+    }else if(sessionAgentId != ""){
+        // this is a monitoring session, lets save the monitored agent id for barge-ins
+        model.currentCall.monitorAgentId = sessionAgentId;
+    }
+
+    // Check to see if we have a transfer leg here, if so, register it
+    if(utils.getText(notif, "session_type") === 'OUTBOUND' && sessionAgentId === "" && utils.getText(notif, "allow_control") === true){
+        model.transferSessions[utils.getText(notif, "session_id")] = {sessionId:utils.getText(notif, "session_id"),destination:utils.getText(notif, "phone"),uii:utils.getText(notif, "uii")};
+    }
+
+    formattedResponse.status = "OK";
+    formattedResponse.message = "Received ADD-SESSION notification";
+    formattedResponse.sessionId = utils.getText(notif, "session_id");
+    formattedResponse.uii = utils.getText(notif, "uii");
+    formattedResponse.phone = utils.getText(notif, "phone");
+    formattedResponse.sessionType = utils.getText(notif, "session_type");
+    formattedResponse.sessionLabel = utils.getText(notif, "session_label");
+    formattedResponse.allowControl = utils.getText(notif, "allow_control");
+    formattedResponse.monitoring = utils.getText(notif, "monitoring");
+    formattedResponse.agentId = utils.getText(notif, "agent_id");
+
+    return formattedResponse;
+};
+
+
+var DialGroupChangeNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a DIAL_GROUP_CHANGE notification.
+ * This event is sent from IQ when an agent's dial group is changed in through the AdminUI.
+ *
+ *   {
+ *       "ui_notification": {
+ *           "@message_id": "IQ10012016080413085500263",
+ *           "@type": "DIAL_GROUP_CHANGE",
+ *           "agent_id": { "#text": "1180958" },
+ *           "dial_group_id": { "#text": "50354" },
+ *           "dialGroupName": { "#text": "Preview Dial Mode" },
+ *           "dial_group_desc": {}
+ *       }
+ *   }
+ */
+DialGroupChangeNotification.prototype.processResponse = function(notification) {
+    //Modify configRequest with new DialGroupId
+    var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
+    var origLoginType = model.configRequest.loginType;
+    var newDgId = utils.getText(notif, "dial_group_id");
+
+    model.dialGroupChangeNotification = notification;
+
+    // Calculate type of login - called from AdminUI when assigning agent to new dial group.
+    // Only options should be BLENDED or OUTBOUND here.
+    if(newDgId && newDgId !== "" && (origLoginType === "INBOUND" || origLoginType === "BLENDED") ){
+        model.configRequest.loginType = "BLENDED";
+    }else if (newDgId && newDgId !== ""){
+        model.configRequest.loginType = "OUTBOUND";
+    }else if (origLoginType  === "INBOUND"){
+        model.configRequest.loginType = "INBOUND";
+    }else{
+        model.configRequest.loginType = "NO-SELECTION";
+    }
+
+    UIModel.getInstance().configRequest.dialGroupId = newDgId;
+
+    var formattedResponse = {
+        message: "Dial Group Updated Successfully.",
+        detail: "Dial Group changed to [" + newDgId + "].",
+        dialGroupId: utils.getText(notif, "dial_group_id"),
+        dialGroupName: utils.getText(notif, "dialGroupName"), // camel case from server for some reason :/
+        dialGroupDesc: utils.getText(notif, "dial_group_desc"),
+        agentId: utils.getText(notif, "agent_id")
+    };
+
+    return formattedResponse;
+};
+
+
+var DialGroupChangePendingNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a DIAL_GROUP_CHANGE_PENDING notification.
+ * This event is sent from IQ when an agent's dial group is changed and the agent is on a call.
+ *
+ * {
+ *     "ui_notification": {
+ *         "@message_id": "IQ10012016080515294800318",
+ *         "@type": "DIAL_GROUP_CHANGE_PENDING",
+ *         "agent_id": { "#text": "1180958" },
+ *         "dial_group_id": { "#text": "50354" },
+ *         "update_from_adminui": { "#text": "TRUE" }
+ *     }
+ * }
+ */
+DialGroupChangePendingNotification.prototype.processResponse = function(notification) {
+    var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
+    model.agentSettings.pendingDialGroupChange = parseInt(utils.getText(notif, "dial_group_id"), 10);
+
+    // check if request originated with AdminUI
+    if(notif.update_from_adminui){
+        model.agentSettings.updateDGFromAdminUI = utils.getText(notif, "update_from_adminui") === true;
+    }else{
+        model.agentSettings.updateDGFromAdminUI = false;
+    }
+
+    var formattedResponse = {
+        message: "Dial Group Change Pending notification received.",
+        detail: "DialGroup switch for existing session pending until active call ends.",
+        agentId: utils.getText(notif, "agent_id"),
+        dialGroupId: utils.getText(notif, "dial_group_id"),
+        updateFromAdminUI: utils.getText(notif, "update_from_adminui")
+    };
+
+    return formattedResponse;
+};
+
+
+var DropSessionNotification = function() {
+
+};
+
+/*
+ * This class handles the DROP-SESSION packet from IQ. It doesn't really do anything
+ * besides format a response for the callback notification since there isn't any action needed.
+ *
+ *  {
+ *      "ui_notification": {
+ *          "@message_id":"IQ10012016081613222800341",
+ *          "@response_to":"",
+ *          "@type":"DROP-SESSION",
+ *          "session_id":{"#text":"3"},
+ *          "uii":{"#text":"201608161322180139000000000124"}
+ *      }
+ *  }
+ */
+DropSessionNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+    var notif = notification.ui_notification;
+
+    formattedResponse.message = "Received DROP-SESSION Notification";
+    formattedResponse.status = "OK";
+    formattedResponse.sessionId = utils.getText(notif, "session_id");
+    formattedResponse.uii = utils.getText(notif, "uii");
+
+    return formattedResponse;
+};
+
+
+var EarlyUiiNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling "EARLY_UII" packets from IntelliQueue.
+ * For manual outdials, this gives the uii to cancel a ringing line.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"EARLY_UII",
+ *          "agent_id":{"#text":"1180958"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+EarlyUiiNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+    var notif = notification.ui_notification;
+
+    formattedResponse.message = "Received EARLY_UII notification";
+    formattedResponse.status = "OK";
+    formattedResponse.agentId = utils.getText(notif, "agent_id");
+    formattedResponse.uii = utils.getText(notif, "uii");
+
+    return formattedResponse;
+};
+
+
+var EndCallNotification = function(libInstance) {
+    this.libInstance = libInstance;
+};
+
+/*
+ * This class is responsible for handling an END-CALL notification.
+ * Save the packet in the UIModel by appending it to the currentCall packet.
+ * Update the CallState field in the UIModel to "CALL-ENDED"
+ *
+ * {
+ *  "ui_notification":{
+ *      "@message_id":"IQ982008082910362203349",
+ *      "@response_to":"",
+ *      "@type":"END-CALL",
+ *      "agent_id":{"#text":"1856"},
+ *      "uii":{"#text":"200808291035510000000900029412"},
+ *      "session_id":{"#text":"2"},
+ *      "call_dts":{"#text":"2008-08-29 10:36:04"},
+ *      "call_duration":{"#text":"16"},
+ *      "term_party":{"#text":"CALLER"},
+ *      "term_reason":{},
+ *      "recording_url":{},
+ *      "disposition_timeout:{"#text":"60"}
+ *  }
+ * }
+ */
+EndCallNotification.prototype.processResponse = function(notification) {
+    var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
+    model.endCallNotification = notification;
+
+    // add callDuration, termParty, and termReason to the current call packet
+    model.currentCall.duration = utils.getText(notif, "call_duration");
+    model.currentCall.termParty = utils.getText(notif, "term_party");
+    model.currentCall.termReason = utils.getText(notif, "term_reason");
+
+    // set call state to "CALL-ENDED"
+    model.agentSettings.callState = "CALL-ENDED";
+
+    // Clear out any transfer sessions from the previous call
+    model.transferSessions = {};
+
+    // Check if there is a pending dial group change
+    if(model.agentSettings.pendingDialGroupChange > 0 || model.agentSettings.pendingDialGroupChange == -1) {
+        // update dial group id
+        model.configRequest.dialGroupId = model.agentSettings.pendingDialGroupChange;
+
+        // send login update request
+        this.libInstance.configureAgent(model.configRequest.queueIds, model.configRequest.chatIds, model.configRequest.skillProfileId, model.configRequest.dialGroupId, model.configRequest.dialDest, model.agentSettings.updateDGFromAdminUI);
+
+        // reset pending dial group variables
+        model.agentSettings.pendingDialGroupChange = 0;
+        model.agentSettings.updateDGFromAdminUI = false;
+    }
+
+    var formattedResponse = {
+        message: "End Call Notification Received.",
+        detail: "",
+        uii: utils.getText(notif, "uii"),
+        sessionId: utils.getText(notif, "session_id"),
+        agentId: utils.getText(notif, "agent_id"),
+        callDts: utils.getText(notif, "call_dts"),
+        duration: model.currentCall.duration,
+        termParty: model.currentCall.termParty,
+        termReason: model.currentCall.termReason,
+        recordingUrl: utils.getText(notif, "recording_url"),
+        dispositionTimeout: utils.getText(notif, "disposition_timeout")
+    };
+
+    return formattedResponse;
+};
+
+
+var GatesChangeNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a gates change notification
+ *
+ * {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016080817344100936",
+ *          "@type":"GATES_CHANGE",
+ *          "agent_id":{"#text":"1180958"},
+ *          "gate_ids":{"#text":"11117,3"}
+ *      }
+ * }
+ */
+GatesChangeNotification.prototype.processResponse = function(notification) {
+    var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
+    var newAssignedGates = [];
+    var availableQueues = model.inboundSettings.availableQueues;
+    var assignedGateIds = utils.getText(notif, "gate_ids");
+    if(assignedGateIds !== ""){
+        assignedGateIds = assignedGateIds.split(',');
+    }
+
+    for(var a = 0; a < assignedGateIds.length; a++){
+        // find gate in avail list
+        var id = assignedGateIds[a];
+        var foundGate = utils.findObjById(availableQueues, id, "gateId");
+        if(foundGate){
+            newAssignedGates.push(foundGate);
+        }else{
+            // gate not in assigned list, add stub
+            var gate = {
+                gateId: id,
+                gateName:"",
+                gateDesc:"",
+                defaultDestOverride:"",
+                isAgentSelectable:false
+            };
+            newAssignedGates.push(gate);
+        }
+    }
+
+    model.inboundSettings.queues = JSON.parse(JSON.stringify(newAssignedGates));
+
+    var formattedResponse = {
+        agentId: utils.getText(notif, "agent_id"),
+        message: "Gates Change notification received.",
+        queues: newAssignedGates
+    };
+
+    return formattedResponse;
+};
+
+
+var GenericNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a generic notification
+ *
+ * {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016080317400400011",
+ *          "@response_to":"1c2fe39f-a31e-aff8-8d23-92a61c88270f",
+ *          "@type":"GENERIC",
+ *          "message_code":{"#text":"0"},
+ *          "message":{"#text":"OK"},
+ *          "detail":{"#text":"Pending Callback Successfully Cancelled."}
+ *      }
+ * }
+ */
+GenericNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+
+    // add message and detail if present
+    formattedResponse.messageCode = utils.getText(notification.ui_notification,"message_code");
+
+    return formattedResponse;
+};
+
+
+var NewCallNotification = function() {
+
+};
+
+/*
+ * This class processes a "NEW-CALL" packet received from Intelliqueue. It will determine
+ * if the call is a regular or monitoring call:
+ * 		@Monitoring==true:  set state to ACTIVE-MONITORING, send NewMonitoringCall event
+ * 		@Monitoring==false: set state to ACTIVE, send newcall packet and increment total calls
+ *
+ *  {"ui_notification":{
+ *      "@message_id":"IQ982010020911335300027",
+ *      "@response_to":"",
+ *      "@type":"NEW-CALL",
+ *      "uii":{"#text":"201002091133350139990000000010"},
+ *      "agent_id":{"#text":"657"},
+ *      "dial_dest":{"#text":"sip:+16789050673@sip.connectfirst.com"},
+ *      "queue_dts":{"#text":"2010-02-09 11:33:53"},
+ *      "queue_time":{"#text":"-1"},
+ *      "ani":{"#text":"9548298548"},
+ *      "dnis":{},
+ *      "call_type":{"#text":"OUTBOUND"},
+ *      "app_url":{},
+ *      "is_monitoring":{"#text":"FALSE"},
+ *      "gate":{
+ *          "@number":"17038",
+ *          "name":{"#text":"AM Campaign"},
+ *          "description":{}
+ *      },
+ *      "message":{},
+ *      "survey_id":{},
+ *      "survey_pop_type":{"#text":"SUPPRESS"},
+ *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
+ *      "outdial_dispositions":{
+ *      "@type":"CAMPAIGN|GATE",
+ *          "disposition":[
+ *              { "@contact_forwarding":"FALSE", "@disposition_id":"20556", "#text":"Not Available"},
+ *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "#text":"Transfer Not Available"}
+ *          ]
+ *      },
+ *      "baggage":{
+ *          "@allow_updates":"TRUE",
+ *          "@show_lead_passes":"TRUE",
+ *          "@show_list_name":"TRUE",
+ *          "state":{"#text":"OH"},
+ *          "aux_data4":{},
+ *          "address2":{},
+ *          "mid_name":{},
+ *          "extern_id":{"#text":"9548298548"},
+ *          "aux_data1":{"#text":"BMAK"},
+ *          "aux_external_url":{},
+ *          "lead_id":{"#text":"64306"},
+ *          "aux_data5":{},
+ *          "aux_data2":{"#text":"BMAK-041653-934"},
+ *          "last_name":{"#text":"Taylor"},
+ *          "lead_passes":{"#text":"1"},
+ *          "first_name":{"#text":"Ryant"},
+ *          "city":{"#text":"Cleveland"},
+ *          "aux_greeting":{},
+ *          "address1":{"#text":"8010 Maryland Ave"},
+ *          "zip":{"#text":"44105"},
+ *          "aux_data3":{"#text":"Call Ctr 1"},
+ *          "aux_phone":{},
+ *          "custom_labels":{
+ *              "aux_1_label":{},
+ *              "aux_2_label":{},
+ *              "aux_3_label":{},
+ *              "aux_4_label":{},
+ *              "aux_5_label":{}
+ *          }
+ *      },
+ *      "survey_response":{
+ *          "@response_id":"24",
+ *          "@survey_id":"1775",
+ *          "details":{
+ *              "detail":[
+ *                  {"@element_id":"9001","@option_id":"0","#text":"Box 1"},
+ *                  {"@element_id":"9002","@option_id":"0","#text":"Area 1"},
+ *                  {"@element_id":"9003","@option_id":"6439"},
+ *                  {"@element_id":"9004","@option_id":"6443"},
+ *                  {"@element_id":"9004","@option_id":"6444"},
+ *                  {"@element_id":"9005","@option_id":"6447"},
+ *                  {"@element_id":"9006","@option_id":"0","#text":"11/20/2013"},
+ *                  {"@element_id":"9015","@option_id":"0","#text":"Box 2"},
+ *                  {"@element_id":"9016","@option_id":"0","#text":"Area 2"},
+ *                  {"@element_id":"9017","@option_id":"6466"},
+ *                  {"@element_id":"9018","@option_id":"6471"},
+ *                  {"@element_id":"9018","@option_id":"6472"},
+ *                  {"@element_id":"9019","@option_id":"6477"},
+ *                  {"@element_id":"9020","@option_id":"0","#text":"11/21/2013"}
+ *             ]
+ *          }
+ *      }
+ *    }
+ *  }
+ */
+NewCallNotification.prototype.processResponse = function(notification) {
+    var model = UIModel.getInstance();
+    var notif = notification.ui_notification;
+
+    // set up new call obj
+    var newCall = {
+        uii: utils.getText(notif,'uii'),
+        agentId: utils.getText(notif,'agent_id'),
+        dialDest: utils.getText(notif,'dial_dest'),
+        queueDts: utils.getText(notif,'queue_dts'),
+        queueTime: utils.getText(notif,'queue_time'),
+        ani: utils.getText(notif,'ani'),
+        dnis: utils.getText(notif,'dnis'),
+        callType: utils.getText(notif,'call_type'),
+        appUrl: utils.getText(notif,'app_url'),
+        isMonitoring: utils.getText(notif,'is_monitoring'),
+        allowHold: utils.getText(notif,'allow_hold'),
+        allowTransfer: utils.getText(notif,'allow_transfer'),
+        allowHangup: utils.getText(notif,'allow_hangup'),
+        allowRequeue: utils.getText(notif,'allow_requeue'),
+        allowEndCallForEveryone: utils.getText(notif,'allow_endcallforeveryone'),
+        surveyId: utils.getText(notif,'survey_id'),
+        surveyPopType: utils.getText(notif,'survey_pop_type'),
+        requeueType: utils.getText(notif,'requeue_type')
+    };
+
+    // set collection values
+    newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
+    newCall.agentRecording = utils.processResponseCollection(notification, 'ui_notification', 'agent_recording', 'agentRecording')[0];
+    newCall.outdialDispositions = utils.processResponseCollection(notification, 'ui_notification', 'outdial_dispositions', 'disposition')[0];
+    newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
+    newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
+    newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+
+    // convert numbers to boolean where applicable
+    newCall.queue.isCampaign = newCall.queue.isCampaign === "1";
+    if(newCall.outdialDispositions && newCall.outdialDispositions.type && newCall.outdialDispositions.type.toUpperCase() === "GATE"){
+        for(var d = 0; d < newCall.outdialDispositions.dispositions.length; d++) {
+            var disp = newCall.outdialDispositions.dispositions[d];
+            disp.isComplete = disp.isComplete === "1";
+            disp.requireNote = disp.requireNote === "1";
+            disp.saveSurvey = disp.saveSurvey === "1";
+            disp.xfer = disp.xfer === "1";
+        }
+    }
+
+    // Build token map
+    model.callTokens = buildTokenMap(notif, newCall);
+
+    // Is Monitoring Call?
+    if(newCall.isMonitoring){
+        model.agentSettings.callState = "ACTIVE-MONITORING";
+    }else{
+        model.agentSettings.callState = "ACTIVE";
+
+        // check for preloaded transfer number
+        if(newCall.baggage && newCall.baggage.auxPhone != ""){
+            model.transferNumber = newCall.baggage.auxPhone;
+        }
+    }
+
+    // Reset the current call counter for Agent Daily Stats
+    model.agentDailyStats.currCallTime = 0;
+
+    // todo handle scripting??
+
+    model.currentCall = newCall;
+
+    return newCall;
+};
+
+
+function buildTokenMap(notif, newCall){
+    var model = UIModel.getInstance();
+    var tokens = {};
+    if(isCampaign(newCall.queue)){
+        var keyValuePairs = [];
+        if (notif.generic_key_value_pairs){
+            var keyValuePairsStr = utils.getText(notif, 'generic_key_value_pairs');
+            if (keyValuePairsStr.length > 0){
+                keyValuePairs = util.parseKeyValuePairsFromString(keyValuePairsStr, "|", "::");
+            }
+        }
+
+        for(var keyValue in keyValuePairs){
+            tokens[keyValue] = keyValuePairs[keyValue];
+        }
+    }
+
+    tokens["ani"] = newCall.ani;
+    tokens["dnis"] = newCall.dnis;
+    tokens["uii"] = newCall.uii;
+
+    try{
+        if(newCall.queue.number){
+            tokens["source_id"] = newCall.number || "";
+            tokens["source_name"] = newCall.name || "";
+            tokens["source_desc"] = newCall.description || "";
+
+            if(newCall.queue.isCampaign === "0"){
+                tokens["source_type"] = "INBOUND";
+            }else{
+                tokens["source_type"] = "OUTBOUND";
+            }
+        }else{
+            tokens["source_id"] = "0";
+            tokens["source_type"] = "MANUAL";
+            tokens["source_name"] = "";
+            tokens["source_desc"] = "";
+        }
+    }catch(any){
+        console.error("There was an error processing source tokenization", + any);
+    }
+
+    try{
+        tokens["agent_first_name"] = model.agentSettings.firstName;
+        tokens["agent_last_name"] = model.agentSettings.lastName;
+        tokens["agent_external_id"] = model.agentSettings.externalAgentId;
+        tokens["agent_extern_id"] = model.agentSettings.externalAgentId;
+        tokens["agent_type"] = model.agentSettings.agentType;
+    }catch(any){
+        console.error("There was an error parsing tokens for agent info. ", any);
+    }
+
+    if(notif.baggage){
+        try{
+            tokens["lead_id"] = newCall.baggage.leadId || "";
+            tokens["extern_id"] = newCall.baggage.externId || "";
+            tokens["first_name"] = newCall.baggage.firstName || "";
+            tokens["mid_name"] = newCall.baggage.midName || "";
+            tokens["last_name"] = newCall.baggage.lastName || "";
+            tokens["address1"] = newCall.baggage.address1 || "";
+            tokens["address2"] = newCall.baggage.address2 || "";
+            tokens["suffix"] = newCall.baggage.suffix || "";
+            tokens["title"] = newCall.baggage.title || "";
+            tokens["city"] = newCall.baggage.city || "";
+            tokens["state"] = newCall.baggage.state || "";
+            tokens["zip"] = newCall.baggage.zip || "";
+            tokens["aux_data1"] = newCall.baggage.auxData1 || "";
+            tokens["aux_data2"] = newCall.baggage.auxData2 || "";
+            tokens["aux_data3"] = newCall.baggage.auxData3 || "";
+            tokens["aux_data4"] = newCall.baggage.auxData4 || "";
+            tokens["aux_data5"] = newCall.baggage.auxData5 || "";
+            tokens["aux_phone"] = newCall.baggage.auxPhone || "";
+            tokens["email"] = newCall.baggage.email || "";
+            tokens["gate_keeper"] = newCall.baggage.gateKeeper || "";
+
+        }catch(any){
+            console.error("There was an error parsing baggage tokens. ", any);
+        }
+    }else{
+        tokens["lead_id"] = "";
+        tokens["extern_id"] = "";
+        tokens["first_name"] = "";
+        tokens["mid_name"] = "";
+        tokens["last_name"] = "";
+        tokens["address1"] = "";
+        tokens["address2"] = "";
+        tokens["suffix"] = "";
+        tokens["title"] = "";
+        tokens["city"] = "";
+        tokens["state"] = "";
+        tokens["zip"] = "";
+        tokens["aux_data1"] = "";
+        tokens["aux_data2"] = "";
+        tokens["aux_data3"] = "";
+        tokens["aux_data4"] = "";
+        tokens["aux_data5"] = "";
+        tokens["aux_phone"] = "";
+        tokens["email"] = "";
+        tokens["gate_keeper"] = "";
+    }
+
+    return tokens;
+}
+
+function isCampaign(gate){
+    if (gate && gate.isCampaign){
+        return gate.isCampaign === "1";
+    }
+    return false;
+}
+
+
 var AgentStateRequest = function(agentState, agentAuxState) {
     if(agentState.toUpperCase() == "ON-BREAK" && UIModel.getInstance().onCall == true){
         this.agentState = "BREAK-AFTER-CALL";
@@ -2208,664 +2868,357 @@ XferWarmCancelRequest.prototype.formatJSON = function() {
 };
 
 
-var AddSessionNotification = function() {
+var AgentStats = function() {
 
 };
+
 
 /*
- * This class is responsible for handling "ADD-SESSION" packets from IntelliQueue.  This is used by
- * the CallControlForm. Then it will increment the total_calls count.
+ * This class is responsible for handling an Agent Stats packet rec'd from IntelliServices.
+ * It will save a copy of it in the UIModel.
  *
- * {
- *   "ui_notification": {
- *       "@message_id": "IQ982008082918151403727",
- *       "@response_to": "",
- *       "@type": "ADD-SESSION",
- *       "session_id": { "#text": "2" },
- *       "uii": { "#text": "200808291814560000000900016558" },
- *       "phone": { "#text": "200808291814370000000900016555" },
- *       "session_type": { "#text": "AGENT" },
- *       "session_label": { "#text": "Primary Agents Call Session" },
- *       "allow_control": { "#text": "TRUE" },
- *       "monitoring": { "#text": "FALSE" },
- *       "agent_id": { "#text": "1856" }
- *   }
- *  }
+  {"ui_stats":{
+       "@type":"AGENT",
+       "agent":{
+           "@alt":"INBOUND",
+           "@atype":"AGENT",
+           "@avgtt":"00.0",
+           "@calls":"0",
+           "@da":"0",
+           "@droute":"6789050673",
+           "@f":"John",
+           "@gdesc":"",
+           "@gname":"",
+           "@id":"1856",
+           "@l":"Doe",
+           "@ldur":"6",
+           "@ltype":"INBOUND",
+           "@oh":"0",
+           "@pd":"0",
+           "@pres":"0",
+           "@rna":"0",
+           "@sdur":"6",
+           "@sp":"",
+           "@state":"AVAILABLE",
+           "@ttt":"0",
+           "@u":"jdoe",
+           "@uii":"",
+           "@util":"0.00"
+       }
+     }
+  }
  */
-AddSessionNotification.prototype.processResponse = function(notification) {
-    var formattedResponse = utils.buildDefaultResponse(notification);
-    var model = UIModel.getInstance();
-    var notif = notification.ui_notification;
-    var sessionAgentId = utils.getText(notif, "agent_id");
-
-    if(utils.getText(notif, "session_type") === "AGENT"){
-        model.incrementTotalCalls();
-    }
-
-    if(sessionAgentId === model.agentSettings.agentId){
-        // add the session_id of this leg to the current call packet -
-        // this way we can use it for hangups later.
-        model.currentCall.sessionId = utils.getText(notif, "session_id");
-
-    }else if(sessionAgentId != ""){
-        // this is a monitoring session, lets save the monitored agent id for barge-ins
-        model.currentCall.monitorAgentId = sessionAgentId;
-    }
-
-    // Check to see if we have a transfer leg here, if so, register it
-    if(utils.getText(notif, "session_type") === 'OUTBOUND' && sessionAgentId === "" && utils.getText(notif, "allow_control") === true){
-        model.transferSessions[utils.getText(notif, "session_id")] = {sessionId:utils.getText(notif, "session_id"),destination:utils.getText(notif, "phone"),uii:utils.getText(notif, "uii")};
-    }
-
-    formattedResponse.status = "OK";
-    formattedResponse.message = "Received ADD-SESSION notification";
-    formattedResponse.sessionId = utils.getText(notif, "session_id");
-    formattedResponse.uii = utils.getText(notif, "uii");
-    formattedResponse.phone = utils.getText(notif, "phone");
-    formattedResponse.sessionType = utils.getText(notif, "session_type");
-    formattedResponse.sessionLabel = utils.getText(notif, "session_label");
-    formattedResponse.allowControl = utils.getText(notif, "allow_control");
-    formattedResponse.monitoring = utils.getText(notif, "monitoring");
-    formattedResponse.agentId = utils.getText(notif, "agent_id");
-
-    return formattedResponse;
-};
-
-
-var DialGroupChangeNotification = function() {
-
-};
-
-/*
- * This class is responsible for handling a DIAL_GROUP_CHANGE notification.
- * This event is sent from IQ when an agent's dial group is changed in through the AdminUI.
- *
- *   {
- *       "ui_notification": {
- *           "@message_id": "IQ10012016080413085500263",
- *           "@type": "DIAL_GROUP_CHANGE",
- *           "agent_id": { "#text": "1180958" },
- *           "dial_group_id": { "#text": "50354" },
- *           "dialGroupName": { "#text": "Preview Dial Mode" },
- *           "dial_group_desc": {}
- *       }
- *   }
- */
-DialGroupChangeNotification.prototype.processResponse = function(notification) {
-    //Modify configRequest with new DialGroupId
-    var model = UIModel.getInstance();
-    var notif = notification.ui_notification;
-    var origLoginType = model.configRequest.loginType;
-    var newDgId = utils.getText(notif, "dial_group_id");
-
-    model.dialGroupChangeNotification = notification;
-
-    // Calculate type of login - called from AdminUI when assigning agent to new dial group.
-    // Only options should be BLENDED or OUTBOUND here.
-    if(newDgId && newDgId !== "" && (origLoginType === "INBOUND" || origLoginType === "BLENDED") ){
-        model.configRequest.loginType = "BLENDED";
-    }else if (newDgId && newDgId !== ""){
-        model.configRequest.loginType = "OUTBOUND";
-    }else if (origLoginType  === "INBOUND"){
-        model.configRequest.loginType = "INBOUND";
-    }else{
-        model.configRequest.loginType = "NO-SELECTION";
-    }
-
-    UIModel.getInstance().configRequest.dialGroupId = newDgId;
-
-    var formattedResponse = {
-        message: "Dial Group Updated Successfully.",
-        detail: "Dial Group changed to [" + newDgId + "].",
-        dialGroupId: utils.getText(notif, "dial_group_id"),
-        dialGroupName: utils.getText(notif, "dialGroupName"), // camel case from server for some reason :/
-        dialGroupDesc: utils.getText(notif, "dial_group_desc"),
-        agentId: utils.getText(notif, "agent_id")
+AgentStats.prototype.processResponse = function(stats) {
+    var resp = stats.ui_stats.agent;
+    var agentStats = {
+        agentLoginType: resp["@alt"],
+        agentType: resp["@atype"],
+        avgTalkTime:resp["@avgtt"],
+        calls: resp["@calls"],
+        isDequeueAgent: resp["@da"],
+        defaultRoute: resp["@droute"],
+        firstName: resp["@f"],
+        queueDesc: resp["@gdesc"],
+        queueName: resp["@gname"],
+        agentId: resp["@id"],
+        lastName: resp["@l"],
+        loginDuration: resp["@ldur"],
+        loginType: resp["@ltype"],
+        offHook: resp["@oh"],
+        pendingDisp: resp["@pd"],
+        presented: resp["@pres"],
+        rna: resp["@rna"],
+        stateDuration: resp["@sdur"],
+        skillProfileName: resp["@sp"],
+        agentState: resp["@state"],
+        totalTalkTime: resp["@ttt"],
+        username: resp["@u"],
+        uii: resp["@uii"],
+        utilization: resp["@util"]
     };
 
-    return formattedResponse;
+    UIModel.getInstance().agentStats = agentStats;
+
+    return agentStats;
 };
 
 
-var DialGroupChangePendingNotification = function() {
+var AgentDailyStats = function() {
 
 };
+
 
 /*
- * This class is responsible for handling a DIAL_GROUP_CHANGE_PENDING notification.
- * This event is sent from IQ when an agent's dial group is changed and the agent is on a call.
+ * This class is responsible for handling an Agent Daily Stats packet rec'd from IntelliServices.
+ * It will save a copy of it in the UIModel.
  *
- * {
- *     "ui_notification": {
- *         "@message_id": "IQ10012016080515294800318",
- *         "@type": "DIAL_GROUP_CHANGE_PENDING",
- *         "agent_id": { "#text": "1180958" },
- *         "dial_group_id": { "#text": "50354" },
- *         "update_from_adminui": { "#text": "TRUE" }
- *     }
- * }
- */
-DialGroupChangePendingNotification.prototype.processResponse = function(notification) {
-    var model = UIModel.getInstance();
-    var notif = notification.ui_notification;
-    model.agentSettings.pendingDialGroupChange = parseInt(utils.getText(notif, "dial_group_id"), 10);
-
-    // check if request originated with AdminUI
-    if(notif.update_from_adminui){
-        model.agentSettings.updateDGFromAdminUI = utils.getText(notif, "update_from_adminui") === true;
-    }else{
-        model.agentSettings.updateDGFromAdminUI = false;
-    }
-
-    var formattedResponse = {
-        message: "Dial Group Change Pending notification received.",
-        detail: "DialGroup switch for existing session pending until active call ends.",
-        agentId: utils.getText(notif, "agent_id"),
-        dialGroupId: utils.getText(notif, "dial_group_id"),
-        updateFromAdminUI: utils.getText(notif, "update_from_adminui")
-    };
-
-    return formattedResponse;
-};
-
-
-var DropSessionNotification = function() {
-
-};
-
-/*
- * This class handles the DROP-SESSION packet from IQ. It doesn't really do anything
- * besides format a response for the callback notification since there isn't any action needed.
- *
- *  {
- *      "ui_notification": {
- *          "@message_id":"IQ10012016081613222800341",
- *          "@response_to":"",
- *          "@type":"DROP-SESSION",
- *          "session_id":{"#text":"3"},
- *          "uii":{"#text":"201608161322180139000000000124"}
- *      }
- *  }
- */
-DropSessionNotification.prototype.processResponse = function(notification) {
-    var formattedResponse = utils.buildDefaultResponse(notification);
-    var notif = notification.ui_notification;
-
-    formattedResponse.message = "Received DROP-SESSION Notification";
-    formattedResponse.status = "OK";
-    formattedResponse.sessionId = utils.getText(notif, "session_id");
-    formattedResponse.uii = utils.getText(notif, "uii");
-
-    return formattedResponse;
-};
-
-
-var EarlyUiiNotification = function() {
-
-};
-
-/*
- * This class is responsible for handling "EARLY_UII" packets from IntelliQueue.
- * For manual outdials, this gives the uii to cancel a ringing line.
- *
- *  {
- *      "ui_notification":{
- *          "@message_id":"IQ10012016081611595000289",
- *          "@type":"EARLY_UII",
- *          "agent_id":{"#text":"1180958"},
- *          "uii":{"#text":"201608161200240139000000000120"}
- *      }
- *  }
- */
-EarlyUiiNotification.prototype.processResponse = function(notification) {
-    var formattedResponse = utils.buildDefaultResponse(notification);
-    var notif = notification.ui_notification;
-
-    formattedResponse.message = "Received EARLY_UII notification";
-    formattedResponse.status = "OK";
-    formattedResponse.agentId = utils.getText(notif, "agent_id");
-    formattedResponse.uii = utils.getText(notif, "uii");
-
-    return formattedResponse;
-};
-
-
-var EndCallNotification = function(libInstance) {
-    this.libInstance = libInstance;
-};
-
-/*
- * This class is responsible for handling an END-CALL notification.
- * Save the packet in the UIModel by appending it to the currentCall packet.
- * Update the CallState field in the UIModel to "CALL-ENDED"
- *
- * {
- *  "ui_notification":{
- *      "@message_id":"IQ982008082910362203349",
- *      "@response_to":"",
- *      "@type":"END-CALL",
- *      "agent_id":{"#text":"1856"},
- *      "uii":{"#text":"200808291035510000000900029412"},
- *      "session_id":{"#text":"2"},
- *      "call_dts":{"#text":"2008-08-29 10:36:04"},
- *      "call_duration":{"#text":"16"},
- *      "term_party":{"#text":"CALLER"},
- *      "term_reason":{},
- *      "recording_url":{},
- *      "disposition_timeout:{"#text":"60"}
- *  }
- * }
- */
-EndCallNotification.prototype.processResponse = function(notification) {
-    var model = UIModel.getInstance();
-    var notif = notification.ui_notification;
-    model.endCallNotification = notification;
-
-    // add callDuration, termParty, and termReason to the current call packet
-    model.currentCall.duration = utils.getText(notif, "call_duration");
-    model.currentCall.termParty = utils.getText(notif, "term_party");
-    model.currentCall.termReason = utils.getText(notif, "term_reason");
-
-    // set call state to "CALL-ENDED"
-    model.agentSettings.callState = "CALL-ENDED";
-
-    // Clear out any transfer sessions from the previous call
-    model.transferSessions = {};
-
-    // Check if there is a pending dial group change
-    if(model.agentSettings.pendingDialGroupChange > 0 || model.agentSettings.pendingDialGroupChange == -1) {
-        // update dial group id
-        model.configRequest.dialGroupId = model.agentSettings.pendingDialGroupChange;
-
-        // send login update request
-        this.libInstance.configureAgent(model.configRequest.queueIds, model.configRequest.chatIds, model.configRequest.skillProfileId, model.configRequest.dialGroupId, model.configRequest.dialDest, model.agentSettings.updateDGFromAdminUI);
-
-        // reset pending dial group variables
-        model.agentSettings.pendingDialGroupChange = 0;
-        model.agentSettings.updateDGFromAdminUI = false;
-    }
-
-    var formattedResponse = {
-        message: "End Call Notification Received.",
-        detail: "",
-        uii: utils.getText(notif, "uii"),
-        sessionId: utils.getText(notif, "session_id"),
-        agentId: utils.getText(notif, "agent_id"),
-        callDts: utils.getText(notif, "call_dts"),
-        duration: model.currentCall.duration,
-        termParty: model.currentCall.termParty,
-        termReason: model.currentCall.termReason,
-        recordingUrl: utils.getText(notif, "recording_url"),
-        dispositionTimeout: utils.getText(notif, "disposition_timeout")
-    };
-
-    return formattedResponse;
-};
-
-
-var GatesChangeNotification = function() {
-
-};
-
-/*
- * This class is responsible for handling a gates change notification
- *
- * {
- *      "ui_notification":{
- *          "@message_id":"IQ10012016080817344100936",
- *          "@type":"GATES_CHANGE",
- *          "agent_id":{"#text":"1180958"},
- *          "gate_ids":{"#text":"11117,3"}
- *      }
- * }
- */
-GatesChangeNotification.prototype.processResponse = function(notification) {
-    var model = UIModel.getInstance();
-    var notif = notification.ui_notification;
-    var newAssignedGates = [];
-    var availableQueues = model.inboundSettings.availableQueues;
-    var assignedGateIds = utils.getText(notif, "gate_ids");
-    if(assignedGateIds !== ""){
-        assignedGateIds = assignedGateIds.split(',');
-    }
-
-    for(var a = 0; a < assignedGateIds.length; a++){
-        // find gate in avail list
-        var id = assignedGateIds[a];
-        var foundGate = utils.findObjById(availableQueues, id, "gateId");
-        if(foundGate){
-            newAssignedGates.push(foundGate);
-        }else{
-            // gate not in assigned list, add stub
-            var gate = {
-                gateId: id,
-                gateName:"",
-                gateDesc:"",
-                defaultDestOverride:"",
-                isAgentSelectable:false
-            };
-            newAssignedGates.push(gate);
-        }
-    }
-
-    model.inboundSettings.queues = JSON.parse(JSON.stringify(newAssignedGates));
-
-    var formattedResponse = {
-        agentId: utils.getText(notif, "agent_id"),
-        message: "Gates Change notification received.",
-        queues: newAssignedGates
-    };
-
-    return formattedResponse;
-};
-
-
-var GenericNotification = function() {
-
-};
-
-/*
- * This class is responsible for handling a generic notification
- *
- * {
- *      "ui_notification":{
- *          "@message_id":"IQ10012016080317400400011",
- *          "@response_to":"1c2fe39f-a31e-aff8-8d23-92a61c88270f",
- *          "@type":"GENERIC",
- *          "message_code":{"#text":"0"},
- *          "message":{"#text":"OK"},
- *          "detail":{"#text":"Pending Callback Successfully Cancelled."}
- *      }
- * }
- */
-GenericNotification.prototype.processResponse = function(notification) {
-    var formattedResponse = utils.buildDefaultResponse(notification);
-
-    // add message and detail if present
-    formattedResponse.messageCode = utils.getText(notification.ui_notification,"message_code");
-
-    return formattedResponse;
-};
-
-
-var NewCallNotification = function() {
-
-};
-
-/*
- * This class processes a "NEW-CALL" packet received from Intelliqueue. It will determine
- * if the call is a regular or monitoring call:
- * 		@Monitoring==true:  set state to ACTIVE-MONITORING, send NewMonitoringCall event
- * 		@Monitoring==false: set state to ACTIVE, send newcall packet and increment total calls
- *
- *  {"ui_notification":{
- *      "@message_id":"IQ982010020911335300027",
- *      "@response_to":"",
- *      "@type":"NEW-CALL",
- *      "uii":{"#text":"201002091133350139990000000010"},
- *      "agent_id":{"#text":"657"},
- *      "dial_dest":{"#text":"sip:+16789050673@sip.connectfirst.com"},
- *      "queue_dts":{"#text":"2010-02-09 11:33:53"},
- *      "queue_time":{"#text":"-1"},
- *      "ani":{"#text":"9548298548"},
- *      "dnis":{},
- *      "call_type":{"#text":"OUTBOUND"},
- *      "app_url":{},
- *      "is_monitoring":{"#text":"FALSE"},
- *      "gate":{
- *          "@number":"17038",
- *          "name":{"#text":"AM Campaign"},
- *          "description":{}
- *      },
- *      "message":{},
- *      "survey_id":{},
- *      "survey_pop_type":{"#text":"SUPPRESS"},
- *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
- *      "outdial_dispositions":{
- *      "@type":"CAMPAIGN|GATE",
- *          "disposition":[
- *              { "@contact_forwarding":"FALSE", "@disposition_id":"20556", "#text":"Not Available"},
- *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "#text":"Transfer Not Available"}
- *          ]
- *      },
- *      "baggage":{
- *          "@allow_updates":"TRUE",
- *          "@show_lead_passes":"TRUE",
- *          "@show_list_name":"TRUE",
- *          "state":{"#text":"OH"},
- *          "aux_data4":{},
- *          "address2":{},
- *          "mid_name":{},
- *          "extern_id":{"#text":"9548298548"},
- *          "aux_data1":{"#text":"BMAK"},
- *          "aux_external_url":{},
- *          "lead_id":{"#text":"64306"},
- *          "aux_data5":{},
- *          "aux_data2":{"#text":"BMAK-041653-934"},
- *          "last_name":{"#text":"Taylor"},
- *          "lead_passes":{"#text":"1"},
- *          "first_name":{"#text":"Ryant"},
- *          "city":{"#text":"Cleveland"},
- *          "aux_greeting":{},
- *          "address1":{"#text":"8010 Maryland Ave"},
- *          "zip":{"#text":"44105"},
- *          "aux_data3":{"#text":"Call Ctr 1"},
- *          "aux_phone":{},
- *          "custom_labels":{
- *              "aux_1_label":{},
- *              "aux_2_label":{},
- *              "aux_3_label":{},
- *              "aux_4_label":{},
- *              "aux_5_label":{}
- *          }
- *      },
- *      "survey_response":{
- *          "@response_id":"24",
- *          "@survey_id":"1775",
- *          "details":{
- *              "detail":[
- *                  {"@element_id":"9001","@option_id":"0","#text":"Box 1"},
- *                  {"@element_id":"9002","@option_id":"0","#text":"Area 1"},
- *                  {"@element_id":"9003","@option_id":"6439"},
- *                  {"@element_id":"9004","@option_id":"6443"},
- *                  {"@element_id":"9004","@option_id":"6444"},
- *                  {"@element_id":"9005","@option_id":"6447"},
- *                  {"@element_id":"9006","@option_id":"0","#text":"11/20/2013"},
- *                  {"@element_id":"9015","@option_id":"0","#text":"Box 2"},
- *                  {"@element_id":"9016","@option_id":"0","#text":"Area 2"},
- *                  {"@element_id":"9017","@option_id":"6466"},
- *                  {"@element_id":"9018","@option_id":"6471"},
- *                  {"@element_id":"9018","@option_id":"6472"},
- *                  {"@element_id":"9019","@option_id":"6477"},
- *                  {"@element_id":"9020","@option_id":"0","#text":"11/21/2013"}
- *             ]
- *          }
- *      }
+ * {"ui_stats":{
+ *      "@type":"AGENTDAILY",
+ *      "agent_id":{"#text":"1180723"},
+ *      "total_login_sessions":{"#text":"1"},
+ *      "total_calls_handled":{"#text":"0"},
+ *      "total_preview_dials":{"#text":"0"},
+ *      "total_manual_dials":{"#text":"0"},
+ *      "total_rna":{"#text":"0"},
+ *      "total_talk_time":{"#text":"0"},
+ *      "total_offhook_time":{"#text":"0"},
+ *      "total_login_time":{"#text":"7808"},
+ *      "total_success_dispositions":{"#text":"0"}
  *    }
- *  }
+ * }
  */
-NewCallNotification.prototype.processResponse = function(notification) {
-    var model = UIModel.getInstance();
-    var notif = notification.ui_notification;
-
-    // set up new call obj
-    var newCall = {
-        uii: utils.getText(notif,'uii'),
-        agentId: utils.getText(notif,'agent_id'),
-        dialDest: utils.getText(notif,'dial_dest'),
-        queueDts: utils.getText(notif,'queue_dts'),
-        queueTime: utils.getText(notif,'queue_time'),
-        ani: utils.getText(notif,'ani'),
-        dnis: utils.getText(notif,'dnis'),
-        callType: utils.getText(notif,'call_type'),
-        appUrl: utils.getText(notif,'app_url'),
-        isMonitoring: utils.getText(notif,'is_monitoring'),
-        allowHold: utils.getText(notif,'allow_hold'),
-        allowTransfer: utils.getText(notif,'allow_transfer'),
-        allowHangup: utils.getText(notif,'allow_hangup'),
-        allowRequeue: utils.getText(notif,'allow_requeue'),
-        allowEndCallForEveryone: utils.getText(notif,'allow_endcallforeveryone'),
-        surveyId: utils.getText(notif,'survey_id'),
-        surveyPopType: utils.getText(notif,'survey_pop_type'),
-        requeueType: utils.getText(notif,'requeue_type')
+AgentDailyStats.prototype.processResponse = function(stats) {
+    var resp = stats.ui_stats;
+    var agentDailyStats = {
+        agentId: utils.getText(resp, "agent_id"),
+        totalLoginSessions: utils.getText(resp, "total_login_sessions"),
+        totalCallsHandled: utils.getText(resp, "total_calls_handled"),
+        totalPreviewDials: utils.getText(resp, "total_preview_dials"),
+        totalManualDials: utils.getText(resp, "total_manual_dials"),
+        totalRna: utils.getText(resp, "total_rna"),
+        totalTalkTime: utils.getText(resp, "total_talk_time"),
+        totalOffhookTime: utils.getText(resp, "total_offhook_time"),
+        totalLoginTime: utils.getText(resp, "total_login_time"),
+        totalSuccessDispositions: utils.getText(resp, "total_success_dispositions"),
+        currCallTime: UIModel.getInstance().agentDailyStats.currCallTime
     };
 
-    // set collection values
-    newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
-    newCall.agentRecording = utils.processResponseCollection(notification, 'ui_notification', 'agent_recording', 'agentRecording')[0];
-    newCall.outdialDispositions = utils.processResponseCollection(notification, 'ui_notification', 'outdial_dispositions', 'disposition')[0];
-    newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
-    newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
-    newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+    UIModel.getInstance().agentDailyStats = agentDailyStats;
 
-    // convert numbers to boolean where applicable
-    newCall.queue.isCampaign = newCall.queue.isCampaign === "1";
-    if(newCall.outdialDispositions && newCall.outdialDispositions.type && newCall.outdialDispositions.type.toUpperCase() === "GATE"){
-        for(var d = 0; d < newCall.outdialDispositions.dispositions.length; d++) {
-            var disp = newCall.outdialDispositions.dispositions[d];
-            disp.isComplete = disp.isComplete === "1";
-            disp.requireNote = disp.requireNote === "1";
-            disp.saveSurvey = disp.saveSurvey === "1";
-            disp.xfer = disp.xfer === "1";
-        }
-    }
-
-    // Build token map
-    model.callTokens = buildTokenMap(notif, newCall);
-
-    // Is Monitoring Call?
-    if(newCall.isMonitoring){
-        model.agentSettings.callState = "ACTIVE-MONITORING";
-    }else{
-        model.agentSettings.callState = "ACTIVE";
-
-        // check for preloaded transfer number
-        if(newCall.baggage && newCall.baggage.auxPhone != ""){
-            model.transferNumber = newCall.baggage.auxPhone;
-        }
-    }
-
-    // Reset the current call counter for Agent Daily Stats
-    model.agentDailyStats.currCallTime = 0;
-
-    // todo handle scripting??
-
-    model.currentCall = newCall;
-
-    return newCall;
+    return agentDailyStats;
 };
 
 
-function buildTokenMap(notif, newCall){
-    var model = UIModel.getInstance();
-    var tokens = {};
-    if(isCampaign(newCall.queue)){
-        var keyValuePairs = [];
-        if (notif.generic_key_value_pairs){
-            var keyValuePairsStr = utils.getText(notif, 'generic_key_value_pairs');
-            if (keyValuePairsStr.length > 0){
-                keyValuePairs = util.parseKeyValuePairsFromString(keyValuePairsStr, "|", "::");
-            }
-        }
+var CampaignStats = function() {
 
-        for(var keyValue in keyValuePairs){
-            tokens[keyValue] = keyValuePairs[keyValue];
-        }
-    }
+};
 
-    tokens["ani"] = newCall.ani;
-    tokens["dnis"] = newCall.dnis;
-    tokens["uii"] = newCall.uii;
 
-    try{
-        if(newCall.queue.number){
-            tokens["source_id"] = newCall.number || "";
-            tokens["source_name"] = newCall.name || "";
-            tokens["source_desc"] = newCall.description || "";
+/*
+ * This class is responsible for handling a Campaign Stats packet rec'd from IntelliServices.
+ * It will save a copy of it in the UIModel.
+ *
+ * {"ui_stats":{
+ *      "@type":"CAMPAIGN",
+ *      "campaign":[
+ *          {
+ *              "@a":"0","@aba":"0","@an":"0","@av":"0","@b":"0","@c":"1","@e":"0","@f":"0",
+ *              "@id":"60275","@int":"0","@m":"0","@na":"0","@name":"Test Campaign",
+ *              "@p":"0","@r":"1","@s":"0","@tc":"0","@ttt":"0"
+ *          },
+ *          {
+ *              "@a":"0","@aba":"0","@an":"0","@av":"0","@b":"0","@c":"0","@e":"0","@f":"0",
+ *              "@id":"60293","@int":"0","@m":"0","@na":"0","@name":"Test Campaign w\\ Search",
+ *              "@p":"0","@r":"19","@s":"0","@tc":"0","@ttt":"0"
+ *          }
+ *     ],
+ *     "totals":{
+ *          "noanswer":{"#text":"0"},
+ *          "totalConnects":{"#text":"0"},
+ *          "pending":{"#text":"0"},
+ *          "active":{"#text":"0"},
+ *          "error":{"#text":"0"},
+ *          "totalTalkTime":{"#text":"0"},
+ *          "answer":{"#text":"0"},
+ *          "abandon":{"#text":"0"},
+ *          "ready":{"#text":"20"},
+ *          "machine":{"#text":"0"},
+ *          "intercept":{"#text":"0"},
+ *          "busy":{"#text":"0"},
+ *          "complete":{"#text":"1"},
+ *          "fax":{"#text":"0"}
+ *     }
+ *   }
+ * }
+ */
+CampaignStats.prototype.processResponse = function(stats) {
+    var resp = stats.ui_stats;
+    var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
+    var campaigns = [];
 
-            if(newCall.queue.isCampaign === "0"){
-                tokens["source_type"] = "INBOUND";
-            }else{
-                tokens["source_type"] = "OUTBOUND";
-            }
-        }else{
-            tokens["source_id"] = "0";
-            tokens["source_type"] = "MANUAL";
-            tokens["source_name"] = "";
-            tokens["source_desc"] = "";
-        }
-    }catch(any){
-        console.error("There was an error processing source tokenization", + any);
-    }
-
-    try{
-        tokens["agent_first_name"] = model.agentSettings.firstName;
-        tokens["agent_last_name"] = model.agentSettings.lastName;
-        tokens["agent_external_id"] = model.agentSettings.externalAgentId;
-        tokens["agent_extern_id"] = model.agentSettings.externalAgentId;
-        tokens["agent_type"] = model.agentSettings.agentType;
-    }catch(any){
-        console.error("There was an error parsing tokens for agent info. ", any);
-    }
-
-    if(notif.baggage){
-        try{
-            tokens["lead_id"] = newCall.baggage.leadId || "";
-            tokens["extern_id"] = newCall.baggage.externId || "";
-            tokens["first_name"] = newCall.baggage.firstName || "";
-            tokens["mid_name"] = newCall.baggage.midName || "";
-            tokens["last_name"] = newCall.baggage.lastName || "";
-            tokens["address1"] = newCall.baggage.address1 || "";
-            tokens["address2"] = newCall.baggage.address2 || "";
-            tokens["suffix"] = newCall.baggage.suffix || "";
-            tokens["title"] = newCall.baggage.title || "";
-            tokens["city"] = newCall.baggage.city || "";
-            tokens["state"] = newCall.baggage.state || "";
-            tokens["zip"] = newCall.baggage.zip || "";
-            tokens["aux_data1"] = newCall.baggage.auxData1 || "";
-            tokens["aux_data2"] = newCall.baggage.auxData2 || "";
-            tokens["aux_data3"] = newCall.baggage.auxData3 || "";
-            tokens["aux_data4"] = newCall.baggage.auxData4 || "";
-            tokens["aux_data5"] = newCall.baggage.auxData5 || "";
-            tokens["aux_phone"] = newCall.baggage.auxPhone || "";
-            tokens["email"] = newCall.baggage.email || "";
-            tokens["gate_keeper"] = newCall.baggage.gateKeeper || "";
-
-        }catch(any){
-            console.error("There was an error parsing baggage tokens. ", any);
+    if(Array.isArray(resp.campaign)){
+        for(var c=0; c< resp.campaign.length; c++){
+            var campRaw = resp.campaign[c];
+            var camp = {
+                active:campRaw["@a"],
+                abandon:campRaw["@aba"],
+                answer:campRaw["@an"],
+                available:campRaw["@av"],
+                busy:campRaw["@b"],
+                complete:campRaw["@c"],
+                error:campRaw["@e"],
+                fax:campRaw["@f"],
+                campaignId:campRaw["@id"],
+                intercept:campRaw["@int"],
+                machine:campRaw["@m"],
+                noanswer:campRaw["@na"],
+                campaignName:campRaw["@name"],
+                pending:campRaw["@p"],
+                ready:campRaw["@r"],
+                staffed:campRaw["@s"],
+                totalConnects:campRaw["@tc"],
+                totalTalkTime:campRaw["@ttt"]
+            };
+            campaigns.push(camp);
         }
     }else{
-        tokens["lead_id"] = "";
-        tokens["extern_id"] = "";
-        tokens["first_name"] = "";
-        tokens["mid_name"] = "";
-        tokens["last_name"] = "";
-        tokens["address1"] = "";
-        tokens["address2"] = "";
-        tokens["suffix"] = "";
-        tokens["title"] = "";
-        tokens["city"] = "";
-        tokens["state"] = "";
-        tokens["zip"] = "";
-        tokens["aux_data1"] = "";
-        tokens["aux_data2"] = "";
-        tokens["aux_data3"] = "";
-        tokens["aux_data4"] = "";
-        tokens["aux_data5"] = "";
-        tokens["aux_phone"] = "";
-        tokens["email"] = "";
-        tokens["gate_keeper"] = "";
+        var campRaw = resp.campaign;
+        var camp = {
+            active:campRaw["@a"],
+            abandon:campRaw["@aba"],
+            answer:campRaw["@an"],
+            available:campRaw["@av"],
+            busy:campRaw["@b"],
+            complete:campRaw["@c"],
+            error:campRaw["@e"],
+            fax:campRaw["@f"],
+            campaignId:campRaw["@id"],
+            intercept:campRaw["@int"],
+            machine:campRaw["@m"],
+            noanswer:campRaw["@na"],
+            campaignName:campRaw["@name"],
+            pending:campRaw["@p"],
+            ready:campRaw["@r"],
+            staffed:campRaw["@s"],
+            totalConnects:campRaw["@tc"],
+            totalTalkTime:campRaw["@ttt"]
+        };
+        campaigns.push(camp);
     }
 
-    return tokens;
-}
+    var campaignStats = {
+        type:resp["@type"],
+        campaigns: campaigns,
+        totals:totals
+    };
 
-function isCampaign(gate){
-    if (gate && gate.isCampaign){
-        return gate.isCampaign === "1";
+    UIModel.getInstance().campaignStats = campaignStats;
+
+    return campaignStats;
+};
+
+
+var QueueStats = function() {
+
+};
+
+
+/*
+ * This class is responsible for handling an Queue Stats packet rec'd from IntelliServices.
+ * It will save a copy of it in the UIModel.
+ *
+ * {
+ *   "ui_stats":{
+ *       "@type":"GATE",
+ *       "gate":{
+ *           "@aba":"0","@active":"0","@ans":"0","@asa":"00.0","@avail":"2",
+ *           "@avga":"00.0","@avgq":"00.0","@avgt":"00.0","@def":"0","@id":"12126",
+ *           "@inq":"0","@long_c":"0","@longq":"0","@name":"Cris inbound",
+ *           "@pres":"0","@route":"0","@short_aba":"0","@short_c":"0","@sla":"100.0",
+ *           "@sla_f":"0","@sla_p":"0","@staff":"2","@t_aba":"0","@t_q":"0","@t_soa":"0","@util":"00.0"
+ *       },
+ *       "totals":{
+ *           "inQueue":{"#text":"0"},
+ *           "answered":{"#text":"0"},
+ *           "totalABATime":{"#text":"0"},
+ *           "active":{"#text":"0"},
+ *           "longCall":{"#text":"0"},
+ *           "shortCall":{"#text":"0"},
+ *           "slaPass":{"#text":"0"},
+ *           "totalQueueTime":{"#text":"0"},
+ *           "routing":{"#text":"0"},
+ *           "totalTalkTime":{"#text":"0"},
+ *           "shortAbandon":{"#text":"0"},
+ *           "presented":{"#text":"0"},
+ *           "totalSOA":{"#text":"0"},
+ *           "slaFail":{"#text":"0"},
+ *           "deflected":{"#text":"0"},
+ *           "abandoned":{"#text":"0"}
+ *      }
+ *   }
+ * }
+ */
+QueueStats.prototype.processResponse = function(stats) {
+    var resp = stats.ui_stats;
+    var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
+    var queues = [];
+
+    if(Array.isArray(resp.gate)){
+        for(var c=0; c< resp.gate.length; c++){
+            var gateRaw = resp.gate[c];
+            var gate = {
+                abandon:gateRaw["@aba"],
+                active:gateRaw["@active"],
+                answer:gateRaw["@ans"],
+                asa:gateRaw["@asa"],
+                available:gateRaw["@avail"],
+                avgAbandon:gateRaw["@avga"],
+                avgQueue:gateRaw["@avgq"],
+                avgTalk:gateRaw["@avgt"],
+                deflected:gateRaw["@def"],
+                queueId:gateRaw["@id"],
+                inQueue:gateRaw["@inq"],
+                longCall:gateRaw["@long_c"],
+                longestInQueue:gateRaw["@longq"],
+                queueName:gateRaw["@name"],
+                presented:gateRaw["@pres"],
+                routing:gateRaw["@route"],
+                shortAbandon:gateRaw["@short_aba"],
+                shortCall:gateRaw["@short_c"],
+                sla:gateRaw["@sla"],
+                slaPass:gateRaw["@sla_p"],
+                slaFail:gateRaw["@sla_f"],
+                staffed:gateRaw["@staff"],
+                tAbandonTime:gateRaw["@t_aba"],
+                tQueueTime:gateRaw["@t_q"],
+                tSpeedOfAnswer:gateRaw["@t_soa"],
+                utilization:gateRaw["@util"]
+            };
+            queues.push(gate);
+        }
+    }else{
+        var gateRaw = resp.gate;
+        var gate = {
+            abandon:gateRaw["@aba"],
+            active:gateRaw["@active"],
+            answer:gateRaw["@ans"],
+            asa:gateRaw["@asa"],
+            available:gateRaw["@avail"],
+            avgAbandon:gateRaw["@avga"],
+            avgQueue:gateRaw["@avgq"],
+            avgTalk:gateRaw["@avgt"],
+            deflected:gateRaw["@def"],
+            queueId:gateRaw["@id"],
+            inQueue:gateRaw["@inq"],
+            longCall:gateRaw["@long_c"],
+            longestInQueue:gateRaw["@longq"],
+            queueName:gateRaw["@name"],
+            presented:gateRaw["@pres"],
+            routing:gateRaw["@route"],
+            shortAbandon:gateRaw["@short_aba"],
+            shortCall:gateRaw["@short_c"],
+            sla:gateRaw["@sla"],
+            slaPass:gateRaw["@sla_p"],
+            slaFail:gateRaw["@sla_f"],
+            staffed:gateRaw["@staff"],
+            tAbandonTime:gateRaw["@t_aba"],
+            tQueueTime:gateRaw["@t_q"],
+            tSpeedOfAnswer:gateRaw["@t_soa"],
+            utilization:gateRaw["@util"]
+        };
+        queues.push(gate);
     }
-    return false;
-}
+
+    var queueStats = {
+        type:resp["@type"],
+        queues: queues,
+        totals:totals
+    };
+
+    UIModel.getInstance().queueStats = queueStats;
+
+    return queueStats;
+};
 
 var UIModel = (function() {
 
@@ -2938,6 +3291,12 @@ var UIModel = (function() {
             genericNotification : new GenericNotification(),
             newCallNotification: new NewCallNotification(),
 
+            // stats packets
+            agentStatsPacket: new AgentStats(),
+            agentDailyStatsPacket: new AgentDailyStats(),
+            queueStatsPacket: new QueueStats(),
+            campaignStatsPacket: new CampaignStats(),
+
             // application state
             applicationSettings : {
                 availableCountries : [],
@@ -2947,12 +3306,16 @@ var UIModel = (function() {
                 isTcpaSafeMode : false              // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
             },
 
+            // stat objects
+            agentStats:{},
             agentDailyStats: {
-                loginTime: 0,
-                offhookTime: 0,
-                talkTime: 0,
+                totalLoginTime: 0,
+                totalOffhookTime: 0,
+                totalTalkTime: 0,
                 currCallTime: 0
             },
+            campaignStats:{},
+            queueStats:{},
 
             // current agent settings
             agentSettings : {
@@ -3276,6 +3639,25 @@ var utils = {
             case MESSAGE_TYPES.PREVIEW_DIAL_ID:
                 var dialResponse = UIModel.getInstance().previewDialRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_DIAL, dialResponse);
+                break;
+            case MESSAGE_TYPES.TCPA_SAFE_ID:
+                var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
+                break;
+        }
+
+    },
+
+    processStats: function(instance, data)
+    {
+        var type = data.ui_stats['@type'];
+        console.log("AgentLibrary: received stats: (IS) " + type.toUpperCase());
+
+        // Fire callback function
+        switch (type.toUpperCase()) {
+            case MESSAGE_TYPES.STATS_AGENT:
+                var agentStats = UIModel.getInstance().agentStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_DIAL, agentStats);
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_ID:
                 var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
@@ -3714,6 +4096,10 @@ const CALLBACK_TYPES = {
     "PAUSE_RECORD":"pauseRecordResponse",
     "PREVIEW_DIAL":"previewDialResponse",
     "REQUEUE":"requeueResponse",
+    "STATS_AGENT":"agentStats",
+    "STATS_AGENTDAILY":"agentDailyStats",
+    "STATS_CAMPAIGN":"campaignStats",
+    "STATS_QUEUE":"queueStats",
     "TCPA_SAFE":"tcpaSafeResponse",
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse"
@@ -3753,6 +4139,10 @@ const MESSAGE_TYPES = {
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
+    "STATS_AGENT":"AGENT",
+    "STATS_AGENT_DAILY":"AGENTDAILY",
+    "STATS_CAMPAIGN":"CAMPAIGN",
+    "STATS_QUEUE":"GATE",
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
     "XFER_COLD":"COLD-XFER",
@@ -4061,6 +4451,38 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().recordRequest;
     };
     /**
+     * Get latest Agent Stats object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentStatsPacket = function() {
+        return UIModel.getInstance().agentStatsPacket;
+    };
+    /**
+     * Get latest Agent Daily Stats object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentDailyStatsPacket = function() {
+        return UIModel.getInstance().agentDailyStatsPacket;
+    };
+    /**
+     * Get latest Queue Stats object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getQueueStatsPacket = function() {
+        return UIModel.getInstance().queueStatsPacket;
+    };
+    /**
+     * Get latest Campaign Stats object
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCampaignStatsPacket = function() {
+        return UIModel.getInstance().campaignStatsPacket;
+    };
+    /**
      * Get packet received on successful Login
      * @memberof AgentLibrary
      * @returns {object}
@@ -4252,6 +4674,38 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getAgentPermissions = function() {
         return UIModel.getInstance().agentPermissions;
+    };
+    /**
+     * Get the Agent stats object containing the current state of agent stats
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentStats = function() {
+        return UIModel.getInstance().agentStats;
+    };
+    /**
+     * Get the Agent Daily stats object containing the current state of agent daily stats
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAgentDailyStats = function() {
+        return UIModel.getInstance().agentDailyStats;
+    };
+    /**
+     * Get the Queue stats object containing the current state of queue stats
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getQueueStats = function() {
+        return UIModel.getInstance().queueStats;
+    };
+    /**
+     * Get the Campaign stats object containing the current state of campaign stats
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getCampaignStats = function() {
+        return UIModel.getInstance().campaignStats;
     };
 
 }

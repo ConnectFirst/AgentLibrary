@@ -69,6 +69,12 @@ var UIModel = (function() {
             genericNotification : new GenericNotification(),
             newCallNotification: new NewCallNotification(),
 
+            // stats packets
+            agentStatsPacket: new AgentStats(),
+            agentDailyStatsPacket: new AgentDailyStats(),
+            queueStatsPacket: new QueueStats(),
+            campaignStatsPacket: new CampaignStats(),
+
             // application state
             applicationSettings : {
                 availableCountries : [],
@@ -78,12 +84,16 @@ var UIModel = (function() {
                 isTcpaSafeMode : false              // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
             },
 
+            // stat objects
+            agentStats:{},
             agentDailyStats: {
-                loginTime: 0,
-                offhookTime: 0,
-                talkTime: 0,
+                totalLoginTime: 0,
+                totalOffhookTime: 0,
+                totalTalkTime: 0,
                 currCallTime: 0
             },
+            campaignStats:{},
+            queueStats:{},
 
             // current agent settings
             agentSettings : {

@@ -1,0 +1,15 @@
+{
+  "ui_stats":{
+    "@type":"AGENTDAILY",
+    "agent_id":{"#text":"1180723"},
+    "total_login_sessions":{"#text":"1"},
+    "total_calls_handled":{"#text":"0"},
+    "total_preview_dials":{"#text":"0"},
+    "total_manual_dials":{"#text":"0"},
+    "total_rna":{"#text":"0"},
+    "total_talk_time":{"#text":"0"},
+    "total_offhook_time":{"#text":"0"},
+    "total_login_time":{"#text":"7808"},
+    "total_success_dispositions":{"#text":"0"}
+  }
+}

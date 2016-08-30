@@ -208,6 +208,25 @@ var utils = {
 
     },
 
+    processStats: function(instance, data)
+    {
+        var type = data.ui_stats['@type'];
+        console.log("AgentLibrary: received stats: (IS) " + type.toUpperCase());
+
+        // Fire callback function
+        switch (type.toUpperCase()) {
+            case MESSAGE_TYPES.STATS_AGENT:
+                var agentStats = UIModel.getInstance().agentStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_DIAL, agentStats);
+                break;
+            case MESSAGE_TYPES.TCPA_SAFE_ID:
+                var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
+                break;
+        }
+
+    },
+
     /*
      * Take the xml marked JSON, group and item property names and reformat to
      * simple javascript object without the xml markers.

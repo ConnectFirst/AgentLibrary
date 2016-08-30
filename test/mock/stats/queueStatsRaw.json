@@ -1,0 +1,30 @@
+{
+  "ui_stats":{
+    "@type":"GATE",
+    "gate":{
+      "@aba":"0","@active":"0","@ans":"0","@asa":"00.0","@avail":"2",
+      "@avga":"00.0","@avgq":"00.0","@avgt":"00.0","@def":"0","@id":"1",
+      "@inq":"0","@long_c":"0","@longq":"0","@name":"First Queue",
+      "@pres":"0","@route":"0","@short_aba":"0","@short_c":"0","@sla":"100.0",
+      "@sla_f":"0","@sla_p":"0","@staff":"2","@t_aba":"0","@t_q":"0","@t_soa":"0","@util":"00.0"
+    },
+    "totals":{
+      "inQueue":{"#text":"0"},
+      "answered":{"#text":"0"},
+      "totalABATime":{"#text":"0"},
+      "active":{"#text":"0"},
+      "longCall":{"#text":"0"},
+      "shortCall":{"#text":"0"},
+      "slaPass":{"#text":"0"},
+      "totalQueueTime":{"#text":"0"},
+      "routing":{"#text":"0"},
+      "totalTalkTime":{"#text":"0"},
+      "shortAbandon":{"#text":"0"},
+      "presented":{"#text":"0"},
+      "totalSOA":{"#text":"0"},
+      "slaFail":{"#text":"0"},
+      "deflected":{"#text":"0"},
+      "abandoned":{"#text":"0"}
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "type":"GATE",
+  "queues":[
+    {
+      "abandon": "0",
+      "active": "0",
+      "answer": "0",
+      "asa": "00.0",
+      "available": "2",
+      "avgAbandon": "00.0",
+      "avgQueue": "00.0",
+      "avgTalk": "00.0",
+      "deflected": "0",
+      "queueId": "1",
+      "inQueue": "0",
+      "longCall": "0",
+      "longestInQueue": "0",
+      "queueName": "First Queue",
+      "presented": "0",
+      "routing": "0",
+      "shortAbandon": "0",
+      "shortCall": "0",
+      "sla": "100.0",
+      "slaPass": "0",
+      "slaFail": "0",
+      "staffed": "2",
+      "tAbandonTime": "0",
+      "tQueueTime": "0",
+      "tSpeedOfAnswer": "0",
+      "utilization": "00.0"
+    }
+  ],
+  "totals":{
+    "inQueue": "0",
+    "answered": "0",
+    "totalABATime": "0",
+    "active": "0",
+    "longCall": "0",
+    "shortCall": "0",
+    "slaPass": "0",
+    "totalQueueTime": "0",
+    "routing": "0",
+    "totalTalkTime": "0",
+    "shortAbandon": "0",
+    "presented": "0",
+    "totalSOA": "0",
+    "slaFail": "0",
+    "deflected": "0",
+    "abandoned": "0"
+  }
+}

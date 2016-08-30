@@ -1,0 +1,31 @@
+{
+  "ui_stats":{
+    "@type":"AGENT",
+    "agent":{
+      "@alt":"INBOUND",
+      "@atype":"AGENT",
+      "@avgtt":"00.0",
+      "@calls":"0",
+      "@da":"0",
+      "@droute":"6789050673",
+      "@f":"John",
+      "@gdesc":"",
+      "@gname":"",
+      "@id":"1856",
+      "@l":"Doe",
+      "@ldur":"6",
+      "@ltype":"INBOUND",
+      "@oh":"0",
+      "@pd":"0",
+      "@pres":"0",
+      "@rna":"0",
+      "@sdur":"6",
+      "@sp":"",
+      "@state":"AVAILABLE",
+      "@ttt":"0",
+      "@u":"jdoe",
+      "@uii":"",
+      "@util":"0.00"
+    }
+  }
+}
