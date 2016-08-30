@@ -15,6 +15,13 @@ var UIModel = (function() {
         // Public methods and variables
         return {
 
+            currentCall: {},                        // save the NEW-CALL notification in parsed form
+            callTokens:{},                          // Stores a map of all tokens for a call
+            callbacks:[],
+            libraryInstance: null,                  // Initialized to the library instance on startup
+            pingIntervalId: null,                   // The id of the timer used to send ping-call messages
+
+
             // request instances
             agentStateRequest : null,
             bargeInRequest : null,
@@ -34,6 +41,7 @@ var UIModel = (function() {
             oneToOneOutdialRequest : null,
             oneToOneOutdialCancelRequest : null,
             pauseRecordRequest : null,
+            pingCallRequest : null,
             previewDialRequest : null,
             recordRequest : null,
             requeueRequest : null,
@@ -69,10 +77,6 @@ var UIModel = (function() {
                 socketDest : "",
                 isTcpaSafeMode : false              // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
             },
-
-            currentCall: {},                        // save the NEW-CALL notification in parsed form
-            callTokens:{},                          // Stores a map of all tokens for a call
-            callbacks:[],
 
             agentDailyStats: {
                 loginTime: 0,

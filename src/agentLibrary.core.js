@@ -135,6 +135,9 @@ function initAgentLibraryCore (context) {
             // todo default socket address?
         }
 
+        // set instance on model object
+        UIModel.getInstance().libraryInstance = this;
+
         return this;
     };
 

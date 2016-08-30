@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-29 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-30 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1726,6 +1726,30 @@ PauseRecordRequest.prototype.processResponse = function(response) {
 };
 
 
+var PingCallRequest = function() {
+    
+};
+
+PingCallRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.PING_CALL,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().currentCall.agentId
+            },
+            "uii":{
+                "#text":UIModel.getInstance().currentCall.uii
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
 var PreviewDialRequest = function(action, searchFields, requestId) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
     this.searchFields = searchFields || [];
@@ -2836,13 +2860,13 @@ function buildTokenMap(notif, newCall){
     return tokens;
 }
 
-
 function isCampaign(gate){
     if (gate && gate.isCampaign){
         return gate.isCampaign === "1";
     }
     return false;
 }
+
 var UIModel = (function() {
 
     var instance;
@@ -2859,6 +2883,13 @@ var UIModel = (function() {
 
         // Public methods and variables
         return {
+
+            currentCall: {},                        // save the NEW-CALL notification in parsed form
+            callTokens:{},                          // Stores a map of all tokens for a call
+            callbacks:[],
+            libraryInstance: null,                  // Initialized to the library instance on startup
+            pingIntervalId: null,                   // The id of the timer used to send ping-call messages
+
 
             // request instances
             agentStateRequest : null,
@@ -2879,6 +2910,7 @@ var UIModel = (function() {
             oneToOneOutdialRequest : null,
             oneToOneOutdialCancelRequest : null,
             pauseRecordRequest : null,
+            pingCallRequest : null,
             previewDialRequest : null,
             recordRequest : null,
             requeueRequest : null,
@@ -2914,10 +2946,6 @@ var UIModel = (function() {
                 socketDest : "",
                 isTcpaSafeMode : false              // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
             },
-
-            currentCall: {},                        // save the NEW-CALL notification in parsed form
-            callTokens:{},                          // Stores a map of all tokens for a call
-            callbacks:[],
 
             agentDailyStats: {
                 loginTime: 0,
@@ -3075,8 +3103,8 @@ var utils = {
                 if(UIModel.getInstance().agentStateRequest === null){
                     UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
                 }
-                var stateChangeResposne = UIModel.getInstance().agentStateRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResposne);
+                var stateChangeResponse = UIModel.getInstance().agentStateRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResponse);
                 break;
             case MESSAGE_TYPES.BARGE_IN:
                 var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
@@ -3215,9 +3243,12 @@ var utils = {
                 }
                 break;
             case MESSAGE_TYPES.NEW_CALL:
-                var newCallNotif = new NewCallNotification(instance);
+                var newCallNotif = new NewCallNotification();
                 var newCallResponse = newCallNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+
+                // start ping call interval timer, sends message every 30 seconds
+                UIModel.getInstance().pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
@@ -3607,29 +3638,36 @@ var utils = {
         }
     },
 
-    /**
-     * Parses a string of key value pairs and returns an Array of KeyValue objects.
-     *
-     * @param str The string of keyvalue pairs to parse
-     * @param outerDelimiter The delimiter that separates each keyValue pair
-     * @param innerDelimiter The delimiter that separates each key from its value
-     */
+    // Parses a string of key value pairs and returns an Array of KeyValue objects.
+    // @param str The string of keyvalue pairs to parse
+    // @param outerDelimiter The delimiter that separates each keyValue pair
+    // @param innerDelimiter The delimiter that separates each key from its value
     parseKeyValuePairsFromString: function(str, outerDelimiter, innerDelimiter){
-    if (!str){
-        return [];
-    }
-    var arr = [];
-    var keyValuesPairs = str.split(outerDelimiter);
-    for (var p = 0; p < keyValuesPairs.length; p++){
-        var keyValuePair = keyValuesPairs[p];
-        var pair = keyValuePair.split(innerDelimiter);
-        var keyValue = {};
-        keyValue[pair[0]] = pair[1];
-        arr.push(keyValue);
-    }
+        if (!str){
+            return [];
+        }
+        var arr = [];
+        var keyValuesPairs = str.split(outerDelimiter);
+        for (var p = 0; p < keyValuesPairs.length; p++){
+            var keyValuePair = keyValuesPairs[p];
+            var pair = keyValuePair.split(innerDelimiter);
+            var keyValue = {};
+            keyValue[pair[0]] = pair[1];
+            arr.push(keyValue);
+        }
 
-    return arr;
-}
+        return arr;
+    },
+
+
+    // called every 30 seconds letting intelliQueue know
+    // not to archive the call so dispositions and other call
+    // clean up actions can happen
+    sendPingCallMessage: function(){
+        UIModel.getInstance().pingCallRequest = new PingCallRequest();
+        var msg = UIModel.getInstance().pingCallRequest.formatJSON();
+        utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+    }
 };
 
 
@@ -3768,6 +3806,9 @@ function initAgentLibraryCore (context) {
         }else{
             // todo default socket address?
         }
+
+        // set instance on model object
+        UIModel.getInstance().libraryInstance = this;
 
         return this;
     };
@@ -4018,14 +4059,6 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getRecordRequest = function() {
         return UIModel.getInstance().recordRequest;
-    };
-    /**
-     * Get latest Barge In Request object
-     * @memberof AgentLibrary
-     * @returns {object}
-     */
-    AgentLibrary.prototype.getBargeInRequest = function() {
-        return UIModel.getInstance().bargeInRequest;
     };
     /**
      * Get packet received on successful Login
@@ -4426,10 +4459,10 @@ function initAgentLibraryCall (context) {
      * @param {function} [callback=null] Callback function when coaching session response received
      */
     AgentLibrary.prototype.coachCall = function(callback){
-        UIModel.getInstance().bargeInRequest = new BargeInRequest("FULL");
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("COACHING");
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
-        utils.setCallback(this, CALLBACK_TYPES.BARGE_IN, callback);
+        utils.setCallback(this, CALLBACK_TYPES.COACH_CALL, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -4464,6 +4497,10 @@ function initAgentLibraryCall (context) {
         UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey);
         var msg = UIModel.getInstance().dispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
+
+        // cancel ping call timer
+        clearInterval(UIModel.getInstance().pingIntervalId);
+        UIModel.getInstance().pingIntervalId = null;
     };
 
     /**
@@ -4603,7 +4640,7 @@ function initAgentLibraryCall (context) {
         UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE");
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
-        utils.setCallback(this, CALLBACK_TYPES.BARGE_IN, callback);
+        utils.setCallback(this, CALLBACK_TYPES.SILENT_MONITOR, callback);
         utils.sendMessage(this, msg);
     };
 

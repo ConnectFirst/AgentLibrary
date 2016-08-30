@@ -271,7 +271,6 @@ function buildTokenMap(notif, newCall){
     return tokens;
 }
 
-
 function isCampaign(gate){
     if (gate && gate.isCampaign){
         return gate.isCampaign === "1";

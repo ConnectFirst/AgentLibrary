@@ -61,6 +61,10 @@ function initAgentLibraryCall (context) {
         UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey);
         var msg = UIModel.getInstance().dispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
+
+        // cancel ping call timer
+        clearInterval(UIModel.getInstance().pingIntervalId);
+        UIModel.getInstance().pingIntervalId = null;
     };
 
     /**

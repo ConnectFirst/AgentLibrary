@@ -26,8 +26,8 @@ var utils = {
                 if(UIModel.getInstance().agentStateRequest === null){
                     UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
                 }
-                var stateChangeResposne = UIModel.getInstance().agentStateRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResposne);
+                var stateChangeResponse = UIModel.getInstance().agentStateRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_STATE, stateChangeResponse);
                 break;
             case MESSAGE_TYPES.BARGE_IN:
                 var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
@@ -166,9 +166,12 @@ var utils = {
                 }
                 break;
             case MESSAGE_TYPES.NEW_CALL:
-                var newCallNotif = new NewCallNotification(instance);
+                var newCallNotif = new NewCallNotification();
                 var newCallResponse = newCallNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+
+                // start ping call interval timer, sends message every 30 seconds
+                UIModel.getInstance().pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
@@ -558,27 +561,34 @@ var utils = {
         }
     },
 
-    /**
-     * Parses a string of key value pairs and returns an Array of KeyValue objects.
-     *
-     * @param str The string of keyvalue pairs to parse
-     * @param outerDelimiter The delimiter that separates each keyValue pair
-     * @param innerDelimiter The delimiter that separates each key from its value
-     */
+    // Parses a string of key value pairs and returns an Array of KeyValue objects.
+    // @param str The string of keyvalue pairs to parse
+    // @param outerDelimiter The delimiter that separates each keyValue pair
+    // @param innerDelimiter The delimiter that separates each key from its value
     parseKeyValuePairsFromString: function(str, outerDelimiter, innerDelimiter){
-    if (!str){
-        return [];
-    }
-    var arr = [];
-    var keyValuesPairs = str.split(outerDelimiter);
-    for (var p = 0; p < keyValuesPairs.length; p++){
-        var keyValuePair = keyValuesPairs[p];
-        var pair = keyValuePair.split(innerDelimiter);
-        var keyValue = {};
-        keyValue[pair[0]] = pair[1];
-        arr.push(keyValue);
-    }
+        if (!str){
+            return [];
+        }
+        var arr = [];
+        var keyValuesPairs = str.split(outerDelimiter);
+        for (var p = 0; p < keyValuesPairs.length; p++){
+            var keyValuePair = keyValuesPairs[p];
+            var pair = keyValuePair.split(innerDelimiter);
+            var keyValue = {};
+            keyValue[pair[0]] = pair[1];
+            arr.push(keyValue);
+        }
 
-    return arr;
-}
+        return arr;
+    },
+
+
+    // called every 30 seconds letting intelliQueue know
+    // not to archive the call so dispositions and other call
+    // clean up actions can happen
+    sendPingCallMessage: function(){
+        UIModel.getInstance().pingCallRequest = new PingCallRequest();
+        var msg = UIModel.getInstance().pingCallRequest.formatJSON();
+        utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+    }
 };
