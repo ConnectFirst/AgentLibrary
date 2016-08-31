@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-30 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-08-31 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4070,7 +4070,7 @@ var utils = {
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionResponse",
     "AGENT_STATE":"agentStateResponse",
-    "BARGE_IN":"bargeResponse",
+    "BARGE_IN":"bargeInResponse",
     "CLOSE_SOCKET":"closeResponse",
     "COACH_CALL":"coachResponse",
     "CONFIG":"configureResponse",
@@ -4088,7 +4088,7 @@ const CALLBACK_TYPES = {
     "GENERIC_RESPONSE":"genericResponse",
     "HOLD":"holdResponse",
     "LOGIN":"loginResponse",
-    "SILENT_MONITOR":"silentMonitorResponse",
+    "SILENT_MONITOR":"monitorResponse",
     "NEW_CALL":"newCallNotification",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
@@ -4914,7 +4914,7 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when coaching session response received
      */
-    AgentLibrary.prototype.coachCall = function(callback){
+    AgentLibrary.prototype.coach = function(callback){
         UIModel.getInstance().bargeInRequest = new BargeInRequest("COACHING");
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
@@ -5092,7 +5092,7 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when silent monitor response received
      */
-    AgentLibrary.prototype.silentMonitor = function(callback){
+    AgentLibrary.prototype.monitor = function(callback){
         UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE");
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 

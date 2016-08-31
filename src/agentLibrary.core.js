@@ -16,7 +16,7 @@
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionResponse",
     "AGENT_STATE":"agentStateResponse",
-    "BARGE_IN":"bargeResponse",
+    "BARGE_IN":"bargeInResponse",
     "CLOSE_SOCKET":"closeResponse",
     "COACH_CALL":"coachResponse",
     "CONFIG":"configureResponse",
@@ -34,7 +34,7 @@ const CALLBACK_TYPES = {
     "GENERIC_RESPONSE":"genericResponse",
     "HOLD":"holdResponse",
     "LOGIN":"loginResponse",
-    "SILENT_MONITOR":"silentMonitorResponse",
+    "SILENT_MONITOR":"monitorResponse",
     "NEW_CALL":"newCallNotification",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",

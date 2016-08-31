@@ -22,7 +22,7 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when coaching session response received
      */
-    AgentLibrary.prototype.coachCall = function(callback){
+    AgentLibrary.prototype.coach = function(callback){
         UIModel.getInstance().bargeInRequest = new BargeInRequest("COACHING");
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
@@ -200,7 +200,7 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when silent monitor response received
      */
-    AgentLibrary.prototype.silentMonitor = function(callback){
+    AgentLibrary.prototype.monitor = function(callback){
         UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE");
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
