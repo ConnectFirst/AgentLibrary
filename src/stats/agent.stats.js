@@ -41,32 +41,36 @@ var AgentStats = function() {
  */
 AgentStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats.agent;
-    var agentStats = {
-        agentLoginType: resp["@alt"],
-        agentType: resp["@atype"],
-        avgTalkTime:resp["@avgtt"],
-        calls: resp["@calls"],
-        isDequeueAgent: resp["@da"],
-        defaultRoute: resp["@droute"],
-        firstName: resp["@f"],
-        queueDesc: resp["@gdesc"],
-        queueName: resp["@gname"],
-        agentId: resp["@id"],
-        lastName: resp["@l"],
-        loginDuration: resp["@ldur"],
-        loginType: resp["@ltype"],
-        offHook: resp["@oh"],
-        pendingDisp: resp["@pd"],
-        presented: resp["@pres"],
-        rna: resp["@rna"],
-        stateDuration: resp["@sdur"],
-        skillProfileName: resp["@sp"],
-        agentState: resp["@state"],
-        totalTalkTime: resp["@ttt"],
-        username: resp["@u"],
-        uii: resp["@uii"],
-        utilization: resp["@util"]
-    };
+    var agentStats = {};
+    if(resp){
+        agentStats = {
+            agentLoginType: resp["@alt"],
+            agentType: resp["@atype"],
+            avgTalkTime:resp["@avgtt"],
+            calls: resp["@calls"],
+            isDequeueAgent: resp["@da"],
+            defaultRoute: resp["@droute"],
+            firstName: resp["@f"],
+            queueDesc: resp["@gdesc"],
+            queueName: resp["@gname"],
+            agentId: resp["@id"],
+            lastName: resp["@l"],
+            loginDuration: resp["@ldur"],
+            loginType: resp["@ltype"],
+            offHook: resp["@oh"],
+            pendingDisp: resp["@pd"],
+            presented: resp["@pres"],
+            rna: resp["@rna"],
+            stateDuration: resp["@sdur"],
+            skillProfileName: resp["@sp"],
+            agentState: resp["@state"],
+            totalTalkTime: resp["@ttt"],
+            username: resp["@u"],
+            uii: resp["@uii"],
+            utilization: resp["@util"]
+        };
+    }
+
 
     UIModel.getInstance().agentStats = agentStats;
 

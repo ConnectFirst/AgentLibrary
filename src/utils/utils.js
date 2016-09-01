@@ -70,6 +70,11 @@ var utils = {
                 } else if (dest === 'IQ') {
                     var configResponse = UIModel.getInstance().configRequest.processResponse(response);
                     utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
+
+                    if(configResponse.status === "SUCCESS"){
+                        // start stats interval timer, request stats every 5 seconds
+                        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
+                    }
                 }
                 break;
             case MESSAGE_TYPES.LOGOUT:
@@ -217,11 +222,19 @@ var utils = {
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.STATS_AGENT:
                 var agentStats = UIModel.getInstance().agentStatsPacket.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_DIAL, agentStats);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_AGENT, agentStats);
                 break;
-            case MESSAGE_TYPES.TCPA_SAFE_ID:
-                var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
+            case MESSAGE_TYPES.STATS_AGENT_DAILY:
+                var agentDailyStats = UIModel.getInstance().agentDailyStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_AGENT_DAILY, agentDailyStats);
+                break;
+            case MESSAGE_TYPES.STATS_CAMPAIGN:
+                var campaignStats = UIModel.getInstance().campaignStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_CAMPAIGN, campaignStats);
+                break;
+            case MESSAGE_TYPES.STATS_QUEUE:
+                var queueStats = UIModel.getInstance().queueStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_QUEUE, queueStats);
                 break;
         }
 
@@ -580,6 +593,28 @@ var utils = {
         }
     },
 
+    // safely check if property exists and return empty string
+    // instead of undefined if it doesn't exist
+    // convert "TRUE" | "FALSE" to boolean
+    getAttribute: function(obj,prop){
+        var o = obj[prop];
+        if(o){
+            if(o[prop]){
+                if(o[prop].toUpperCase() === "TRUE"){
+                    return true;
+                }else if(o[prop].toUpperCase() === "FALSE"){
+                    return false;
+                }else{
+                    return o[prop] || "";
+                }
+            }else{
+                return "";
+            }
+        }else{
+            return "";
+        }
+    },
+
     // Parses a string of key value pairs and returns an Array of KeyValue objects.
     // @param str The string of keyvalue pairs to parse
     // @param outerDelimiter The delimiter that separates each keyValue pair
@@ -608,6 +643,13 @@ var utils = {
     sendPingCallMessage: function(){
         UIModel.getInstance().pingCallRequest = new PingCallRequest();
         var msg = UIModel.getInstance().pingCallRequest.formatJSON();
+        utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+    },
+
+    // called every 5 seconds to request stats from IntelliServices
+    sendStatsRequestMessage: function(){
+        UIModel.getInstance().statsRequest = new StatsRequest();
+        var msg = UIModel.getInstance().statsRequest.formatJSON();
         utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
     }
 };

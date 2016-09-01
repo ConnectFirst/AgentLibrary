@@ -32,6 +32,10 @@ function initAgentLibrarySocket (context) {
             instance.socket.onclose = function(){
                 utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
                 UIModel.getInstance().applicationSettings.socketConnected = false;
+
+                // cancel stats timer
+                clearInterval(UIModel.getInstance().statsIntervalId);
+                UIModel.getInstance().statsIntervalId = null;
             };
         }else{
             console.warn("AgentLibrary: WebSocket NOT supported by your Browser.");

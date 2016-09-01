@@ -20,7 +20,7 @@ var UIModel = (function() {
             callbacks:[],
             libraryInstance: null,                  // Initialized to the library instance on startup
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
-
+            statsIntervalId: null,                  // The id of the timer used to send stats request messages
 
             // request instances
             agentStateRequest : null,
@@ -45,6 +45,7 @@ var UIModel = (function() {
             previewDialRequest : null,
             recordRequest : null,
             requeueRequest : null,
+            statsRequest : null,
             tcpaSafeRequest : null,
             warmXferRequest : null,
             warmXferCancelRequest : null,

@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-08-31 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-01 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2662,6 +2662,32 @@ RequeueRequest.prototype.processResponse = function(response) {
 };
 
 
+var StatsRequest = function() {
+    
+};
+
+/*
+ * { "ui_request": {
+ *      "@response_to":"",
+ *      "@message_id":"IS20160901142437535",
+ *      "@type":"STATS"
+ *    }
+ * }
+ */
+StatsRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IS",
+            "@type":MESSAGE_TYPES.STATS,
+            "@message_id":utils.getMessageId(),
+            "@response_to":""
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
 var TcpaSafeRequest = function(action, searchFields, requestId) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
     this.searchFields = searchFields || [];
@@ -2910,32 +2936,36 @@ var AgentStats = function() {
  */
 AgentStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats.agent;
-    var agentStats = {
-        agentLoginType: resp["@alt"],
-        agentType: resp["@atype"],
-        avgTalkTime:resp["@avgtt"],
-        calls: resp["@calls"],
-        isDequeueAgent: resp["@da"],
-        defaultRoute: resp["@droute"],
-        firstName: resp["@f"],
-        queueDesc: resp["@gdesc"],
-        queueName: resp["@gname"],
-        agentId: resp["@id"],
-        lastName: resp["@l"],
-        loginDuration: resp["@ldur"],
-        loginType: resp["@ltype"],
-        offHook: resp["@oh"],
-        pendingDisp: resp["@pd"],
-        presented: resp["@pres"],
-        rna: resp["@rna"],
-        stateDuration: resp["@sdur"],
-        skillProfileName: resp["@sp"],
-        agentState: resp["@state"],
-        totalTalkTime: resp["@ttt"],
-        username: resp["@u"],
-        uii: resp["@uii"],
-        utilization: resp["@util"]
-    };
+    var agentStats = {};
+    if(resp){
+        agentStats = {
+            agentLoginType: resp["@alt"],
+            agentType: resp["@atype"],
+            avgTalkTime:resp["@avgtt"],
+            calls: resp["@calls"],
+            isDequeueAgent: resp["@da"],
+            defaultRoute: resp["@droute"],
+            firstName: resp["@f"],
+            queueDesc: resp["@gdesc"],
+            queueName: resp["@gname"],
+            agentId: resp["@id"],
+            lastName: resp["@l"],
+            loginDuration: resp["@ldur"],
+            loginType: resp["@ltype"],
+            offHook: resp["@oh"],
+            pendingDisp: resp["@pd"],
+            presented: resp["@pres"],
+            rna: resp["@rna"],
+            stateDuration: resp["@sdur"],
+            skillProfileName: resp["@sp"],
+            agentState: resp["@state"],
+            totalTalkTime: resp["@ttt"],
+            username: resp["@u"],
+            uii: resp["@uii"],
+            utilization: resp["@util"]
+        };
+    }
+
 
     UIModel.getInstance().agentStats = agentStats;
 
@@ -3242,7 +3272,7 @@ var UIModel = (function() {
             callbacks:[],
             libraryInstance: null,                  // Initialized to the library instance on startup
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
-
+            statsIntervalId: null,                  // The id of the timer used to send stats request messages
 
             // request instances
             agentStateRequest : null,
@@ -3267,6 +3297,7 @@ var UIModel = (function() {
             previewDialRequest : null,
             recordRequest : null,
             requeueRequest : null,
+            statsRequest : null,
             tcpaSafeRequest : null,
             warmXferRequest : null,
             warmXferCancelRequest : null,
@@ -3510,6 +3541,11 @@ var utils = {
                 } else if (dest === 'IQ') {
                     var configResponse = UIModel.getInstance().configRequest.processResponse(response);
                     utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
+
+                    if(configResponse.status === "SUCCESS"){
+                        // start stats interval timer, request stats every 5 seconds
+                        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
+                    }
                 }
                 break;
             case MESSAGE_TYPES.LOGOUT:
@@ -3657,11 +3693,19 @@ var utils = {
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.STATS_AGENT:
                 var agentStats = UIModel.getInstance().agentStatsPacket.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_DIAL, agentStats);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_AGENT, agentStats);
                 break;
-            case MESSAGE_TYPES.TCPA_SAFE_ID:
-                var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
+            case MESSAGE_TYPES.STATS_AGENT_DAILY:
+                var agentDailyStats = UIModel.getInstance().agentDailyStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_AGENT_DAILY, agentDailyStats);
+                break;
+            case MESSAGE_TYPES.STATS_CAMPAIGN:
+                var campaignStats = UIModel.getInstance().campaignStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_CAMPAIGN, campaignStats);
+                break;
+            case MESSAGE_TYPES.STATS_QUEUE:
+                var queueStats = UIModel.getInstance().queueStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_QUEUE, queueStats);
                 break;
         }
 
@@ -4020,6 +4064,28 @@ var utils = {
         }
     },
 
+    // safely check if property exists and return empty string
+    // instead of undefined if it doesn't exist
+    // convert "TRUE" | "FALSE" to boolean
+    getAttribute: function(obj,prop){
+        var o = obj[prop];
+        if(o){
+            if(o[prop]){
+                if(o[prop].toUpperCase() === "TRUE"){
+                    return true;
+                }else if(o[prop].toUpperCase() === "FALSE"){
+                    return false;
+                }else{
+                    return o[prop] || "";
+                }
+            }else{
+                return "";
+            }
+        }else{
+            return "";
+        }
+    },
+
     // Parses a string of key value pairs and returns an Array of KeyValue objects.
     // @param str The string of keyvalue pairs to parse
     // @param outerDelimiter The delimiter that separates each keyValue pair
@@ -4048,6 +4114,13 @@ var utils = {
     sendPingCallMessage: function(){
         UIModel.getInstance().pingCallRequest = new PingCallRequest();
         var msg = UIModel.getInstance().pingCallRequest.formatJSON();
+        utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+    },
+
+    // called every 5 seconds to request stats from IntelliServices
+    sendStatsRequestMessage: function(){
+        UIModel.getInstance().statsRequest = new StatsRequest();
+        var msg = UIModel.getInstance().statsRequest.formatJSON();
         utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
     }
 };
@@ -4097,7 +4170,7 @@ const CALLBACK_TYPES = {
     "PREVIEW_DIAL":"previewDialResponse",
     "REQUEUE":"requeueResponse",
     "STATS_AGENT":"agentStats",
-    "STATS_AGENTDAILY":"agentDailyStats",
+    "STATS_AGENT_DAILY":"agentDailyStats",
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
     "TCPA_SAFE":"tcpaSafeResponse",
@@ -4139,6 +4212,7 @@ const MESSAGE_TYPES = {
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
+    "STATS":"STATS",
     "STATS_AGENT":"AGENT",
     "STATS_AGENT_DAILY":"AGENTDAILY",
     "STATS_CAMPAIGN":"CAMPAIGN",
@@ -4744,6 +4818,10 @@ function initAgentLibrarySocket (context) {
             instance.socket.onclose = function(){
                 utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
                 UIModel.getInstance().applicationSettings.socketConnected = false;
+
+                // cancel stats timer
+                clearInterval(UIModel.getInstance().statsIntervalId);
+                UIModel.getInstance().statsIntervalId = null;
             };
         }else{
             console.warn("AgentLibrary: WebSocket NOT supported by your Browser.");
