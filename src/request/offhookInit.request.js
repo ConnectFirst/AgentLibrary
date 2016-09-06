@@ -49,7 +49,7 @@ OffhookInitRequest.prototype.processResponse = function(response) {
         if(formattedResponse.message === ""){
             formattedResponse.message = "Unable to process offhook request";
         }
-        console.log("AgentLibrary: Unable to process offhook request ", detail);
+        console.log("AgentLibrary: Unable to process offhook request ", formattedResponse.detail);
     }
 
     return formattedResponse;

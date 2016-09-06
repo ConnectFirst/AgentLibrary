@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-01 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-06 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2154,7 +2154,7 @@ OffhookInitRequest.prototype.processResponse = function(response) {
         if(formattedResponse.message === ""){
             formattedResponse.message = "Unable to process offhook request";
         }
-        console.log("AgentLibrary: Unable to process offhook request ", detail);
+        console.log("AgentLibrary: Unable to process offhook request ", formattedResponse.detail);
     }
 
     return formattedResponse;
