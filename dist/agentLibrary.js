@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-06 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-07 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2508,6 +2508,21 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
 };
 
 
+var ReconnectRequest = function() {
+
+};
+
+ReconnectRequest.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var loginMsg = JSON.parse(model.loginRequest.formatJSON());
+
+    loginMsg.hash_code = {"#text":model.hashCode};
+    loginMsg.update_login = {"#text":"FALSE"};
+    loginMsg.reconnect = {"#text":"TRUE"};
+
+    return JSON.stringify(loginMsg);
+};
+
 var RecordRequest = function(record) {
     this.record = record;
 };
@@ -2637,10 +2652,8 @@ RequeueRequest.prototype.formatJSON = function() {
  *      "@type":"RE-QUEUE",
  *      "agent_id":{"#text":"1856"},
  *      "uii":{"#text":"200808281716090000000900028070"},
- *      "status":{"#text":"OK"},
- *      "gate_number":{"#text":"19"},
- *      "message":{"#text":"Success."},
- *      "detail":{"#text":"The re-queue request was successfully processed."}
+ *      "gate_id":{"#text":"19"},
+ *      "maintain_agent":{"#text":"FALSE"}
  *    }
  * }
  */
@@ -2650,7 +2663,11 @@ RequeueRequest.prototype.processResponse = function(response) {
 
     formattedResponse.agentId = utils.getText(resp, 'agent_id');
     formattedResponse.uii = utils.getText(resp, 'uii');
-    formattedResponse.queueId = utils.getText(resp, 'gate_number');
+    formattedResponse.queueId = utils.getText(resp, 'gate_id');
+
+    if(formattedResponse.status === ""){
+        formattedResponse.status = "OK";
+    }
 
     if(formattedResponse.status === "OK"){
         console.log("AgentLibrary: Requeue successfull." );
@@ -3295,6 +3312,7 @@ var UIModel = (function() {
             pauseRecordRequest : null,
             pingCallRequest : null,
             previewDialRequest : null,
+            reconnectRequest : null,
             recordRequest : null,
             requeueRequest : null,
             statsRequest : null,
@@ -3687,7 +3705,7 @@ var utils = {
     processStats: function(instance, data)
     {
         var type = data.ui_stats['@type'];
-        console.log("AgentLibrary: received stats: (IS) " + type.toUpperCase());
+        //console.log("AgentLibrary: received stats: (IS) " + type.toUpperCase());
 
         // Fire callback function
         switch (type.toUpperCase()) {
@@ -4047,17 +4065,13 @@ var utils = {
     // convert "TRUE" | "FALSE" to boolean
     getText: function(obj,prop){
         var o = obj[prop];
-        if(o){
-            if(o['#text']){
-                if(o['#text'].toUpperCase() === "TRUE"){
-                    return true;
-                }else if(o['#text'].toUpperCase() === "FALSE"){
-                    return false;
-                }else{
-                    return o['#text'] || "";
-                }
+        if(o && o['#text']){
+            if(o['#text'].toUpperCase() === "TRUE"){
+                return true;
+            }else if(o['#text'].toUpperCase() === "FALSE"){
+                return false;
             }else{
-                return "";
+                return o['#text'] || "";
             }
         }else{
             return "";
@@ -4069,17 +4083,13 @@ var utils = {
     // convert "TRUE" | "FALSE" to boolean
     getAttribute: function(obj,prop){
         var o = obj[prop];
-        if(o){
-            if(o[prop]){
-                if(o[prop].toUpperCase() === "TRUE"){
-                    return true;
-                }else if(o[prop].toUpperCase() === "FALSE"){
-                    return false;
-                }else{
-                    return o[prop] || "";
-                }
+        if(o && o[prop]){
+            if(o[prop].toUpperCase() === "TRUE"){
+                return true;
+            }else if(o[prop].toUpperCase() === "FALSE"){
+                return false;
             }else{
-                return "";
+                return o[prop] || "";
             }
         }else{
             return "";
@@ -4966,6 +4976,29 @@ function initAgentLibraryAgent (context) {
         utils.setCallback(this, CALLBACK_TYPES.CALLBACK_CANCEL, callback);
         utils.sendMessage(this, msg);
     };
+
+    /**
+     * Request stats messages to be sent every 5 seconds. The stats responses will be sent as
+     * four possible callback types: agentStats, agentDailyStats, campaignStats, or queueStats
+     * @memberof AgentLibrary
+     */
+    AgentLibrary.prototype.requestStats = function(){
+        // start stats interval timer, request stats every 5 seconds
+        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
+    };
+
+    /**
+     * Reconnect the agent session, similar to configureAgent, but doesn't reset set all
+     * configure values if not needed.
+     * @memberof AgentLibrary
+     */
+    AgentLibrary.prototype.reconnect = function(){
+        UIModel.getInstance().reconnectRequest = new ReconnectRequest();
+        var msg = UIModel.getInstance().reconnectRequest.formatJSON();
+
+        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
+    };
+
 }
 
 function initAgentLibraryCall (context) {

@@ -131,4 +131,27 @@ function initAgentLibraryAgent (context) {
         utils.setCallback(this, CALLBACK_TYPES.CALLBACK_CANCEL, callback);
         utils.sendMessage(this, msg);
     };
+
+    /**
+     * Request stats messages to be sent every 5 seconds. The stats responses will be sent as
+     * four possible callback types: agentStats, agentDailyStats, campaignStats, or queueStats
+     * @memberof AgentLibrary
+     */
+    AgentLibrary.prototype.requestStats = function(){
+        // start stats interval timer, request stats every 5 seconds
+        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
+    };
+
+    /**
+     * Reconnect the agent session, similar to configureAgent, but doesn't reset set all
+     * configure values if not needed.
+     * @memberof AgentLibrary
+     */
+    AgentLibrary.prototype.reconnect = function(){
+        UIModel.getInstance().reconnectRequest = new ReconnectRequest();
+        var msg = UIModel.getInstance().reconnectRequest.formatJSON();
+
+        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
+    };
+
 }

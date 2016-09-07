@@ -216,7 +216,7 @@ var utils = {
     processStats: function(instance, data)
     {
         var type = data.ui_stats['@type'];
-        console.log("AgentLibrary: received stats: (IS) " + type.toUpperCase());
+        //console.log("AgentLibrary: received stats: (IS) " + type.toUpperCase());
 
         // Fire callback function
         switch (type.toUpperCase()) {
@@ -576,17 +576,13 @@ var utils = {
     // convert "TRUE" | "FALSE" to boolean
     getText: function(obj,prop){
         var o = obj[prop];
-        if(o){
-            if(o['#text']){
-                if(o['#text'].toUpperCase() === "TRUE"){
-                    return true;
-                }else if(o['#text'].toUpperCase() === "FALSE"){
-                    return false;
-                }else{
-                    return o['#text'] || "";
-                }
+        if(o && o['#text']){
+            if(o['#text'].toUpperCase() === "TRUE"){
+                return true;
+            }else if(o['#text'].toUpperCase() === "FALSE"){
+                return false;
             }else{
-                return "";
+                return o['#text'] || "";
             }
         }else{
             return "";
@@ -598,17 +594,13 @@ var utils = {
     // convert "TRUE" | "FALSE" to boolean
     getAttribute: function(obj,prop){
         var o = obj[prop];
-        if(o){
-            if(o[prop]){
-                if(o[prop].toUpperCase() === "TRUE"){
-                    return true;
-                }else if(o[prop].toUpperCase() === "FALSE"){
-                    return false;
-                }else{
-                    return o[prop] || "";
-                }
+        if(o && o[prop]){
+            if(o[prop].toUpperCase() === "TRUE"){
+                return true;
+            }else if(o[prop].toUpperCase() === "FALSE"){
+                return false;
             }else{
-                return "";
+                return o[prop] || "";
             }
         }else{
             return "";

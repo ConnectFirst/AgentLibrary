@@ -42,10 +42,8 @@ RequeueRequest.prototype.formatJSON = function() {
  *      "@type":"RE-QUEUE",
  *      "agent_id":{"#text":"1856"},
  *      "uii":{"#text":"200808281716090000000900028070"},
- *      "status":{"#text":"OK"},
- *      "gate_number":{"#text":"19"},
- *      "message":{"#text":"Success."},
- *      "detail":{"#text":"The re-queue request was successfully processed."}
+ *      "gate_id":{"#text":"19"},
+ *      "maintain_agent":{"#text":"FALSE"}
  *    }
  * }
  */
@@ -55,7 +53,11 @@ RequeueRequest.prototype.processResponse = function(response) {
 
     formattedResponse.agentId = utils.getText(resp, 'agent_id');
     formattedResponse.uii = utils.getText(resp, 'uii');
-    formattedResponse.queueId = utils.getText(resp, 'gate_number');
+    formattedResponse.queueId = utils.getText(resp, 'gate_id');
+
+    if(formattedResponse.status === ""){
+        formattedResponse.status = "OK";
+    }
 
     if(formattedResponse.status === "OK"){
         console.log("AgentLibrary: Requeue successfull." );

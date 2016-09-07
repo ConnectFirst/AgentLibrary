@@ -43,6 +43,7 @@ var UIModel = (function() {
             pauseRecordRequest : null,
             pingCallRequest : null,
             previewDialRequest : null,
+            reconnectRequest : null,
             recordRequest : null,
             requeueRequest : null,
             statsRequest : null,
