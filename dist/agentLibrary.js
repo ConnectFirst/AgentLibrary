@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-07 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-09 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2207,6 +2207,7 @@ OffhookTermRequest.prototype.processResponse = function(data) {
     model.agentSettings.isOffhook = false;
 
     var formattedResponse = {
+        status: "OK",
         agentId: utils.getText(notif, "agent_id"),
         startDts: utils.getText(notif, "start_dts"),
         endDts: utils.getText(notif, "end_dts"),

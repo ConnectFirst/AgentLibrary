@@ -44,6 +44,7 @@ OffhookTermRequest.prototype.processResponse = function(data) {
     model.agentSettings.isOffhook = false;
 
     var formattedResponse = {
+        status: "OK",
         agentId: utils.getText(notif, "agent_id"),
         startDts: utils.getText(notif, "start_dts"),
         endDts: utils.getText(notif, "end_dts"),
