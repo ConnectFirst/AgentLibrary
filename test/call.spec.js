@@ -262,7 +262,7 @@ describe( 'Tests for Agent Library agent methods', function() {
 
     it( 'should build a hold message and send message over socket', function() {
         var Lib = new AgentLibrary();
-        var holdState = "ON";
+        var holdState = true;
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
@@ -292,7 +292,7 @@ describe( 'Tests for Agent Library agent methods', function() {
 
     it( 'should process a hold response message', function() {
         var Lib = new AgentLibrary();
-        var holdState = "ON";
+        var holdState = true;
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
@@ -317,10 +317,10 @@ describe( 'Tests for Agent Library agent methods', function() {
         };
         var response = Lib.getHoldRequest().processResponse(holdResponse);
         var expectedResponse = {
-            message: "Broadcasting new hold state of ON",
+            message: "Broadcasting new hold state of true",
             detail: "",
             status: "OK",
-            holdState: "ON",
+            holdState: true,
             sessionId: "1",
             uii:""
         };

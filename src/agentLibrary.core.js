@@ -14,7 +14,7 @@
 
 /*jshint esnext: true */
 const CALLBACK_TYPES = {
-    "ADD_SESSION":"addSessionResponse",
+    "ADD_SESSION":"addSessionNotification",
     "AGENT_STATE":"agentStateResponse",
     "BARGE_IN":"bargeInResponse",
     "CLOSE_SOCKET":"closeResponse",

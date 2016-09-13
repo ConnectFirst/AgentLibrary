@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-09 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-13 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1267,29 +1267,29 @@ ConfigRequest.prototype.formatJSON = function() {
 /*
  * This function is responsible for handling the response to Login from IntelliQueue.
  *
- * {"ui_response":{
- *      "@message_id":"IQ10012016082513212000447",
- *      "@response_to":"IQ201608251121200",
- *      "@type":"LOGIN",
- *      "agent_id":{"#text":"1"},
- *      "status":{"#text":"SUCCESS"},
- *      "message":{"#text":"Hello Geoffrey Mina!"},
- *      "detail":{"#text":"Logon request processed successfully!"},
- *      "hash_code":{"#text":"404946966"},
- *      "login_type":{"#text":"BLENDED"},
- *      "outdial_group_id":{"#text":"50692"},
- *      "skill_profile_id":{"#text":"1513"},
- *      "gates":{
- *          "gate_id":[
- *              {"#text":"11116"},
- *              {"#text":"11117"}
- *          ]
- *      },
- *      "chat_queues":{
- *          "chat_queue_id":{"#text":"30"}
- *      }
- *    }
- * }
+  {"ui_response":{
+       "@message_id":"IQ10012016082513212000447",
+       "@response_to":"IQ201608251121200",
+       "@type":"LOGIN",
+       "agent_id":{"#text":"1"},
+       "status":{"#text":"SUCCESS"},
+       "message":{"#text":"Hello Geoffrey Mina!"},
+       "detail":{"#text":"Logon request processed successfully!"},
+       "hash_code":{"#text":"404946966"},
+       "login_type":{"#text":"BLENDED"},
+       "outdial_group_id":{"#text":"50692"},
+       "skill_profile_id":{"#text":"1513"},
+       "gates":{
+           "gate_id":[
+               {"#text":"11116"},
+               {"#text":"11117"}
+           ]
+       },
+       "chat_queues":{
+           "chat_queue_id":{"#text":"30"}
+       }
+     }
+  }
  */
 ConfigRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;
@@ -1697,7 +1697,7 @@ HoldRequest.prototype.formatJSON = function() {
                 "#text":"1"
             },
             "hold_state":{
-                "#text":utils.toString(this.holdState)
+                "#text":this.holdState === true ? "ON" : "OFF"
             }
         }
     };
@@ -1729,7 +1729,7 @@ HoldRequest.prototype.processResponse = function(response) {
        currUII = UIModel.getInstance().currentCall.uii;
     }
 
-    formattedResponse.holdState = utils.getText(resp, 'hold_state');
+    formattedResponse.holdState = utils.getText(resp, 'hold_state') === "ON";
     formattedResponse.sessionId = utils.getText(resp, 'session_id');
     formattedResponse.uii = utils.getText(resp, 'uii');
 
@@ -4151,7 +4151,7 @@ var utils = {
 
 /*jshint esnext: true */
 const CALLBACK_TYPES = {
-    "ADD_SESSION":"addSessionResponse",
+    "ADD_SESSION":"addSessionNotification",
     "AGENT_STATE":"agentStateResponse",
     "BARGE_IN":"bargeInResponse",
     "CLOSE_SOCKET":"closeResponse",
@@ -5115,7 +5115,7 @@ function initAgentLibraryCall (context) {
     /**
      * Place a call on hold
      * @memberof AgentLibrary
-     * @param {string} holdState Whether we are putting call on hold or taking off hold - values "ON" | "OFF"
+     * @param {boolean} holdState Whether we are putting call on hold or taking off hold - values true | false
      * @param {function} [callback=null] Callback function when hold response received
      */
     AgentLibrary.prototype.hold = function(holdState, callback){
@@ -5212,7 +5212,7 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Pause call recording
+     * Toggle call recording based on passed in boolean true | false
      * @memberof AgentLibrary
      * @param {boolean} record Whether we are recording or not
      * @param {function} [callback=null] Callback function when record response received

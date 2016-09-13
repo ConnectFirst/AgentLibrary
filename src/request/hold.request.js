@@ -34,7 +34,7 @@ HoldRequest.prototype.formatJSON = function() {
                 "#text":"1"
             },
             "hold_state":{
-                "#text":utils.toString(this.holdState)
+                "#text":this.holdState === true ? "ON" : "OFF"
             }
         }
     };
@@ -66,7 +66,7 @@ HoldRequest.prototype.processResponse = function(response) {
        currUII = UIModel.getInstance().currentCall.uii;
     }
 
-    formattedResponse.holdState = utils.getText(resp, 'hold_state');
+    formattedResponse.holdState = utils.getText(resp, 'hold_state') === "ON";
     formattedResponse.sessionId = utils.getText(resp, 'session_id');
     formattedResponse.uii = utils.getText(resp, 'uii');
 

@@ -112,7 +112,7 @@ function initAgentLibraryCall (context) {
     /**
      * Place a call on hold
      * @memberof AgentLibrary
-     * @param {string} holdState Whether we are putting call on hold or taking off hold - values "ON" | "OFF"
+     * @param {boolean} holdState Whether we are putting call on hold or taking off hold - values true | false
      * @param {function} [callback=null] Callback function when hold response received
      */
     AgentLibrary.prototype.hold = function(holdState, callback){
@@ -209,7 +209,7 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Pause call recording
+     * Toggle call recording based on passed in boolean true | false
      * @memberof AgentLibrary
      * @param {boolean} record Whether we are recording or not
      * @param {function} [callback=null] Callback function when record response received
