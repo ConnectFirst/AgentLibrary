@@ -34,7 +34,7 @@ HoldRequest.prototype.formatJSON = function() {
                 "#text":"1"
             },
             "hold_state":{
-                "#text":this.holdState === true ? "ON" : "OFF"
+                "#text":this.holdState === true || this.holdState === "true" ? "ON" : "OFF"
             }
         }
     };
