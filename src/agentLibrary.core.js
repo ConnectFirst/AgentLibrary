@@ -1,18 +1,55 @@
 
 // CONSTANTS
+
+
+/*jshint esnext: true */
+const LOG_LEVELS ={
+    "DEBUG":"debug",
+    "INFO":"info",
+    "WARN":"warn",
+    "ERROR":"error"
+};
+
 /**
  * @memberof AgentLibrary
  * Possible callback types:
- * <li>"openResponse"</li>
- * <li>"closeResponse"</li>
- * <li>"loginResponse"</li>
- * <li>"logoutResponse"</li>
- * <li>"configureResponse"</li>
+ * <li>"addSessionNotification"</li>
  * <li>"agentStateResponse"</li>
+ * <li>"bargeInResponse"</li>
+ * <li>"closeResponse"</li>
+ * <li>"coachResponse"</li>
+ * <li>"configureResponse"</li>
+ * <li>"callNotesResponse"</li>
+ * <li>"callbacksPendingResponse"</li>
+ * <li>"callbackCancelResponse"</li>
+ * <li>"campaignDispositionsResponse"</li>
+ * <li>"dialGroupChangeNotification"</li>
+ * <li>"dialGroupChangePendingNotification"</li>
+ * <li>"dropSessionNotification"</li>
+ * <li>"earlyUiiNotification"</li>
+ * <li>"endCallNotification"</li>
+ * <li>"gatesChangeNotification"</li>
+ * <li>"genericNotification"</li>
+ * <li>"genericResponse"</li>
+ * <li>"holdResponse"</li>
+ * <li>"loginResponse"</li>
+ * <li>"monitorResponse"</li>
+ * <li>"newCallNotification"</li>
+ * <li>"offhookInitResponse"</li>
+ * <li>"offhookTermResponse"</li>
+ * <li>"openResponse"</li>
+ * <li>"pauseRecordResponse"</li>
+ * <li>"previewDialResponse"</li>
+ * <li>"requeueResponse"</li>
+ * <li>"agentStats"</li>
+ * <li>"agentDailyStats"</li>
+ * <li>"campaignStats"</li>
+ * <li>"queueStats"</li>
+ * <li>"tcpaSafeResponse"</li>
+ * <li>"coldXferResponse"</li>
+ * <li>"warmXferResponse"</li>
  * @type {object}
  */
-
-/*jshint esnext: true */
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
     "AGENT_STATE":"agentStateResponse",
@@ -32,6 +69,7 @@ const CALLBACK_TYPES = {
     "GATES_CHANGE":"gatesChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
+    "LOG_RESULTS":"logResultsResponse",
     "HOLD":"holdResponse",
     "LOGIN":"loginResponse",
     "SILENT_MONITOR":"monitorResponse",
@@ -49,7 +87,6 @@ const CALLBACK_TYPES = {
     "TCPA_SAFE":"tcpaSafeResponse",
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse"
-
 };
 
 const MESSAGE_TYPES = {
@@ -115,6 +152,7 @@ function initAgentLibraryCore (context) {
      * @memberof AgentLibrary
      * @property {object} callbacks Internal map of registered callback functions
      * @property {object} _requests Internal map of requests by message id, private property.
+     * @property {object} _db Internal IndexedDB used for logging
      * @example
      * var Lib = new AgentLibrary({
      *      socketDest:'ws://d01-test.cf.dev:8080',
@@ -132,6 +170,12 @@ function initAgentLibraryCore (context) {
         this.callbacks = {};
         this._requests = {};
 
+        // set instance on model object
+        UIModel.getInstance().libraryInstance = this;
+
+        // initialize indexedDB for logging
+        this.openLogger();
+
         // set default values
         if(typeof config.callbacks !== 'undefined'){
             this.callbacks = config.callbacks;
@@ -143,9 +187,6 @@ function initAgentLibraryCore (context) {
         }else{
             // todo default socket address?
         }
-
-        // set instance on model object
-        UIModel.getInstance().libraryInstance = this;
 
         return this;
     };

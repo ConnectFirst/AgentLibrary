@@ -66,10 +66,9 @@ BargeInRequest.prototype.processResponse = function(response) {
     formattedResponse.uii = utils.getText(resp, 'uii');
 
     if(formattedResponse.status === "OK"){
-        console.log("AgentLibrary: Barge-in successful.", formattedResponse.message );
+        utils.logMessage(LOG_LEVELS.DEBUG, formattedResponse.message, response);
     }else{
-
-        console.warn("AgentLibrary: There was an error processing the Barge-In request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.WARN, "There was an error processing the Barge-In request. " + formattedResponse.detail, response);
     }
 
     return formattedResponse;

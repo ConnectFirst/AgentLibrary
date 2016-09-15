@@ -35,7 +35,7 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dial
     // validate dialDest is sip or 10-digit num
     if(!utils.validateDest(this.dialDest)){
         // TODO propagate this to the client
-        console.error("AgentLibrary: dialDest must be a valid sip or 10-digit DID");
+        utils.logMessage(LOG_LEVELS.WARN, "dialDest [" + this.dialDest + "] must be a valid sip or 10-digit DID", "");
     }
 
 };
@@ -135,11 +135,15 @@ ConfigRequest.prototype.processResponse = function(response) {
     var status = utils.getText(resp, "status");
     var detail = utils.getText(resp, "detail");
     var model = UIModel.getInstance();
+    var message = "";
     var formattedResponse = utils.buildDefaultResponse(response);
 
     if(detail === "Logon Session Configuration Updated!"){
         // this is an update login packet
         model.agentSettings.updateLoginMode = true;
+
+        message = "Logon Session Configuration Updated!";
+        utils.logMessage(LOG_LEVELS.INFO, message, response);
     }
 
     if(status === "SUCCESS"){
@@ -181,7 +185,8 @@ ConfigRequest.prototype.processResponse = function(response) {
 
             }else{
                 // this was a reconnect
-                console.log("AgentLibrary: Processed a Layer 2 Reconnect Successfully");
+                message = "Processed a Layer 2 Reconnect Successfully";
+                utils.logMessage(LOG_LEVELS.INFO, message, response);
             }
         }
 
@@ -198,7 +203,7 @@ ConfigRequest.prototype.processResponse = function(response) {
         if(formattedResponse.message === ""){
             formattedResponse.message = "Agent configuration attempt failed (2nd layer login)"
         }
-        console.warn("AgentLibrary: Layer 2 login failed!");
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }
 
     return formattedResponse;

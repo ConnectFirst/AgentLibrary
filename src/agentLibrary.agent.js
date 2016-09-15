@@ -59,6 +59,9 @@ function initAgentLibraryAgent (context) {
             this.closeSocket();
         }
 
+        // clear logger db
+        this.clearLog();
+
     };
 
     /**

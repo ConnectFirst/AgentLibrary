@@ -70,15 +70,15 @@ RecordRequest.prototype.processResponse = function(response) {
             if(formattedResponse.message === ""){
                 formattedResponse.message = "Broadcasting new record state of " + formattedResponse.state;
             }
-            console.log("AgentLibrary: Broadcasting new record state of " + formattedResponse.state);
+            utils.logMessage(LOG_LEVELS.DEBUG, formattedResponse.message, response);
         }else{
-            console.log("AgentLibrary: Record Response is for a different call...discarding");
+            utils.logMessage(LOG_LEVELS.DEBUG, "Record Response is for a different call...discarding", response);
         }
     }else{
         if(formattedResponse.message === ""){
             formattedResponse.message = "Error processing RECORD request." + formattedResponse.message + "\n" + formattedResponse.detail;
         }
-        console.warn("AgentLibrary: Error processing RECORD request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }
 
     return formattedResponse;

@@ -56,10 +56,11 @@ XferColdRequest.prototype.processResponse = function(response) {
     formattedResponse.dialDest = utils.getText(resp, 'dial_dest');
 
     if(formattedResponse.status === "OK"){
-        console.log("AgentLibrary: Cold Xfer to " + formattedResponse.dialDest + " processed successfully." );
-    }else{
 
-        console.warn("AgentLibrary: There was an error processing the Cold Xfer request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+    }else{
+        // log message response
+        var message = "There was an error processing the Cold Xfer request. " + formattedResponse.message + " : " + formattedResponse.detail;
+        utils.logMessage(LOG_LEVELS.WARN, message, response);
     }
 
     return formattedResponse;

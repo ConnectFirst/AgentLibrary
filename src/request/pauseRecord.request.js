@@ -80,15 +80,15 @@ PauseRecordRequest.prototype.processResponse = function(response) {
             if(formattedResponse.message === ""){
                 formattedResponse.message = "Broadcasting new record state of " + formattedResponse.state;
             }
-            console.log("AgentLibrary: Broadcasting new record state of " + formattedResponse.state);
+            utils.logMessage(LOG_LEVELS.DEBUG, "Broadcasting new record state of " + formattedResponse.state, response);
         }else{
-            console.log("AgentLibrary: Pause Record Response is for a different call...discarding");
+            utils.logMessage(LOG_LEVELS.DEBUG, "Pause Record Response is for a different call...discarding", response);
         }
     }else{
         if(formattedResponse.message === ""){
             formattedResponse.message = "Error processing PAUSE-RECORD request." + formattedResponse.message + "\n" + formattedResponse.detail;
         }
-        console.warn("AgentLibrary: Error processing PAUSE-RECORD request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }
 
     return formattedResponse;

@@ -4,6 +4,7 @@ var initAgentLibrary = function (context) {
     initAgentLibrarySocket(context);
     initAgentLibraryAgent(context);
     initAgentLibraryCall(context);
+    initAgentLibraryLogger(context);
 
     return context.AgentLibrary;
 };
@@ -11,7 +12,7 @@ var initAgentLibrary = function (context) {
 if (typeof define === 'function' && define.amd) {
     // Expose Library as an AMD module if it's loaded with RequireJS or
     // similar.
-    console.log("AgentLibrary: using AMD");
+    //console.log("AgentLibrary: using AMD");
     define(function () {
         return initAgentLibrary({});
     });
@@ -19,11 +20,11 @@ if (typeof define === 'function' && define.amd) {
     // Node. Does not work with strict CommonJS, but
     // only CommonJS-like environments that support module.exports,
     // like Node.
-    console.log("AgentLibrary: Using Node");
+    //console.log("AgentLibrary: Using Node");
     module.exports = initAgentLibrary(this);
 } else {
     // Load Library normally (creating a Library global) if not using an AMD
     // loader.
-    console.log("AgentLibrary: Not using AMD");
+    //console.log("AgentLibrary: Not using AMD");
     initAgentLibrary(this);
 }

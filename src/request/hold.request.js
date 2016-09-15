@@ -76,16 +76,16 @@ HoldRequest.prototype.processResponse = function(response) {
             if(formattedResponse.message === ""){
                 formattedResponse.message = "Broadcasting new hold state of " + formattedResponse.holdState;
             }
-            console.log("AgentLibrary: Broadcasting new hold state of " + formattedResponse.holdState);
+            utils.logMessage(LOG_LEVELS.DEBUG, "Broadcasting new hold state of " + formattedResponse.holdState, response);
         }
         else{
-            console.log("AgentLibrary: Hold Response is for a different call...discarding");
+            utils.logMessage(LOG_LEVELS.DEBUG, "Hold Response is for a different call...discarding", response);
         }
     }else{
         if(formattedResponse.message === ""){
             formattedResponse.message = "Error processing HOLD request. " +  + formattedResponse.message + "\n" + formattedResponse.detail;
         }
-        console.warn("AgentLibrary: Error processing HOLD request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.WARN, "Error processing HOLD request. " + formattedResponse.detail, response);
     }
 
     return formattedResponse;

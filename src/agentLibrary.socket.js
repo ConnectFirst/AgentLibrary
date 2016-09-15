@@ -8,8 +8,9 @@ function initAgentLibrarySocket (context) {
         var instance = this;
         utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
         if("WebSocket" in context){
-            console.log("AgentLibrary: attempting to open socket connection...");
-            instance.socket = new WebSocket(UIModel.getInstance().applicationSettings.socketDest);
+            var socketDest = UIModel.getInstance().applicationSettings.socketDest;
+            utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
+            instance.socket = new WebSocket(socketDest);
 
             instance.socket.onopen = function() {
                 UIModel.getInstance().applicationSettings.socketConnected = true;
@@ -38,7 +39,7 @@ function initAgentLibrarySocket (context) {
                 UIModel.getInstance().statsIntervalId = null;
             };
         }else{
-            console.warn("AgentLibrary: WebSocket NOT supported by your Browser.");
+            utils.logMessage(LOG_LEVELS.WARN, "WebSocket NOT supported by your Browser", "");
         }
     };
 

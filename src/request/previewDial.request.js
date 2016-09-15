@@ -81,7 +81,7 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
     };
 
     if(notif['@callbacks'] === 'TRUE'){
-        console.log("AgentLibrary: New CALLBACK packet request rec'd from dialer");
+        utils.logMessage(LOG_LEVELS.INFO, "New CALLBACK packet request rec'd from dialer", notification);
         // clear callbacks??
         //model.callbacks = [];
         for(var l = 0; l < leads.length; l++){
@@ -89,7 +89,6 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
             model.callbacks.push(lead);
         }
     }else{
-        console.log("AgentLibrary: New PREVIEW-DIAL packet rec'd from dialer");
         model.outboundSettings.previewDialLeads = leads;
     }
 

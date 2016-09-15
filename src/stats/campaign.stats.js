@@ -45,11 +45,41 @@ CampaignStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var campaigns = [];
+    var campRaw = {};
+    var camp = {};
 
     if(Array.isArray(resp.campaign)){
         for(var c=0; c< resp.campaign.length; c++){
-            var campRaw = resp.campaign[c];
-            var camp = {
+            campRaw = resp.campaign[c];
+            if(campRaw){
+                camp = {
+                    active:campRaw["@a"],
+                    abandon:campRaw["@aba"],
+                    answer:campRaw["@an"],
+                    available:campRaw["@av"],
+                    busy:campRaw["@b"],
+                    complete:campRaw["@c"],
+                    error:campRaw["@e"],
+                    fax:campRaw["@f"],
+                    campaignId:campRaw["@id"],
+                    intercept:campRaw["@int"],
+                    machine:campRaw["@m"],
+                    noanswer:campRaw["@na"],
+                    campaignName:campRaw["@name"],
+                    pending:campRaw["@p"],
+                    ready:campRaw["@r"],
+                    staffed:campRaw["@s"],
+                    totalConnects:campRaw["@tc"],
+                    totalTalkTime:campRaw["@ttt"]
+                };
+            }
+
+            campaigns.push(camp);
+        }
+    }else{
+        campRaw = resp.campaign;
+        if(campRaw){
+            camp = {
                 active:campRaw["@a"],
                 abandon:campRaw["@aba"],
                 answer:campRaw["@an"],
@@ -69,30 +99,8 @@ CampaignStats.prototype.processResponse = function(stats) {
                 totalConnects:campRaw["@tc"],
                 totalTalkTime:campRaw["@ttt"]
             };
-            campaigns.push(camp);
         }
-    }else{
-        var campRaw = resp.campaign;
-        var camp = {
-            active:campRaw["@a"],
-            abandon:campRaw["@aba"],
-            answer:campRaw["@an"],
-            available:campRaw["@av"],
-            busy:campRaw["@b"],
-            complete:campRaw["@c"],
-            error:campRaw["@e"],
-            fax:campRaw["@f"],
-            campaignId:campRaw["@id"],
-            intercept:campRaw["@int"],
-            machine:campRaw["@m"],
-            noanswer:campRaw["@na"],
-            campaignName:campRaw["@name"],
-            pending:campRaw["@p"],
-            ready:campRaw["@r"],
-            staffed:campRaw["@s"],
-            totalConnects:campRaw["@tc"],
-            totalTalkTime:campRaw["@ttt"]
-        };
+
         campaigns.push(camp);
     }
 

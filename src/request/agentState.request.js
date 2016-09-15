@@ -80,8 +80,6 @@ AgentStateRequest.prototype.processResponse = function(response) {
             currStateStr = currAuxState;
         }
 
-        console.log("AgentLibrary: Agent state changed from [" + prevStateStr + "] to [" + currStateStr + "]" );
-
         // Update the state in the UIModel
         model.agentSettings.currentState = currState;
         model.agentSettings.currentStateLabel = currAuxState;
@@ -90,7 +88,10 @@ AgentStateRequest.prototype.processResponse = function(response) {
         if(formattedResponse.message === ""){
             formattedResponse.message = "Unable to change agent state";
         }
-        console.warn("AgentLibrary: Unable to change agent state " + formattedResponse.detail);
+
+        // log message response
+        var message = "Unable to change agent state. " + formattedResponse.detail;
+        utils.logMessage(LOG_LEVELS.WARN, message, response);
     }
 
     return formattedResponse;

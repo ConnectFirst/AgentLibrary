@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-13 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-15 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -749,8 +749,6 @@ AgentStateRequest.prototype.processResponse = function(response) {
             currStateStr = currAuxState;
         }
 
-        console.log("AgentLibrary: Agent state changed from [" + prevStateStr + "] to [" + currStateStr + "]" );
-
         // Update the state in the UIModel
         model.agentSettings.currentState = currState;
         model.agentSettings.currentStateLabel = currAuxState;
@@ -759,7 +757,10 @@ AgentStateRequest.prototype.processResponse = function(response) {
         if(formattedResponse.message === ""){
             formattedResponse.message = "Unable to change agent state";
         }
-        console.warn("AgentLibrary: Unable to change agent state " + formattedResponse.detail);
+
+        // log message response
+        var message = "Unable to change agent state. " + formattedResponse.detail;
+        utils.logMessage(LOG_LEVELS.WARN, message, response);
     }
 
     return formattedResponse;
@@ -835,10 +836,9 @@ BargeInRequest.prototype.processResponse = function(response) {
     formattedResponse.uii = utils.getText(resp, 'uii');
 
     if(formattedResponse.status === "OK"){
-        console.log("AgentLibrary: Barge-in successful.", formattedResponse.message );
+        utils.logMessage(LOG_LEVELS.DEBUG, formattedResponse.message, response);
     }else{
-
-        console.warn("AgentLibrary: There was an error processing the Barge-In request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.WARN, "There was an error processing the Barge-In request. " + formattedResponse.detail, response);
     }
 
     return formattedResponse;
@@ -1150,10 +1150,11 @@ XferColdRequest.prototype.processResponse = function(response) {
     formattedResponse.dialDest = utils.getText(resp, 'dial_dest');
 
     if(formattedResponse.status === "OK"){
-        console.log("AgentLibrary: Cold Xfer to " + formattedResponse.dialDest + " processed successfully." );
-    }else{
 
-        console.warn("AgentLibrary: There was an error processing the Cold Xfer request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+    }else{
+        // log message response
+        var message = "There was an error processing the Cold Xfer request. " + formattedResponse.message + " : " + formattedResponse.detail;
+        utils.logMessage(LOG_LEVELS.WARN, message, response);
     }
 
     return formattedResponse;
@@ -1196,7 +1197,7 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dial
     // validate dialDest is sip or 10-digit num
     if(!utils.validateDest(this.dialDest)){
         // TODO propagate this to the client
-        console.error("AgentLibrary: dialDest must be a valid sip or 10-digit DID");
+        utils.logMessage(LOG_LEVELS.WARN, "dialDest [" + this.dialDest + "] must be a valid sip or 10-digit DID", "");
     }
 
 };
@@ -1267,40 +1268,44 @@ ConfigRequest.prototype.formatJSON = function() {
 /*
  * This function is responsible for handling the response to Login from IntelliQueue.
  *
-  {"ui_response":{
-       "@message_id":"IQ10012016082513212000447",
-       "@response_to":"IQ201608251121200",
-       "@type":"LOGIN",
-       "agent_id":{"#text":"1"},
-       "status":{"#text":"SUCCESS"},
-       "message":{"#text":"Hello Geoffrey Mina!"},
-       "detail":{"#text":"Logon request processed successfully!"},
-       "hash_code":{"#text":"404946966"},
-       "login_type":{"#text":"BLENDED"},
-       "outdial_group_id":{"#text":"50692"},
-       "skill_profile_id":{"#text":"1513"},
-       "gates":{
-           "gate_id":[
-               {"#text":"11116"},
-               {"#text":"11117"}
-           ]
-       },
-       "chat_queues":{
-           "chat_queue_id":{"#text":"30"}
-       }
-     }
-  }
+ * {"ui_response":{
+ *      "@message_id":"IQ10012016082513212000447",
+ *      "@response_to":"IQ201608251121200",
+ *      "@type":"LOGIN",
+ *      "agent_id":{"#text":"1"},
+ *      "status":{"#text":"SUCCESS"},
+ *      "message":{"#text":"Hello Geoffrey Mina!"},
+ *      "detail":{"#text":"Logon request processed successfully!"},
+ *      "hash_code":{"#text":"404946966"},
+ *      "login_type":{"#text":"BLENDED"},
+ *      "outdial_group_id":{"#text":"50692"},
+ *      "skill_profile_id":{"#text":"1513"},
+ *      "gates":{
+ *          "gate_id":[
+ *              {"#text":"11116"},
+ *              {"#text":"11117"}
+ *          ]
+ *      },
+ *      "chat_queues":{
+ *          "chat_queue_id":{"#text":"30"}
+ *      }
+ *    }
+ * }
  */
 ConfigRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;
     var status = utils.getText(resp, "status");
     var detail = utils.getText(resp, "detail");
     var model = UIModel.getInstance();
+    var message = "";
     var formattedResponse = utils.buildDefaultResponse(response);
 
     if(detail === "Logon Session Configuration Updated!"){
         // this is an update login packet
         model.agentSettings.updateLoginMode = true;
+
+        message = "Logon Session Configuration Updated!";
+        utils.logMessage(LOG_LEVELS.INFO, message, response);
     }
 
     if(status === "SUCCESS"){
@@ -1342,7 +1347,8 @@ ConfigRequest.prototype.processResponse = function(response) {
 
             }else{
                 // this was a reconnect
-                console.log("AgentLibrary: Processed a Layer 2 Reconnect Successfully");
+                message = "Processed a Layer 2 Reconnect Successfully";
+                utils.logMessage(LOG_LEVELS.INFO, message, response);
             }
         }
 
@@ -1359,7 +1365,7 @@ ConfigRequest.prototype.processResponse = function(response) {
         if(formattedResponse.message === ""){
             formattedResponse.message = "Agent configuration attempt failed (2nd layer login)"
         }
-        console.warn("AgentLibrary: Layer 2 login failed!");
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }
 
     return formattedResponse;
@@ -1697,7 +1703,7 @@ HoldRequest.prototype.formatJSON = function() {
                 "#text":"1"
             },
             "hold_state":{
-                "#text":this.holdState === true ? "ON" : "OFF"
+                "#text":this.holdState === true || this.holdState === "true" ? "ON" : "OFF"
             }
         }
     };
@@ -1739,16 +1745,16 @@ HoldRequest.prototype.processResponse = function(response) {
             if(formattedResponse.message === ""){
                 formattedResponse.message = "Broadcasting new hold state of " + formattedResponse.holdState;
             }
-            console.log("AgentLibrary: Broadcasting new hold state of " + formattedResponse.holdState);
+            utils.logMessage(LOG_LEVELS.DEBUG, "Broadcasting new hold state of " + formattedResponse.holdState, response);
         }
         else{
-            console.log("AgentLibrary: Hold Response is for a different call...discarding");
+            utils.logMessage(LOG_LEVELS.DEBUG, "Hold Response is for a different call...discarding", response);
         }
     }else{
         if(formattedResponse.message === ""){
             formattedResponse.message = "Error processing HOLD request. " +  + formattedResponse.message + "\n" + formattedResponse.detail;
         }
-        console.warn("AgentLibrary: Error processing HOLD request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.WARN, "Error processing HOLD request. " + formattedResponse.detail, response);
     }
 
     return formattedResponse;
@@ -1991,10 +1997,10 @@ LoginRequest.prototype.processResponse = function(response) {
 
     }else if(status === 'RESTRICTED'){
         formattedResponse.message = "Invalid IP Address";
-        console.log("AgentLibrary: Invalid IP Address");
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }else{
         formattedResponse.message = "Invalid Username or password";
-        console.log("AgentLibrary: Invalid Username or password");
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }
 
     return formattedResponse;
@@ -2154,7 +2160,7 @@ OffhookInitRequest.prototype.processResponse = function(response) {
         if(formattedResponse.message === ""){
             formattedResponse.message = "Unable to process offhook request";
         }
-        console.log("AgentLibrary: Unable to process offhook request ", formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message + ' ' + formattedResponse.detail, response);
     }
 
     return formattedResponse;
@@ -2372,15 +2378,15 @@ PauseRecordRequest.prototype.processResponse = function(response) {
             if(formattedResponse.message === ""){
                 formattedResponse.message = "Broadcasting new record state of " + formattedResponse.state;
             }
-            console.log("AgentLibrary: Broadcasting new record state of " + formattedResponse.state);
+            utils.logMessage(LOG_LEVELS.DEBUG, "Broadcasting new record state of " + formattedResponse.state, response);
         }else{
-            console.log("AgentLibrary: Pause Record Response is for a different call...discarding");
+            utils.logMessage(LOG_LEVELS.DEBUG, "Pause Record Response is for a different call...discarding", response);
         }
     }else{
         if(formattedResponse.message === ""){
             formattedResponse.message = "Error processing PAUSE-RECORD request." + formattedResponse.message + "\n" + formattedResponse.detail;
         }
-        console.warn("AgentLibrary: Error processing PAUSE-RECORD request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }
 
     return formattedResponse;
@@ -2493,7 +2499,7 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
     };
 
     if(notif['@callbacks'] === 'TRUE'){
-        console.log("AgentLibrary: New CALLBACK packet request rec'd from dialer");
+        utils.logMessage(LOG_LEVELS.INFO, "New CALLBACK packet request rec'd from dialer", notification);
         // clear callbacks??
         //model.callbacks = [];
         for(var l = 0; l < leads.length; l++){
@@ -2501,7 +2507,6 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
             model.callbacks.push(lead);
         }
     }else{
-        console.log("AgentLibrary: New PREVIEW-DIAL packet rec'd from dialer");
         model.outboundSettings.previewDialLeads = leads;
     }
 
@@ -2595,15 +2600,15 @@ RecordRequest.prototype.processResponse = function(response) {
             if(formattedResponse.message === ""){
                 formattedResponse.message = "Broadcasting new record state of " + formattedResponse.state;
             }
-            console.log("AgentLibrary: Broadcasting new record state of " + formattedResponse.state);
+            utils.logMessage(LOG_LEVELS.DEBUG, formattedResponse.message, response);
         }else{
-            console.log("AgentLibrary: Record Response is for a different call...discarding");
+            utils.logMessage(LOG_LEVELS.DEBUG, "Record Response is for a different call...discarding", response);
         }
     }else{
         if(formattedResponse.message === ""){
             formattedResponse.message = "Error processing RECORD request." + formattedResponse.message + "\n" + formattedResponse.detail;
         }
-        console.warn("AgentLibrary: Error processing RECORD request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.DEBUG, formattedResponse.message, response);
     }
 
     return formattedResponse;
@@ -2670,9 +2675,9 @@ RequeueRequest.prototype.processResponse = function(response) {
     formattedResponse.queueId = utils.getText(resp, 'gate_number');
 
     if(formattedResponse.status === "OK"){
-        console.log("AgentLibrary: Requeue successfull." );
     }else{
-        console.warn("AgentLibrary: There was an error processing the requeue request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        var message = "There was an error processing the requeue request. " + formattedResponse.detail;
+        utils.logMessage(LOG_LEVELS.WARN, message, response);
     }
 
     return formattedResponse;
@@ -2788,7 +2793,8 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
     };
 
     if(notif['@callbacks'] === 'TRUE'){
-        console.log("AgentLibrary: New CALLBACK packet request rec'd from dialer");
+        var message = "New CALLBACK packet request rec'd from dialer";
+        utils.logMessage(LOG_LEVELS.INFO, message, notification);
         // clear callbacks??
         //model.callbacks = [];
         for(var l = 0; l < leads.length; l++){
@@ -2796,7 +2802,6 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
             model.callbacks.push(lead);
         }
     }else{
-        console.log("AgentLibrary: New TCPA_SAFE packet rec'd from dialer");
         model.outboundSettings.tcpaSafeLeads = leads;
     }
 
@@ -2874,10 +2879,9 @@ XferWarmRequest.prototype.processResponse = function(response) {
     formattedResponse.dialDest = utils.getText(resp, 'dial_dest');
 
     if(formattedResponse.status === "OK"){
-        console.log("AgentLibrary: Warm Xfer to " + formattedResponse.dialDest + " processed successfully." );
+        utils.logMessage(LOG_LEVELS.DEBUG, "Warm Xfer to " + formattedResponse.dialDest + " processed successfully.", response);
     }else{
-
-        console.warn("AgentLibrary: There was an error processing the Warm Xfer request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.WARN, "There was an error processing the Warm Xfer request. " + formattedResponse.message + "\n" + formattedResponse.detail, response);
     }
 
     return formattedResponse;
@@ -3082,11 +3086,41 @@ CampaignStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var campaigns = [];
+    var campRaw = {};
+    var camp = {};
 
     if(Array.isArray(resp.campaign)){
         for(var c=0; c< resp.campaign.length; c++){
-            var campRaw = resp.campaign[c];
-            var camp = {
+            campRaw = resp.campaign[c];
+            if(campRaw){
+                camp = {
+                    active:campRaw["@a"],
+                    abandon:campRaw["@aba"],
+                    answer:campRaw["@an"],
+                    available:campRaw["@av"],
+                    busy:campRaw["@b"],
+                    complete:campRaw["@c"],
+                    error:campRaw["@e"],
+                    fax:campRaw["@f"],
+                    campaignId:campRaw["@id"],
+                    intercept:campRaw["@int"],
+                    machine:campRaw["@m"],
+                    noanswer:campRaw["@na"],
+                    campaignName:campRaw["@name"],
+                    pending:campRaw["@p"],
+                    ready:campRaw["@r"],
+                    staffed:campRaw["@s"],
+                    totalConnects:campRaw["@tc"],
+                    totalTalkTime:campRaw["@ttt"]
+                };
+            }
+
+            campaigns.push(camp);
+        }
+    }else{
+        campRaw = resp.campaign;
+        if(campRaw){
+            camp = {
                 active:campRaw["@a"],
                 abandon:campRaw["@aba"],
                 answer:campRaw["@an"],
@@ -3106,30 +3140,8 @@ CampaignStats.prototype.processResponse = function(stats) {
                 totalConnects:campRaw["@tc"],
                 totalTalkTime:campRaw["@ttt"]
             };
-            campaigns.push(camp);
         }
-    }else{
-        var campRaw = resp.campaign;
-        var camp = {
-            active:campRaw["@a"],
-            abandon:campRaw["@aba"],
-            answer:campRaw["@an"],
-            available:campRaw["@av"],
-            busy:campRaw["@b"],
-            complete:campRaw["@c"],
-            error:campRaw["@e"],
-            fax:campRaw["@f"],
-            campaignId:campRaw["@id"],
-            intercept:campRaw["@int"],
-            machine:campRaw["@m"],
-            noanswer:campRaw["@na"],
-            campaignName:campRaw["@name"],
-            pending:campRaw["@p"],
-            ready:campRaw["@r"],
-            staffed:campRaw["@s"],
-            totalConnects:campRaw["@tc"],
-            totalTalkTime:campRaw["@ttt"]
-        };
+
         campaigns.push(camp);
     }
 
@@ -3189,11 +3201,49 @@ QueueStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var queues = [];
+    var gate = {};
+    var gateRaw = {};
 
     if(Array.isArray(resp.gate)){
         for(var c=0; c< resp.gate.length; c++){
-            var gateRaw = resp.gate[c];
-            var gate = {
+            gateRaw = resp.gate[c];
+            if(gateRaw){
+                gate = {
+                    abandon:gateRaw["@aba"],
+                    active:gateRaw["@active"],
+                    answer:gateRaw["@ans"],
+                    asa:gateRaw["@asa"],
+                    available:gateRaw["@avail"],
+                    avgAbandon:gateRaw["@avga"],
+                    avgQueue:gateRaw["@avgq"],
+                    avgTalk:gateRaw["@avgt"],
+                    deflected:gateRaw["@def"],
+                    queueId:gateRaw["@id"],
+                    inQueue:gateRaw["@inq"],
+                    longCall:gateRaw["@long_c"],
+                    longestInQueue:gateRaw["@longq"],
+                    queueName:gateRaw["@name"],
+                    presented:gateRaw["@pres"],
+                    routing:gateRaw["@route"],
+                    shortAbandon:gateRaw["@short_aba"],
+                    shortCall:gateRaw["@short_c"],
+                    sla:gateRaw["@sla"],
+                    slaPass:gateRaw["@sla_p"],
+                    slaFail:gateRaw["@sla_f"],
+                    staffed:gateRaw["@staff"],
+                    tAbandonTime:gateRaw["@t_aba"],
+                    tQueueTime:gateRaw["@t_q"],
+                    tSpeedOfAnswer:gateRaw["@t_soa"],
+                    utilization:gateRaw["@util"]
+                };
+            }
+
+            queues.push(gate);
+        }
+    }else{
+        gateRaw = resp.gate;
+        if(gateRaw){
+            gate = {
                 abandon:gateRaw["@aba"],
                 active:gateRaw["@active"],
                 answer:gateRaw["@ans"],
@@ -3221,38 +3271,8 @@ QueueStats.prototype.processResponse = function(stats) {
                 tSpeedOfAnswer:gateRaw["@t_soa"],
                 utilization:gateRaw["@util"]
             };
-            queues.push(gate);
         }
-    }else{
-        var gateRaw = resp.gate;
-        var gate = {
-            abandon:gateRaw["@aba"],
-            active:gateRaw["@active"],
-            answer:gateRaw["@ans"],
-            asa:gateRaw["@asa"],
-            available:gateRaw["@avail"],
-            avgAbandon:gateRaw["@avga"],
-            avgQueue:gateRaw["@avgq"],
-            avgTalk:gateRaw["@avgt"],
-            deflected:gateRaw["@def"],
-            queueId:gateRaw["@id"],
-            inQueue:gateRaw["@inq"],
-            longCall:gateRaw["@long_c"],
-            longestInQueue:gateRaw["@longq"],
-            queueName:gateRaw["@name"],
-            presented:gateRaw["@pres"],
-            routing:gateRaw["@route"],
-            shortAbandon:gateRaw["@short_aba"],
-            shortCall:gateRaw["@short_c"],
-            sla:gateRaw["@sla"],
-            slaPass:gateRaw["@sla_p"],
-            slaFail:gateRaw["@sla_f"],
-            staffed:gateRaw["@staff"],
-            tAbandonTime:gateRaw["@t_aba"],
-            tQueueTime:gateRaw["@t_q"],
-            tSpeedOfAnswer:gateRaw["@t_soa"],
-            utilization:gateRaw["@util"]
-        };
+
         queues.push(gate);
     }
 
@@ -3488,12 +3508,38 @@ var UIModel = (function() {
 
 
 var utils = {
+    logMessage: function(logLevel, message, data){
+        var instance = UIModel.getInstance().libraryInstance;
+        if(instance._db){
+            var transaction = instance._db.transaction(["logger"], "readwrite");
+            var store = transaction.objectStore("logger");
+
+            var record = {
+                logLevel: logLevel,
+                message: message,
+                dts: new Date(),
+                data: data
+            };
+
+            var request = store.add(record);
+
+        }else{
+            //console.log("AgentLibrary: indexedDb not available");
+        }
+    },
+
     sendMessage: function(instance, msg) {
         if (instance.socket.readyState === 1) {
             // add message id to request map, then send message
             var msgObj = JSON.parse(msg);
+            var type = msgObj.ui_request['@type'];
+            var destination = msgObj.ui_request['@destination'];
+            var message = "Sending " + type + " request message to " + destination;
             instance._requests[msgObj.ui_request['@message_id']] = { type: msgObj.ui_request['@type'], msg: msgObj.ui_request };
             instance.socket.send(msg);
+
+            utils.logMessage(LOG_LEVELS.INFO, message, msgObj);
+
         } else {
             console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
         }
@@ -3504,7 +3550,10 @@ var utils = {
         var type = response.ui_response['@type'];
         var messageId = response.ui_response['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
-        console.log("AgentLibrary: received response: (" + dest + ") " + type.toUpperCase());
+        var message = "Received " + type.toUpperCase() + " response message from " + dest;
+
+        // log message response
+        utils.logMessage(LOG_LEVELS.INFO, message, response);
 
         // Send generic on message response
         utils.fireCallback(instance, CALLBACK_TYPES.ON_MESSAGE, response);
@@ -3607,7 +3656,10 @@ var utils = {
         var type = data.ui_notification['@type'];
         var messageId = data.ui_notification['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
-        console.log("AgentLibrary: received notification: (" + dest + ") " + type.toUpperCase());
+        var message = "Received " + type.toUpperCase() + " notification message from " + dest;
+
+        // log message response
+        utils.logMessage(LOG_LEVELS.INFO, message, data);
 
         switch (type.toUpperCase()){
             case MESSAGE_TYPES.ADD_SESSION:
@@ -3683,7 +3735,10 @@ var utils = {
         var type = response.dialer_request['@type'];
         var messageId = response.dialer_request['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
-        console.log("AgentLibrary: received response: (" + dest + ") " + type.toUpperCase());
+        var message = "Received " + type.toUpperCase() + " dialer response message from " + dest;
+
+        // log message response
+        utils.logMessage(LOG_LEVELS.INFO, message, response);
 
         // Send generic on message response
         utils.fireCallback(instance, CALLBACK_TYPES.ON_MESSAGE, response);
@@ -3705,7 +3760,10 @@ var utils = {
     processStats: function(instance, data)
     {
         var type = data.ui_stats['@type'];
-        //console.log("AgentLibrary: received stats: (IS) " + type.toUpperCase());
+        var message = "Received " + type.toUpperCase() + " response message from IS";
+
+        // log message response
+        utils.logMessage(LOG_LEVELS.INFO, message, data);
 
         // Fire callback function
         switch (type.toUpperCase()) {
@@ -4137,19 +4195,56 @@ var utils = {
 
 
 // CONSTANTS
+
+
+/*jshint esnext: true */
+const LOG_LEVELS ={
+    "DEBUG":"debug",
+    "INFO":"info",
+    "WARN":"warn",
+    "ERROR":"error"
+};
+
 /**
  * @memberof AgentLibrary
  * Possible callback types:
- * <li>"openResponse"</li>
- * <li>"closeResponse"</li>
- * <li>"loginResponse"</li>
- * <li>"logoutResponse"</li>
- * <li>"configureResponse"</li>
+ * <li>"addSessionNotification"</li>
  * <li>"agentStateResponse"</li>
+ * <li>"bargeInResponse"</li>
+ * <li>"closeResponse"</li>
+ * <li>"coachResponse"</li>
+ * <li>"configureResponse"</li>
+ * <li>"callNotesResponse"</li>
+ * <li>"callbacksPendingResponse"</li>
+ * <li>"callbackCancelResponse"</li>
+ * <li>"campaignDispositionsResponse"</li>
+ * <li>"dialGroupChangeNotification"</li>
+ * <li>"dialGroupChangePendingNotification"</li>
+ * <li>"dropSessionNotification"</li>
+ * <li>"earlyUiiNotification"</li>
+ * <li>"endCallNotification"</li>
+ * <li>"gatesChangeNotification"</li>
+ * <li>"genericNotification"</li>
+ * <li>"genericResponse"</li>
+ * <li>"holdResponse"</li>
+ * <li>"loginResponse"</li>
+ * <li>"monitorResponse"</li>
+ * <li>"newCallNotification"</li>
+ * <li>"offhookInitResponse"</li>
+ * <li>"offhookTermResponse"</li>
+ * <li>"openResponse"</li>
+ * <li>"pauseRecordResponse"</li>
+ * <li>"previewDialResponse"</li>
+ * <li>"requeueResponse"</li>
+ * <li>"agentStats"</li>
+ * <li>"agentDailyStats"</li>
+ * <li>"campaignStats"</li>
+ * <li>"queueStats"</li>
+ * <li>"tcpaSafeResponse"</li>
+ * <li>"coldXferResponse"</li>
+ * <li>"warmXferResponse"</li>
  * @type {object}
  */
-
-/*jshint esnext: true */
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
     "AGENT_STATE":"agentStateResponse",
@@ -4169,6 +4264,7 @@ const CALLBACK_TYPES = {
     "GATES_CHANGE":"gatesChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
+    "LOG_RESULTS":"logResultsResponse",
     "HOLD":"holdResponse",
     "LOGIN":"loginResponse",
     "SILENT_MONITOR":"monitorResponse",
@@ -4186,7 +4282,6 @@ const CALLBACK_TYPES = {
     "TCPA_SAFE":"tcpaSafeResponse",
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse"
-
 };
 
 const MESSAGE_TYPES = {
@@ -4252,6 +4347,7 @@ function initAgentLibraryCore (context) {
      * @memberof AgentLibrary
      * @property {object} callbacks Internal map of registered callback functions
      * @property {object} _requests Internal map of requests by message id, private property.
+     * @property {object} _db Internal IndexedDB used for logging
      * @example
      * var Lib = new AgentLibrary({
      *      socketDest:'ws://d01-test.cf.dev:8080',
@@ -4269,6 +4365,12 @@ function initAgentLibraryCore (context) {
         this.callbacks = {};
         this._requests = {};
 
+        // set instance on model object
+        UIModel.getInstance().libraryInstance = this;
+
+        // initialize indexedDB for logging
+        this.openLogger();
+
         // set default values
         if(typeof config.callbacks !== 'undefined'){
             this.callbacks = config.callbacks;
@@ -4280,9 +4382,6 @@ function initAgentLibraryCore (context) {
         }else{
             // todo default socket address?
         }
-
-        // set instance on model object
-        UIModel.getInstance().libraryInstance = this;
 
         return this;
     };
@@ -4804,8 +4903,9 @@ function initAgentLibrarySocket (context) {
         var instance = this;
         utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
         if("WebSocket" in context){
-            console.log("AgentLibrary: attempting to open socket connection...");
-            instance.socket = new WebSocket(UIModel.getInstance().applicationSettings.socketDest);
+            var socketDest = UIModel.getInstance().applicationSettings.socketDest;
+            utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
+            instance.socket = new WebSocket(socketDest);
 
             instance.socket.onopen = function() {
                 UIModel.getInstance().applicationSettings.socketConnected = true;
@@ -4834,7 +4934,7 @@ function initAgentLibrarySocket (context) {
                 UIModel.getInstance().statsIntervalId = null;
             };
         }else{
-            console.warn("AgentLibrary: WebSocket NOT supported by your Browser.");
+            utils.logMessage(LOG_LEVELS.WARN, "WebSocket NOT supported by your Browser", "");
         }
     };
 
@@ -4903,6 +5003,9 @@ function initAgentLibraryAgent (context) {
             utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
             this.closeSocket();
         }
+
+        // clear logger db
+        this.clearLog();
 
     };
 
@@ -5283,12 +5386,182 @@ function initAgentLibraryCall (context) {
 
 }
 
+function initAgentLibraryLogger (context) {
+
+    'use strict';
+
+    var AgentLibrary = context.AgentLibrary;
+
+    AgentLibrary.prototype.openLogger = function(){
+        var instance = this;
+
+        if("indexedDB" in context){
+            // Open database
+            var dbRequest = indexedDB.open("AgentLibraryLogging", 5); // version number
+
+            dbRequest.onerror = function(event){
+                console.error("Error requesting DB access");
+            };
+
+            dbRequest.onsuccess = function(event){
+                instance._db = event.target.result;
+
+                instance._db.onerror = function(event){
+                    // Generic error handler for all errors targeted at this database requests
+                    console.error("AgentLibrary: Database error - " + event.target.errorCode);
+                };
+
+                instance._db.onsuccess = function(event){
+                    console.log("AgentLibrary: Successful logging of record");
+                };
+            };
+
+            // This event is only implemented in recent browsers
+            dbRequest.onupgradeneeded = function(event){
+                instance._db = event.target.result;
+
+                // Create an objectStore to hold log information. Key path should be unique
+                if(!instance._db.objectStoreNames.contains("logger")){
+                    var objectStore = instance._db.createObjectStore("logger", { autoIncrement: true });
+
+                    // simple indicies: index name, index column path
+                    objectStore.createIndex("logLevel", "logLevel", {unique: false});
+                    objectStore.createIndex("dts", "dts", {unique: false});
+
+                    // index for logLevel and date range
+                    var name = "levelAndDate";
+                    var keyPath = ['logLevel','dts'];
+                    objectStore.createIndex(name, keyPath, {unique: false});
+                }
+            };
+
+        }else{
+            console.warn("AgentLibrary: indexedDB NOT supported by your Browser.");
+        }
+    };
+
+    /**
+     * Clear the AgentLibrary log by emptying the IndexedDB object store
+     * @memberof AgentLibrary
+     */
+    AgentLibrary.prototype.clearLog = function(){
+        var DBDeleteRequest = indexedDB.deleteDatabase("AgentLibraryLogging"); // todo change this after dev done
+
+        DBDeleteRequest.onerror = function(event) {
+            console.log("Error deleting database.");
+        };
+
+        DBDeleteRequest.onsuccess = function(event) {
+            console.log("Database deleted successfully");
+
+            console.log(request.result); // should be null
+        };
+
+        /*var transaction = this._db.transaction(["logger"], "readwrite");
+        var objectStore = transaction.objectStore("logger");
+
+        var objectStoreRequest = objectStore.clear();
+
+        objectStoreRequest.onsuccess = function(event){
+            console.log("AgentLibrary: logger database cleared");
+        };*/
+    };
+
+    AgentLibrary.prototype.getLogRecords = function(logLevel, startDate, endDate, callback){
+        logLevel = logLevel || "";
+        var instance = this;
+        var transaction = instance._db.transaction(["logger"], "readonly");
+        var objStore = transaction.objectStore("logger");
+        var index = null,
+            cursor = null,
+            range = null;
+        var returnVal = [];
+        utils.setCallback(instance, CALLBACK_TYPES.LOG_RESULTS, callback);
+
+        if(logLevel.toUpperCase() !== "ALL") { // looking for specific log level type
+            if(startDate && endDate){
+                var lowerBound = [logLevel.toLowerCase(), startDate];
+                var upperBound = [logLevel.toLowerCase(), endDate];
+                range = IDBKeyRange.bound(lowerBound,upperBound);
+            }else if(startDate){
+                range = IDBKeyRange.lowerBound([logLevel.toLowerCase(), startDate]);
+            }else if(endDate){
+                range = IDBKeyRange.upperBound([logLevel.toLowerCase(), endDate]);
+            }
+
+            if(range !== null){
+                // with the provided date range
+                index = objStore.index("levelAndDate");
+                index.openCursor(range).onsuccess = function(event){
+                    cursor = event.target.result;
+                    if(cursor){
+                        returnVal.push(cursor.value);
+                        cursor.continue();
+                    }
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                };
+
+            }else{
+                // no date range specified, return all within log level
+                index = objStore.index("logLevel");
+                index.openCursor().onsuccess = function(event){
+                    cursor = event.target.result;
+                    if(cursor){
+                        returnVal.push(cursor.value);
+                        cursor.continue();
+                    }
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                };
+
+            }
+        } else { // give us all log level types
+
+            if(startDate && endDate){
+                range = IDBKeyRange.bound(startDate,endDate);
+            }else if(startDate){
+                range = IDBKeyRange.lowerBound(startDate);
+            }else if(endDate){
+                range = IDBKeyRange.upperBound(endDate);
+            }
+
+            if(range !== null){
+                // with the provided date range
+                index = objStore.index("dts");
+
+                index.openCursor(range).onsuccess = function(event){
+                    cursor = event.target.result;
+                    if(cursor){
+                        returnVal.push(cursor.value);
+                        cursor.continue();
+                    }
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                };
+            }else{
+                // no date range specified, return all records
+                objStore.openCursor().onsuccess = function(event){
+                    cursor = event.target.result;
+                    if(cursor){
+                        returnVal.push(cursor.value);
+                        cursor.continue();
+                    }
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                };
+            }
+
+        }
+
+        return null;
+
+    };
+
+}
 var initAgentLibrary = function (context) {
 
     initAgentLibraryCore(context);
     initAgentLibrarySocket(context);
     initAgentLibraryAgent(context);
     initAgentLibraryCall(context);
+    initAgentLibraryLogger(context);
 
     return context.AgentLibrary;
 };
@@ -5296,7 +5569,7 @@ var initAgentLibrary = function (context) {
 if (typeof define === 'function' && define.amd) {
     // Expose Library as an AMD module if it's loaded with RequireJS or
     // similar.
-    console.log("AgentLibrary: using AMD");
+    //console.log("AgentLibrary: using AMD");
     define(function () {
         return initAgentLibrary({});
     });
@@ -5304,12 +5577,12 @@ if (typeof define === 'function' && define.amd) {
     // Node. Does not work with strict CommonJS, but
     // only CommonJS-like environments that support module.exports,
     // like Node.
-    console.log("AgentLibrary: Using Node");
+    //console.log("AgentLibrary: Using Node");
     module.exports = initAgentLibrary(this);
 } else {
     // Load Library normally (creating a Library global) if not using an AMD
     // loader.
-    console.log("AgentLibrary: Not using AMD");
+    //console.log("AgentLibrary: Not using AMD");
     initAgentLibrary(this);
 }
 } (this));

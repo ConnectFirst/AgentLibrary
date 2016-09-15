@@ -17,7 +17,8 @@ module.exports = function(grunt) {
     sub('src/submodule/%s.submodule.js'),
     sub('src/%s.socket.js'),
     sub('src/%s.agent.js'),
-    sub('src/%s.call.js')
+    sub('src/%s.call.js'),
+    sub('src/%s.logger.js')
   ];
 
   var DIST_HEAD_LIST = [

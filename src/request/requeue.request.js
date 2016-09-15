@@ -59,9 +59,9 @@ RequeueRequest.prototype.processResponse = function(response) {
     formattedResponse.queueId = utils.getText(resp, 'gate_number');
 
     if(formattedResponse.status === "OK"){
-        console.log("AgentLibrary: Requeue successfull." );
     }else{
-        console.warn("AgentLibrary: There was an error processing the requeue request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        var message = "There was an error processing the requeue request. " + formattedResponse.detail;
+        utils.logMessage(LOG_LEVELS.WARN, message, response);
     }
 
     return formattedResponse;

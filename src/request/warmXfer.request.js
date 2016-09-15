@@ -69,10 +69,9 @@ XferWarmRequest.prototype.processResponse = function(response) {
     formattedResponse.dialDest = utils.getText(resp, 'dial_dest');
 
     if(formattedResponse.status === "OK"){
-        console.log("AgentLibrary: Warm Xfer to " + formattedResponse.dialDest + " processed successfully." );
+        utils.logMessage(LOG_LEVELS.DEBUG, "Warm Xfer to " + formattedResponse.dialDest + " processed successfully.", response);
     }else{
-
-        console.warn("AgentLibrary: There was an error processing the Warm Xfer request. " + formattedResponse.message + "\n" + formattedResponse.detail);
+        utils.logMessage(LOG_LEVELS.WARN, "There was an error processing the Warm Xfer request. " + formattedResponse.message + "\n" + formattedResponse.detail, response);
     }
 
     return formattedResponse;

@@ -1,10 +1,36 @@
 var utils = {
+    logMessage: function(logLevel, message, data){
+        var instance = UIModel.getInstance().libraryInstance;
+        if(instance._db){
+            var transaction = instance._db.transaction(["logger"], "readwrite");
+            var store = transaction.objectStore("logger");
+
+            var record = {
+                logLevel: logLevel,
+                message: message,
+                dts: new Date(),
+                data: data
+            };
+
+            var request = store.add(record);
+
+        }else{
+            //console.log("AgentLibrary: indexedDb not available");
+        }
+    },
+
     sendMessage: function(instance, msg) {
         if (instance.socket.readyState === 1) {
             // add message id to request map, then send message
             var msgObj = JSON.parse(msg);
+            var type = msgObj.ui_request['@type'];
+            var destination = msgObj.ui_request['@destination'];
+            var message = "Sending " + type + " request message to " + destination;
             instance._requests[msgObj.ui_request['@message_id']] = { type: msgObj.ui_request['@type'], msg: msgObj.ui_request };
             instance.socket.send(msg);
+
+            utils.logMessage(LOG_LEVELS.INFO, message, msgObj);
+
         } else {
             console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
         }
@@ -15,7 +41,10 @@ var utils = {
         var type = response.ui_response['@type'];
         var messageId = response.ui_response['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
-        console.log("AgentLibrary: received response: (" + dest + ") " + type.toUpperCase());
+        var message = "Received " + type.toUpperCase() + " response message from " + dest;
+
+        // log message response
+        utils.logMessage(LOG_LEVELS.INFO, message, response);
 
         // Send generic on message response
         utils.fireCallback(instance, CALLBACK_TYPES.ON_MESSAGE, response);
@@ -118,7 +147,10 @@ var utils = {
         var type = data.ui_notification['@type'];
         var messageId = data.ui_notification['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
-        console.log("AgentLibrary: received notification: (" + dest + ") " + type.toUpperCase());
+        var message = "Received " + type.toUpperCase() + " notification message from " + dest;
+
+        // log message response
+        utils.logMessage(LOG_LEVELS.INFO, message, data);
 
         switch (type.toUpperCase()){
             case MESSAGE_TYPES.ADD_SESSION:
@@ -194,7 +226,10 @@ var utils = {
         var type = response.dialer_request['@type'];
         var messageId = response.dialer_request['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
-        console.log("AgentLibrary: received response: (" + dest + ") " + type.toUpperCase());
+        var message = "Received " + type.toUpperCase() + " dialer response message from " + dest;
+
+        // log message response
+        utils.logMessage(LOG_LEVELS.INFO, message, response);
 
         // Send generic on message response
         utils.fireCallback(instance, CALLBACK_TYPES.ON_MESSAGE, response);
@@ -216,7 +251,10 @@ var utils = {
     processStats: function(instance, data)
     {
         var type = data.ui_stats['@type'];
-        //console.log("AgentLibrary: received stats: (IS) " + type.toUpperCase());
+        var message = "Received " + type.toUpperCase() + " response message from IS";
+
+        // log message response
+        utils.logMessage(LOG_LEVELS.INFO, message, data);
 
         // Fire callback function
         switch (type.toUpperCase()) {

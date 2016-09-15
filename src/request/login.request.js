@@ -235,10 +235,10 @@ LoginRequest.prototype.processResponse = function(response) {
 
     }else if(status === 'RESTRICTED'){
         formattedResponse.message = "Invalid IP Address";
-        console.log("AgentLibrary: Invalid IP Address");
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }else{
         formattedResponse.message = "Invalid Username or password";
-        console.log("AgentLibrary: Invalid Username or password");
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }
 
     return formattedResponse;
