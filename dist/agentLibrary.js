@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-15 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-16 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2608,7 +2608,7 @@ RecordRequest.prototype.processResponse = function(response) {
         if(formattedResponse.message === ""){
             formattedResponse.message = "Error processing RECORD request." + formattedResponse.message + "\n" + formattedResponse.detail;
         }
-        utils.logMessage(LOG_LEVELS.DEBUG, formattedResponse.message, response);
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }
 
     return formattedResponse;
@@ -5445,7 +5445,8 @@ function initAgentLibraryLogger (context) {
      * @memberof AgentLibrary
      */
     AgentLibrary.prototype.clearLog = function(){
-        var DBDeleteRequest = indexedDB.deleteDatabase("AgentLibraryLogging"); // todo change this after dev done
+        var instance = this;
+        /*var DBDeleteRequest = indexedDB.deleteDatabase("AgentLibraryLogging"); // todo change this after dev done
 
         DBDeleteRequest.onerror = function(event) {
             console.log("Error deleting database.");
@@ -5455,16 +5456,16 @@ function initAgentLibraryLogger (context) {
             console.log("Database deleted successfully");
 
             console.log(request.result); // should be null
-        };
+        };*/
 
-        /*var transaction = this._db.transaction(["logger"], "readwrite");
+        var transaction = instance._db.transaction(["logger"], "readwrite");
         var objectStore = transaction.objectStore("logger");
 
         var objectStoreRequest = objectStore.clear();
 
         objectStoreRequest.onsuccess = function(event){
             console.log("AgentLibrary: logger database cleared");
-        };*/
+        };
     };
 
     AgentLibrary.prototype.getLogRecords = function(logLevel, startDate, endDate, callback){
@@ -5504,7 +5505,7 @@ function initAgentLibraryLogger (context) {
             }else{
                 // no date range specified, return all within log level
                 index = objStore.index("logLevel");
-                index.openCursor().onsuccess = function(event){
+                index.openCursor(logLevel).onsuccess = function(event){
                     cursor = event.target.result;
                     if(cursor){
                         returnVal.push(cursor.value);

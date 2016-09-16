@@ -88,7 +88,6 @@ function initAgentLibraryLogger (context) {
         var index = null,
             cursor = null,
             range = null;
-        var returnVal = [];
         utils.setCallback(instance, CALLBACK_TYPES.LOG_RESULTS, callback);
 
         if(logLevel.toUpperCase() !== "ALL") { // looking for specific log level type
@@ -104,26 +103,28 @@ function initAgentLibraryLogger (context) {
 
             if(range !== null){
                 // with the provided date range
+                var levelAndDateReturn = [];
                 index = objStore.index("levelAndDate");
                 index.openCursor(range).onsuccess = function(event){
                     cursor = event.target.result;
                     if(cursor){
-                        returnVal.push(cursor.value);
+                        levelAndDateReturn.push(cursor.value);
                         cursor.continue();
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, levelAndDateReturn);
                 };
 
             }else{
                 // no date range specified, return all within log level
+                var logLevelReturn = [];
                 index = objStore.index("logLevel");
-                index.openCursor().onsuccess = function(event){
+                index.openCursor(logLevel).onsuccess = function(event){
                     cursor = event.target.result;
                     if(cursor){
-                        returnVal.push(cursor.value);
+                        logLevelReturn.push(cursor.value);
                         cursor.continue();
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, logLevelReturn);
                 };
 
             }
@@ -139,25 +140,27 @@ function initAgentLibraryLogger (context) {
 
             if(range !== null){
                 // with the provided date range
+                var dtsReturn = [];
                 index = objStore.index("dts");
 
                 index.openCursor(range).onsuccess = function(event){
                     cursor = event.target.result;
                     if(cursor){
-                        returnVal.push(cursor.value);
+                        dtsReturn.push(cursor.value);
                         cursor.continue();
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsReturn);
                 };
             }else{
                 // no date range specified, return all records
+                var allValsReturn = [];
                 objStore.openCursor().onsuccess = function(event){
                     cursor = event.target.result;
                     if(cursor){
-                        returnVal.push(cursor.value);
+                        allValsReturn.push(cursor.value);
                         cursor.continue();
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, allValsReturn);
                 };
             }
 
