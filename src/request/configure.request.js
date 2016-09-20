@@ -34,7 +34,6 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dial
 
     // validate dialDest is sip or 10-digit num
     if(!utils.validateDest(this.dialDest)){
-        // TODO propagate this to the client
         utils.logMessage(LOG_LEVELS.WARN, "dialDest [" + this.dialDest + "] must be a valid sip or 10-digit DID", "");
     }
 

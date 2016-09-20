@@ -29,7 +29,11 @@ var utils = {
             instance._requests[msgObj.ui_request['@message_id']] = { type: msgObj.ui_request['@type'], msg: msgObj.ui_request };
             instance.socket.send(msg);
 
-            utils.logMessage(LOG_LEVELS.INFO, message, msgObj);
+            if(type === 'STATS'){
+                utils.logMessage(LOG_LEVELS.STATS, message, msgObj);
+            }else{
+                utils.logMessage(LOG_LEVELS.INFO, message, msgObj);
+            }
 
         } else {
             console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
@@ -254,7 +258,7 @@ var utils = {
         var message = "Received " + type.toUpperCase() + " response message from IS";
 
         // log message response
-        utils.logMessage(LOG_LEVELS.INFO, message, data);
+        utils.logMessage(LOG_LEVELS.STATS, message, data);
 
         // Fire callback function
         switch (type.toUpperCase()) {

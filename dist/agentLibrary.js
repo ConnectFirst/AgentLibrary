@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-16 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-20 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1196,7 +1196,6 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dial
 
     // validate dialDest is sip or 10-digit num
     if(!utils.validateDest(this.dialDest)){
-        // TODO propagate this to the client
         utils.logMessage(LOG_LEVELS.WARN, "dialDest [" + this.dialDest + "] must be a valid sip or 10-digit DID", "");
     }
 
@@ -3538,7 +3537,11 @@ var utils = {
             instance._requests[msgObj.ui_request['@message_id']] = { type: msgObj.ui_request['@type'], msg: msgObj.ui_request };
             instance.socket.send(msg);
 
-            utils.logMessage(LOG_LEVELS.INFO, message, msgObj);
+            if(type === 'STATS'){
+                utils.logMessage(LOG_LEVELS.STATS, message, msgObj);
+            }else{
+                utils.logMessage(LOG_LEVELS.INFO, message, msgObj);
+            }
 
         } else {
             console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
@@ -3763,7 +3766,7 @@ var utils = {
         var message = "Received " + type.toUpperCase() + " response message from IS";
 
         // log message response
-        utils.logMessage(LOG_LEVELS.INFO, message, data);
+        utils.logMessage(LOG_LEVELS.STATS, message, data);
 
         // Fire callback function
         switch (type.toUpperCase()) {
@@ -4200,6 +4203,7 @@ var utils = {
 /*jshint esnext: true */
 const LOG_LEVELS ={
     "DEBUG":"debug",
+    "STATS":"stats",
     "INFO":"info",
     "WARN":"warn",
     "ERROR":"error"
@@ -5476,7 +5480,6 @@ function initAgentLibraryLogger (context) {
         var index = null,
             cursor = null,
             range = null;
-        var returnVal = [];
         utils.setCallback(instance, CALLBACK_TYPES.LOG_RESULTS, callback);
 
         if(logLevel.toUpperCase() !== "ALL") { // looking for specific log level type
@@ -5492,26 +5495,28 @@ function initAgentLibraryLogger (context) {
 
             if(range !== null){
                 // with the provided date range
+                var levelAndDateReturn = [];
                 index = objStore.index("levelAndDate");
                 index.openCursor(range).onsuccess = function(event){
                     cursor = event.target.result;
                     if(cursor){
-                        returnVal.push(cursor.value);
+                        levelAndDateReturn.push(cursor.value);
                         cursor.continue();
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, levelAndDateReturn);
                 };
 
             }else{
                 // no date range specified, return all within log level
+                var logLevelReturn = [];
                 index = objStore.index("logLevel");
                 index.openCursor(logLevel).onsuccess = function(event){
                     cursor = event.target.result;
                     if(cursor){
-                        returnVal.push(cursor.value);
+                        logLevelReturn.push(cursor.value);
                         cursor.continue();
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, logLevelReturn);
                 };
 
             }
@@ -5527,25 +5532,27 @@ function initAgentLibraryLogger (context) {
 
             if(range !== null){
                 // with the provided date range
+                var dtsReturn = [];
                 index = objStore.index("dts");
 
                 index.openCursor(range).onsuccess = function(event){
                     cursor = event.target.result;
                     if(cursor){
-                        returnVal.push(cursor.value);
+                        dtsReturn.push(cursor.value);
                         cursor.continue();
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsReturn);
                 };
             }else{
                 // no date range specified, return all records
+                var allValsReturn = [];
                 objStore.openCursor().onsuccess = function(event){
                     cursor = event.target.result;
                     if(cursor){
-                        returnVal.push(cursor.value);
+                        allValsReturn.push(cursor.value);
                         cursor.continue();
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, returnVal);
+                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, allValsReturn);
                 };
             }
 

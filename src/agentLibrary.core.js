@@ -5,6 +5,7 @@
 /*jshint esnext: true */
 const LOG_LEVELS ={
     "DEBUG":"debug",
+    "STATS":"stats",
     "INFO":"info",
     "WARN":"warn",
     "ERROR":"error"
