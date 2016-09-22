@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-20 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-22 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4966,6 +4966,9 @@ function initAgentLibraryAgent (context) {
 
         utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
         utils.sendMessage(this, msg);
+
+        // purge records older than 2 days
+        this.purgeLog();
     };
 
     /**
@@ -5007,10 +5010,6 @@ function initAgentLibraryAgent (context) {
             utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
             this.closeSocket();
         }
-
-        // clear logger db
-        this.clearLog();
-
     };
 
     /**
@@ -5444,23 +5443,41 @@ function initAgentLibraryLogger (context) {
         }
     };
 
+
+    /**
+     * Purge records older than 2 days from the AgentLibrary log
+     * @memberof AgentLibrary
+     */
+    AgentLibrary.prototype.purgeLog = function(){
+        var instance = this;
+
+        if(instance._db){
+            var transaction = instance._db.transaction(["logger"], "readwrite");
+            var objectStore = transaction.objectStore("logger");
+            var dateIndex = objectStore.index("dts");
+            var endDate = new Date();
+            endDate.setMinutes(endDate.getMinutes() - 4);
+            //endDate.setDate(endDate.getDate() - 2); // two days ago
+
+            var range = IDBKeyRange.upperBound(endDate);
+            var destroy = dateIndex.openCursor(range).onsuccess = function(event){
+                var cursor = event.target.result;
+                if(cursor){
+                    objectStore.delete(cursor.primaryKey);
+                    //console.log(cursor.primaryKey);
+                    cursor.continue();
+                }
+
+            };
+        }
+    };
+
     /**
      * Clear the AgentLibrary log by emptying the IndexedDB object store
      * @memberof AgentLibrary
      */
     AgentLibrary.prototype.clearLog = function(){
         var instance = this;
-        /*var DBDeleteRequest = indexedDB.deleteDatabase("AgentLibraryLogging"); // todo change this after dev done
-
-        DBDeleteRequest.onerror = function(event) {
-            console.log("Error deleting database.");
-        };
-
-        DBDeleteRequest.onsuccess = function(event) {
-            console.log("Database deleted successfully");
-
-            console.log(request.result); // should be null
-        };*/
 
         var transaction = instance._db.transaction(["logger"], "readwrite");
         var objectStore = transaction.objectStore("logger");
@@ -5470,6 +5487,18 @@ function initAgentLibraryLogger (context) {
         objectStoreRequest.onsuccess = function(event){
             console.log("AgentLibrary: logger database cleared");
         };
+    };
+
+    AgentLibrary.prototype.deleteDB = function(){
+        var DBDeleteRequest = indexedDB.deleteDatabase("AgentLibraryLogging");
+
+         DBDeleteRequest.onerror = function(event) {
+         console.log("Error deleting database.");
+         };
+
+         DBDeleteRequest.onsuccess = function(event) {
+         console.log("Database deleted successfully");
+         };
     };
 
     AgentLibrary.prototype.getLogRecords = function(logLevel, startDate, endDate, callback){

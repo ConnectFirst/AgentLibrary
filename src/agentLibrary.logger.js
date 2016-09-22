@@ -52,23 +52,39 @@ function initAgentLibraryLogger (context) {
         }
     };
 
+
+    /**
+     * Purge records older than 2 days from the AgentLibrary log
+     * @memberof AgentLibrary
+     */
+    AgentLibrary.prototype.purgeLog = function(){
+        var instance = this;
+
+        if(instance._db){
+            var transaction = instance._db.transaction(["logger"], "readwrite");
+            var objectStore = transaction.objectStore("logger");
+            var dateIndex = objectStore.index("dts");
+            var endDate = new Date();
+            endDate.setDate(endDate.getDate() - 2); // two days ago
+
+            var range = IDBKeyRange.upperBound(endDate);
+            var destroy = dateIndex.openCursor(range).onsuccess = function(event){
+                var cursor = event.target.result;
+                if(cursor){
+                    objectStore.delete(cursor.primaryKey);
+                    cursor.continue();
+                }
+
+            };
+        }
+    };
+
     /**
      * Clear the AgentLibrary log by emptying the IndexedDB object store
      * @memberof AgentLibrary
      */
     AgentLibrary.prototype.clearLog = function(){
         var instance = this;
-        /*var DBDeleteRequest = indexedDB.deleteDatabase("AgentLibraryLogging"); // todo change this after dev done
-
-        DBDeleteRequest.onerror = function(event) {
-            console.log("Error deleting database.");
-        };
-
-        DBDeleteRequest.onsuccess = function(event) {
-            console.log("Database deleted successfully");
-
-            console.log(request.result); // should be null
-        };*/
 
         var transaction = instance._db.transaction(["logger"], "readwrite");
         var objectStore = transaction.objectStore("logger");
@@ -78,6 +94,18 @@ function initAgentLibraryLogger (context) {
         objectStoreRequest.onsuccess = function(event){
             console.log("AgentLibrary: logger database cleared");
         };
+    };
+
+    AgentLibrary.prototype.deleteDB = function(){
+        var DBDeleteRequest = indexedDB.deleteDatabase("AgentLibraryLogging");
+
+         DBDeleteRequest.onerror = function(event) {
+         console.log("Error deleting database.");
+         };
+
+         DBDeleteRequest.onsuccess = function(event) {
+         console.log("Database deleted successfully");
+         };
     };
 
     AgentLibrary.prototype.getLogRecords = function(logLevel, startDate, endDate, callback){
