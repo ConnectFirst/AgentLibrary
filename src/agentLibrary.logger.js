@@ -18,6 +18,9 @@ function initAgentLibraryLogger (context) {
             dbRequest.onsuccess = function(event){
                 instance._db = event.target.result;
 
+                //prune items older than 2 days
+                instance.purgeLog();
+
                 instance._db.onerror = function(event){
                     // Generic error handler for all errors targeted at this database requests
                     console.error("AgentLibrary: Database error - " + event.target.errorCode);
@@ -45,6 +48,7 @@ function initAgentLibraryLogger (context) {
                     var keyPath = ['logLevel','dts'];
                     objectStore.createIndex(name, keyPath, {unique: false});
                 }
+
             };
 
         }else{

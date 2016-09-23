@@ -17,9 +17,6 @@ function initAgentLibraryAgent (context) {
 
         utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
         utils.sendMessage(this, msg);
-
-        // purge records older than 2 days
-        this.purgeLog();
     };
 
     /**

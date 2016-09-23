@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-22 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-23 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4966,9 +4966,6 @@ function initAgentLibraryAgent (context) {
 
         utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
         utils.sendMessage(this, msg);
-
-        // purge records older than 2 days
-        this.purgeLog();
     };
 
     /**
@@ -5409,6 +5406,9 @@ function initAgentLibraryLogger (context) {
             dbRequest.onsuccess = function(event){
                 instance._db = event.target.result;
 
+                //prune items older than 2 days
+                instance.purgeLog();
+
                 instance._db.onerror = function(event){
                     // Generic error handler for all errors targeted at this database requests
                     console.error("AgentLibrary: Database error - " + event.target.errorCode);
@@ -5436,6 +5436,7 @@ function initAgentLibraryLogger (context) {
                     var keyPath = ['logLevel','dts'];
                     objectStore.createIndex(name, keyPath, {unique: false});
                 }
+
             };
 
         }else{
@@ -5456,15 +5457,13 @@ function initAgentLibraryLogger (context) {
             var objectStore = transaction.objectStore("logger");
             var dateIndex = objectStore.index("dts");
             var endDate = new Date();
-            endDate.setMinutes(endDate.getMinutes() - 4);
-            //endDate.setDate(endDate.getDate() - 2); // two days ago
+            endDate.setDate(endDate.getDate() - 2); // two days ago
 
             var range = IDBKeyRange.upperBound(endDate);
             var destroy = dateIndex.openCursor(range).onsuccess = function(event){
                 var cursor = event.target.result;
                 if(cursor){
                     objectStore.delete(cursor.primaryKey);
-                    //console.log(cursor.primaryKey);
                     cursor.continue();
                 }
 
