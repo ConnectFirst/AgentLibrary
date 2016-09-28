@@ -41,6 +41,7 @@ const LOG_LEVELS ={
  * <li>"openResponse"</li>
  * <li>"pauseRecordResponse"</li>
  * <li>"previewDialResponse"</li>
+ * <li>"previewLeadStateNotification"</li>
  * <li>"requeueResponse"</li>
  * <li>"agentStats"</li>
  * <li>"agentDailyStats"</li>
@@ -80,6 +81,7 @@ const CALLBACK_TYPES = {
     "OPEN_SOCKET":"openResponse",
     "PAUSE_RECORD":"pauseRecordResponse",
     "PREVIEW_DIAL":"previewDialResponse",
+    "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "REQUEUE":"requeueResponse",
     "STATS_AGENT":"agentStats",
     "STATS_AGENT_DAILY":"agentDailyStats",
@@ -121,6 +123,7 @@ const MESSAGE_TYPES = {
     "PING_CALL":"PING-CALL",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
+    "PREVIEW_LEAD_STATE":"PREVIEW-LEAD-STATE",
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
     "STATS":"STATS",

@@ -62,6 +62,7 @@
   "maxBreakTime": "-1",
   "maxLunchTime": "-1",
   "onCall": false,
+  "onManualOutdial": false,
   "outboundManualDefaultRingtime": "30",
   "pendingCallbacks": [],
   "pendingDialGroupChange": 0,

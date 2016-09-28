@@ -48,6 +48,11 @@ AddSessionNotification.prototype.processResponse = function(notification) {
         model.transferSessions[utils.getText(notif, "session_id")] = {sessionId:utils.getText(notif, "session_id"),destination:utils.getText(notif, "phone"),uii:utils.getText(notif, "uii")};
     }
 
+    // if agent session, set on call status
+    if(notif.session_id === '2'){
+        model.agentSettings.onCall = true;
+    }
+
     formattedResponse.status = "OK";
     formattedResponse.message = "Received ADD-SESSION notification";
     formattedResponse.sessionId = utils.getText(notif, "session_id");

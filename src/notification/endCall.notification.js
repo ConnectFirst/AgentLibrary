@@ -37,6 +37,8 @@ EndCallNotification.prototype.processResponse = function(notification) {
 
     // set call state to "CALL-ENDED"
     model.agentSettings.callState = "CALL-ENDED";
+    model.agentSettings.onCall = false;
+    model.agentSettings.onManualOutdial = false;
 
     // Clear out any transfer sessions from the previous call
     model.transferSessions = {};

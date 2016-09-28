@@ -210,9 +210,6 @@ var utils = {
                 var newCallNotif = new NewCallNotification();
                 var newCallResponse = newCallNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
-
-                // start ping call interval timer, sends message every 30 seconds
-                UIModel.getInstance().pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
@@ -221,6 +218,11 @@ var utils = {
                 }
                 var termResponse = UIModel.getInstance().offhookTermRequest.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
+                break;
+            case MESSAGE_TYPES.PREVIEW_LEAD_STATE:
+                var leadStateNotif = new PreviewLeadStateNotification();
+                var leadStateResponse = leadStateNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_LEAD_STATE, leadStateResponse);
                 break;
         }
     },

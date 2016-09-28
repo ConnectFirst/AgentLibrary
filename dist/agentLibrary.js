@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-23 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-09-28 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -55,6 +55,11 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     // Check to see if we have a transfer leg here, if so, register it
     if(utils.getText(notif, "session_type") === 'OUTBOUND' && sessionAgentId === "" && utils.getText(notif, "allow_control") === true){
         model.transferSessions[utils.getText(notif, "session_id")] = {sessionId:utils.getText(notif, "session_id"),destination:utils.getText(notif, "phone"),uii:utils.getText(notif, "uii")};
+    }
+
+    // if agent session, set on call status
+    if(notif.session_id === '2'){
+        model.agentSettings.onCall = true;
     }
 
     formattedResponse.status = "OK";
@@ -268,6 +273,8 @@ EndCallNotification.prototype.processResponse = function(notification) {
 
     // set call state to "CALL-ENDED"
     model.agentSettings.callState = "CALL-ENDED";
+    model.agentSettings.onCall = false;
+    model.agentSettings.onManualOutdial = false;
 
     // Clear out any transfer sessions from the previous call
     model.transferSessions = {};
@@ -552,6 +559,12 @@ NewCallNotification.prototype.processResponse = function(notification) {
 
     model.currentCall = newCall;
 
+    // start ping call interval timer, sends message every 30 seconds
+    // if this is not a manual outdial and we are not suppressing disposition pop
+    if(newCall.outdialDispositions && newCall.outdialDispositions.dispositions && newCall.outdialDispositions.dispositions.length > 0 && newCall.surveyPopType !== "SUPPRESS"){
+        UIModel.getInstance().pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
+    }
+
     return newCall;
 };
 
@@ -666,6 +679,40 @@ function isCampaign(gate){
     }
     return false;
 }
+
+
+var PreviewLeadStateNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a generic notification
+ *
+ * {
+ *      "ui_notification":{
+ *          "@type":"PREVIEW-LEAD-STATE",
+ *          "@call_type":"MANUAL|PREVIEW",
+ *          "@message_id":"IQ10012016092715393600184",
+ *          "request_id":{"#text":"IQ10012016092715390900179"},
+ *          "lead_state":{"#text":"ANSWER"},
+ *          "callback":{"#text":"FALSE"}
+ *      }
+ *   }
+ * }
+ */
+PreviewLeadStateNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    UIModel.getInstance().agentSettings.onManualOutdial = true;
+
+    var response = {
+        callType: notif['@call_type'],
+        leadState: utils.getText(notif,"lead_state"),
+        callback: utils.getText(notif,"callback")
+    };
+
+    return response;
+};
 
 
 var AgentStateRequest = function(agentState, agentAuxState) {
@@ -3411,6 +3458,7 @@ var UIModel = (function() {
                 maxBreakTime : -1,
                 maxLunchTime : -1,
                 onCall : false,                     // true if agent is on an active call
+                onManualOutdial : false,            // true if agent is on a manual outdial call
                 outboundManualDefaultRingtime : "30",
                 pendingCallbacks : [],
                 pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
@@ -3718,9 +3766,6 @@ var utils = {
                 var newCallNotif = new NewCallNotification();
                 var newCallResponse = newCallNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
-
-                // start ping call interval timer, sends message every 30 seconds
-                UIModel.getInstance().pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
@@ -3729,6 +3774,11 @@ var utils = {
                 }
                 var termResponse = UIModel.getInstance().offhookTermRequest.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_TERM, termResponse);
+                break;
+            case MESSAGE_TYPES.PREVIEW_LEAD_STATE:
+                var leadStateNotif = new PreviewLeadStateNotification();
+                var leadStateResponse = leadStateNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_LEAD_STATE, leadStateResponse);
                 break;
         }
     },
@@ -4239,6 +4289,7 @@ const LOG_LEVELS ={
  * <li>"openResponse"</li>
  * <li>"pauseRecordResponse"</li>
  * <li>"previewDialResponse"</li>
+ * <li>"previewLeadStateNotification"</li>
  * <li>"requeueResponse"</li>
  * <li>"agentStats"</li>
  * <li>"agentDailyStats"</li>
@@ -4278,6 +4329,7 @@ const CALLBACK_TYPES = {
     "OPEN_SOCKET":"openResponse",
     "PAUSE_RECORD":"pauseRecordResponse",
     "PREVIEW_DIAL":"previewDialResponse",
+    "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "REQUEUE":"requeueResponse",
     "STATS_AGENT":"agentStats",
     "STATS_AGENT_DAILY":"agentDailyStats",
@@ -4319,6 +4371,7 @@ const MESSAGE_TYPES = {
     "PING_CALL":"PING-CALL",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
+    "PREVIEW_LEAD_STATE":"PREVIEW-LEAD-STATE",
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
     "STATS":"STATS",

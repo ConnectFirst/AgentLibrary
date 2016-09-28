@@ -83,7 +83,7 @@ var UIModel = (function() {
                 isLoggedInIS : false,               // a check for whether or not user is logged in with IntelliServices
                 socketConnected : false,
                 socketDest : "",
-                isTcpaSafeMode : false              // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
+                isTcpaSafeMode : false             // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
             },
 
             // stat objects
@@ -123,6 +123,7 @@ var UIModel = (function() {
                 maxBreakTime : -1,
                 maxLunchTime : -1,
                 onCall : false,                     // true if agent is on an active call
+                onManualOutdial : false,            // true if agent is on a manual outdial call
                 outboundManualDefaultRingtime : "30",
                 pendingCallbacks : [],
                 pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
