@@ -168,16 +168,43 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a preview dial request message
+     * Sends a preview dial request to call lead based on request id. Call previewFetch method first to get request id.
      * @memberof AgentLibrary
-     * @param {string} [action=""] Action to take
+     * @param {number} requestId Pending request id sent back with lead, required to dial lead.
+     */
+    AgentLibrary.prototype.previewDial = function(requestId){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("", [], requestId);
+        var msg = UIModel.getInstance().previewDialRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a message to fetch preview dialable leads
+     * @memberof AgentLibrary
      * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
      * e.g. [ {key: "name", value: "Geoff"} ]
-     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     * @param {function} [callback=null] Callback function when preview fetch completed, returns matched leads
      */
-    AgentLibrary.prototype.previewDial = function(action, searchFields, requestId){
-        UIModel.getInstance().previewDialRequest = new PreviewDialRequest(action, searchFields, requestId);
+    AgentLibrary.prototype.previewFetch = function(searchFields, callback){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("", searchFields, "");
         var msg = UIModel.getInstance().previewDialRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.PREVIEW_FETCH, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Pull back leads that match search criteria
+     * @memberof AgentLibrary
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {function} [callback=null] Callback function when lead search completed, returns matched leads
+     */
+    AgentLibrary.prototype.serachLeads = function(searchFields, callback){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("search", searchFields, "");
+        var msg = UIModel.getInstance().previewDialRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LEAD_SEARCH, callback);
         utils.sendMessage(this, msg);
     };
 

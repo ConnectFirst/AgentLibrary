@@ -33,6 +33,7 @@ const LOG_LEVELS ={
  * <li>"genericNotification"</li>
  * <li>"genericResponse"</li>
  * <li>"holdResponse"</li>
+ * <li>"leadSearchResponse"</li>
  * <li>"loginResponse"</li>
  * <li>"monitorResponse"</li>
  * <li>"newCallNotification"</li>
@@ -40,7 +41,7 @@ const LOG_LEVELS ={
  * <li>"offhookTermResponse"</li>
  * <li>"openResponse"</li>
  * <li>"pauseRecordResponse"</li>
- * <li>"previewDialResponse"</li>
+ * <li>"previewFetchResponse"</li>
  * <li>"previewLeadStateNotification"</li>
  * <li>"requeueResponse"</li>
  * <li>"agentStats"</li>
@@ -76,11 +77,12 @@ const CALLBACK_TYPES = {
     "LOGIN":"loginResponse",
     "SILENT_MONITOR":"monitorResponse",
     "NEW_CALL":"newCallNotification",
+    "LEAD_SEARCH":"leadSearchResponse",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
     "OPEN_SOCKET":"openResponse",
     "PAUSE_RECORD":"pauseRecordResponse",
-    "PREVIEW_DIAL":"previewDialResponse",
+    "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "REQUEUE":"requeueResponse",
     "STATS_AGENT":"agentStats",

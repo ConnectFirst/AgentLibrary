@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-09-28 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-10-01 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -429,7 +429,7 @@ var NewCallNotification = function() {
  *      "survey_pop_type":{"#text":"SUPPRESS"},
  *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
  *      "outdial_dispositions":{
- *      "@type":"CAMPAIGN|GATE",
+ *          "@type":"CAMPAIGN|GATE",
  *          "disposition":[
  *              { "@contact_forwarding":"FALSE", "@disposition_id":"20556", "#text":"Not Available"},
  *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "#text":"Transfer Not Available"}
@@ -524,6 +524,11 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+
+    // if only one disposition, convert to array
+    if(newCall.outdialDispositions.disposition){
+        newCall.outdialDispositions.dispositions = [newCall.outdialDispositions]
+    }
 
     // convert numbers to boolean where applicable
     newCall.queue.isCampaign = newCall.queue.isCampaign === "1";
@@ -2509,6 +2514,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
  * from the dialer. It will save a copy of it in the UIModel.
  *
  * {"dialer_request":{
+ *      "@action":"",
  *      "@callbacks":"TRUE|FALSE"
  *      ,"@message_id":"ID2008091513163400220",
  *      "@response_to":"",
@@ -2538,6 +2544,7 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
     var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
     var formattedResponse = {
+        action: notif['@action'],
         dialGroupId: utils.getText(notif,"dial_group_id"),
         accountId: utils.getText(notif,"account_id"),
         agentId: utils.getText(notif,"agent_id"),
@@ -3418,7 +3425,7 @@ var UIModel = (function() {
                 isLoggedInIS : false,               // a check for whether or not user is logged in with IntelliServices
                 socketConnected : false,
                 socketDest : "",
-                isTcpaSafeMode : false              // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
+                isTcpaSafeMode : false             // Comes in at the account-level - will get set to true if this interface should be in tcpa-safe-mode only.
             },
 
             // stat objects
@@ -3800,7 +3807,12 @@ var utils = {
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.PREVIEW_DIAL_ID:
                 var dialResponse = UIModel.getInstance().previewDialRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_DIAL, dialResponse);
+                if(dialResponse.action.toUpperCase() === "SEARCH"){
+                    utils.fireCallback(instance, CALLBACK_TYPES.LEAD_SEARCH, dialResponse);
+                }else{
+                    utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_FETCH, dialResponse);
+                }
+
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_ID:
                 var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
@@ -3914,8 +3926,34 @@ var utils = {
      *           "@save_survey": "1",
      *           "@xfer": "0",
      *           "#text": "One B"
+     *          },
+     *          {
+     *           "@contact_forwarding": "false",
+     *           "@disposition_id": "926",
+     *           "@is_complete": "1",
+     *           "@require_note": "0",
+     *           "@save_survey": "1",
+     *           "@xfer": "0",
+     *           "#text": "One B"
      *          }
      *      ]
+     *   }
+     *
+     *   OR
+     *
+     *   "outdial_dispositions": {
+     *       "@type": "GATE",
+     *       "disposition": {
+     *          {
+     *           "@contact_forwarding": "false",
+     *           "@disposition_id": "926",
+     *           "@is_complete": "1",
+     *           "@require_note": "0",
+     *           "@save_survey": "1",
+     *           "@xfer": "0",
+     *           "#text": "One B"
+     *          }
+     *      }
      *   }
      */
 
@@ -3944,8 +3982,8 @@ var utils = {
                     }
 
                     if(typeof itemsRaw[i][key] === "object"){
-                        // check for #text element
-                        if(itemsRaw[i][key]['#text']) {
+                        if(Object.keys(itemsRaw[i][key]).length === 1 && itemsRaw[i][key]['#text']) {
+                            // only one property - #text attribute
                             item[formattedKey] = itemsRaw[i][key]['#text'];
                         }else if(Object.keys(itemsRaw[i][key]).length === 0){
                             // dealing with empty property
@@ -3994,18 +4032,29 @@ var utils = {
                 }
 
                 if(typeof itemsRaw[prop] === "object"){
-                    if(itemsRaw[prop]['#text']) {
-                        // dealing with #text element
-                        item[formattedProp] = itemsRaw[prop]['#text'];
+                    if(itemsRaw[prop]['#text'] && Object.keys(itemsRaw[prop]).length === 1) {
+                        //if(Object.keys(itemsRaw[prop]).length === 1){
+                            // dealing only with #text element
+                            item[formattedProp] = itemsRaw[prop]['#text'];
+                        /*}else{
+                            console.log('here');
+                            for(key in itemsRaw[prop]){
+
+                            }
+                        }*/
                     }else if(Object.keys(itemsRaw[prop]).length === 0){
                         // dealing with empty property
                         item[formattedProp] = "";
                     }else{
                         // make recursive call
-                        if(Array.isArray(itemsRaw[prop])){
+                        if(Array.isArray(itemsRaw[prop]) || Object.keys(itemsRaw[prop]).length > 1){
                             var newIt = [];
                             newIt = utils.processResponseCollection(response[groupProp], itemProp, prop, textName);
-                            item[formattedProp + 's'] = newIt;
+                            if(formattedProp.substr(formattedProp.length - 1) !== 's'){
+                                item[formattedProp + 's'] = newIt;
+                            }else{
+                                item[formattedProp] = newIt;
+                            }
                         }else {
                             var newProp = Object.keys(itemsRaw[prop])[0];
                             var newItms = [];
@@ -4288,7 +4337,7 @@ const LOG_LEVELS ={
  * <li>"offhookTermResponse"</li>
  * <li>"openResponse"</li>
  * <li>"pauseRecordResponse"</li>
- * <li>"previewDialResponse"</li>
+ * <li>"previewFetchResponse"</li>
  * <li>"previewLeadStateNotification"</li>
  * <li>"requeueResponse"</li>
  * <li>"agentStats"</li>
@@ -4324,11 +4373,12 @@ const CALLBACK_TYPES = {
     "LOGIN":"loginResponse",
     "SILENT_MONITOR":"monitorResponse",
     "NEW_CALL":"newCallNotification",
+    "LEAD_SEARCH":"leadSearchResponse",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermResponse",
     "OPEN_SOCKET":"openResponse",
     "PAUSE_RECORD":"pauseRecordResponse",
-    "PREVIEW_DIAL":"previewDialResponse",
+    "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "REQUEUE":"requeueResponse",
     "STATS_AGENT":"agentStats",
@@ -5327,16 +5377,43 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a preview dial request message
+     * Sends a preview dial request to call lead based on request id. Call previewFetch method first to get request id.
      * @memberof AgentLibrary
-     * @param {string} [action=""] Action to take
+     * @param {number} requestId Pending request id sent back with lead, required to dial lead.
+     */
+    AgentLibrary.prototype.previewDial = function(requestId){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("", [], requestId);
+        var msg = UIModel.getInstance().previewDialRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a message to fetch preview dialable leads
+     * @memberof AgentLibrary
      * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
      * e.g. [ {key: "name", value: "Geoff"} ]
-     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     * @param {function} [callback=null] Callback function when preview fetch completed, returns matched leads
      */
-    AgentLibrary.prototype.previewDial = function(action, searchFields, requestId){
-        UIModel.getInstance().previewDialRequest = new PreviewDialRequest(action, searchFields, requestId);
+    AgentLibrary.prototype.previewFetch = function(searchFields, callback){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("", searchFields, "");
         var msg = UIModel.getInstance().previewDialRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.PREVIEW_FETCH, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Pull back leads that match search criteria
+     * @memberof AgentLibrary
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {function} [callback=null] Callback function when lead search completed, returns matched leads
+     */
+    AgentLibrary.prototype.serachLeads = function(searchFields, callback){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("search", searchFields, "");
+        var msg = UIModel.getInstance().previewDialRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LEAD_SEARCH, callback);
         utils.sendMessage(this, msg);
     };
 

@@ -71,7 +71,7 @@
     "auxData3": "Call Ctr 1",
     "auxPhone": "",
     "customLabels": [
-      {}
+      { "aux_1Label" : "", "aux_2Label" : "", "aux_3Label" : "", "aux_4Label" : "", "aux_5Label" : "" }
     ]
   },
   "surveyResponse": {

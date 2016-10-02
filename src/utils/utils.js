@@ -244,7 +244,12 @@ var utils = {
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.PREVIEW_DIAL_ID:
                 var dialResponse = UIModel.getInstance().previewDialRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_DIAL, dialResponse);
+                if(dialResponse.action.toUpperCase() === "SEARCH"){
+                    utils.fireCallback(instance, CALLBACK_TYPES.LEAD_SEARCH, dialResponse);
+                }else{
+                    utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_FETCH, dialResponse);
+                }
+
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_ID:
                 var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
@@ -358,8 +363,34 @@ var utils = {
      *           "@save_survey": "1",
      *           "@xfer": "0",
      *           "#text": "One B"
+     *          },
+     *          {
+     *           "@contact_forwarding": "false",
+     *           "@disposition_id": "926",
+     *           "@is_complete": "1",
+     *           "@require_note": "0",
+     *           "@save_survey": "1",
+     *           "@xfer": "0",
+     *           "#text": "One B"
      *          }
      *      ]
+     *   }
+     *
+     *   OR
+     *
+     *   "outdial_dispositions": {
+     *       "@type": "GATE",
+     *       "disposition": {
+     *          {
+     *           "@contact_forwarding": "false",
+     *           "@disposition_id": "926",
+     *           "@is_complete": "1",
+     *           "@require_note": "0",
+     *           "@save_survey": "1",
+     *           "@xfer": "0",
+     *           "#text": "One B"
+     *          }
+     *      }
      *   }
      */
 
@@ -388,18 +419,22 @@ var utils = {
                     }
 
                     if(typeof itemsRaw[i][key] === "object"){
-                        // check for #text element
-                        if(itemsRaw[i][key]['#text']) {
+                        if(Object.keys(itemsRaw[i][key]).length === 1 && itemsRaw[i][key]['#text']) {
+                            // only one property - #text attribute
                             item[formattedKey] = itemsRaw[i][key]['#text'];
                         }else if(Object.keys(itemsRaw[i][key]).length === 0){
                             // dealing with empty property
                             item[formattedKey] = "";
                         }else {
                             // make recursive call
-                            if(Array.isArray(itemsRaw[key])){
+                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1){
                                 var newIt = [];
                                 newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
-                                item[formattedKey + 's'] = newIt;
+                                if(formattedKey.substr(formattedKey.length - 1) !== 's') {
+                                    item[formattedKey + 's'] = newIt;
+                                }else{
+                                    item[formattedKey] = newIt;
+                                }
                             }else{
                                 var newItemProp = Object.keys(itemsRaw[i][key])[0];
                                 var newItems = [];
@@ -438,18 +473,22 @@ var utils = {
                 }
 
                 if(typeof itemsRaw[prop] === "object"){
-                    if(itemsRaw[prop]['#text']) {
-                        // dealing with #text element
+                    if(itemsRaw[prop]['#text'] && Object.keys(itemsRaw[prop]).length === 1) {
+                        // dealing only with #text element
                         item[formattedProp] = itemsRaw[prop]['#text'];
                     }else if(Object.keys(itemsRaw[prop]).length === 0){
                         // dealing with empty property
                         item[formattedProp] = "";
                     }else{
                         // make recursive call
-                        if(Array.isArray(itemsRaw[prop])){
+                        if(Array.isArray(itemsRaw[prop]) || Object.keys(itemsRaw[prop]).length > 1){
                             var newIt = [];
                             newIt = utils.processResponseCollection(response[groupProp], itemProp, prop, textName);
-                            item[formattedProp + 's'] = newIt;
+                            if(formattedProp.substr(formattedProp.length - 1) !== 's'){
+                                item[formattedProp + 's'] = newIt;
+                            }else{
+                                item[formattedProp] = newIt;
+                            }
                         }else {
                             var newProp = Object.keys(itemsRaw[prop])[0];
                             var newItms = [];

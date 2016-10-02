@@ -33,7 +33,7 @@ var NewCallNotification = function() {
  *      "survey_pop_type":{"#text":"SUPPRESS"},
  *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
  *      "outdial_dispositions":{
- *      "@type":"CAMPAIGN|GATE",
+ *          "@type":"CAMPAIGN|GATE",
  *          "disposition":[
  *              { "@contact_forwarding":"FALSE", "@disposition_id":"20556", "#text":"Not Available"},
  *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "#text":"Transfer Not Available"}
@@ -128,6 +128,11 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+
+    // if only one disposition, convert to array
+    if(newCall.outdialDispositions.disposition){
+        newCall.outdialDispositions.dispositions = [newCall.outdialDispositions]
+    }
 
     // convert numbers to boolean where applicable
     newCall.queue.isCampaign = newCall.queue.isCampaign === "1";
