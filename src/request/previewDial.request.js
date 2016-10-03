@@ -25,7 +25,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
             "@type":MESSAGE_TYPES.PREVIEW_DIAL,
             "@message_id":utils.getMessageId(),
             "@action":this.action,
-            "response_to":"",
+            "@response_to":"",
             "agent_id":{
                 "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
             },

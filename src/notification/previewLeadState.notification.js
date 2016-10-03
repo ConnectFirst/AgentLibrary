@@ -25,6 +25,8 @@ PreviewLeadStateNotification.prototype.processResponse = function(notification) 
 
     var response = {
         callType: notif['@call_type'],
+        messageId: notif['@message_id'],
+        requestId: utils.getText(notif, "request_id"),
         leadState: utils.getText(notif,"lead_state"),
         callback: utils.getText(notif,"callback")
     };

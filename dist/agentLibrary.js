@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-10-01 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-10-03 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -712,6 +712,8 @@ PreviewLeadStateNotification.prototype.processResponse = function(notification) 
 
     var response = {
         callType: notif['@call_type'],
+        messageId: notif['@message_id'],
+        requestId: utils.getText(notif, "request_id"),
         leadState: utils.getText(notif,"lead_state"),
         callback: utils.getText(notif,"callback")
     };
@@ -2494,7 +2496,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
             "@type":MESSAGE_TYPES.PREVIEW_DIAL,
             "@message_id":utils.getMessageId(),
             "@action":this.action,
-            "response_to":"",
+            "@response_to":"",
             "agent_id":{
                 "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
             },
@@ -3990,10 +3992,14 @@ var utils = {
                             item[formattedKey] = "";
                         }else {
                             // make recursive call
-                            if(Array.isArray(itemsRaw[key])){
+                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1){
                                 var newIt = [];
                                 newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
-                                item[formattedKey + 's'] = newIt;
+                                if(formattedKey.substr(formattedKey.length - 1) !== 's') {
+                                    item[formattedKey + 's'] = newIt;
+                                }else{
+                                    item[formattedKey] = newIt;
+                                }
                             }else{
                                 var newItemProp = Object.keys(itemsRaw[i][key])[0];
                                 var newItems = [];
@@ -4033,15 +4039,8 @@ var utils = {
 
                 if(typeof itemsRaw[prop] === "object"){
                     if(itemsRaw[prop]['#text'] && Object.keys(itemsRaw[prop]).length === 1) {
-                        //if(Object.keys(itemsRaw[prop]).length === 1){
-                            // dealing only with #text element
-                            item[formattedProp] = itemsRaw[prop]['#text'];
-                        /*}else{
-                            console.log('here');
-                            for(key in itemsRaw[prop]){
-
-                            }
-                        }*/
+                        // dealing only with #text element
+                        item[formattedProp] = itemsRaw[prop]['#text'];
                     }else if(Object.keys(itemsRaw[prop]).length === 0){
                         // dealing with empty property
                         item[formattedProp] = "";
@@ -4330,6 +4329,7 @@ const LOG_LEVELS ={
  * <li>"genericNotification"</li>
  * <li>"genericResponse"</li>
  * <li>"holdResponse"</li>
+ * <li>"leadSearchResponse"</li>
  * <li>"loginResponse"</li>
  * <li>"monitorResponse"</li>
  * <li>"newCallNotification"</li>
