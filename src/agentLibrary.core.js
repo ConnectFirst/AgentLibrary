@@ -35,10 +35,11 @@ const LOG_LEVELS ={
  * <li>"holdResponse"</li>
  * <li>"leadSearchResponse"</li>
  * <li>"loginResponse"</li>
+ * <li>"logoutResponse"</li>
  * <li>"monitorResponse"</li>
  * <li>"newCallNotification"</li>
  * <li>"offhookInitResponse"</li>
- * <li>"offhookTermResponse"</li>
+ * <li>"offhookTermNotification"</li>
  * <li>"openResponse"</li>
  * <li>"pauseRecordResponse"</li>
  * <li>"previewFetchResponse"</li>
@@ -72,19 +73,20 @@ const CALLBACK_TYPES = {
     "GATES_CHANGE":"gatesChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
-    "LOG_RESULTS":"logResultsResponse",
     "HOLD":"holdResponse",
+    "LOG_RESULTS":"logResultsResponse",
     "LOGIN":"loginResponse",
-    "SILENT_MONITOR":"monitorResponse",
+    "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
     "LEAD_SEARCH":"leadSearchResponse",
     "OFFHOOK_INIT":"offhookInitResponse",
-    "OFFHOOK_TERM":"offhookTermResponse",
+    "OFFHOOK_TERM":"offhookTermNotification",
     "OPEN_SOCKET":"openResponse",
     "PAUSE_RECORD":"pauseRecordResponse",
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "REQUEUE":"requeueResponse",
+    "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
     "STATS_AGENT_DAILY":"agentDailyStats",
     "STATS_CAMPAIGN":"campaignStats",
@@ -97,8 +99,6 @@ const CALLBACK_TYPES = {
 const MESSAGE_TYPES = {
     "ADD_SESSION":"ADD-SESSION",
     "BARGE_IN":"BARGE-IN",
-    "LOGIN":"LOGIN",
-    "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
     "CALL_NOTES":"CALL-NOTES",
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
@@ -114,6 +114,8 @@ const MESSAGE_TYPES = {
     "HANGUP":"HANGUP",
     "HOLD":"HOLD",
     "INBOUND_DISPOSITION":"INBOUND-DISPOSITION",
+    "LOGIN":"LOGIN",
+    "LOGOUT":"LOGOUT",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
     "OFFHOOK_TERM":"OFF-HOOK-TERM",

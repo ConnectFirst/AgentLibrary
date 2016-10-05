@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-10-03 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-10-05 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4081,13 +4081,13 @@ var utils = {
 
     fireCallback: function(instance, type, response) {
         response = response || "";
-        if (typeof instance.callbacks[type] === 'function') {
+        if (typeof type !== 'undefined' && typeof instance.callbacks[type] === 'function') {
             instance.callbacks[type].call(instance, response);
         }
     },
 
     setCallback: function(instance, type, callback) {
-        if (typeof callback !== 'undefined') {
+        if (typeof type !== 'undefined' && typeof callback !== 'undefined') {
             instance.callbacks[type] = callback;
         }
     },
@@ -4331,10 +4331,11 @@ const LOG_LEVELS ={
  * <li>"holdResponse"</li>
  * <li>"leadSearchResponse"</li>
  * <li>"loginResponse"</li>
+ * <li>"logoutResponse"</li>
  * <li>"monitorResponse"</li>
  * <li>"newCallNotification"</li>
  * <li>"offhookInitResponse"</li>
- * <li>"offhookTermResponse"</li>
+ * <li>"offhookTermNotification"</li>
  * <li>"openResponse"</li>
  * <li>"pauseRecordResponse"</li>
  * <li>"previewFetchResponse"</li>
@@ -4368,19 +4369,20 @@ const CALLBACK_TYPES = {
     "GATES_CHANGE":"gatesChangeNotification",
     "GENERIC_NOTIFICATION":"genericNotification",
     "GENERIC_RESPONSE":"genericResponse",
-    "LOG_RESULTS":"logResultsResponse",
     "HOLD":"holdResponse",
+    "LOG_RESULTS":"logResultsResponse",
     "LOGIN":"loginResponse",
-    "SILENT_MONITOR":"monitorResponse",
+    "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
     "LEAD_SEARCH":"leadSearchResponse",
     "OFFHOOK_INIT":"offhookInitResponse",
-    "OFFHOOK_TERM":"offhookTermResponse",
+    "OFFHOOK_TERM":"offhookTermNotification",
     "OPEN_SOCKET":"openResponse",
     "PAUSE_RECORD":"pauseRecordResponse",
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "REQUEUE":"requeueResponse",
+    "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
     "STATS_AGENT_DAILY":"agentDailyStats",
     "STATS_CAMPAIGN":"campaignStats",
@@ -4393,8 +4395,6 @@ const CALLBACK_TYPES = {
 const MESSAGE_TYPES = {
     "ADD_SESSION":"ADD-SESSION",
     "BARGE_IN":"BARGE-IN",
-    "LOGIN":"LOGIN",
-    "LOGOUT":"LOGOUT",
     "AGENT_STATE":"AGENT-STATE",
     "CALL_NOTES":"CALL-NOTES",
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
@@ -4410,6 +4410,8 @@ const MESSAGE_TYPES = {
     "HANGUP":"HANGUP",
     "HOLD":"HOLD",
     "INBOUND_DISPOSITION":"INBOUND-DISPOSITION",
+    "LOGIN":"LOGIN",
+    "LOGOUT":"LOGOUT",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
     "OFFHOOK_TERM":"OFF-HOOK-TERM",
@@ -5146,11 +5148,9 @@ function initAgentLibraryAgent (context) {
      * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when offhookTerm response received
      */
-    AgentLibrary.prototype.offhookTerm = function(callback){
+    AgentLibrary.prototype.offhookTerm = function(){
         UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
         var msg = UIModel.getInstance().offhookTermRequest.formatJSON();
-
-        utils.setCallback(this, CALLBACK_TYPES.OFFHOOK_TERM, callback);
         utils.sendMessage(this, msg);
     };
 

@@ -94,11 +94,9 @@ function initAgentLibraryAgent (context) {
      * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when offhookTerm response received
      */
-    AgentLibrary.prototype.offhookTerm = function(callback){
+    AgentLibrary.prototype.offhookTerm = function(){
         UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
         var msg = UIModel.getInstance().offhookTermRequest.formatJSON();
-
-        utils.setCallback(this, CALLBACK_TYPES.OFFHOOK_TERM, callback);
         utils.sendMessage(this, msg);
     };
 

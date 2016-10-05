@@ -516,13 +516,13 @@ var utils = {
 
     fireCallback: function(instance, type, response) {
         response = response || "";
-        if (typeof instance.callbacks[type] === 'function') {
+        if (typeof type !== 'undefined' && typeof instance.callbacks[type] === 'function') {
             instance.callbacks[type].call(instance, response);
         }
     },
 
     setCallback: function(instance, type, callback) {
-        if (typeof callback !== 'undefined') {
+        if (typeof type !== 'undefined' && typeof callback !== 'undefined') {
             instance.callbacks[type] = callback;
         }
     },
