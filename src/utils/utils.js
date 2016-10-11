@@ -224,6 +224,11 @@ var utils = {
                 var leadStateResponse = leadStateNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_LEAD_STATE, leadStateResponse);
                 break;
+            case MESSAGE_TYPES.PENDING_DISP:
+                var pendingDispNotif = new PendingDispNotification();
+                var pendingDispResponse = pendingDispNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.PENDING_DISP, pendingDispResponse);
+                break;
         }
     },
 

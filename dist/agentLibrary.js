@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-10-06 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-10-11 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -684,6 +684,31 @@ function isCampaign(gate){
     }
     return false;
 }
+
+
+var PendingDispNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a generic notification
+ *
+ * {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016080317400400011",
+ *          "@type":"PENDING_DISP",
+ *          "agent_id":{"#text":"3"},
+ *          "status":{"#text":"false"}
+ *      }
+ * }
+ */
+PendingDispNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = {};
+    formattedResponse.agentId = utils.getText(notification.ui_notification,"agent_id");
+    formattedResponse.status = utils.getText(notification.ui_notification,"status");
+
+    return formattedResponse;
+};
 
 
 var PreviewLeadStateNotification = function() {
@@ -3800,6 +3825,11 @@ var utils = {
                 var leadStateResponse = leadStateNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_LEAD_STATE, leadStateResponse);
                 break;
+            case MESSAGE_TYPES.PENDING_DISP:
+                var pendingDispNotif = new PendingDispNotification();
+                var pendingDispResponse = pendingDispNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.PENDING_DISP, pendingDispResponse);
+                break;
         }
     },
 
@@ -4349,6 +4379,7 @@ const LOG_LEVELS ={
  * <li>"offhookTermNotification"</li>
  * <li>"openResponse"</li>
  * <li>"pauseRecordResponse"</li>
+ * <li>"pendingDispNotification"</li>
  * <li>"previewFetchResponse"</li>
  * <li>"previewLeadStateNotification"</li>
  * <li>"requeueResponse"</li>
@@ -4390,6 +4421,7 @@ const CALLBACK_TYPES = {
     "OFFHOOK_TERM":"offhookTermNotification",
     "OPEN_SOCKET":"openResponse",
     "PAUSE_RECORD":"pauseRecordResponse",
+    "PENDING_DISP":"pendingDispNotification",
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "REQUEUE":"requeueResponse",
@@ -4433,6 +4465,7 @@ const MESSAGE_TYPES = {
     "PAUSE_RECORD":"PAUSE-RECORD",
     "PING_CALL":"PING-CALL",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
+    "PENDING_DISP":"PENDING_DISP",
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
     "PREVIEW_LEAD_STATE":"PREVIEW-LEAD-STATE",
     "RECORD":"RECORD",

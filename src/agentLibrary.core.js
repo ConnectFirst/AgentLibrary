@@ -42,6 +42,7 @@ const LOG_LEVELS ={
  * <li>"offhookTermNotification"</li>
  * <li>"openResponse"</li>
  * <li>"pauseRecordResponse"</li>
+ * <li>"pendingDispNotification"</li>
  * <li>"previewFetchResponse"</li>
  * <li>"previewLeadStateNotification"</li>
  * <li>"requeueResponse"</li>
@@ -83,6 +84,7 @@ const CALLBACK_TYPES = {
     "OFFHOOK_TERM":"offhookTermNotification",
     "OPEN_SOCKET":"openResponse",
     "PAUSE_RECORD":"pauseRecordResponse",
+    "PENDING_DISP":"pendingDispNotification",
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "REQUEUE":"requeueResponse",
@@ -126,6 +128,7 @@ const MESSAGE_TYPES = {
     "PAUSE_RECORD":"PAUSE-RECORD",
     "PING_CALL":"PING-CALL",
     "PREVIEW_DIAL":"PREVIEW-DIAL",
+    "PENDING_DISP":"PENDING_DISP",
     "PREVIEW_DIAL_ID":"PREVIEW_DIAL",
     "PREVIEW_LEAD_STATE":"PREVIEW-LEAD-STATE",
     "RECORD":"RECORD",
