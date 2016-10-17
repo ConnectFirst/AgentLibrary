@@ -33,17 +33,29 @@
       {
         "contactForwarding": false,
         "dispositionId": "1",
-        "disposition": "Not Available"
+        "disposition": "Not Available",
+        "isComplete": false,
+        "requireNote": false,
+        "saveSurvey":false,
+        "xfer":false
       },
       {
         "contactForwarding": false,
         "dispositionId": "2",
-        "disposition": "Transfer Not Available"
+        "disposition": "Transfer Not Available",
+        "isComplete": false,
+        "requireNote": false,
+        "saveSurvey":false,
+        "xfer":false
       },
       {
         "contactForwarding": false,
         "dispositionId": "3",
-        "disposition": "Transfer Not Available - Ringing (no answer)"
+        "disposition": "Transfer Not Available - Ringing (no answer)",
+        "isComplete": false,
+        "requireNote": false,
+        "saveSurvey":false,
+        "xfer":false
       }
     ]
   },

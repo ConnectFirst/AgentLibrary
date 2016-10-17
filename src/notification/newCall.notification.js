@@ -130,13 +130,13 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
 
     // if only one disposition, convert to array
-    if(newCall.outdialDispositions.disposition){
+    if(newCall.outdialDispositions && newCall.outdialDispositions.disposition){
         newCall.outdialDispositions.dispositions = [newCall.outdialDispositions]
     }
 
     // convert numbers to boolean where applicable
     newCall.queue.isCampaign = newCall.queue.isCampaign === "1";
-    if(newCall.outdialDispositions && newCall.outdialDispositions.type && newCall.outdialDispositions.type.toUpperCase() === "GATE"){
+    if(newCall.outdialDispositions && newCall.outdialDispositions.dispositions){
         for(var d = 0; d < newCall.outdialDispositions.dispositions.length; d++) {
             var disp = newCall.outdialDispositions.dispositions[d];
             disp.isComplete = disp.isComplete === "1";
