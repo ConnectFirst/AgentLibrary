@@ -96,6 +96,10 @@ var utils = {
                 var hold = UIModel.getInstance().holdRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.HOLD, hold);
                 break;
+            case MESSAGE_TYPES.LEAD_HISTORY:
+                var history = UIModel.getInstance().leadHistoryRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LEAD_HISTORY, history);
+                break;
             case MESSAGE_TYPES.LOGIN:
                 if (dest === "IS") {
                     var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);

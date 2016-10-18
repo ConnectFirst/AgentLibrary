@@ -18,6 +18,7 @@ module.exports = function(grunt) {
     sub('src/%s.socket.js'),
     sub('src/%s.agent.js'),
     sub('src/%s.call.js'),
+    sub('src/%s.lead.js'),
     sub('src/%s.logger.js')
   ];
 

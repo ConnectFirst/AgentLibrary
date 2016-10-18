@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-10-17 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-10-18 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1850,6 +1850,112 @@ HoldRequest.prototype.processResponse = function(response) {
 };
 
 
+var LeadHistoryRequest = function(leadId) {
+    this.leadId = leadId;
+};
+
+/*
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@message_id":"UI200809291036128",
+ *      "@response_to":"",
+ *      "@type":"LEAD-HISTORY",
+ *      "agent_id":{"#text":"1"},
+ *      "lead_id":{"#text":"12"},
+ *    }
+ * }
+ */
+LeadHistoryRequest.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.LEAD_HISTORY,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(model.agentSettings.agentId)
+            },
+            "lead_id":{
+                "#text":utils.toString(this.leadId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes LEAD-HISTORY packets rec'd from IQ.
+ *
+ * {"ui_response":{
+ *      "@lead_id":"2653",
+ *      "@message_id":"IQ982008091512353000875",
+ *      "@response_to":"UIV220089151235539",
+ *      "@type":"LEAD-HISTORY",
+ *      "previous_dial":{
+ *          "@agent_name":"mandy pants (mandy)",
+ *          "@duration":"",
+ *          "@pass_disposition":"",
+ *          "@pass_dts":"2008-09-15 12:35:27",
+ *          "@pass_number":"",
+ *          "@pass_uii":"200809151234140000000900021288",
+ *          "agent_notes":{"#text":"This person was incredibly nice and agreed to buy donuts. "},
+ *          "agent_disposition":{"#text":"Incomplete"}
+ *      }
+ *   }
+ * }
+ *
+ * OR
+ *
+ * {"ui_response":{
+ *      "@lead_id":"2653",
+ *      "@message_id":"IQ982008091512353000875",
+ *      "@response_to":"UIV220089151235539",
+ *      "@type":"LEAD-HISTORY",
+ *      "previous_dial":[
+ *        {
+ *          "@agent_name":"mandy pants (mandy)",
+ *          "@duration":"",
+ *          "@pass_disposition":"",
+ *          "@pass_dts":"2008-09-15 12:35:27",
+ *          "@pass_number":"",
+ *          "@pass_uii":"200809151234140000000900021288",
+ *          "agent_notes":{"#text":"This person was incredibly nice and agreed to buy donuts. "},
+ *          "agent_disposition":{"#text":"Incomplete"}
+ *        },
+ *        {
+ *          "@agent_name":"mandy pants (mandy)",
+ *          "@duration":"",
+ *          "@pass_disposition":"",
+ *          "@pass_dts":"2008-09-15 12:35:27",
+ *          "@pass_number":"",
+ *          "@pass_uii":"200809151234140000000900021288",
+ *          "agent_notes":{"#text":"This person was incredibly nice and agreed to buy donuts. "},
+ *          "agent_disposition":{"#text":"Incomplete"}
+ *        }
+ *      ]
+ *   }
+ * }
+ */
+LeadHistoryRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var histResponse = {
+        leadId: resp['@lead_id']
+    };
+
+    var history = utils.processResponseCollection(response, 'ui_response', 'previous_dial');
+
+    // always return array, even if only one item
+    if(!Array.isArray(history)){
+        history = [history];
+    }
+    histResponse.leadHistory = history;
+
+    return histResponse;
+};
+
+
 var LoginRequest = function(username, password) {
     this.username = username;
     this.password = password;
@@ -3414,6 +3520,7 @@ var UIModel = (function() {
             dispositionManualPassRequest : null,
             hangupRequest : null,
             holdRequest : null,
+            leadHistoryRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
             offhookInitRequest : null,
@@ -3696,6 +3803,10 @@ var utils = {
             case MESSAGE_TYPES.HOLD:
                 var hold = UIModel.getInstance().holdRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.HOLD, hold);
+                break;
+            case MESSAGE_TYPES.LEAD_HISTORY:
+                var history = UIModel.getInstance().leadHistoryRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LEAD_HISTORY, history);
                 break;
             case MESSAGE_TYPES.LOGIN:
                 if (dest === "IS") {
@@ -4416,6 +4527,7 @@ const CALLBACK_TYPES = {
     "LOGIN":"loginResponse",
     "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
+    "LEAD_HISTORY":"leadHistoryResponse",
     "LEAD_SEARCH":"leadSearchResponse",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermNotification",
@@ -4453,6 +4565,7 @@ const MESSAGE_TYPES = {
     "HANGUP":"HANGUP",
     "HOLD":"HOLD",
     "INBOUND_DISPOSITION":"INBOUND-DISPOSITION",
+    "LEAD_HISTORY":"LEAD-HISTORY",
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "NEW_CALL":"NEW-CALL",
@@ -5560,6 +5673,27 @@ function initAgentLibraryCall (context) {
 
 }
 
+function initAgentLibraryLead (context) {
+
+    'use strict';
+
+    var AgentLibrary = context.AgentLibrary;
+
+    /**
+     * Get the history for a given lead
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when lead history response received
+     */
+    AgentLibrary.prototype.leadHistory = function(leadId, callback){
+        UIModel.getInstance().leadHistoryRequest = new LeadHistoryRequest(leadId);
+        var msg = UIModel.getInstance().leadHistoryRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LEAD_HISTORY, callback);
+        utils.sendMessage(this, msg);
+    };
+
+}
+
 function initAgentLibraryLogger (context) {
 
     'use strict';
@@ -5771,6 +5905,7 @@ var initAgentLibrary = function (context) {
     initAgentLibrarySocket(context);
     initAgentLibraryAgent(context);
     initAgentLibraryCall(context);
+    initAgentLibraryLead(context);
     initAgentLibraryLogger(context);
 
     return context.AgentLibrary;

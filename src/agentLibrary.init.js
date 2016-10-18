@@ -4,6 +4,7 @@ var initAgentLibrary = function (context) {
     initAgentLibrarySocket(context);
     initAgentLibraryAgent(context);
     initAgentLibraryCall(context);
+    initAgentLibraryLead(context);
     initAgentLibraryLogger(context);
 
     return context.AgentLibrary;

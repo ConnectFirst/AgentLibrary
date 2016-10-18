@@ -34,6 +34,7 @@ var UIModel = (function() {
             dispositionManualPassRequest : null,
             hangupRequest : null,
             holdRequest : null,
+            leadHistoryRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
             offhookInitRequest : null,
