@@ -109,6 +109,7 @@
       "campaignName": "Test Campaign2"
     }
   ],
+  "defaultDialGroup":"",
   "outdialGroup": {},
   "previewDialLeads": [],
   "tcpaSafeLeads": [],

@@ -128,6 +128,7 @@ var UIModel = (function() {
                 outboundManualDefaultRingtime : "30",
                 pendingCallbacks : [],
                 pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
+                phoneLoginPin: "",
                 realAgentType : "AGENT",
                 totalCalls : 0,                     // Call counter that is incremented every time a new session is received
                 transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
@@ -187,6 +188,7 @@ var UIModel = (function() {
                 availableCampaigns : [],            // array of campaigns agent has access to, set on login
                 availableOutdialGroups : [],        // array of dial groups agent has access to, set on login
                 insertCampaigns : [],
+                defaultDialGroup: 0,
                 outdialGroup : {},                  // dial group agent is signed into
                 previewDialLeads : [],              // list of leads returned from preview dial request
                 tcpaSafeLeads : [],                 // list of leads returned from tcpa safe request

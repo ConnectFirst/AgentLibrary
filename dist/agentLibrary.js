@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-10-18 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-10-19 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2135,6 +2135,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentSettings.initLoginStateLabel = utils.getText(resp, 'init_login_state_label');
             model.agentSettings.outboundManualDefaultRingtime = utils.getText(resp, 'outbound_manual_default_ringtime');
             model.agentSettings.isOutboundPrepay = utils.getText(resp, 'outbound_prepay') === "1";
+            model.agentSettings.phoneLoginPin = utils.getText(resp, 'phone_login_pin');
 
             model.agentPermissions.allowCallControl = utils.getText(resp, 'allow_call_control') === "1";
             model.agentPermissions.allowChat = utils.getText(resp, 'allow_chat') === "1";
@@ -2150,6 +2151,8 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.allowBlended = utils.getText(resp, 'allow_blended') === "1";
             model.agentPermissions.allowLoginControl = utils.getText(resp, 'allow_login_control') === "1";
             model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
+
+            model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
             var allowLeadInserts = typeof resp.insert_campaigns === 'undefined' ? false : response.ui_response.insert_campaigns.campaign;
             if(allowLeadInserts && allowLeadInserts.length > 0){
@@ -3614,6 +3617,7 @@ var UIModel = (function() {
                 outboundManualDefaultRingtime : "30",
                 pendingCallbacks : [],
                 pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
+                phoneLoginPin: "",
                 realAgentType : "AGENT",
                 totalCalls : 0,                     // Call counter that is incremented every time a new session is received
                 transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
@@ -3673,6 +3677,7 @@ var UIModel = (function() {
                 availableCampaigns : [],            // array of campaigns agent has access to, set on login
                 availableOutdialGroups : [],        // array of dial groups agent has access to, set on login
                 insertCampaigns : [],
+                defaultDialGroup: 0,
                 outdialGroup : {},                  // dial group agent is signed into
                 previewDialLeads : [],              // list of leads returned from preview dial request
                 tcpaSafeLeads : [],                 // list of leads returned from tcpa safe request

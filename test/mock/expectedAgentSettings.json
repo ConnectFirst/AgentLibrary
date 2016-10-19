@@ -72,5 +72,6 @@
   "updateDGFromAdminUI": false,
   "updateLoginMode": false,
   "wasMonitoring": false,
-  "disableSupervisorMonitoring": "0"
+  "disableSupervisorMonitoring": "0",
+  "phoneLoginPin":""
 }

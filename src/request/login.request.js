@@ -178,6 +178,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentSettings.initLoginStateLabel = utils.getText(resp, 'init_login_state_label');
             model.agentSettings.outboundManualDefaultRingtime = utils.getText(resp, 'outbound_manual_default_ringtime');
             model.agentSettings.isOutboundPrepay = utils.getText(resp, 'outbound_prepay') === "1";
+            model.agentSettings.phoneLoginPin = utils.getText(resp, 'phone_login_pin');
 
             model.agentPermissions.allowCallControl = utils.getText(resp, 'allow_call_control') === "1";
             model.agentPermissions.allowChat = utils.getText(resp, 'allow_chat') === "1";
@@ -193,6 +194,8 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.allowBlended = utils.getText(resp, 'allow_blended') === "1";
             model.agentPermissions.allowLoginControl = utils.getText(resp, 'allow_login_control') === "1";
             model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
+
+            model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
             var allowLeadInserts = typeof resp.insert_campaigns === 'undefined' ? false : response.ui_response.insert_campaigns.campaign;
             if(allowLeadInserts && allowLeadInserts.length > 0){
