@@ -1,5 +1,5 @@
 
-var PreviewLeadStateNotification = function() {
+var TcpaSafeLeadStateNotification = function() {
 
 };
 
@@ -11,20 +11,17 @@ var PreviewLeadStateNotification = function() {
  *
  * {
  *      "ui_notification":{
- *          "@type":"PREVIEW-LEAD-STATE",
- *          "@call_type":"MANUAL|PREVIEW",
- *          "@message_id":"IQ10012016092715393600184",
- *          "request_id":{"#text":"IQ10012016092715390900179"},
- *          "lead_state":{"#text":"ANSWER"},
- *          "callback":{"#text":"FALSE"}
+ *          "@message_id":"IQ10012016080317400400011",
+ *          "@type":"TCPA-SAFE-LEAD-STATE",
+ *          "@call_type":"MANUAL|TCPA-SAFE",
+ *          "request_id":{"#text":""},
+ *          "lead_state":{"#text":"CALLING"},
+ *          "callback":{"#text":"false"}
  *      }
- *   }
  * }
  */
-PreviewLeadStateNotification.prototype.processResponse = function(notification) {
+TcpaSafeLeadStateNotification.prototype.processResponse = function(notification) {
     var notif = notification.ui_notification;
-
-    UIModel.getInstance().agentSettings.onManualOutdial = true;
 
     var response = {
         callType: notif['@call_type'],

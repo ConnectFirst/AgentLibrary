@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-10-19 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-10-21 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -716,7 +716,10 @@ var PreviewLeadStateNotification = function() {
 };
 
 /*
- * This class is responsible for handling a generic notification
+ * This class is responsible for processing the lead state packet
+ * received from intelliqueue. It will decide what type of leads are
+ * being processed, and depending on if the callback is true or false, it will
+ * call the appropriate form to update the lead state.
  *
  * {
  *      "ui_notification":{
@@ -734,6 +737,87 @@ PreviewLeadStateNotification.prototype.processResponse = function(notification) 
     var notif = notification.ui_notification;
 
     UIModel.getInstance().agentSettings.onManualOutdial = true;
+
+    var response = {
+        callType: notif['@call_type'],
+        messageId: notif['@message_id'],
+        requestId: utils.getText(notif, "request_id"),
+        leadState: utils.getText(notif,"lead_state"),
+        callback: utils.getText(notif,"callback")
+    };
+
+    return response;
+};
+
+
+var ReverseMatchNotification = function() {
+
+};
+
+/*
+ * This class is responsible for processing a REVERSE_MATCH packet from IQ. It
+ * will log the packet was rec'd, save the packet to the UIModel for use by
+ * components like the WhosCallingForm
+ * {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016080317400400011",
+ *          "@response_to":"1c2fe39f-a31e-aff8-8d23-92a61c88270f",
+ *          "@type":"REVERSE_MATCH",
+ *          "first_name":{"#text":""},
+ *          "mid_name":{"#text":""},
+ *          "last_name":{"#text":""},
+ *          "address1":{"#text":""},
+ *          "address2":{"#text":""},
+ *          "city":{"#text":""},
+ *          "state":{"#text":""},
+ *          "zip":{"#text":""},
+ *          "business_name":{"#text":""}
+ *      }
+ * }
+ */
+ReverseMatchNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+    var model = UIModel.getInstance();
+
+    model.tokens["first_name"] = utils.getText(notif,'first_name');
+    model.tokens["mid_name"] = utils.getText(notif,'mid_name');
+    model.tokens["last_name"] = utils.getText(notif,'last_name');
+    model.tokens["address1"] = utils.getText(notif,'address1');
+    model.tokens["address2"] = utils.getText(notif,'address2');
+    model.tokens["suffix"] = utils.getText(notif,'suffix');
+    model.tokens["title"] = utils.getText(notif,'title');
+    model.tokens["city"] = utils.getText(notif,'city');
+    model.tokens["state"] = utils.getText(notif,'state');
+    model.tokens["zip"] = utils.getText(notif,'zip');
+    model.tokens["business_name"] = utils.getText(notif,'business_name');
+
+    return model.tokens;
+};
+
+
+var TcpaSafeLeadStateNotification = function() {
+
+};
+
+/*
+ * This class is responsible for processing the lead state packet
+ * received from intelliqueue. It will decide what type of leads are
+ * being processed, and depending on if the callback is true or false, it will
+ * call the appropriate form to update the lead state.
+ *
+ * {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016080317400400011",
+ *          "@type":"TCPA-SAFE-LEAD-STATE",
+ *          "@call_type":"MANUAL|TCPA-SAFE",
+ *          "request_id":{"#text":""},
+ *          "lead_state":{"#text":"CALLING"},
+ *          "callback":{"#text":"false"}
+ *      }
+ * }
+ */
+TcpaSafeLeadStateNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
 
     var response = {
         callType: notif['@call_type'],
@@ -1953,6 +2037,235 @@ LeadHistoryRequest.prototype.processResponse = function(response) {
     histResponse.leadHistory = history;
 
     return histResponse;
+};
+
+
+var LeadInsertRequest = function(dataObj) {
+    this.dataObj = dataObj;
+};
+
+/*
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@message_id":"UI200809291036128",
+ *      "@response_to":"",
+ *      "@type":"LEAD-INSERT",
+ *      "agent_id":{"#text":"1"},
+ *      "campaign_id":{"#text":""},
+ *      "lead_phone":{"#text":""},
+ *      "dialable":{"#text":""},
+ *      "agent_reserved":{"#text":""},
+ *      "callback_dts":{"#text":""},
+ *      "first_name":{"#text":""},
+ *      "mid_name":{"#text":""},
+ *      "last_name":{"#text":""},
+ *      "suffix":{"#text":""},
+ *      "title":{"#text":""},
+ *      "address1":{"#text":""},
+ *      "address2":{"#text":""},
+ *      "city":{"#text":""},
+ *      "state":{"#text":""},
+ *      "zip":{"#text":""},
+ *      "email":{"#text":""},
+ *      "gateKeeper":{"#text":""},
+ *      "aux_data1":{"#text":""},
+ *      "aux_data2":{"#text":""},
+ *      "aux_data3":{"#text":""},
+ *      "aux_data4":{"#text":""},
+ *      "aux_data5":{"#text":""},
+ *    }
+ * }
+ */
+LeadInsertRequest.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.LEAD_INSERT,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(this.dataObj.agentId)
+            },
+            "campaign_id":{
+                "#text":utils.toString(this.dataObj.campaignId)
+            },
+            "lead_phone":{
+                "#text":utils.toString(this.dataObj.leadPhone)
+            },
+            "dialable":{
+                "#text":utils.toString(this.dataObj.dialable)
+            },
+            "agent_reserved":{
+                "#text":utils.toString(this.dataObj.agentReserved)
+            },
+            "callback_dts":{
+                "#text":utils.toString(this.dataObj.callbackDts)
+            },
+            "first_name":{
+                "#text":utils.toString(this.dataObj.firstName)
+            },
+            "mid_name":{
+                "#text":utils.toString(this.dataObj.midName)
+            },
+            "last_name":{
+                "#text":utils.toString(this.dataObj.lastName)
+            },
+            "suffix":{
+                "#text":utils.toString(this.dataObj.suffix)
+            },
+            "title":{
+                "#text":utils.toString(this.dataObj.title)
+            },
+            "address1":{
+                "#text":utils.toString(this.dataObj.address1)
+            },
+            "address2":{
+                "#text":utils.toString(this.dataObj.address2)
+            },
+            "city":{
+                "#text":utils.toString(this.dataObj.city)
+            },
+            "state":{
+                "#text":utils.toString(this.dataObj.state)
+            },
+            "zip":{
+                "#text":utils.toString(this.dataObj.zip)
+            },
+            "email":{
+                "#text":utils.toString(this.dataObj.email)
+            },
+            "gateKeeper":{
+                "#text":utils.toString(this.dataObj.gateKeeper)
+            },
+            "aux_data1":{
+                "#text":utils.toString(this.dataObj.auxData1)
+            },
+            "aux_data2":{
+                "#text":utils.toString(this.dataObj.auxData2)
+            },
+            "aux_data3":{
+                "#text":utils.toString(this.dataObj.auxData3)
+            },
+            "aux_data4":{
+                "#text":utils.toString(this.dataObj.auxData4)
+            },
+            "aux_data5":{
+                "#text":utils.toString(this.dataObj.auxData5)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes LEAD-INSERT packets rec'd from IQ.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008091512353000875",
+ *      "@response_to":"UIV220089151235539",
+ *      "@type":"LEAD-INSERT",
+ *      "status":{"#text":"TRUE|FALSE"},
+ *      "msg":{"#text":""},
+ *      "detail":{"#text":""},
+ *   }
+ * }
+ */
+LeadInsertRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    formattedResponse.message = resp.msg["#text"];
+
+    return formattedResponse;
+};
+
+
+var LeadUpdateRequest = function(leadId, leadPhone, baggage) {
+    this.leadId = leadId;
+    this.leadPhone = leadPhone;
+    this.baggage = baggage;
+    this.agentId = utils.toString(UIModel.getInstance().agentSettings.agentId);
+};
+
+/*
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@message_id":"UI200809291036128",
+ *      "@response_to":"",
+ *      "@type":"LEAD-UPDATE",
+ *      "agent_id":{"#text":"1"},
+ *      "lead_id":{"#text":"12"},
+ *      "lead_phone":{"#text":"12"},
+ *       "baggage":{
+ *          "lead_id":{"#text":"64306"},
+ *          "extern_id":{"#text":"9548298548"},
+ *          "first_name":{"#text":"Ryant"},
+ *          "mid_name":{},
+ *          "last_name":{"#text":"Taylor"},
+ *          "state":{"#text":"OH"},
+ *          "aux_data1":{"#text":"BMAK"},
+ *          "aux_data2":{"#text":"BMAK-041653-934"},
+ *          "aux_data3":{"#text":"Call Ctr 1"},
+ *          "aux_data4":{},
+ *          "aux_data5":{},
+ *          "address1":{"#text":"8010 Maryland Ave"},
+ *          "address2":{},
+ *          "city":{"#text":"Cleveland"},
+ *          "zip":{"#text":"44105"},
+ *          "aux_external_url":{},
+ *          "aux_greeting":{},
+ *          "aux_phone":{}
+ *      },
+ *    }
+ * }
+ */
+LeadUpdateRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.LEAD_UPDATE,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":this.agentId
+            },
+            "lead_id":{
+                "#text":utils.toString(this.leadId)
+            },
+            "lead_phone":{
+                "#text":utils.toString(this.leadId)
+            },
+            "baggage":{
+                "#text":this.baggage
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes LEAD-UPDATE packets rec'd from IQ.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008091512353000875",
+ *      "@response_to":"UIV220089151235539",
+ *      "@type":"LEAD-UPDATE",
+ *      "status":{"#text":"TRUE|FALSE"},
+ *      "msg":{"#text":"64306"},
+ *      "detail":{"#text":"64306"},
+ *   }
+ * }
+ */
+LeadUpdateRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    formattedResponse.message = resp.msg["#text"];
+
+    return formattedResponse;
 };
 
 
@@ -3524,6 +3837,8 @@ var UIModel = (function() {
             hangupRequest : null,
             holdRequest : null,
             leadHistoryRequest : null,
+            leadInsertRequest : null,
+            leadUpdateRequest : null,
             logoutRequest : null,
             loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
             offhookInitRequest : null,
@@ -3813,6 +4128,14 @@ var utils = {
                 var history = UIModel.getInstance().leadHistoryRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.LEAD_HISTORY, history);
                 break;
+            case MESSAGE_TYPES.LEAD_INSERT:
+                var insert = UIModel.getInstance().leadInsertRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LEAD_INSERT, insert);
+                break;
+            case MESSAGE_TYPES.LEAD_UPDATE:
+                var update = UIModel.getInstance().leadUpdateRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LEAD_UPDATE, update);
+                break;
             case MESSAGE_TYPES.LOGIN:
                 if (dest === "IS") {
                     var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
@@ -3945,6 +4268,16 @@ var utils = {
                 var pendingDispNotif = new PendingDispNotification();
                 var pendingDispResponse = pendingDispNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.PENDING_DISP, pendingDispResponse);
+                break;
+            case MESSAGE_TYPES.REVERSE_MATCH:
+                var reverseMatchNotif = new ReverseMatchNotification();
+                var reverseMatchResponse = reverseMatchNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.REVERSE_MATCH, reverseMatchResponse);
+                break;
+            case MESSAGE_TYPES.TCPA_SAFE_LEAD_STATE:
+                var leadStateNotif = new TcpaSafeLeadStateNotification();
+                var leadStateResponse = leadStateNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateResponse);
                 break;
         }
     },
@@ -4499,6 +4832,7 @@ const LOG_LEVELS ={
  * <li>"previewFetchResponse"</li>
  * <li>"previewLeadStateNotification"</li>
  * <li>"requeueResponse"</li>
+ * <li>"reverseMatchNotification"</li>
  * <li>"agentStats"</li>
  * <li>"agentDailyStats"</li>
  * <li>"campaignStats"</li>
@@ -4533,7 +4867,9 @@ const CALLBACK_TYPES = {
     "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
     "LEAD_HISTORY":"leadHistoryResponse",
+    "LEAD_INSERT":"leadInsertResponse",
     "LEAD_SEARCH":"leadSearchResponse",
+    "LEAD_UPDATE":"leadUpdateResponse",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermNotification",
     "OPEN_SOCKET":"openResponse",
@@ -4542,12 +4878,14 @@ const CALLBACK_TYPES = {
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "REQUEUE":"requeueResponse",
+    "REVERSE_MATCH":"reverseMatchNotification",
     "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
     "STATS_AGENT_DAILY":"agentDailyStats",
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
     "TCPA_SAFE":"tcpaSafeResponse",
+    "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse"
 };
@@ -4571,6 +4909,8 @@ const MESSAGE_TYPES = {
     "HOLD":"HOLD",
     "INBOUND_DISPOSITION":"INBOUND-DISPOSITION",
     "LEAD_HISTORY":"LEAD-HISTORY",
+    "LEAD_INSERT":"LEAD-INSERT",
+    "LEAD_UPDATE":"LEAD-UPDATE",
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "NEW_CALL":"NEW-CALL",
@@ -4588,6 +4928,7 @@ const MESSAGE_TYPES = {
     "PREVIEW_LEAD_STATE":"PREVIEW-LEAD-STATE",
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
+    "REVERSE_MATCH":"REVERSE_MATCH",
     "STATS":"STATS",
     "STATS_AGENT":"AGENT",
     "STATS_AGENT_DAILY":"AGENTDAILY",
@@ -4595,6 +4936,7 @@ const MESSAGE_TYPES = {
     "STATS_QUEUE":"GATE",
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
+    "TCPA_SAFE_LEAD_STATE":"TCPA-SAFE-LEAD-STATE",
     "XFER_COLD":"COLD-XFER",
     "XFER_WARM":"WARM-XFER",
     "XFER_WARM_CANCEL":"WARM-XFER-CANCEL"
@@ -5694,6 +6036,36 @@ function initAgentLibraryLead (context) {
         var msg = UIModel.getInstance().leadHistoryRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.LEAD_HISTORY, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Insert a lead to the given campaign
+     * @memberof AgentLibrary
+     * @param {object} Contains agentId, campaignId, and lead info
+     * @param {function} [callback=null] Callback function when lead history response received
+     */
+    AgentLibrary.prototype.leadInsert = function(dataObj, callback){
+        UIModel.getInstance().leadInsertRequest = new LeadInsertRequest(dataObj);
+        var msg = UIModel.getInstance().leadInsertRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LEAD_INSERT, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Update lead information
+     * @memberof AgentLibrary
+     * @param {string} leadId Id for lead to update
+     * @param {string} leadPhone Lead phone number
+     * @param {object} baggage Object containing lead information
+     * @param {function} [callback=null] Callback function when lead history response received
+     */
+    AgentLibrary.prototype.leadUpdate = function(leadId, leadPhone, baggage, callback){
+        UIModel.getInstance().leadUpdateRequest = new LeadUpdateRequest(leadId);
+        var msg = UIModel.getInstance().leadUpdateRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LEAD_UPDATE, callback);
         utils.sendMessage(this, msg);
     };
 

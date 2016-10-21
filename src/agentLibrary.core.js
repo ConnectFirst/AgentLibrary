@@ -46,6 +46,7 @@ const LOG_LEVELS ={
  * <li>"previewFetchResponse"</li>
  * <li>"previewLeadStateNotification"</li>
  * <li>"requeueResponse"</li>
+ * <li>"reverseMatchNotification"</li>
  * <li>"agentStats"</li>
  * <li>"agentDailyStats"</li>
  * <li>"campaignStats"</li>
@@ -80,7 +81,9 @@ const CALLBACK_TYPES = {
     "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
     "LEAD_HISTORY":"leadHistoryResponse",
+    "LEAD_INSERT":"leadInsertResponse",
     "LEAD_SEARCH":"leadSearchResponse",
+    "LEAD_UPDATE":"leadUpdateResponse",
     "OFFHOOK_INIT":"offhookInitResponse",
     "OFFHOOK_TERM":"offhookTermNotification",
     "OPEN_SOCKET":"openResponse",
@@ -89,12 +92,14 @@ const CALLBACK_TYPES = {
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "REQUEUE":"requeueResponse",
+    "REVERSE_MATCH":"reverseMatchNotification",
     "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
     "STATS_AGENT_DAILY":"agentDailyStats",
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
     "TCPA_SAFE":"tcpaSafeResponse",
+    "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse"
 };
@@ -118,6 +123,8 @@ const MESSAGE_TYPES = {
     "HOLD":"HOLD",
     "INBOUND_DISPOSITION":"INBOUND-DISPOSITION",
     "LEAD_HISTORY":"LEAD-HISTORY",
+    "LEAD_INSERT":"LEAD-INSERT",
+    "LEAD_UPDATE":"LEAD-UPDATE",
     "LOGIN":"LOGIN",
     "LOGOUT":"LOGOUT",
     "NEW_CALL":"NEW-CALL",
@@ -135,6 +142,7 @@ const MESSAGE_TYPES = {
     "PREVIEW_LEAD_STATE":"PREVIEW-LEAD-STATE",
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
+    "REVERSE_MATCH":"REVERSE_MATCH",
     "STATS":"STATS",
     "STATS_AGENT":"AGENT",
     "STATS_AGENT_DAILY":"AGENTDAILY",
@@ -142,6 +150,7 @@ const MESSAGE_TYPES = {
     "STATS_QUEUE":"GATE",
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
+    "TCPA_SAFE_LEAD_STATE":"TCPA-SAFE-LEAD-STATE",
     "XFER_COLD":"COLD-XFER",
     "XFER_WARM":"WARM-XFER",
     "XFER_WARM_CANCEL":"WARM-XFER-CANCEL"

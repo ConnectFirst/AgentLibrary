@@ -100,6 +100,14 @@ var utils = {
                 var history = UIModel.getInstance().leadHistoryRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.LEAD_HISTORY, history);
                 break;
+            case MESSAGE_TYPES.LEAD_INSERT:
+                var insert = UIModel.getInstance().leadInsertRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LEAD_INSERT, insert);
+                break;
+            case MESSAGE_TYPES.LEAD_UPDATE:
+                var update = UIModel.getInstance().leadUpdateRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LEAD_UPDATE, update);
+                break;
             case MESSAGE_TYPES.LOGIN:
                 if (dest === "IS") {
                     var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
@@ -232,6 +240,16 @@ var utils = {
                 var pendingDispNotif = new PendingDispNotification();
                 var pendingDispResponse = pendingDispNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.PENDING_DISP, pendingDispResponse);
+                break;
+            case MESSAGE_TYPES.REVERSE_MATCH:
+                var reverseMatchNotif = new ReverseMatchNotification();
+                var reverseMatchResponse = reverseMatchNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.REVERSE_MATCH, reverseMatchResponse);
+                break;
+            case MESSAGE_TYPES.TCPA_SAFE_LEAD_STATE:
+                var leadStateNotif = new TcpaSafeLeadStateNotification();
+                var leadStateResponse = leadStateNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateResponse);
                 break;
         }
     },
