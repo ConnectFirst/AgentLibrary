@@ -1,5 +1,18 @@
 
 var LeadInsertRequest = function(dataObj) {
+    // handle boolean value conversion
+    if(dataObj.agent_reserved && dataObj.agent_reserved === true){
+        dataObj.agent_reserved = "1";
+    }else{
+        dataObj.agent_reserved = "0";
+    }
+
+    if(dataObj.dialable && dataObj.dialable === true){
+        dataObj.dialable = "1";
+    }else{
+        dataObj.dialable = "0";
+    }
+
     this.dataObj = dataObj;
 };
 
@@ -44,31 +57,31 @@ LeadInsertRequest.prototype.formatJSON = function() {
             "@message_id":utils.getMessageId(),
             "@response_to":"",
             "agent_id":{
-                "#text":utils.toString(this.dataObj.agentId)
+                "#text":utils.toString(this.dataObj.agent_id)
             },
             "campaign_id":{
-                "#text":utils.toString(this.dataObj.campaignId)
+                "#text":utils.toString(this.dataObj.campaign_id)
             },
             "lead_phone":{
-                "#text":utils.toString(this.dataObj.leadPhone)
+                "#text":utils.toString(this.dataObj.lead_phone)
             },
             "dialable":{
                 "#text":utils.toString(this.dataObj.dialable)
             },
             "agent_reserved":{
-                "#text":utils.toString(this.dataObj.agentReserved)
+                "#text":utils.toString(this.dataObj.agent_reserved)
             },
-            "callback_dts":{
-                "#text":utils.toString(this.dataObj.callbackDts)
+            "call_back_dts":{
+                "#text":utils.toString(this.dataObj.callback_dts)
             },
             "first_name":{
-                "#text":utils.toString(this.dataObj.firstName)
+                "#text":utils.toString(this.dataObj.first_name)
             },
             "mid_name":{
-                "#text":utils.toString(this.dataObj.midName)
+                "#text":utils.toString(this.dataObj.mid_name)
             },
             "last_name":{
-                "#text":utils.toString(this.dataObj.lastName)
+                "#text":utils.toString(this.dataObj.last_name)
             },
             "suffix":{
                 "#text":utils.toString(this.dataObj.suffix)
@@ -94,23 +107,23 @@ LeadInsertRequest.prototype.formatJSON = function() {
             "email":{
                 "#text":utils.toString(this.dataObj.email)
             },
-            "gateKeeper":{
-                "#text":utils.toString(this.dataObj.gateKeeper)
+            "gate_keeper":{
+                "#text":utils.toString(this.dataObj.gate_keeper)
             },
             "aux_data1":{
-                "#text":utils.toString(this.dataObj.auxData1)
+                "#text":utils.toString(this.dataObj.aux_data1)
             },
             "aux_data2":{
-                "#text":utils.toString(this.dataObj.auxData2)
+                "#text":utils.toString(this.dataObj.aux_data2)
             },
             "aux_data3":{
-                "#text":utils.toString(this.dataObj.auxData3)
+                "#text":utils.toString(this.dataObj.aux_data3)
             },
             "aux_data4":{
-                "#text":utils.toString(this.dataObj.auxData4)
+                "#text":utils.toString(this.dataObj.aux_data4)
             },
             "aux_data5":{
-                "#text":utils.toString(this.dataObj.auxData5)
+                "#text":utils.toString(this.dataObj.aux_data5)
             }
         }
     };

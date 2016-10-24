@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-10-21 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-10-24 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2041,6 +2041,19 @@ LeadHistoryRequest.prototype.processResponse = function(response) {
 
 
 var LeadInsertRequest = function(dataObj) {
+    // handle boolean value conversion
+    if(dataObj.agent_reserved && dataObj.agent_reserved === true){
+        dataObj.agent_reserved = "1";
+    }else{
+        dataObj.agent_reserved = "0";
+    }
+
+    if(dataObj.dialable && dataObj.dialable === true){
+        dataObj.dialable = "1";
+    }else{
+        dataObj.dialable = "0";
+    }
+
     this.dataObj = dataObj;
 };
 
@@ -2085,31 +2098,31 @@ LeadInsertRequest.prototype.formatJSON = function() {
             "@message_id":utils.getMessageId(),
             "@response_to":"",
             "agent_id":{
-                "#text":utils.toString(this.dataObj.agentId)
+                "#text":utils.toString(this.dataObj.agent_id)
             },
             "campaign_id":{
-                "#text":utils.toString(this.dataObj.campaignId)
+                "#text":utils.toString(this.dataObj.campaign_id)
             },
             "lead_phone":{
-                "#text":utils.toString(this.dataObj.leadPhone)
+                "#text":utils.toString(this.dataObj.lead_phone)
             },
             "dialable":{
                 "#text":utils.toString(this.dataObj.dialable)
             },
             "agent_reserved":{
-                "#text":utils.toString(this.dataObj.agentReserved)
+                "#text":utils.toString(this.dataObj.agent_reserved)
             },
-            "callback_dts":{
-                "#text":utils.toString(this.dataObj.callbackDts)
+            "call_back_dts":{
+                "#text":utils.toString(this.dataObj.callback_dts)
             },
             "first_name":{
-                "#text":utils.toString(this.dataObj.firstName)
+                "#text":utils.toString(this.dataObj.first_name)
             },
             "mid_name":{
-                "#text":utils.toString(this.dataObj.midName)
+                "#text":utils.toString(this.dataObj.mid_name)
             },
             "last_name":{
-                "#text":utils.toString(this.dataObj.lastName)
+                "#text":utils.toString(this.dataObj.last_name)
             },
             "suffix":{
                 "#text":utils.toString(this.dataObj.suffix)
@@ -2135,23 +2148,23 @@ LeadInsertRequest.prototype.formatJSON = function() {
             "email":{
                 "#text":utils.toString(this.dataObj.email)
             },
-            "gateKeeper":{
-                "#text":utils.toString(this.dataObj.gateKeeper)
+            "gate_keeper":{
+                "#text":utils.toString(this.dataObj.gate_keeper)
             },
             "aux_data1":{
-                "#text":utils.toString(this.dataObj.auxData1)
+                "#text":utils.toString(this.dataObj.aux_data1)
             },
             "aux_data2":{
-                "#text":utils.toString(this.dataObj.auxData2)
+                "#text":utils.toString(this.dataObj.aux_data2)
             },
             "aux_data3":{
-                "#text":utils.toString(this.dataObj.auxData3)
+                "#text":utils.toString(this.dataObj.aux_data3)
             },
             "aux_data4":{
-                "#text":utils.toString(this.dataObj.auxData4)
+                "#text":utils.toString(this.dataObj.aux_data4)
             },
             "aux_data5":{
-                "#text":utils.toString(this.dataObj.auxData5)
+                "#text":utils.toString(this.dataObj.aux_data5)
             }
         }
     };
@@ -2222,6 +2235,8 @@ var LeadUpdateRequest = function(leadId, leadPhone, baggage) {
  * }
  */
 LeadUpdateRequest.prototype.formatJSON = function() {
+    // make sure required baggage fields are present
+    this.baggage = _formatBaggage(this.baggage);
     var msg = {
         "ui_request": {
             "@destination":"IQ",
@@ -2235,11 +2250,9 @@ LeadUpdateRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.leadId)
             },
             "lead_phone":{
-                "#text":utils.toString(this.leadId)
+                "#text":utils.toString(this.leadPhone)
             },
-            "baggage":{
-                "#text":this.baggage
-            }
+            "baggage": this.baggage
         }
     };
 
@@ -2266,6 +2279,29 @@ LeadUpdateRequest.prototype.processResponse = function(response) {
     formattedResponse.message = resp.msg["#text"];
 
     return formattedResponse;
+};
+
+_formatBaggage = function(baggage){
+    baggage.first_name = {"#text": baggage.first_name || ""};
+    baggage.mid_name = {"#text":baggage.mid_name || ""};
+    baggage.last_name = {"#text":baggage.last_name || ""};
+    baggage.suffix =  {"#text":baggage.suffix || ""};
+    baggage.title = {"#text":baggage.title || ""};
+    baggage.address1 = {"#text":baggage.address1 || ""};
+    baggage.address2 = {"#text":baggage.address2 || ""};
+    baggage.city = {"#text":baggage.city || ""};
+    baggage.state = {"#text":baggage.state || ""};
+    baggage.zip = {"#text":baggage.zip || ""};
+    baggage.email = {"#text":baggage.email || ""};
+    baggage.gate_keeper = {"#text":baggage.gate_keeper || ""};
+    baggage.extern_id = {"#text":baggage.extern_id || ""};
+    baggage.aux_data1 = {"#text":baggage.aux_data1 || ""};
+    baggage.aux_data2 = {"#text":baggage.aux_data2 || ""};
+    baggage.aux_data3 = {"#text":baggage.aux_data3 || ""};
+    baggage.aux_data4 = {"#text":baggage.aux_data4 || ""};
+    baggage.aux_data5 = {"#text":baggage.aux_data5 || ""};
+
+    return baggage;
 };
 
 
@@ -4298,7 +4334,8 @@ var utils = {
         // Fire callback function
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.PREVIEW_DIAL_ID:
-                var dialResponse = UIModel.getInstance().previewDialRequest.processResponse(response);
+                var pdRequest = new PreviewDialRequest();
+                var dialResponse = pdRequest.processResponse(response);
                 if(dialResponse.action.toUpperCase() === "SEARCH"){
                     utils.fireCallback(instance, CALLBACK_TYPES.LEAD_SEARCH, dialResponse);
                 }else{
@@ -4307,7 +4344,8 @@ var utils = {
 
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_ID:
-                var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
+                var tcpaRequest = new TcpaSafeRequest();
+                var tcpaResponse = tcpaRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
                 break;
         }
@@ -6062,7 +6100,7 @@ function initAgentLibraryLead (context) {
      * @param {function} [callback=null] Callback function when lead history response received
      */
     AgentLibrary.prototype.leadUpdate = function(leadId, leadPhone, baggage, callback){
-        UIModel.getInstance().leadUpdateRequest = new LeadUpdateRequest(leadId);
+        UIModel.getInstance().leadUpdateRequest = new LeadUpdateRequest(leadId, leadPhone, baggage);
         var msg = UIModel.getInstance().leadUpdateRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.LEAD_UPDATE, callback);

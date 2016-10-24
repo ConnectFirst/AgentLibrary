@@ -40,7 +40,7 @@ function initAgentLibraryLead (context) {
      * @param {function} [callback=null] Callback function when lead history response received
      */
     AgentLibrary.prototype.leadUpdate = function(leadId, leadPhone, baggage, callback){
-        UIModel.getInstance().leadUpdateRequest = new LeadUpdateRequest(leadId);
+        UIModel.getInstance().leadUpdateRequest = new LeadUpdateRequest(leadId, leadPhone, baggage);
         var msg = UIModel.getInstance().leadUpdateRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.LEAD_UPDATE, callback);

@@ -270,7 +270,8 @@ var utils = {
         // Fire callback function
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.PREVIEW_DIAL_ID:
-                var dialResponse = UIModel.getInstance().previewDialRequest.processResponse(response);
+                var pdRequest = new PreviewDialRequest();
+                var dialResponse = pdRequest.processResponse(response);
                 if(dialResponse.action.toUpperCase() === "SEARCH"){
                     utils.fireCallback(instance, CALLBACK_TYPES.LEAD_SEARCH, dialResponse);
                 }else{
@@ -279,7 +280,8 @@ var utils = {
 
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_ID:
-                var tcpaResponse = UIModel.getInstance().tcpaSafeRequest.processResponse(response);
+                var tcpaRequest = new TcpaSafeRequest();
+                var tcpaResponse = tcpaRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
                 break;
         }

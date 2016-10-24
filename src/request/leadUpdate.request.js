@@ -39,6 +39,8 @@ var LeadUpdateRequest = function(leadId, leadPhone, baggage) {
  * }
  */
 LeadUpdateRequest.prototype.formatJSON = function() {
+    // make sure required baggage fields are present
+    this.baggage = _formatBaggage(this.baggage);
     var msg = {
         "ui_request": {
             "@destination":"IQ",
@@ -52,11 +54,9 @@ LeadUpdateRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.leadId)
             },
             "lead_phone":{
-                "#text":utils.toString(this.leadId)
+                "#text":utils.toString(this.leadPhone)
             },
-            "baggage":{
-                "#text":this.baggage
-            }
+            "baggage": this.baggage
         }
     };
 
@@ -83,4 +83,27 @@ LeadUpdateRequest.prototype.processResponse = function(response) {
     formattedResponse.message = resp.msg["#text"];
 
     return formattedResponse;
+};
+
+_formatBaggage = function(baggage){
+    baggage.first_name = {"#text": baggage.first_name || ""};
+    baggage.mid_name = {"#text":baggage.mid_name || ""};
+    baggage.last_name = {"#text":baggage.last_name || ""};
+    baggage.suffix =  {"#text":baggage.suffix || ""};
+    baggage.title = {"#text":baggage.title || ""};
+    baggage.address1 = {"#text":baggage.address1 || ""};
+    baggage.address2 = {"#text":baggage.address2 || ""};
+    baggage.city = {"#text":baggage.city || ""};
+    baggage.state = {"#text":baggage.state || ""};
+    baggage.zip = {"#text":baggage.zip || ""};
+    baggage.email = {"#text":baggage.email || ""};
+    baggage.gate_keeper = {"#text":baggage.gate_keeper || ""};
+    baggage.extern_id = {"#text":baggage.extern_id || ""};
+    baggage.aux_data1 = {"#text":baggage.aux_data1 || ""};
+    baggage.aux_data2 = {"#text":baggage.aux_data2 || ""};
+    baggage.aux_data3 = {"#text":baggage.aux_data3 || ""};
+    baggage.aux_data4 = {"#text":baggage.aux_data4 || ""};
+    baggage.aux_data5 = {"#text":baggage.aux_data5 || ""};
+
+    return baggage;
 };
