@@ -336,7 +336,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        Lib.manualOutdial(destination, null, callerId, null, null);
+        Lib.manualOutdial(destination, callerId, null, null, null);
         var msg = Lib.getManualOutdialRequest().formatJSON();
 
         Lib.socket._message(msg);

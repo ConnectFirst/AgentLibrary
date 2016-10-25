@@ -132,8 +132,8 @@ function initAgentLibraryCall (context) {
      * @param {string} [countryId='USA'] Country for the destination number
      * @param {number} [queueId=''] Queue id to tie manual call to
      */
-    AgentLibrary.prototype.manualOutdial = function(destination, ringTime, callerId, countryId, queueId){
-        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, ringTime, callerId, countryId, queueId);
+    AgentLibrary.prototype.manualOutdial = function(destination, callerId, ringTime, countryId, queueId){
+        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, callerId,  ringTime, countryId, queueId);
         var msg = UIModel.getInstance().oneToOneOutdialRequest.formatJSON();
         utils.sendMessage(this, msg);
     };

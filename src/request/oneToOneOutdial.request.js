@@ -1,8 +1,8 @@
 
-var OneToOneOutdialRequest = function(destination, ringTime, callerId, countryId, gateId) {
+var OneToOneOutdialRequest = function(destination, callerId, ringTime, countryId, gateId) {
     this.destination = destination;
-    this.ringTime = ringTime || "60";
     this.callerId = callerId;
+    this.ringTime = ringTime || "60";
     this.countryId = countryId || "USA";
     this.gateId = gateId || "";
 };

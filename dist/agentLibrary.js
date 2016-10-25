@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-10-24 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-10-25 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2771,10 +2771,10 @@ OffhookTermRequest.prototype.processResponse = function(data) {
 };
 
 
-var OneToOneOutdialRequest = function(destination, ringTime, callerId, countryId, gateId) {
+var OneToOneOutdialRequest = function(destination, callerId, ringTime, countryId, gateId) {
     this.destination = destination;
-    this.ringTime = ringTime || "60";
     this.callerId = callerId;
+    this.ringTime = ringTime || "60";
     this.countryId = countryId || "USA";
     this.gateId = gateId || "";
 };
@@ -5883,8 +5883,8 @@ function initAgentLibraryCall (context) {
      * @param {string} [countryId='USA'] Country for the destination number
      * @param {number} [queueId=''] Queue id to tie manual call to
      */
-    AgentLibrary.prototype.manualOutdial = function(destination, ringTime, callerId, countryId, queueId){
-        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, ringTime, callerId, countryId, queueId);
+    AgentLibrary.prototype.manualOutdial = function(destination, callerId, ringTime, countryId, queueId){
+        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, callerId,  ringTime, countryId, queueId);
         var msg = UIModel.getInstance().oneToOneOutdialRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
