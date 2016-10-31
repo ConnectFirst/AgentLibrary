@@ -4526,6 +4526,7 @@ const LOG_LEVELS ={
  * <li>"pendingDispNotification"</li>
  * <li>"previewFetchResponse"</li>
  * <li>"previewLeadStateNotification"</li>
+ * <li>"recordResponse"</li>
  * <li>"requeueResponse"</li>
  * <li>"agentStats"</li>
  * <li>"agentDailyStats"</li>
@@ -4569,6 +4570,7 @@ const CALLBACK_TYPES = {
     "PENDING_DISP":"pendingDispNotification",
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
+    "RECORD":"recordResponse",
     "REQUEUE":"requeueResponse",
     "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
