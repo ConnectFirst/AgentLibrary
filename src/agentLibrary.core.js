@@ -708,5 +708,13 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getCampaignStats = function() {
         return UIModel.getInstance().campaignStats;
     };
+    /**
+     * Get Transfer Sessions
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getTransferSessions = function() {
+        return UIModel.getInstance().transferSessions;
+    };
 
 }

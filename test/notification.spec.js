@@ -263,7 +263,8 @@ describe( 'Tests for processing notification messages in Agent Library', functio
             "sessionLabel": "Primary Agents Call Session",
             "allowControl": true,
             "monitoring": false,
-            "agentId": "1"
+            "agentId": "1",
+            "transferSessions":{}
         };
 
         expect(response).toEqual(expectedResponse);

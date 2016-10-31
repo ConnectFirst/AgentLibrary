@@ -39,6 +39,11 @@ var NewCallNotification = function() {
  *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "#text":"Transfer Not Available"}
  *          ]
  *      },
+ *      "requeue_shortcuts":{
+ *          "requeue_shortcut":[
+ *              { "@gate_id":"2", "@name":"test queue" "@skill_id":""}
+ *          ]
+ *      },
  *      "baggage":{
  *          "@allow_updates":"TRUE",
  *          "@show_lead_passes":"TRUE",
@@ -125,9 +130,20 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
     newCall.agentRecording = utils.processResponseCollection(notification, 'ui_notification', 'agent_recording', 'agentRecording')[0];
     newCall.outdialDispositions = utils.processResponseCollection(notification, 'ui_notification', 'outdial_dispositions', 'disposition')[0];
+    newCall.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
     newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+
+    // fix phonebook format
+    if(newCall.transferPhoneBook && newCall.transferPhoneBook.entrys){
+        newCall.transferPhoneBook = newCall.transferPhoneBook.entrys;
+    }
+
+    // fix requeue shortcuts
+    if(newCall.requeueShortcuts && newCall.requeueShortcuts.requeueShortcuts){
+        newCall.requeueShortcuts = newCall.requeueShortcuts.requeueShortcuts;
+    }
 
     // if only one disposition, convert to array
     if(newCall.outdialDispositions && newCall.outdialDispositions.disposition){

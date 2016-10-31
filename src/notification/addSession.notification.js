@@ -63,6 +63,7 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     formattedResponse.allowControl = utils.getText(notif, "allow_control");
     formattedResponse.monitoring = utils.getText(notif, "monitoring");
     formattedResponse.agentId = utils.getText(notif, "agent_id");
+    formattedResponse.transferSessions = model.transferSessions;
 
     return formattedResponse;
 };

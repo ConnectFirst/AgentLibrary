@@ -21,6 +21,17 @@ DropSessionNotification.prototype.processResponse = function(notification) {
     var formattedResponse = utils.buildDefaultResponse(notification);
     var notif = notification.ui_notification;
 
+    var sessionId = utils.getText(notif, "session_id");
+    var transfer = UIModel.getInstance().transferSessions[sessionId];
+
+    // Check to see if we just disconnected a transfer session
+    // If so, we need to remove the session from our map
+    if(transfer){
+        utils.logMessage(LOG_LEVELS.DEBUG, "Transfer to " + transfer.destination + " has terminated", "");
+        delete UIModel.getInstance().transferSessions[sessionId];
+        formattedResponse.transferEnd = transfer;
+    }
+
     formattedResponse.message = "Received DROP-SESSION Notification";
     formattedResponse.status = "OK";
     formattedResponse.sessionId = utils.getText(notif, "session_id");
