@@ -45,6 +45,7 @@ const LOG_LEVELS ={
  * <li>"pendingDispNotification"</li>
  * <li>"previewFetchResponse"</li>
  * <li>"previewLeadStateNotification"</li>
+ * <li>"recordResponse"</li>
  * <li>"requeueResponse"</li>
  * <li>"reverseMatchNotification"</li>
  * <li>"agentStats"</li>
@@ -91,6 +92,7 @@ const CALLBACK_TYPES = {
     "PENDING_DISP":"pendingDispNotification",
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
+    "RECORD":"recordResponse",
     "REQUEUE":"requeueResponse",
     "REVERSE_MATCH":"reverseMatchNotification",
     "SILENT_MONITOR":"monitorResponse",
@@ -716,6 +718,14 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getCampaignStats = function() {
         return UIModel.getInstance().campaignStats;
+    };
+    /**
+     * Get Transfer Sessions
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getTransferSessions = function() {
+        return UIModel.getInstance().transferSessions;
     };
 
 }
