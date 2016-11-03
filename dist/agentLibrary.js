@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-10-25 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-11-03 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -72,6 +72,7 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     formattedResponse.allowControl = utils.getText(notif, "allow_control");
     formattedResponse.monitoring = utils.getText(notif, "monitoring");
     formattedResponse.agentId = utils.getText(notif, "agent_id");
+    formattedResponse.transferSessions = model.transferSessions;
 
     return formattedResponse;
 };
@@ -195,6 +196,17 @@ var DropSessionNotification = function() {
 DropSessionNotification.prototype.processResponse = function(notification) {
     var formattedResponse = utils.buildDefaultResponse(notification);
     var notif = notification.ui_notification;
+
+    var sessionId = utils.getText(notif, "session_id");
+    var transfer = UIModel.getInstance().transferSessions[sessionId];
+
+    // Check to see if we just disconnected a transfer session
+    // If so, we need to remove the session from our map
+    if(transfer){
+        utils.logMessage(LOG_LEVELS.DEBUG, "Transfer to " + transfer.destination + " has terminated", "");
+        delete UIModel.getInstance().transferSessions[sessionId];
+        formattedResponse.transferEnd = transfer;
+    }
 
     formattedResponse.message = "Received DROP-SESSION Notification";
     formattedResponse.status = "OK";
@@ -435,6 +447,11 @@ var NewCallNotification = function() {
  *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "#text":"Transfer Not Available"}
  *          ]
  *      },
+ *      "requeue_shortcuts":{
+ *          "requeue_shortcut":[
+ *              { "@gate_id":"2", "@name":"test queue" "@skill_id":""}
+ *          ]
+ *      },
  *      "baggage":{
  *          "@allow_updates":"TRUE",
  *          "@show_lead_passes":"TRUE",
@@ -521,9 +538,20 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
     newCall.agentRecording = utils.processResponseCollection(notification, 'ui_notification', 'agent_recording', 'agentRecording')[0];
     newCall.outdialDispositions = utils.processResponseCollection(notification, 'ui_notification', 'outdial_dispositions', 'disposition')[0];
+    newCall.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
     newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+
+    // fix phonebook format
+    if(newCall.transferPhoneBook && newCall.transferPhoneBook.entrys){
+        newCall.transferPhoneBook = newCall.transferPhoneBook.entrys;
+    }
+
+    // fix requeue shortcuts
+    if(newCall.requeueShortcuts && newCall.requeueShortcuts.requeueShortcuts){
+        newCall.requeueShortcuts = newCall.requeueShortcuts.requeueShortcuts;
+    }
 
     // if only one disposition, convert to array
     if(newCall.outdialDispositions && newCall.outdialDispositions.disposition){
@@ -4869,6 +4897,7 @@ const LOG_LEVELS ={
  * <li>"pendingDispNotification"</li>
  * <li>"previewFetchResponse"</li>
  * <li>"previewLeadStateNotification"</li>
+ * <li>"recordResponse"</li>
  * <li>"requeueResponse"</li>
  * <li>"reverseMatchNotification"</li>
  * <li>"agentStats"</li>
@@ -4915,6 +4944,7 @@ const CALLBACK_TYPES = {
     "PENDING_DISP":"pendingDispNotification",
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
+    "RECORD":"recordResponse",
     "REQUEUE":"requeueResponse",
     "REVERSE_MATCH":"reverseMatchNotification",
     "SILENT_MONITOR":"monitorResponse",
@@ -5540,6 +5570,14 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getCampaignStats = function() {
         return UIModel.getInstance().campaignStats;
+    };
+    /**
+     * Get Transfer Sessions
+     * @memberof AgentLibrary
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getTransferSessions = function() {
+        return UIModel.getInstance().transferSessions;
     };
 
 }
