@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-11-03 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-11-10 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2532,7 +2532,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
             var allowLeadInserts = typeof resp.insert_campaigns === 'undefined' ? false : response.ui_response.insert_campaigns.campaign;
-            if(allowLeadInserts && allowLeadInserts.length > 0){
+            if(allowLeadInserts){
                 model.agentPermissions.allowLeadInserts = true;
             }
 
@@ -5863,9 +5863,9 @@ function initAgentLibraryCall (context) {
      * @param {string} notes Agent notes for call
      * @param {boolean} callback Boolean for whether or not this call is a callback
      * @param {string} [callbackDTS=""] date time stamp if callback
-     * @param {string} [leadId=null] The lead id (for outbound dispositions)
-     * @param {string} [requestKey=null] The request key for the lead (if manual pass disposition)
-     * @param {string} [externId=null] The external id of the lead (outbound)
+     * @param {string} [leadId=null] The lead id
+     * @param {string} [requestKey=null] The request key for the lead
+     * @param {string} [externId=null] The external id of the lead
      */
     AgentLibrary.prototype.dispositionManualPass = function(dispId, notes, callback, callbackDTS, leadId, requestKey, externId){
         UIModel.getInstance().dispositionManualPassRequest = new DispositionManualPassRequest(dispId, notes, callback, callbackDTS, leadId, requestKey, externId);
