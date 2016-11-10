@@ -198,7 +198,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
             var allowLeadInserts = typeof resp.insert_campaigns === 'undefined' ? false : response.ui_response.insert_campaigns.campaign;
-            if(allowLeadInserts && allowLeadInserts.length > 0){
+            if(allowLeadInserts){
                 model.agentPermissions.allowLeadInserts = true;
             }
 
