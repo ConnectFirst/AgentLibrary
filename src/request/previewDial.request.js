@@ -76,6 +76,7 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
     var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
     var formattedResponse = {
         action: notif['@action'],
+        callbacks: notif['@callbacks'] === "TRUE",
         dialGroupId: utils.getText(notif,"dial_group_id"),
         accountId: utils.getText(notif,"account_id"),
         agentId: utils.getText(notif,"agent_id"),

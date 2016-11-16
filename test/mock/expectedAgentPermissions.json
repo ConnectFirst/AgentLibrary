@@ -22,5 +22,6 @@
   },
   "disableSupervisorMonitoring": true,
   "requireFetchedLeadsCalled": false,
-  "showLeadHistory": true
+  "showLeadHistory": true,
+  "progressiveEnabled":false
 }

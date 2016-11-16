@@ -200,7 +200,7 @@ function initAgentLibraryCall (context) {
      * e.g. [ {key: "name", value: "Geoff"} ]
      * @param {function} [callback=null] Callback function when lead search completed, returns matched leads
      */
-    AgentLibrary.prototype.serachLeads = function(searchFields, callback){
+    AgentLibrary.prototype.searchLeads = function(searchFields, callback){
         UIModel.getInstance().previewDialRequest = new PreviewDialRequest("search", searchFields, "");
         var msg = UIModel.getInstance().previewDialRequest.formatJSON();
 

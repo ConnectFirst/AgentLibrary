@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-11-10 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-11-15 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1569,6 +1569,7 @@ function setDialGroupSettings(response){
         if(group.dialGroupId === response.ui_response.outdial_group_id['#text']){
             model.agentPermissions.allowLeadSearch = group.allowLeadSearch;
             model.agentPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
+            model.agentPermissions.progressiveEnabled = group.progressiveEnabled === 1;
             model.outboundSettings.outdialGroup = JSON.parse(JSON.stringify(group)); // copy object
 
             // Only used for Preview or TCPA Safe accounts.
@@ -3069,6 +3070,7 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
     var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
     var formattedResponse = {
         action: notif['@action'],
+        callbacks: notif['@callbacks'] === "TRUE",
         dialGroupId: utils.getText(notif,"dial_group_id"),
         accountId: utils.getText(notif,"account_id"),
         agentId: utils.getText(notif,"agent_id"),
@@ -3333,6 +3335,7 @@ TcpaSafeRequest.prototype.formatJSON = function() {
  * from the dialer. It will save a copy of it in the UIModel.
  *
  * {"dialer_request":{
+ *      "@action":"",
  *      "@callbacks":"TRUE|FALSE"
  *      ,"@message_id":"ID2008091513163400220",
  *      "@response_to":"",
@@ -3363,6 +3366,8 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
     var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
     var formattedResponse = {
+        action: notif['@action'],
+        callbacks: notif['@callbacks'] === "TRUE",
         dialGroupId: utils.getText(notif,"dial_group_id"),
         accountId: utils.getText(notif,"account_id"),
         agentId: utils.getText(notif,"agent_id"),
@@ -4025,6 +4030,7 @@ var UIModel = (function() {
                 allowPreviewLeadFilters : false,    // Controlled by the dial-group allow_preview_lead_filters setting. Enables or disables the filters on the preview style forms
                 allowLeadUpdatesByCampaign : {},    // For each campaign ID, store whether leads can be updated
                 disableSupervisorMonitoring : true, // Controls whether or not a supervisor can view agent stats
+                progressiveEnabled : false,         // Preview dial feature that enables auto-calls from the preview window.
                 requireFetchedLeadsCalled : false,  // Controlled by the dial-group require_fetched_leads_called setting. Enables or disables the requirement to only fetch new leads when current leads are called or expired. ONly for Preview or TCPA-SAFE.
                 showLeadHistory : true              // Controls whether or not the agents can view lead history
             },
@@ -5989,7 +5995,7 @@ function initAgentLibraryCall (context) {
      * e.g. [ {key: "name", value: "Geoff"} ]
      * @param {function} [callback=null] Callback function when lead search completed, returns matched leads
      */
-    AgentLibrary.prototype.serachLeads = function(searchFields, callback){
+    AgentLibrary.prototype.searchLeads = function(searchFields, callback){
         UIModel.getInstance().previewDialRequest = new PreviewDialRequest("search", searchFields, "");
         var msg = UIModel.getInstance().previewDialRequest.formatJSON();
 
