@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-11-15 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-11-16 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2532,8 +2532,7 @@ LoginRequest.prototype.processResponse = function(response) {
 
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
-            var allowLeadInserts = typeof resp.insert_campaigns === 'undefined' ? false : response.ui_response.insert_campaigns.campaign;
-            if(allowLeadInserts){
+            if(response.ui_response.allow_lead_inserts && typeof resp.insert_campaigns !== 'undefined' && response.ui_response.insert_campaigns.campaign){
                 model.agentPermissions.allowLeadInserts = true;
             }
 
