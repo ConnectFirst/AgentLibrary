@@ -23,4 +23,6 @@ CallbackCancelRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+// NOTE: cancel callback response sent as a generic notification message
+
 

@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-11-16 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-11-17 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -5758,7 +5758,7 @@ function initAgentLibraryAgent (context) {
      * @memberof AgentLibrary
      * @param {number} leadId Id of lead callback to cancel
      * @param {number} [agentId=logged in agent id] Id of agent to cancel specified lead callback for
-     * @param {function} [callback=null] Callback function when offhookTerm response received
+     * @param {function} [callback=null] Callback function when callback is canceled
      */
     AgentLibrary.prototype.cancelCallback = function(leadId, agentId, callback){
         UIModel.getInstance().callbackCancelRequest = new CallbackCancelRequest(leadId, agentId);
