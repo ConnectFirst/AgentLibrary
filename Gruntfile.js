@@ -19,6 +19,7 @@ module.exports = function(grunt) {
     sub('src/%s.agent.js'),
     sub('src/%s.call.js'),
     sub('src/%s.lead.js'),
+    sub('src/%s.chat.js'),
     sub('src/%s.logger.js')
   ];
 
@@ -26,6 +27,7 @@ module.exports = function(grunt) {
     sub('src/%s.intro.js'),
     sub('src/notification/*.notification.js'),
     sub('src/request/*.request.js'),
+    sub('src/chat/*.request.js'),
     sub('src/stats/*.stats.js'),
     sub('src/model/*.model.js'),
     sub('src/utils/*.js'),
@@ -39,6 +41,7 @@ module.exports = function(grunt) {
     sub('src/%s.intro.js'),
     sub('src/notification/*.notification.js'),
     sub('src/request/*.request.js'),
+    sub('src/chat/*.request.js'),
     sub('src/stats/*.stats.js'),
     sub('src/model/*.model.js'),
     sub('src/utils/*.js'),
