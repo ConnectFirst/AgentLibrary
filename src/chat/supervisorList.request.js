@@ -51,11 +51,22 @@ SupervisorListRequest.prototype.formatJSON = function() {
  */
 
 SupervisorListRequest.prototype.processResponse = function(response) {
-    var resp = response.ui_response;
     var model = UIModel.getInstance();
+    var tempList = utils.processResponseCollection(response, "ui_response", "supervisor");
+    var supervisors = [];
 
-    utils.logMessage(LOG_LEVELS.DEBUG, "New supervisor list received ", response);
-    model.supervisors = utils.processResponseCollection(response, "ui_response", "supervisor");
+    for(var i = 0; i < tempList.length; i++){
+        var sup = tempList[i];
+        supervisors.push({
+            agentId:sup.id,
+            firstName:sup.fname,
+            lastName:sup.lname,
+            username:sup.uname
+        });
+    }
+
+    utils.logMessage(LOG_LEVELS.DEBUG, "New supervisor list received ", supervisors);
+    model.supervisors = supervisors;
 
     return model.supervisors;
 };
