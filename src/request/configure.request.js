@@ -196,7 +196,7 @@ ConfigRequest.prototype.processResponse = function(response) {
         formattedResponse.connectionSettings = model.connectionSettings;
         formattedResponse.inboundSettings = model.inboundSettings;
         formattedResponse.outboundSettings = model.outboundSettings;
-        formattedResponse.surveySettings = model.surveySettings;
+        formattedResponse.scriptSettings = model.scriptSettings;
     }else{
         // Login failed
         if(formattedResponse.message === ""){

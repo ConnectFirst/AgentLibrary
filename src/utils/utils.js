@@ -146,6 +146,10 @@ var utils = {
                 var supervisorList = UIModel.getInstance().supervisorListRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.SUPERVISOR_LIST, supervisorList);
                 break;
+            case MESSAGE_TYPES.SCRIPT_CONFIG:
+                var script = UIModel.getInstance().scriptConfigRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.SCRIPT_CONFIG, script);
+                break;
             case MESSAGE_TYPES.XFER_COLD:
                 var coldXfer = UIModel.getInstance().coldXferRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.XFER_COLD, coldXfer);

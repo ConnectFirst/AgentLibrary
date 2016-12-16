@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-12-14 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-12-16 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1549,7 +1549,7 @@ ConfigRequest.prototype.processResponse = function(response) {
         formattedResponse.connectionSettings = model.connectionSettings;
         formattedResponse.inboundSettings = model.inboundSettings;
         formattedResponse.outboundSettings = model.outboundSettings;
-        formattedResponse.surveySettings = model.surveySettings;
+        formattedResponse.scriptSettings = model.scriptSettings;
     }else{
         // Login failed
         if(formattedResponse.message === ""){
@@ -2543,7 +2543,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
             model.inboundSettings.availableRequeueQueues = utils.processResponseCollection(response.ui_response, "requeue_gates", "gate_group");
             model.chatSettings.availableChatRooms = utils.processResponseCollection(response.ui_response, "chat_rooms", "room");
-            model.surveySettings.availableSurveys = utils.processResponseCollection(response.ui_response, "surveys", "survey");
+            model.scriptSettings.availableScripts = utils.processResponseCollection(response.ui_response, "surveys", "survey");
             model.agentSettings.callerIds = utils.processResponseCollection(response.ui_response, "caller_ids", "caller_id");
             model.agentSettings.availableAgentStates = utils.processResponseCollection(response.ui_response, "agent_states", "agent_state");
             model.applicationSettings.availableCountries = utils.processResponseCollection(response.ui_response, "account_countries", "country");
@@ -2568,7 +2568,7 @@ LoginRequest.prototype.processResponse = function(response) {
         formattedResponse.connectionSettings = model.connectionSettings;
         formattedResponse.inboundSettings = model.inboundSettings;
         formattedResponse.outboundSettings = model.outboundSettings;
-        formattedResponse.surveySettings = model.surveySettings;
+        formattedResponse.scriptSettings = model.scriptSettings;
 
     }else if(status === 'RESTRICTED'){
         formattedResponse.message = "Invalid IP Address";
@@ -3255,6 +3255,69 @@ RequeueRequest.prototype.processResponse = function(response) {
     }else{
         var message = "There was an error processing the requeue request. " + formattedResponse.detail;
         utils.logMessage(LOG_LEVELS.WARN, message, response);
+    }
+
+    return formattedResponse;
+};
+
+
+var ScriptConfigRequest = function(scriptId, version) {
+    this.scriptId = scriptId;
+    this.version = version;
+};
+
+/*
+* This event is responsible for requesting a script object
+*/
+ScriptConfigRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "@type":MESSAGE_TYPES.SCRIPT_CONFIG,
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
+            },
+            "script_id": {
+                "#text" : utils.toString(this.scriptId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+/*
+ * This class process SCRIPT-CONFIG packets received from IntelliQueue.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082817165103294",
+ *      "@response_to":"",
+ *      "@type":"SCRIPT-CONFIG",
+ *      "status":{"#text":"OK"},
+ *      "message":{},
+ *      "script_id":{"#text":"123"},
+ *      "version":{"#text":"1"},
+ *      "json":{},
+ *   }
+ * }
+ */
+ScriptConfigRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    if(formattedResponse.status === "true"){
+        formattedResponse.status = true;
+        formattedResponse.scriptId = utils.getText(resp, 'script_id');
+        formattedResponse.version = utils.getText(resp, 'version');
+        formattedResponse.json = utils.getText(resp, 'json');
+
+        // store script on model
+        UIModel.getInstance().scriptSettings.loadedScripts[formattedResponse.scriptId] = formattedResponse;
+    }else{
+        formattedResponse.status = false;
     }
 
     return formattedResponse;
@@ -4363,8 +4426,9 @@ var UIModel = (function() {
                 campaignDispositions : []           // list of campaign dispositions for specific campaign
             },
 
-            surveySettings : {
-                availableSurveys : []
+            scriptSettings : {
+                availableScripts : [],
+                loadedScripts: {}                   // stores script data by script id e.g. {1:{}, 32:{}}
             },
 
 
@@ -4537,6 +4601,10 @@ var utils = {
             case MESSAGE_TYPES.SUPERVISOR_LIST:
                 var supervisorList = UIModel.getInstance().supervisorListRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.SUPERVISOR_LIST, supervisorList);
+                break;
+            case MESSAGE_TYPES.SCRIPT_CONFIG:
+                var script = UIModel.getInstance().scriptConfigRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.SCRIPT_CONFIG, script);
                 break;
             case MESSAGE_TYPES.XFER_COLD:
                 var coldXfer = UIModel.getInstance().coldXferRequest.processResponse(response);
@@ -5227,6 +5295,7 @@ const LOG_LEVELS ={
  * <li>"agentDailyStats"</li>
  * <li>"campaignStats"</li>
  * <li>"queueStats"</li>
+ * <li>"scriptConfigResponse"</li>
  * <li>"supervisorListResponse"</li>
  * <li>"tcpaSafeResponse"</li>
  * <li>"coldXferResponse"</li>
@@ -5273,6 +5342,7 @@ const CALLBACK_TYPES = {
     "RECORD":"recordResponse",
     "REQUEUE":"requeueResponse",
     "REVERSE_MATCH":"reverseMatchNotification",
+    "SCRIPT_CONFIG":"scriptConfigResponse",
     "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
     "STATS_AGENT_DAILY":"agentDailyStats",
@@ -5328,6 +5398,7 @@ const MESSAGE_TYPES = {
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
     "REVERSE_MATCH":"REVERSE_MATCH",
+    "SCRIPT_CONFIG":"SCRIPT-CONFIG",
     "STATS":"STATS",
     "STATS_AGENT":"AGENT",
     "STATS_AGENT_DAILY":"AGENTDAILY",
@@ -6426,6 +6497,28 @@ function initAgentLibraryCall (context) {
         UIModel.getInstance().warmXferCancelRequest = new XferWarmCancelRequest(dialDest);
         var msg = UIModel.getInstance().warmXferCancelRequest.formatJSON();
         utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Requests a script object based on given id
+     * @memberof AgentLibrary
+     * @param {number} scriptId Id of script
+     */
+    AgentLibrary.prototype.getScript = function(scriptId, version, callback){
+        var model = UIModel.getInstance();
+        var script = model.scriptSettings.loadedScripts[scriptId];
+        if(script && script.version === version){
+            // return from memory
+            return script;
+        }else{
+            // load script
+            model.scriptConfigRequest = new ScriptConfigRequest(scriptId);
+            var msg = UIModel.getInstance().scriptConfigRequest.formatJSON();
+            utils.sendMessage(this, msg);
+        }
+
+        utils.setCallback(this, CALLBACK_TYPES.SCRIPT_CONFIG, callback);
+
     };
 
 }

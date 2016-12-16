@@ -305,4 +305,26 @@ function initAgentLibraryCall (context) {
         utils.sendMessage(this, msg);
     };
 
+    /**
+     * Requests a script object based on given id
+     * @memberof AgentLibrary
+     * @param {number} scriptId Id of script
+     */
+    AgentLibrary.prototype.getScript = function(scriptId, version, callback){
+        var model = UIModel.getInstance();
+        var script = model.scriptSettings.loadedScripts[scriptId];
+        if(script && script.version === version){
+            // return from memory
+            return script;
+        }else{
+            // load script
+            model.scriptConfigRequest = new ScriptConfigRequest(scriptId);
+            var msg = UIModel.getInstance().scriptConfigRequest.formatJSON();
+            utils.sendMessage(this, msg);
+        }
+
+        utils.setCallback(this, CALLBACK_TYPES.SCRIPT_CONFIG, callback);
+
+    };
+
 }

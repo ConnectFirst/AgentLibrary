@@ -206,8 +206,9 @@ var UIModel = (function() {
                 campaignDispositions : []           // list of campaign dispositions for specific campaign
             },
 
-            surveySettings : {
-                availableSurveys : []
+            scriptSettings : {
+                availableScripts : [],
+                loadedScripts: {}                   // stores script data by script id e.g. {1:{}, 32:{}}
             },
 
 
