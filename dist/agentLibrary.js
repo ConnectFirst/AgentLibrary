@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-12-16 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-12-19 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -437,6 +437,8 @@ var NewCallNotification = function() {
  *          "description":{}
  *      },
  *      "message":{},
+ *      "script_id":{},
+ *      "script_version":{},
  *      "survey_id":{},
  *      "survey_pop_type":{"#text":"SUPPRESS"},
  *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
@@ -529,6 +531,8 @@ NewCallNotification.prototype.processResponse = function(notification) {
         allowHangup: utils.getText(notif,'allow_hangup'),
         allowRequeue: utils.getText(notif,'allow_requeue'),
         allowEndCallForEveryone: utils.getText(notif,'allow_endcallforeveryone'),
+        scriptId: utils.getText(notif,'script_id'),
+        scriptVersion: utils.getText(notif,'script_version'),
         surveyId: utils.getText(notif,'survey_id'),
         surveyPopType: utils.getText(notif,'survey_pop_type'),
         requeueType: utils.getText(notif,'requeue_type')
@@ -3263,7 +3267,7 @@ RequeueRequest.prototype.processResponse = function(response) {
 
 var ScriptConfigRequest = function(scriptId, version) {
     this.scriptId = scriptId;
-    this.version = version;
+    this.version = version || null;
 };
 
 /*

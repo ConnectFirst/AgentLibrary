@@ -1,7 +1,7 @@
 
 var ScriptConfigRequest = function(scriptId, version) {
     this.scriptId = scriptId;
-    this.version = version;
+    this.version = version || null;
 };
 
 /*
