@@ -22,6 +22,14 @@ var UIModel = (function() {
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
 
+            // chat requests
+            chatAliasRequest : null,
+            chatRoomRequest : null,
+            chatSendRequest : null,
+            supervisorListRequest : null,
+            chatRoomStateRequest : new ChatRoomStateRequest(),
+
+
             // request instances
             agentStateRequest : null,
             bargeInRequest : null,
@@ -132,6 +140,7 @@ var UIModel = (function() {
                 pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
                 phoneLoginPin: "",
                 realAgentType : "AGENT",
+                supervisors : [],                   // Used for agent chat
                 totalCalls : 0,                     // Call counter that is incremented every time a new session is received
                 transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
                 updateDGFromAdminUI : false,        // if pending Dial Group change came from AdminUI, set to true (only used if request is pending)
@@ -198,8 +207,9 @@ var UIModel = (function() {
                 campaignDispositions : []           // list of campaign dispositions for specific campaign
             },
 
-            surveySettings : {
-                availableSurveys : []
+            scriptSettings : {
+                availableScripts : [],
+                loadedScripts: {}                   // stores script data by script id e.g. {1:{}, 32:{}}
             },
 
 

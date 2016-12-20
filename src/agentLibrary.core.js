@@ -24,6 +24,7 @@ const LOG_LEVELS ={
  * <li>"callbacksPendingResponse"</li>
  * <li>"callbackCancelResponse"</li>
  * <li>"campaignDispositionsResponse"</li>
+ * <li>"chatResponse"</li>
  * <li>"dialGroupChangeNotification"</li>
  * <li>"dialGroupChangePendingNotification"</li>
  * <li>"dropSessionNotification"</li>
@@ -52,6 +53,8 @@ const LOG_LEVELS ={
  * <li>"agentDailyStats"</li>
  * <li>"campaignStats"</li>
  * <li>"queueStats"</li>
+ * <li>"scriptConfigResponse"</li>
+ * <li>"supervisorListResponse"</li>
  * <li>"tcpaSafeResponse"</li>
  * <li>"coldXferResponse"</li>
  * <li>"warmXferResponse"</li>
@@ -68,6 +71,8 @@ const CALLBACK_TYPES = {
     "CALLBACK_PENDING":"callbacksPendingResponse",
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
+    "CHAT":"chatResponse",
+    "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
     "DROP_SESSION":"dropSessionNotification",
@@ -95,11 +100,13 @@ const CALLBACK_TYPES = {
     "RECORD":"recordResponse",
     "REQUEUE":"requeueResponse",
     "REVERSE_MATCH":"reverseMatchNotification",
+    "SCRIPT_CONFIG":"scriptConfigResponse",
     "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
     "STATS_AGENT_DAILY":"agentDailyStats",
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
+    "SUPERVISOR_LIST":"supervisorListResponse",
     "TCPA_SAFE":"tcpaSafeResponse",
     "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
@@ -114,6 +121,10 @@ const MESSAGE_TYPES = {
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
     "CAMPAIGN_DISPOSITIONS":"CAMPAIGN-DISPOSITIONS",
+    "CHAT_SEND":"CHAT",
+    "CHAT_ALIAS":"CHAT-ALIAS",
+    "CHAT_ROOM":"CHAT-ROOM",
+    "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -145,11 +156,13 @@ const MESSAGE_TYPES = {
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
     "REVERSE_MATCH":"REVERSE_MATCH",
+    "SCRIPT_CONFIG":"SCRIPT-CONFIG",
     "STATS":"STATS",
     "STATS_AGENT":"AGENT",
     "STATS_AGENT_DAILY":"AGENTDAILY",
     "STATS_CAMPAIGN":"CAMPAIGN",
     "STATS_QUEUE":"GATE",
+    "SUPERVISOR_LIST":"SUPERVISOR-LIST",
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
     "TCPA_SAFE_LEAD_STATE":"TCPA-SAFE-LEAD-STATE",

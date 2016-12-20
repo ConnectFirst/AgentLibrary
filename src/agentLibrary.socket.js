@@ -27,6 +27,8 @@ function initAgentLibrarySocket (context) {
                     utils.processDialerResponse(instance, data);
                 }else if(data.ui_stats){
                     utils.processStats(instance, data);
+                }else if(data.ui_request){
+                    utils.processRequest(instance, data);
                 }
             };
 

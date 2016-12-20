@@ -44,7 +44,7 @@ var utils = {
     {
         var type = response.ui_response['@type'];
         var messageId = response.ui_response['@message_id'];
-        var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
+        var dest = (messageId === "" || !messageId) ? "IS" : messageId.slice(0, 2);
         var message = "Received " + type.toUpperCase() + " response message from " + dest;
 
         // log message response
@@ -141,6 +141,14 @@ var utils = {
             case MESSAGE_TYPES.REQUEUE:
                 var requeue = UIModel.getInstance().requeueRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.REQUEUE, requeue);
+                break;
+            case MESSAGE_TYPES.SUPERVISOR_LIST:
+                var supervisorList = UIModel.getInstance().supervisorListRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.SUPERVISOR_LIST, supervisorList);
+                break;
+            case MESSAGE_TYPES.SCRIPT_CONFIG:
+                var script = UIModel.getInstance().scriptConfigRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.SCRIPT_CONFIG, script);
                 break;
             case MESSAGE_TYPES.XFER_COLD:
                 var coldXfer = UIModel.getInstance().coldXferRequest.processResponse(response);
@@ -286,6 +294,24 @@ var utils = {
                 break;
         }
 
+    },
+
+    processRequest: function(instance, message){
+        var type = message.ui_request['@type'];
+
+        // Fire callback function
+        switch (type.toUpperCase()) {
+            case MESSAGE_TYPES.CHAT_SEND:
+                var chatSendRequest = new ChatSendRequest();
+                var chatSendResponse = chatSendRequest.processResponse(message);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT, chatSendResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_ROOM_STATE:
+                var chatRoomStateRequest = new ChatRoomStateRequest();
+                var chatRoomStateResponse = chatRoomStateRequest.processResponse(message);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ROOM_STATE, chatRoomStateResponse);
+                break;
+        }
     },
 
     processStats: function(instance, data)

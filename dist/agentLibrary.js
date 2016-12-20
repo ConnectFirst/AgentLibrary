@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2016-11-17 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2016-12-20 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -437,6 +437,8 @@ var NewCallNotification = function() {
  *          "description":{}
  *      },
  *      "message":{},
+ *      "script_id":{},
+ *      "script_version":{},
  *      "survey_id":{},
  *      "survey_pop_type":{"#text":"SUPPRESS"},
  *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
@@ -529,6 +531,8 @@ NewCallNotification.prototype.processResponse = function(notification) {
         allowHangup: utils.getText(notif,'allow_hangup'),
         allowRequeue: utils.getText(notif,'allow_requeue'),
         allowEndCallForEveryone: utils.getText(notif,'allow_endcallforeveryone'),
+        scriptId: utils.getText(notif,'script_id'),
+        scriptVersion: utils.getText(notif,'script_version'),
         surveyId: utils.getText(notif,'survey_id'),
         surveyPopType: utils.getText(notif,'survey_pop_type'),
         requeueType: utils.getText(notif,'requeue_type')
@@ -1118,6 +1122,8 @@ CallbackCancelRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+// NOTE: cancel callback response sent as a generic notification message
+
 
 
 
@@ -1549,7 +1555,7 @@ ConfigRequest.prototype.processResponse = function(response) {
         formattedResponse.connectionSettings = model.connectionSettings;
         formattedResponse.inboundSettings = model.inboundSettings;
         formattedResponse.outboundSettings = model.outboundSettings;
-        formattedResponse.surveySettings = model.surveySettings;
+        formattedResponse.scriptSettings = model.scriptSettings;
     }else{
         // Login failed
         if(formattedResponse.message === ""){
@@ -2543,7 +2549,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
             model.inboundSettings.availableRequeueQueues = utils.processResponseCollection(response.ui_response, "requeue_gates", "gate_group");
             model.chatSettings.availableChatRooms = utils.processResponseCollection(response.ui_response, "chat_rooms", "room");
-            model.surveySettings.availableSurveys = utils.processResponseCollection(response.ui_response, "surveys", "survey");
+            model.scriptSettings.availableScripts = utils.processResponseCollection(response.ui_response, "surveys", "survey");
             model.agentSettings.callerIds = utils.processResponseCollection(response.ui_response, "caller_ids", "caller_id");
             model.agentSettings.availableAgentStates = utils.processResponseCollection(response.ui_response, "agent_states", "agent_state");
             model.applicationSettings.availableCountries = utils.processResponseCollection(response.ui_response, "account_countries", "country");
@@ -2568,7 +2574,7 @@ LoginRequest.prototype.processResponse = function(response) {
         formattedResponse.connectionSettings = model.connectionSettings;
         formattedResponse.inboundSettings = model.inboundSettings;
         formattedResponse.outboundSettings = model.outboundSettings;
-        formattedResponse.surveySettings = model.surveySettings;
+        formattedResponse.scriptSettings = model.scriptSettings;
 
     }else if(status === 'RESTRICTED'){
         formattedResponse.message = "Invalid IP Address";
@@ -3262,6 +3268,69 @@ RequeueRequest.prototype.processResponse = function(response) {
 };
 
 
+var ScriptConfigRequest = function(scriptId, version) {
+    this.scriptId = scriptId;
+    this.version = version || null;
+};
+
+/*
+* This event is responsible for requesting a script object
+*/
+ScriptConfigRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "@type":MESSAGE_TYPES.SCRIPT_CONFIG,
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
+            },
+            "script_id": {
+                "#text" : utils.toString(this.scriptId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+/*
+ * This class process SCRIPT-CONFIG packets received from IntelliQueue.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082817165103294",
+ *      "@response_to":"",
+ *      "@type":"SCRIPT-CONFIG",
+ *      "status":{"#text":"OK"},
+ *      "message":{},
+ *      "script_id":{"#text":"123"},
+ *      "version":{"#text":"1"},
+ *      "json":{},
+ *   }
+ * }
+ */
+ScriptConfigRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    if(formattedResponse.status === "true"){
+        formattedResponse.status = true;
+        formattedResponse.scriptId = utils.getText(resp, 'script_id');
+        formattedResponse.version = utils.getText(resp, 'version');
+        formattedResponse.json = utils.getText(resp, 'json');
+
+        // store script on model
+        UIModel.getInstance().scriptSettings.loadedScripts[formattedResponse.scriptId] = formattedResponse;
+    }else{
+        formattedResponse.status = false;
+    }
+
+    return formattedResponse;
+};
+
+
 var StatsRequest = function() {
     
 };
@@ -3495,6 +3564,297 @@ XferWarmCancelRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+
+var ChatAliasRequest = function(alias) {
+    this.alias = alias;
+};
+
+/*
+ * This class is responsible for creating the request to change chat alias
+ * packet and sending it to intelliservices.
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@message_id":"UI200809291036128",
+ *      "@response_to":"",
+ *      "@type":"CHAT-ALIAS",
+ *      "alias":{"#text":""}
+ *    }
+ * }
+ */
+ChatAliasRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IS",
+            "@type":MESSAGE_TYPES.CHAT_ALIAS,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "alias":{
+                "#text":utils.toString(this.alias)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+var ChatRoomRequest = function(action, roomType, roomId, agentOne, agentTwo) {
+    this.action = action;
+    this.roomType = roomType;
+    this.roomId = roomId;
+    this.agentOne = agentOne || "";
+    this.agentTwo = agentTwo || "";
+};
+
+/*
+ * This class is responsible for sending the packet requesting to either enter
+ * a chatroom, or to exit a chatroom to IS. It also handles private chats. There are
+ * two possible ways these packets could look:
+ *
+ * //PUBLIC
+ * {"ui_request":{
+ *      "@destination":"IS",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "@type":"CHAT-ROOM",
+ *      "@room_type":"PUBLIC",
+ *      "room_id":{"#text":""},
+ *      "action":{"#text":"EXIT"}
+ *    }
+ * }
+ * -OR-
+ * // PRIVATE
+ * {"ui_request":{
+ *      "@destination":"IS",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "@type":"CHAT-ROOM",
+ *      "@room_type":"PRIVATE",
+ *      "agent_one":{"#text":""},
+ *      "agent_two":{"#text":""},
+ *      "action":{"#text":"ENTER"}
+ *    }
+ * }
+ *
+ */
+ChatRoomRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IS",
+            "@type":MESSAGE_TYPES.CHAT_ROOM,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "action":{
+                "#text":utils.toString(this.action)
+            }
+        }
+    };
+
+    if(this.action !== "EXIT"){
+        msg.ui_request["@room_type"] = this.roomType;
+    }
+
+    if(this.roomType === "PRIVATE" && this.action === "ENTER"){
+        msg.ui_request.agent_one = { "#text":utils.toString(this.agentOne) };
+        msg.ui_request.agent_two = { "#text":utils.toString(this.agentTwo) };
+    }else{
+        msg.ui_request.room_id = { "#text":utils.toString(this.roomId) };
+    }
+    return JSON.stringify(msg);
+};
+
+
+var ChatRoomStateRequest = function() {
+
+};
+
+/*
+ * This class is responsible for processing CHAT-ROOM-STATE packets received
+ * from IntelliServices.
+ *
+ * {"ui_request":{
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "@type":"CHAT-ROOM-STATE",
+ *      "room_id":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "chat_alias":{"#text":""},
+ *      "state":{"#text":""}
+ *    }
+ * }
+ */
+ChatRoomStateRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_request;
+    var formattedResponse = {
+        roomId: utils.getText(resp, 'room_id'),
+        agentId: utils.getText(resp, 'agent_id'),
+        chatAlias: utils.getText(resp, 'chat_alias'),
+        state: utils.getText(resp, 'state')
+    };
+
+    utils.logMessage(LOG_LEVELS.DEBUG, "Chat-Room-State update packet received for room #" + formattedResponse.roomId, response);
+    return formattedResponse;
+};
+
+var ChatSendRequest = function(roomId, message) {
+    this.roomId = roomId;
+    this.message = message;
+};
+
+/*
+ * This class is responsible for creating the CHAT message packet and sending
+ * it to IntelliServices.
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@message_id":"UI200809291036128",
+ *      "@response_to":"",
+ *      "@type":"CHAT",
+ *      "room_id":{"#text":""}
+ *      "message":{"#text":""}
+ *    }
+ * }
+ */
+ChatSendRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IS",
+            "@type":MESSAGE_TYPES.CHAT_SEND,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "room_id":{
+                "#text":utils.toString(this.roomId)
+            },
+            "message":{
+                "#text":utils.toString(this.message)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class is responsible for handling CHAT packets received from
+ * IntelliServices.
+ *
+ * //PUBLIC
+ * {"ui_request":{
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "@type":"CHAT",
+ *      "room_type":"GROUP",
+ *      "room_id":{"#text":""},
+ *      "message":{"#text":""},
+ *      "sender":{"#text":""},
+ *      "sender_id":{"#text":""},
+ *      "room_name":{"#text":""}
+ *    }
+ * }
+ * -OR-
+ * // PRIVATE
+ * {"ui_request":{
+ *      "@dynamic_create":"TRUE",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "@type":"CHAT",
+ *      "room_type":"PRIVATE",
+ *      "room_id":{"#text":""},
+ *      "message":{"#text":""},
+ *      "sender":{"#text":""},
+ *      "room_name":{"#text":""}
+ *    }
+ * }
+ */
+
+ChatSendRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_request;
+    var formattedResponse = {
+        roomType: utils.getText(resp, 'room_type'),
+        roomId: utils.getText(resp, 'room_id'),
+        message: utils.getText(resp, 'message'),
+        sender: utils.getText(resp, 'sender'),
+        senderId: utils.getText(resp, 'sender_id'),
+        roomName: utils.getText(resp, 'room_name'),
+        dynamicCreate: utils.getText(resp, 'dynamic_create') === "TRUE"
+    };
+
+    utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT packet received from IntelliServices", response);
+
+    return formattedResponse;
+};
+
+var SupervisorListRequest = function() {
+
+};
+
+/*
+ * This class is responsible for creating a packet to request a list of
+ * supervisors from IntelliServices. This is used by the chat function so an
+ * agent can grab a list of supervisors and then select one for a private chat.
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@message_id":"UI200809291036128",
+ *      "@response_to":"",
+ *      "@type":"SUPERVISOR-LIST",
+ *      "agent_id":{"#text":""}
+ *    }
+ * }
+ */
+SupervisorListRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IS",
+            "@type":MESSAGE_TYPES.SUPERVISOR_LIST,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class is responsible for handling the SUPERVISOR-LIST packet
+ * rec'd from intelliservices. It will save a copy of this list in the
+ * UIModel under a variable called "supervisors". Whenever a new list
+ * is rec'd it is overwritten.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082910361503344",
+ *      "@response_to":"",
+ *      "supervisor":[
+ *          {"id":{"#text":""}, "fname":{"#text":""}, "lname":{"#text":""}, "uname":{"#text":""} }
+ *          {"id":{"#text":""}, "fname":{"#text":""}, "lname":{"#text":""}, "uname":{"#text":""} }
+ *      ]
+ *    }
+ * }
+ */
+
+SupervisorListRequest.prototype.processResponse = function(response) {
+    var model = UIModel.getInstance();
+    var tempList = utils.processResponseCollection(response, "ui_response", "supervisor");
+    var supervisors = [];
+
+    for(var i = 0; i < tempList.length; i++){
+        var sup = tempList[i];
+        supervisors.push({
+            agentId:sup.id,
+            firstName:sup.fname,
+            lastName:sup.lname,
+            username:sup.uname
+        });
+    }
+
+    utils.logMessage(LOG_LEVELS.DEBUG, "New supervisor list received ", supervisors);
+    model.supervisors = supervisors;
+
+    return model.supervisors;
+};
 
 var AgentStats = function() {
 
@@ -3892,6 +4252,14 @@ var UIModel = (function() {
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
 
+            // chat requests
+            chatAliasRequest : null,
+            chatRoomRequest : null,
+            chatSendRequest : null,
+            supervisorListRequest : null,
+            chatRoomStateRequest : new ChatRoomStateRequest(),
+
+
             // request instances
             agentStateRequest : null,
             bargeInRequest : null,
@@ -4002,6 +4370,7 @@ var UIModel = (function() {
                 pendingDialGroupChange: 0,          // Set to Dial Group Id if we are waiting to change dial groups until agent ends call
                 phoneLoginPin: "",
                 realAgentType : "AGENT",
+                supervisors : [],                   // Used for agent chat
                 totalCalls : 0,                     // Call counter that is incremented every time a new session is received
                 transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
                 updateDGFromAdminUI : false,        // if pending Dial Group change came from AdminUI, set to true (only used if request is pending)
@@ -4068,8 +4437,9 @@ var UIModel = (function() {
                 campaignDispositions : []           // list of campaign dispositions for specific campaign
             },
 
-            surveySettings : {
-                availableSurveys : []
+            scriptSettings : {
+                availableScripts : [],
+                loadedScripts: {}                   // stores script data by script id e.g. {1:{}, 32:{}}
             },
 
 
@@ -4141,7 +4511,7 @@ var utils = {
     {
         var type = response.ui_response['@type'];
         var messageId = response.ui_response['@message_id'];
-        var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
+        var dest = (messageId === "" || !messageId) ? "IS" : messageId.slice(0, 2);
         var message = "Received " + type.toUpperCase() + " response message from " + dest;
 
         // log message response
@@ -4238,6 +4608,14 @@ var utils = {
             case MESSAGE_TYPES.REQUEUE:
                 var requeue = UIModel.getInstance().requeueRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.REQUEUE, requeue);
+                break;
+            case MESSAGE_TYPES.SUPERVISOR_LIST:
+                var supervisorList = UIModel.getInstance().supervisorListRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.SUPERVISOR_LIST, supervisorList);
+                break;
+            case MESSAGE_TYPES.SCRIPT_CONFIG:
+                var script = UIModel.getInstance().scriptConfigRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.SCRIPT_CONFIG, script);
                 break;
             case MESSAGE_TYPES.XFER_COLD:
                 var coldXfer = UIModel.getInstance().coldXferRequest.processResponse(response);
@@ -4383,6 +4761,24 @@ var utils = {
                 break;
         }
 
+    },
+
+    processRequest: function(instance, message){
+        var type = message.ui_request['@type'];
+
+        // Fire callback function
+        switch (type.toUpperCase()) {
+            case MESSAGE_TYPES.CHAT_SEND:
+                var chatSendRequest = new ChatSendRequest();
+                var chatSendResponse = chatSendRequest.processResponse(message);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT, chatSendResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_ROOM_STATE:
+                var chatRoomStateRequest = new ChatRoomStateRequest();
+                var chatRoomStateResponse = chatRoomStateRequest.processResponse(message);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ROOM_STATE, chatRoomStateResponse);
+                break;
+        }
     },
 
     processStats: function(instance, data)
@@ -4881,6 +5277,7 @@ const LOG_LEVELS ={
  * <li>"callbacksPendingResponse"</li>
  * <li>"callbackCancelResponse"</li>
  * <li>"campaignDispositionsResponse"</li>
+ * <li>"chatResponse"</li>
  * <li>"dialGroupChangeNotification"</li>
  * <li>"dialGroupChangePendingNotification"</li>
  * <li>"dropSessionNotification"</li>
@@ -4909,6 +5306,8 @@ const LOG_LEVELS ={
  * <li>"agentDailyStats"</li>
  * <li>"campaignStats"</li>
  * <li>"queueStats"</li>
+ * <li>"scriptConfigResponse"</li>
+ * <li>"supervisorListResponse"</li>
  * <li>"tcpaSafeResponse"</li>
  * <li>"coldXferResponse"</li>
  * <li>"warmXferResponse"</li>
@@ -4925,6 +5324,8 @@ const CALLBACK_TYPES = {
     "CALLBACK_PENDING":"callbacksPendingResponse",
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
+    "CHAT":"chatResponse",
+    "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
     "DROP_SESSION":"dropSessionNotification",
@@ -4952,11 +5353,13 @@ const CALLBACK_TYPES = {
     "RECORD":"recordResponse",
     "REQUEUE":"requeueResponse",
     "REVERSE_MATCH":"reverseMatchNotification",
+    "SCRIPT_CONFIG":"scriptConfigResponse",
     "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
     "STATS_AGENT_DAILY":"agentDailyStats",
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
+    "SUPERVISOR_LIST":"supervisorListResponse",
     "TCPA_SAFE":"tcpaSafeResponse",
     "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
@@ -4971,6 +5374,10 @@ const MESSAGE_TYPES = {
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
     "CAMPAIGN_DISPOSITIONS":"CAMPAIGN-DISPOSITIONS",
+    "CHAT_SEND":"CHAT",
+    "CHAT_ALIAS":"CHAT-ALIAS",
+    "CHAT_ROOM":"CHAT-ROOM",
+    "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -5002,11 +5409,13 @@ const MESSAGE_TYPES = {
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
     "REVERSE_MATCH":"REVERSE_MATCH",
+    "SCRIPT_CONFIG":"SCRIPT-CONFIG",
     "STATS":"STATS",
     "STATS_AGENT":"AGENT",
     "STATS_AGENT_DAILY":"AGENTDAILY",
     "STATS_CAMPAIGN":"CAMPAIGN",
     "STATS_QUEUE":"GATE",
+    "SUPERVISOR_LIST":"SUPERVISOR-LIST",
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
     "TCPA_SAFE_LEAD_STATE":"TCPA-SAFE-LEAD-STATE",
@@ -5616,6 +6025,8 @@ function initAgentLibrarySocket (context) {
                     utils.processDialerResponse(instance, data);
                 }else if(data.ui_stats){
                     utils.processStats(instance, data);
+                }else if(data.ui_request){
+                    utils.processRequest(instance, data);
                 }
             };
 
@@ -6099,6 +6510,28 @@ function initAgentLibraryCall (context) {
         utils.sendMessage(this, msg);
     };
 
+    /**
+     * Requests a script object based on given id
+     * @memberof AgentLibrary
+     * @param {number} scriptId Id of script
+     */
+    AgentLibrary.prototype.getScript = function(scriptId, version, callback){
+        var model = UIModel.getInstance();
+        var script = model.scriptSettings.loadedScripts[scriptId];
+        if(script && script.version === version){
+            // return from memory
+            return script;
+        }else{
+            // load script
+            model.scriptConfigRequest = new ScriptConfigRequest(scriptId);
+            var msg = UIModel.getInstance().scriptConfigRequest.formatJSON();
+            utils.sendMessage(this, msg);
+        }
+
+        utils.setCallback(this, CALLBACK_TYPES.SCRIPT_CONFIG, callback);
+
+    };
+
 }
 
 function initAgentLibraryLead (context) {
@@ -6147,6 +6580,82 @@ function initAgentLibraryLead (context) {
         var msg = UIModel.getInstance().leadUpdateRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.LEAD_UPDATE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+}
+
+function initAgentLibraryChat (context) {
+
+    'use strict';
+
+    var AgentLibrary = context.AgentLibrary;
+
+    /**
+     * Set the agent chat alias
+     * @memberof AgentLibrary
+     * @param {string} alias The alias string to be used for agent chat messages
+     */
+    AgentLibrary.prototype.setChatAlias = function(alias){
+        UIModel.getInstance().chatAliasRequest = new ChatAliasRequest(alias);
+        var msg = UIModel.getInstance().chatAliasRequest.formatJSON();
+
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to enter/exit a public chat room
+     * @memberof AgentLibrary
+     * @param {string} action "ENTER" | "EXIT"
+     * @param {integer} roomId Chat room id
+     */
+    AgentLibrary.prototype.publicChatRoom = function(action, roomId){
+        UIModel.getInstance().chatRoomRequest = new ChatRoomRequest(action, "PUBLIC", roomId);
+        var msg = UIModel.getInstance().chatRoomRequest.formatJSON();
+
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to enter/exit a private chat room
+     * @memberof AgentLibrary
+     * @param {string} action "ENTER" | "EXIT"
+     * @param {integer} roomId Chat room id
+     * @param {integer} agentOne Id for the logged in agent
+     * @param {integer} agentTwo Id for the agent or supervisor the logged in agent is chatting with
+     */
+    AgentLibrary.prototype.privateChatRoom = function(action, roomId, agentOne, agentTwo){
+        UIModel.getInstance().chatRoomRequest = new ChatRoomRequest(action, "PRIVATE", roomId, agentOne, agentTwo);
+        var msg = UIModel.getInstance().chatRoomRequest.formatJSON();
+
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send a chat message to the given room
+     * @memberof AgentLibrary
+     * @param {integer} roomId Id for chat room
+     * @param {string} message The message to be sent
+     * @param {function} [callback=null] Callback function when chat message received
+     */
+    AgentLibrary.prototype.sendChat = function(roomId, message, callback){
+        UIModel.getInstance().chatSendRequest = new ChatSendRequest(roomId, message);
+        var msg = UIModel.getInstance().chatSendRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CHAT, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Get list of supervisors for logged in agent
+     * @memberof AgentLibrary
+     * @param {function} [callback=null] Callback function when chat message received
+     */
+    AgentLibrary.prototype.getSupervisors = function(callback){
+        UIModel.getInstance().supervisorListRequest = new SupervisorListRequest();
+        var msg = UIModel.getInstance().supervisorListRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.SUPERVISOR_LIST, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -6364,6 +6873,7 @@ var initAgentLibrary = function (context) {
     initAgentLibraryAgent(context);
     initAgentLibraryCall(context);
     initAgentLibraryLead(context);
+    initAgentLibraryChat(context);
     initAgentLibraryLogger(context);
 
     return context.AgentLibrary;
