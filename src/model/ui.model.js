@@ -98,7 +98,7 @@ var UIModel = (function() {
             },
 
             // stat objects
-            agentStats:{},
+            agentStats:[],
             agentDailyStats: {
                 totalLoginTime: 0,
                 totalOffhookTime: 0,

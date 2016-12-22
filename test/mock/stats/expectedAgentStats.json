@@ -1,4 +1,4 @@
-{
+[{
   "agentLoginType": "INBOUND",
   "agentType": "AGENT",
   "avgTalkTime": "00.0",
@@ -23,4 +23,4 @@
   "username": "jdoe",
   "uii": "",
   "utilization": "0.00"
-}
+}]
