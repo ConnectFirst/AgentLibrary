@@ -73,33 +73,38 @@ AgentStats.prototype.processResponse = function(stats) {
             agentStats.push(a);
         }
     }else {
-        var agent = {
-            agentLoginType: resp["@alt"],
-            agentType: resp["@atype"],
-            avgTalkTime:resp["@avgtt"],
-            calls: resp["@calls"],
-            isDequeueAgent: resp["@da"],
-            defaultRoute: resp["@droute"],
-            firstName: resp["@f"],
-            queueDesc: resp["@gdesc"],
-            queueName: resp["@gname"],
-            agentId: resp["@id"],
-            lastName: resp["@l"],
-            loginDuration: resp["@ldur"],
-            loginType: resp["@ltype"],
-            offHook: resp["@oh"],
-            pendingDisp: resp["@pd"],
-            presented: resp["@pres"],
-            rna: resp["@rna"],
-            stateDuration: resp["@sdur"],
-            skillProfileName: resp["@sp"],
-            agentState: resp["@state"],
-            totalTalkTime: resp["@ttt"],
-            username: resp["@u"],
-            uii: resp["@uii"],
-            utilization: resp["@util"]
-        };
-        agentStats.push(agent);
+        try {
+            var agent = {
+                agentLoginType: resp["@alt"],
+                agentType: resp["@atype"],
+                avgTalkTime: resp["@avgtt"],
+                calls: resp["@calls"],
+                isDequeueAgent: resp["@da"],
+                defaultRoute: resp["@droute"],
+                firstName: resp["@f"],
+                queueDesc: resp["@gdesc"],
+                queueName: resp["@gname"],
+                agentId: resp["@id"],
+                lastName: resp["@l"],
+                loginDuration: resp["@ldur"],
+                loginType: resp["@ltype"],
+                offHook: resp["@oh"],
+                pendingDisp: resp["@pd"],
+                presented: resp["@pres"],
+                rna: resp["@rna"],
+                stateDuration: resp["@sdur"],
+                skillProfileName: resp["@sp"],
+                agentState: resp["@state"],
+                totalTalkTime: resp["@ttt"],
+                username: resp["@u"],
+                uii: resp["@uii"],
+                utilization: resp["@util"]
+            };
+            agentStats.push(agent);
+        }catch(e){
+            // do nothing for now
+        }
+
     }
 
     UIModel.getInstance().agentStats = agentStats;
