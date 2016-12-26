@@ -212,7 +212,7 @@
           }
         },
         {
-          "@allow_lead_updates": "1",
+          "@allow_lead_updates": "2",
           "@campaign_id": "3",
           "@campaign_name": "Test Campaign3",
           "@survey_id": "3",

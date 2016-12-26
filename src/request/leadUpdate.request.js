@@ -86,24 +86,25 @@ LeadUpdateRequest.prototype.processResponse = function(response) {
 };
 
 _formatBaggage = function(baggage){
-    baggage.first_name = {"#text": baggage.first_name || ""};
-    baggage.mid_name = {"#text":baggage.mid_name || ""};
-    baggage.last_name = {"#text":baggage.last_name || ""};
-    baggage.suffix =  {"#text":baggage.suffix || ""};
-    baggage.title = {"#text":baggage.title || ""};
-    baggage.address1 = {"#text":baggage.address1 || ""};
-    baggage.address2 = {"#text":baggage.address2 || ""};
-    baggage.city = {"#text":baggage.city || ""};
-    baggage.state = {"#text":baggage.state || ""};
-    baggage.zip = {"#text":baggage.zip || ""};
-    baggage.email = {"#text":baggage.email || ""};
-    baggage.gate_keeper = {"#text":baggage.gate_keeper || ""};
-    baggage.extern_id = {"#text":baggage.extern_id || ""};
-    baggage.aux_data1 = {"#text":baggage.aux_data1 || ""};
-    baggage.aux_data2 = {"#text":baggage.aux_data2 || ""};
-    baggage.aux_data3 = {"#text":baggage.aux_data3 || ""};
-    baggage.aux_data4 = {"#text":baggage.aux_data4 || ""};
-    baggage.aux_data5 = {"#text":baggage.aux_data5 || ""};
+    var bag = {};
+    bag.first_name = {"#text": baggage.first_name || ""};
+    bag.mid_name = {"#text":baggage.mid_name || ""};
+    bag.last_name = {"#text":baggage.last_name || ""};
+    bag.suffix =  {"#text":baggage.suffix || ""};
+    bag.title = {"#text":baggage.title || ""};
+    bag.address1 = {"#text":baggage.address1 || ""};
+    bag.address2 = {"#text":baggage.address2 || ""};
+    bag.city = {"#text":baggage.city || ""};
+    bag.state = {"#text":baggage.state || ""};
+    bag.zip = {"#text":baggage.zip || ""};
+    bag.email = {"#text":baggage.email || ""};
+    bag.gate_keeper = {"#text":baggage.gate_keeper || ""};
+    bag.extern_id = {"#text":baggage.extern_id || ""};
+    bag.aux_data1 = {"#text":baggage.aux_data1 || ""};
+    bag.aux_data2 = {"#text":baggage.aux_data2 || ""};
+    bag.aux_data3 = {"#text":baggage.aux_data3 || ""};
+    bag.aux_data4 = {"#text":baggage.aux_data4 || ""};
+    bag.aux_data5 = {"#text":baggage.aux_data5 || ""};
 
-    return baggage;
+    return bag;
 };

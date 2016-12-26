@@ -16,9 +16,9 @@
   "allowOutbound": true,
   "allowPreviewLeadFilters": false,
   "allowLeadUpdatesByCampaign": {
-    "1": true,
-    "2": false,
-    "3": true
+    "1": "1",
+    "2": "0",
+    "3": "2"
   },
   "disableSupervisorMonitoring": true,
   "requireFetchedLeadsCalled": false,

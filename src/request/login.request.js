@@ -255,7 +255,7 @@ processCampaigns = function(response){
     var label = "";
     var campaignId = 0;
     var campaignName = "";
-    var allowLeadUpdates = false;
+    var allowLeadUpdates = 0;
 
     if(typeof response.ui_response.campaigns.campaign !== 'undefined'){
         campaignsRaw = response.ui_response.campaigns.campaign;
@@ -266,7 +266,7 @@ processCampaigns = function(response){
         for(var c = 0; c < campaignsRaw.length; c++){
             campaignId = campaignsRaw[c]['@campaign_id'];
             campaignName = campaignsRaw[c]['@campaign_name'];
-            allowLeadUpdates = campaignsRaw[c]['@allow_lead_updates'] == '1';
+            allowLeadUpdates = campaignsRaw[c]['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
             customLabels = campaignsRaw[c]['custom_labels'];
             labelArray = [];
             label = "";
@@ -295,7 +295,7 @@ processCampaigns = function(response){
             // single campaign object
             campaignId = campaignsRaw['@campaign_id'];
             campaignName = campaignsRaw['@campaign_name'];
-            allowLeadUpdates = campaignsRaw['@allow_lead_updates'] == '1';
+            allowLeadUpdates = campaignsRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
             customLabels = campaignsRaw['custom_labels'];
             labelArray = [];
             label = "";

@@ -240,7 +240,7 @@
   "outboundSettings": {
     "availableCampaigns": [
       {
-        "allowLeadUpdates": true,
+        "allowLeadUpdates": "1",
         "campaignId": "1",
         "campaignName":"Test Campaign1",
         "surveyId": "1",
@@ -264,7 +264,7 @@
         ]
       },
       {
-        "allowLeadUpdates": false,
+        "allowLeadUpdates": "0",
         "campaignId": "2",
         "surveyId": "2",
         "campaignName": "Test Campaign2",
@@ -288,7 +288,7 @@
         ]
       },
       {
-        "allowLeadUpdates": true,
+        "allowLeadUpdates": "2",
         "campaignId": "3",
         "campaignName": "Test Campaign3",
         "surveyId": "3",
