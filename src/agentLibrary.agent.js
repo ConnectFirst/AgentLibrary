@@ -119,7 +119,7 @@ function initAgentLibraryAgent (context) {
      * @memberof AgentLibrary
      * @param {number} leadId Id of lead callback to cancel
      * @param {number} [agentId=logged in agent id] Id of agent to cancel specified lead callback for
-     * @param {function} [callback=null] Callback function when offhookTerm response received
+     * @param {function} [callback=null] Callback function when callback is canceled
      */
     AgentLibrary.prototype.cancelCallback = function(leadId, agentId, callback){
         UIModel.getInstance().callbackCancelRequest = new CallbackCancelRequest(leadId, agentId);

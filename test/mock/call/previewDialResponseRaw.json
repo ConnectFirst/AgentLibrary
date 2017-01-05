@@ -1,6 +1,7 @@
 {
   "dialer_request": {
-    "@callbacks": "TRUE|FALSE",
+    "@action":"",
+    "@callbacks": "FALSE",
     "@message_id": "ID2008091513163400220",
     "@response_to": "",
     "@type": "PREVIEW_DIAL",

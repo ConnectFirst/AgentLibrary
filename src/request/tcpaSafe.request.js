@@ -45,6 +45,7 @@ TcpaSafeRequest.prototype.formatJSON = function() {
  * from the dialer. It will save a copy of it in the UIModel.
  *
  * {"dialer_request":{
+ *      "@action":"",
  *      "@callbacks":"TRUE|FALSE"
  *      ,"@message_id":"ID2008091513163400220",
  *      "@response_to":"",
@@ -75,6 +76,8 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
     var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
     var formattedResponse = {
+        action: notif['@action'],
+        callbacks: notif['@callbacks'] === "TRUE",
         dialGroupId: utils.getText(notif,"dial_group_id"),
         accountId: utils.getText(notif,"account_id"),
         agentId: utils.getText(notif,"agent_id"),

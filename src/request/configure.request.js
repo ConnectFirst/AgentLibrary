@@ -196,7 +196,7 @@ ConfigRequest.prototype.processResponse = function(response) {
         formattedResponse.connectionSettings = model.connectionSettings;
         formattedResponse.inboundSettings = model.inboundSettings;
         formattedResponse.outboundSettings = model.outboundSettings;
-        formattedResponse.surveySettings = model.surveySettings;
+        formattedResponse.scriptSettings = model.scriptSettings;
     }else{
         // Login failed
         if(formattedResponse.message === ""){
@@ -216,6 +216,7 @@ function setDialGroupSettings(response){
         if(group.dialGroupId === response.ui_response.outdial_group_id['#text']){
             model.agentPermissions.allowLeadSearch = group.allowLeadSearch;
             model.agentPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
+            model.agentPermissions.progressiveEnabled = group.progressiveEnabled === 1;
             model.outboundSettings.outdialGroup = JSON.parse(JSON.stringify(group)); // copy object
 
             // Only used for Preview or TCPA Safe accounts.

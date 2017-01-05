@@ -13,6 +13,8 @@
   "allowHangup": "",
   "allowRequeue": "",
   "allowEndCallForEveryone": "",
+  "scriptId": "",
+  "scriptVersion": "",
   "surveyId": "",
   "surveyPopType": "SUPPRESS",
   "requeueType": "",

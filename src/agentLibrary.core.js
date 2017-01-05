@@ -53,6 +53,7 @@ const LOG_LEVELS ={
  * <li>"agentDailyStats"</li>
  * <li>"campaignStats"</li>
  * <li>"queueStats"</li>
+ * <li>"scriptConfigResponse"</li>
  * <li>"supervisorListResponse"</li>
  * <li>"tcpaSafeResponse"</li>
  * <li>"coldXferResponse"</li>
@@ -99,6 +100,7 @@ const CALLBACK_TYPES = {
     "RECORD":"recordResponse",
     "REQUEUE":"requeueResponse",
     "REVERSE_MATCH":"reverseMatchNotification",
+    "SCRIPT_CONFIG":"scriptConfigResponse",
     "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
     "STATS_AGENT_DAILY":"agentDailyStats",
@@ -154,6 +156,7 @@ const MESSAGE_TYPES = {
     "RECORD":"RECORD",
     "REQUEUE":"RE-QUEUE",
     "REVERSE_MATCH":"REVERSE_MATCH",
+    "SCRIPT_CONFIG":"SCRIPT-CONFIG",
     "STATS":"STATS",
     "STATS_AGENT":"AGENT",
     "STATS_AGENT_DAILY":"AGENTDAILY",

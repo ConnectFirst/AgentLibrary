@@ -168,6 +168,7 @@ var UIModel = (function() {
                 allowPreviewLeadFilters : false,    // Controlled by the dial-group allow_preview_lead_filters setting. Enables or disables the filters on the preview style forms
                 allowLeadUpdatesByCampaign : {},    // For each campaign ID, store whether leads can be updated
                 disableSupervisorMonitoring : true, // Controls whether or not a supervisor can view agent stats
+                progressiveEnabled : false,         // Preview dial feature that enables auto-calls from the preview window.
                 requireFetchedLeadsCalled : false,  // Controlled by the dial-group require_fetched_leads_called setting. Enables or disables the requirement to only fetch new leads when current leads are called or expired. ONly for Preview or TCPA-SAFE.
                 showLeadHistory : true              // Controls whether or not the agents can view lead history
             },
@@ -206,8 +207,9 @@ var UIModel = (function() {
                 campaignDispositions : []           // list of campaign dispositions for specific campaign
             },
 
-            surveySettings : {
-                availableSurveys : []
+            scriptSettings : {
+                availableScripts : [],
+                loadedScripts: {}                   // stores script data by script id e.g. {1:{}, 32:{}}
             },
 
 

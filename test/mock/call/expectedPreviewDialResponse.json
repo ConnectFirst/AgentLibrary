@@ -1,4 +1,6 @@
 {
+  "action":"",
+  "callbacks":false,
   "dialGroupId": "1",
   "accountId": "99999999",
   "agentId": "1",

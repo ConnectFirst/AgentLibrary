@@ -197,8 +197,7 @@ LoginRequest.prototype.processResponse = function(response) {
 
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
-            var allowLeadInserts = typeof resp.insert_campaigns === 'undefined' ? false : response.ui_response.insert_campaigns.campaign;
-            if(allowLeadInserts){
+            if(response.ui_response.allow_lead_inserts && typeof resp.insert_campaigns !== 'undefined' && response.ui_response.insert_campaigns.campaign){
                 model.agentPermissions.allowLeadInserts = true;
             }
 
@@ -209,7 +208,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
             model.inboundSettings.availableRequeueQueues = utils.processResponseCollection(response.ui_response, "requeue_gates", "gate_group");
             model.chatSettings.availableChatRooms = utils.processResponseCollection(response.ui_response, "chat_rooms", "room");
-            model.surveySettings.availableSurveys = utils.processResponseCollection(response.ui_response, "surveys", "survey");
+            model.scriptSettings.availableScripts = utils.processResponseCollection(response.ui_response, "surveys", "survey");
             model.agentSettings.callerIds = utils.processResponseCollection(response.ui_response, "caller_ids", "caller_id");
             model.agentSettings.availableAgentStates = utils.processResponseCollection(response.ui_response, "agent_states", "agent_state");
             model.applicationSettings.availableCountries = utils.processResponseCollection(response.ui_response, "account_countries", "country");
@@ -234,7 +233,7 @@ LoginRequest.prototype.processResponse = function(response) {
         formattedResponse.connectionSettings = model.connectionSettings;
         formattedResponse.inboundSettings = model.inboundSettings;
         formattedResponse.outboundSettings = model.outboundSettings;
-        formattedResponse.surveySettings = model.surveySettings;
+        formattedResponse.scriptSettings = model.scriptSettings;
 
     }else if(status === 'RESTRICTED'){
         formattedResponse.message = "Invalid IP Address";

@@ -29,6 +29,8 @@ var NewCallNotification = function() {
  *          "description":{}
  *      },
  *      "message":{},
+ *      "script_id":{},
+ *      "script_version":{},
  *      "survey_id":{},
  *      "survey_pop_type":{"#text":"SUPPRESS"},
  *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
@@ -121,6 +123,8 @@ NewCallNotification.prototype.processResponse = function(notification) {
         allowHangup: utils.getText(notif,'allow_hangup'),
         allowRequeue: utils.getText(notif,'allow_requeue'),
         allowEndCallForEveryone: utils.getText(notif,'allow_endcallforeveryone'),
+        scriptId: utils.getText(notif,'script_id'),
+        scriptVersion: utils.getText(notif,'script_version'),
         surveyId: utils.getText(notif,'survey_id'),
         surveyPopType: utils.getText(notif,'survey_pop_type'),
         requeueType: utils.getText(notif,'requeue_type')

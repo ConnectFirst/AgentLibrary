@@ -350,8 +350,8 @@
     ],
     "outdialGroup": {}
   },
-  "surveySettings": {
-    "availableSurveys": [
+  "scriptSettings": {
+    "availableScripts": [
       {
         "surveyId": "1",
         "surveyName": "New Survey"
