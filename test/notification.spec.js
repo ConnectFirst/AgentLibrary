@@ -117,6 +117,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
                 updatedExpectedPermissions.allowLeadSearch = group.allowLeadSearch;
                 updatedExpectedPermissions.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled;
                 updatedExpectedPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
+                updatedExpectedPermissions.progressiveEnabled = group.progressiveEnabled;
             }
         }
 

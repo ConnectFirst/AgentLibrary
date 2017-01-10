@@ -216,7 +216,7 @@ function setDialGroupSettings(response){
         if(group.dialGroupId === response.ui_response.outdial_group_id['#text']){
             model.agentPermissions.allowLeadSearch = group.allowLeadSearch;
             model.agentPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
-            model.agentPermissions.progressiveEnabled = group.progressiveEnabled === 1;
+            model.agentPermissions.progressiveEnabled = group.progressiveEnabled;
             model.outboundSettings.outdialGroup = JSON.parse(JSON.stringify(group)); // copy object
 
             // Only used for Preview or TCPA Safe accounts.
