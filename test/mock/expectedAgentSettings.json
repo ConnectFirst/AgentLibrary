@@ -1,4 +1,5 @@
 {
+  "accountId":null,
   "agentId": "1",
   "agentType": "AGENT",
   "altDefaultLoginDest": "",
@@ -51,6 +52,7 @@
   "dialDest": "",
   "email": "test@connectfirst.com",
   "externalAgentId": "",
+  "guid":"",
   "firstName": "Test First",
   "isLoggedIn": false,
   "isOffhook": false,

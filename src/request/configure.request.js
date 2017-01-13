@@ -156,6 +156,8 @@ ConfigRequest.prototype.processResponse = function(response) {
             model.agentPermissions.allowLeadSearch = false;
             model.agentSettings.dialDest = model.configRequest.dialDest; // not sent in response
             model.agentSettings.loginType = utils.getText(resp, "login_type");
+            model.agentSettings.guid = utils.getText(resp,"guid");
+            model.agentSettings.accountId = utils.getText(resp,"account_id");
 
             // Set collection values
             setDialGroupSettings(response);
@@ -167,6 +169,8 @@ ConfigRequest.prototype.processResponse = function(response) {
             if(model.agentSettings.updateLoginMode){
                 model.agentSettings.dialDest = model.configRequest.dialDest;
                 model.agentSettings.loginType = utils.getText(resp, "login_type");
+                model.agentSettings.guid = utils.getText(resp,"guid");
+                model.agentSettings.accountId = utils.getText(resp,"account_id");
 
                 // This was an update login request
                 model.agentSettings.updateLoginMode = false;
