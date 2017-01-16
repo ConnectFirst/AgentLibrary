@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-01-13 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-01-16 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -6559,6 +6559,8 @@ function initAgentLibraryCall (context) {
     AgentLibrary.prototype.getScript = function(scriptId, version, callback){
         var model = UIModel.getInstance();
         var script = model.scriptSettings.loadedScripts[scriptId];
+        utils.setCallback(this, CALLBACK_TYPES.SCRIPT_CONFIG, callback);
+
         if(script && script.version === version){
             // return from memory
             return script;
@@ -6568,9 +6570,6 @@ function initAgentLibraryCall (context) {
             var msg = UIModel.getInstance().scriptConfigRequest.formatJSON();
             utils.sendMessage(this, msg);
         }
-
-        utils.setCallback(this, CALLBACK_TYPES.SCRIPT_CONFIG, callback);
-
     };
 
 }

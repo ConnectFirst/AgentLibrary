@@ -313,6 +313,8 @@ function initAgentLibraryCall (context) {
     AgentLibrary.prototype.getScript = function(scriptId, version, callback){
         var model = UIModel.getInstance();
         var script = model.scriptSettings.loadedScripts[scriptId];
+        utils.setCallback(this, CALLBACK_TYPES.SCRIPT_CONFIG, callback);
+
         if(script && script.version === version){
             // return from memory
             return script;
@@ -322,9 +324,6 @@ function initAgentLibraryCall (context) {
             var msg = UIModel.getInstance().scriptConfigRequest.formatJSON();
             utils.sendMessage(this, msg);
         }
-
-        utils.setCallback(this, CALLBACK_TYPES.SCRIPT_CONFIG, callback);
-
     };
 
 }
