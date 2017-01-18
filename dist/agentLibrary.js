@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-01-16 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-01-18 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3336,6 +3336,53 @@ ScriptConfigRequest.prototype.processResponse = function(response) {
 };
 
 
+var ScriptResultRequest = function(uii, scriptId, jsonResult) {
+    this.uii = uii;
+    this.scriptId = scriptId;
+    this.jsonResult = jsonResult;
+};
+
+/*
+* This event is responsible for sending the script result object
+*/
+ScriptResultRequest.prototype.formatJSON = function() {
+    // format survey response object
+    var formattedJson = _formatResponse(this.jsonResult);
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "@type":MESSAGE_TYPES.SCRIPT_RESULT,
+            "agent_id": {
+                "#text" : utils.toString(UIModel.getInstance().agentSettings.agentId)
+            },
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "script_id": {
+                "#text" : utils.toString(this.scriptId)
+            },
+            "json_result": formattedJson
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+_formatResponse = function(result){
+    var res = {};
+
+    for(var i = 0; i < Object.keys(result).length; i++){
+        var key = Object.keys(result)[i];
+        res[key] = {"#text": result[key].value || ""};
+    }
+
+    return res;
+};
+
+
 var StatsRequest = function() {
     
 };
@@ -5451,6 +5498,7 @@ const MESSAGE_TYPES = {
     "REQUEUE":"RE-QUEUE",
     "REVERSE_MATCH":"REVERSE_MATCH",
     "SCRIPT_CONFIG":"SCRIPT-CONFIG",
+    "SCRIPT_RESULT":"SCRIPT-RESULT",
     "STATS":"STATS",
     "STATS_AGENT":"AGENT",
     "STATS_AGENT_DAILY":"AGENTDAILY",
@@ -6570,6 +6618,17 @@ function initAgentLibraryCall (context) {
             var msg = UIModel.getInstance().scriptConfigRequest.formatJSON();
             utils.sendMessage(this, msg);
         }
+    };
+
+    /**
+     * Saves the results from a script
+     * @memberof AgentLibrary
+     * @param {number} scriptId Id of script
+     */
+    AgentLibrary.prototype.saveScriptResult = function(uii, scriptId, jsonResult){
+        UIModel.getInstance().scriptResultRequest = new ScriptResultRequest(uii, scriptId, jsonResult);
+        var msg = UIModel.getInstance().scriptResultRequest.formatJSON();
+        utils.sendMessage(this, msg);
     };
 
 }

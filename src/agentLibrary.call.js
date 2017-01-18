@@ -326,4 +326,15 @@ function initAgentLibraryCall (context) {
         }
     };
 
+    /**
+     * Saves the results from a script
+     * @memberof AgentLibrary
+     * @param {number} scriptId Id of script
+     */
+    AgentLibrary.prototype.saveScriptResult = function(uii, scriptId, jsonResult){
+        UIModel.getInstance().scriptResultRequest = new ScriptResultRequest(uii, scriptId, jsonResult);
+        var msg = UIModel.getInstance().scriptResultRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
 }
