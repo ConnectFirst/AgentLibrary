@@ -3363,7 +3363,9 @@ ScriptResultRequest.prototype.formatJSON = function() {
             "script_id": {
                 "#text" : utils.toString(this.scriptId)
             },
-            "json_result": formattedJson
+            "json_result": {
+                "#text": JSON.stringify(formattedJson)
+            }
         }
     };
 
@@ -3376,7 +3378,7 @@ _formatResponse = function(result){
 
     for(var i = 0; i < Object.keys(result).length; i++){
         var key = Object.keys(result)[i];
-        res[key] = {"#text": result[key].value || ""};
+        res[key] = result[key].value || "";
     }
 
     return res;
