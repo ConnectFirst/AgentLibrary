@@ -367,10 +367,10 @@ describe( 'Tests for Agent Library agent methods', function() {
         var dispId = "1";
         var notes = "A note!";
         var callback = false;
-        var survey = [
-            { label: "hello", externId: "text_box", leadUpdateColumn: ""},
-            { label: "20", externId: "check_box", leadUpdateColumn: ""}
-        ];
+        var survey = {
+            "name": {value: "Geoff", leadField: "first_name"},
+            "title": {value: "CEO", leadField: "title"}
+        };
 
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();

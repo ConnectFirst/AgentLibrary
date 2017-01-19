@@ -1667,9 +1667,17 @@ var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, con
     this.contactForwardNumber = contactForwardNumber || null;
 
     /*
-     * survey = [
-     *      { label: "", externId: "", leadUpdateColumn: ""}
-     * ]
+     * survey = {
+     *      first_name: {
+     *          leadField: "first_name"
+     *          value: "Geoff"
+     *      },
+     *      last_name: {
+     *          leadField: "last_name"
+     *          value: "Mina"
+     *      }
+     *      ...
+     * }
      */
     this.survey = survey || null;
 };
@@ -1749,6 +1757,7 @@ DispositionRequest.prototype.formatJSON = function() {
     }
 
     /*
+     * converts survey to this reponse
      * survey : {
      *      response: [
      *          { "@extern_id":"", "@lead_update_column":"", "#text":"" }
@@ -1757,11 +1766,12 @@ DispositionRequest.prototype.formatJSON = function() {
      */
     if(this.survey !== null){
         var response = [];
-        for(var i = 0; i < this.survey.length; i++){
+        for(var i = 0; i < Object.keys(this.survey).length; i++){
+            var key = Object.keys(this.survey)[i];
             var obj = {
-                "@extern_id": utils.toString(this.survey[i].externId),
-                "@lead_update_column": utils.toString(this.survey[i].leadUpdateColumn),
-                "#text": this.survey[i].label
+                "@extern_id": "",
+                "@lead_update_column": utils.toString(this.survey[key].leadField),
+                "#text": this.survey[key].value
             };
             response.push(obj);
         }
