@@ -1,5 +1,5 @@
 
-var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dialDest, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillPofileId, dialGroupId, updateFromAdminUI) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillPofileId = skillPofileId || "";

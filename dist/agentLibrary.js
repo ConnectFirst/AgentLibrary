@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-01-18 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-01-23 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1358,7 +1358,7 @@ XferColdRequest.prototype.processResponse = function(response) {
 };
 
 
-var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dialDest, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillPofileId, dialGroupId, updateFromAdminUI) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillPofileId = skillPofileId || "";
@@ -5540,6 +5540,7 @@ function initAgentLibraryCore (context) {
      * attached to the context that the library was loaded in.
      * @param {Object} [config={}] Set socket url and callback functions.
      * @constructor
+     * @namespace Core
      * @memberof AgentLibrary
      * @property {object} callbacks Internal map of registered callback functions
      * @property {object} _requests Internal map of requests by message id, private property.
@@ -5584,7 +5585,7 @@ function initAgentLibraryCore (context) {
 
     /**
      * Set multiple callback functions based on type
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core
      * @param {Object} callbackMap Contains map of callback types to their respective functions:<br />
      * <tt>callbackMap = {<br />
      *      closeResponse: onCloseFunction,<br />
@@ -5600,7 +5601,7 @@ function initAgentLibraryCore (context) {
 
     /**
      * Set an individual callback function for the given type
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core
      * @param {string} type The name of the event that fires the callback function
      * @param {function} callback The function to call for the given type
      */
@@ -5610,7 +5611,7 @@ function initAgentLibraryCore (context) {
 
     /**
      * Get the map of all registered callbacks
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core
      * @returns {array}
      */
     AgentLibrary.prototype.getCallbacks = function(){
@@ -5619,19 +5620,24 @@ function initAgentLibraryCore (context) {
 
     /**
      * Get a given registered callback by type
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core
      * @returns {object}
      */
     AgentLibrary.prototype.getCallback = function(type){
         return this.callbacks[type];
     };
 
+    /**
+     * @namespace Requests
+     * @memberof AgentLibrary.Core
+     */
+
     ////////////////////////////
     // requests and responses //
     ////////////////////////////
     /**
      * Get outgoing Login Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getLoginRequest = function() {
@@ -5639,7 +5645,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get outgoing Config Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getConfigRequest = function() {
@@ -5647,7 +5653,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get outgoing Logout Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getLogoutRequest = function() {
@@ -5655,7 +5661,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Agent Daily Stats object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getAgentDailyStats = function() {
@@ -5663,7 +5669,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Call Tokens object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getCallTokens = function() {
@@ -5671,7 +5677,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest outgoing Agent State Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getAgentStateRequest = function() {
@@ -5679,7 +5685,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest outgoing offhook init Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getOffhookInitRequest = function() {
@@ -5687,7 +5693,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest outgoing offhook termination Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getOffhookTermRequest = function() {
@@ -5695,7 +5701,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest outgoing Hangup Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getHangupRequest = function() {
@@ -5703,7 +5709,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest outgoing Preview Dial Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getPreviewDialRequest = function() {
@@ -5711,7 +5717,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest TCPA Safe Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getTcpaSafeRequest = function() {
@@ -5719,7 +5725,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Manual Outdial Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getManualOutdialRequest = function() {
@@ -5727,7 +5733,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Manual Outdial Cancel Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getManualOutdialCancelRequest = function() {
@@ -5735,7 +5741,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Call Notes Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getCallNotesRequest = function() {
@@ -5743,7 +5749,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Campaign Dispositions Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getCampaignDispositionsRequest = function() {
@@ -5751,7 +5757,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Disposition Call Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getDispositionRequest = function() {
@@ -5759,7 +5765,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Disposition Manual Pass Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getDispositionManualPassRequest = function() {
@@ -5767,7 +5773,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Warm Transfer Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getWarmTransferRequest = function() {
@@ -5775,7 +5781,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Cold Transfer Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getColdTransferRequest = function() {
@@ -5783,7 +5789,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Warm Transfer Cancel Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getWarmTransferCancelRequest = function() {
@@ -5791,7 +5797,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Requeue Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getRequeueRequest = function() {
@@ -5799,7 +5805,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Barge-In Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getBargeInRequest = function() {
@@ -5807,7 +5813,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Hold Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getHoldRequest = function() {
@@ -5815,7 +5821,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Pause Record Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getPauseRecordRequest = function() {
@@ -5823,7 +5829,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Record Request object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getRecordRequest = function() {
@@ -5831,7 +5837,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Agent Stats object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getAgentStatsPacket = function() {
@@ -5839,7 +5845,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Agent Daily Stats object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getAgentDailyStatsPacket = function() {
@@ -5847,7 +5853,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Queue Stats object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getQueueStatsPacket = function() {
@@ -5855,7 +5861,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest Campaign Stats object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getCampaignStatsPacket = function() {
@@ -5863,7 +5869,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get packet received on successful Login
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getLoginPacket = function() {
@@ -5871,7 +5877,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get packet received on successful Configuration (2nd layer login)
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getConfigPacket = function() {
@@ -5879,7 +5885,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest received packet for Agent State
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getAgentStatePacket = function() {
@@ -5887,7 +5893,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest received packet for the Current Call
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getCurrentCallPacket = function() {
@@ -5895,7 +5901,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest received packet for initiating an offhook session
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getOffhookInitPacket = function() {
@@ -5903,19 +5909,24 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get latest received packet for terminating an offhook session
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getOffhookTermPacket = function() {
         return UIModel.getInstance().offhookTermPacket;
     };
 
+
+    /**
+     * @namespace Notifications
+     * @memberof AgentLibrary.Core
+     */
     ///////////////////
     // notifications //
     ///////////////////
     /**
      * Get Dial Group Change notification class
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Notifications
      * @returns {object}
      */
     AgentLibrary.prototype.getDialGroupChangeNotification = function() {
@@ -5923,7 +5934,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Dial Group Change Pending notification class
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Notifications
      * @returns {object}
      */
     AgentLibrary.prototype.getDialGroupChangePendingNotification = function() {
@@ -5931,7 +5942,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get End Call notification class
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Notifications
      * @returns {object}
      */
     AgentLibrary.prototype.getEndCallNotification = function() {
@@ -5939,7 +5950,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Gates Change notification class
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Notifications
      * @returns {object}
      */
     AgentLibrary.prototype.getGatesChangeNotification = function() {
@@ -5947,7 +5958,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Generic notification class
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Notifications
      * @returns {object}
      */
     AgentLibrary.prototype.getGenericNotification = function() {
@@ -5955,7 +5966,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get New Call notification class
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Notifications
      * @returns {object}
      */
     AgentLibrary.prototype.getNewCallNotification = function() {
@@ -5963,7 +5974,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get current call object
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Notifications
      * @returns {object}
      */
     AgentLibrary.prototype.getCurrentCall = function() {
@@ -5971,7 +5982,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Add Session notification class
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Notifications
      * @returns {object}
      */
     AgentLibrary.prototype.getAddSessionNotification = function() {
@@ -5979,7 +5990,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Drop Session notification class
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Notifications
      * @returns {object}
      */
     AgentLibrary.prototype.getDropSessionNotification = function() {
@@ -5987,20 +5998,23 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Early UII notification class
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Notifications
      * @returns {object}
      */
     AgentLibrary.prototype.getEarlyUiiNotification = function() {
         return UIModel.getInstance().earlyUiiNotification;
     };
 
-
+    /**
+     * @namespace Settings
+     * @memberof AgentLibrary.Core
+     */
     //////////////////////
     // settings objects //
     //////////////////////
     /**
      * Get Application Settings object containing the current state of application related data
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Settings
      * @returns {object}
      */
     AgentLibrary.prototype.getApplicationSettings = function() {
@@ -6008,7 +6022,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Chat Settings object containing the current state of chat related data
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Settings
      * @returns {object}
      */
     AgentLibrary.prototype.getChatSettings = function() {
@@ -6016,7 +6030,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Connection Settings object containing the current state of connection related data
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Settings
      * @returns {object}
      */
     AgentLibrary.prototype.getConnectionSettings = function() {
@@ -6024,7 +6038,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Inbound Settings object containing the current state of inbound related data
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Settings
      * @returns {object}
      */
     AgentLibrary.prototype.getInboundSettings = function() {
@@ -6032,7 +6046,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Outbound Settings object containing the current state of outbound related data
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Settings
      * @returns {object}
      */
     AgentLibrary.prototype.getOutboundSettings = function() {
@@ -6040,23 +6054,40 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get Agent Settings object containing the current state of agent related data
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Settings
      * @returns {object}
      */
     AgentLibrary.prototype.getAgentSettings = function() {
         return UIModel.getInstance().agentSettings;
     };
     /**
+     * Get Transfer Sessions
+     * @memberof AgentLibrary.Core.Settings
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getTransferSessions = function() {
+        return UIModel.getInstance().transferSessions;
+    };
+    /**
      * Get the Agent Permissions object containing the current state of agent permissions
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Settings
      * @returns {object}
      */
     AgentLibrary.prototype.getAgentPermissions = function() {
         return UIModel.getInstance().agentPermissions;
     };
+
+    /**
+     * @namespace Stats
+     * @memberof AgentLibrary.Core
+     */
+    ///////////////////
+    // stats objects //
+    ///////////////////
+
     /**
      * Get the Agent stats object containing the current state of agent stats
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Settings
      * @returns {object}
      */
     AgentLibrary.prototype.getAgentStats = function() {
@@ -6064,7 +6095,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get the Agent Daily stats object containing the current state of agent daily stats
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Stats
      * @returns {object}
      */
     AgentLibrary.prototype.getAgentDailyStats = function() {
@@ -6072,7 +6103,7 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get the Queue stats object containing the current state of queue stats
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Stats
      * @returns {object}
      */
     AgentLibrary.prototype.getQueueStats = function() {
@@ -6080,19 +6111,11 @@ function initAgentLibraryCore (context) {
     };
     /**
      * Get the Campaign stats object containing the current state of campaign stats
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Core.Stats
      * @returns {object}
      */
     AgentLibrary.prototype.getCampaignStats = function() {
         return UIModel.getInstance().campaignStats;
-    };
-    /**
-     * Get Transfer Sessions
-     * @memberof AgentLibrary
-     * @returns {object}
-     */
-    AgentLibrary.prototype.getTransferSessions = function() {
-        return UIModel.getInstance().transferSessions;
     };
 
 }
@@ -6150,6 +6173,10 @@ function initAgentLibrarySocket (context) {
 
 }
 function initAgentLibraryAgent (context) {
+    /**
+     * @namespace Agent
+     * @memberof AgentLibrary
+     */
 
     'use strict';
 
@@ -6157,7 +6184,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Sends agent login message to IntelliServices
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Agent
      * @param {string} username Agent's username
      * @param {string} password Agent's password
      * @param {function} [callback=null] Callback function when loginAgent response received
@@ -6172,17 +6199,17 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Sends agent configure message (2nd layer login) to IntelliQueue
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Agent
+     * @param {string} dialDest The agent's number, sip | DID.
      * @param {string[]} [queueIds=null] The queue ids the agent will be logged into.
      * @param {string[]} [chatIds=null] The chat ids the agent will be logged into.
      * @param {string} [skillProfileId=null] The skill profile the agent will be logged into.
      * @param {string} [dialGroupId=null] The outbound dial group id the agent will be logged into.
-     * @param {string} dialDest The agent's number, sip | DID.
      * @param {string} [updateFromAdminUI=false] Whether the request is generated from the AdminUI or not.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(queueIds, chatIds, skillProfileId, dialGroupId, dialDest, updateFromAdminUI, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(queueIds, chatIds, skillProfileId, dialGroupId, dialDest, updateFromAdminUI);
+    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, callback){
+        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);
@@ -6191,7 +6218,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Sends agent logout message to IntelliQueue
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Agent
      * @param {number} agentId Id of the agent that will be logged out.
      * @param {function} [callback=null] Callback function when logoutAgent response received.
      */
@@ -6213,7 +6240,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Sends agent state change message to IntelliQueue
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Agent
      * @param {string} agentState The system/base state to transition to <br />
      * AVAILABLE | TRANSITION | ENGAGED | ON-BREAK | WORKING | AWAY | LUNCH | AUX-UNAVAIL-NO-OFFHOOK | AUX-UNAVAIL-OFFHOOK
      * @param {string} [agentAuxState=""] The aux state display label
@@ -6229,7 +6256,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Initiates an agent offhook session
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Agent
      * @param {function} [callback=null] Callback function when offhookInit response received
      */
     AgentLibrary.prototype.offhookInit = function(callback){
@@ -6242,7 +6269,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Terminates agent's offhook session
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Agent
      * @param {function} [callback=null] Callback function when offhookTerm response received
      */
     AgentLibrary.prototype.offhookTerm = function(){
@@ -6253,7 +6280,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Returns scheduled callbacks for the given agent
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Agent
      * @param {number} [agentId=logged in agent id] Id of agent to get callbacks for
      * @param {function} [callback=null] Callback function when pending callbacks response received
      */
@@ -6267,7 +6294,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Cancel a scheduled callback for the given agent based on lead id
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Agent
      * @param {number} leadId Id of lead callback to cancel
      * @param {number} [agentId=logged in agent id] Id of agent to cancel specified lead callback for
      * @param {function} [callback=null] Callback function when callback is canceled
@@ -6283,7 +6310,7 @@ function initAgentLibraryAgent (context) {
     /**
      * Request stats messages to be sent every 5 seconds. The stats responses will be sent as
      * four possible callback types: agentStats, agentDailyStats, campaignStats, or queueStats
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Agent
      */
     AgentLibrary.prototype.requestStats = function(){
         // start stats interval timer, request stats every 5 seconds
@@ -6293,7 +6320,7 @@ function initAgentLibraryAgent (context) {
     /**
      * Reconnect the agent session, similar to configureAgent, but doesn't reset set all
      * configure values if not needed.
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Agent
      */
     AgentLibrary.prototype.reconnect = function(){
         UIModel.getInstance().reconnectRequest = new ReconnectRequest();
@@ -6305,6 +6332,10 @@ function initAgentLibraryAgent (context) {
 }
 
 function initAgentLibraryCall (context) {
+    /**
+     * @namespace Call
+     * @memberof AgentLibrary
+     */
 
     'use strict';
 
@@ -6312,7 +6343,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Barge in on a call, can hear all parties and be heard by all
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {function} [callback=null] Callback function when barge in response received
      */
     AgentLibrary.prototype.bargeIn = function(callback){
@@ -6325,7 +6356,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Add a coaching session to the call, can hear all parties but only able to speak on agent channel
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {function} [callback=null] Callback function when coaching session response received
      */
     AgentLibrary.prototype.coach = function(callback){
@@ -6338,7 +6369,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Transfer to another number and end the call for the original agent (cold transfer).
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when cold transfer response received
@@ -6353,7 +6384,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Send a disposition for an inbound or outbound call
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {string} uii UII (unique id) for call
      * @param {string} dispId The disposition id
      * @param {string} notes Agent notes for call
@@ -6375,7 +6406,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Send a disposition for a manual pass on a lead
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {string} dispId The disposition id
      * @param {string} notes Agent notes for call
      * @param {boolean} callback Boolean for whether or not this call is a callback
@@ -6392,7 +6423,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Get a list of all campaign dispositions for given campaign id
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {string} campaignId Id for campaign to get dispositions for
      * @param {function} [callback=null] Callback function when campaign dispositions response received
      */
@@ -6406,7 +6437,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Sends a hangup request message
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
      */
     AgentLibrary.prototype.hangup = function(sessionId){
@@ -6417,7 +6448,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Place a call on hold
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {boolean} holdState Whether we are putting call on hold or taking off hold - values true | false
      * @param {function} [callback=null] Callback function when hold response received
      */
@@ -6431,27 +6462,23 @@ function initAgentLibraryCall (context) {
 
     /**
      * Sends a manual outdial request message
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {string} destination Number to call - ANI
-     * @param {number} [ringTime=60] Time in seconds to ring call
      * @param {number} callerId Number displayed to callee, DNIS
+     * @param {number} [ringTime=60] Time in seconds to ring call
      * @param {string} [countryId='USA'] Country for the destination number
      * @param {number} [queueId=''] Queue id to tie manual call to
      */
     AgentLibrary.prototype.manualOutdial = function(destination, callerId, ringTime, countryId, queueId){
-        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, callerId,  ringTime, countryId, queueId);
+        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, callerId, ringTime, countryId, queueId);
         var msg = UIModel.getInstance().oneToOneOutdialRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 
     /**
-     * Sends a manual outdial request message
-     * @memberof AgentLibrary
-     * @param {string} destination Number to call - ANI
-     * @param {number} [ringTime=60] Time in seconds to ring call
-     * @param {number} callerId Number displayed to callee, DNIS
-     * @param {string} [countryId='USA'] Country for the destination number
-     * @param {number} [queueId=''] Queue id to tie manual call to
+     * Cancels a manual outdial request by UII.
+     * @memberof AgentLibrary.Call
+     * @param {string} uii UII of manual call request, the UII is returned in the EARLY_UII notification.
      */
     AgentLibrary.prototype.manualOutdialCancel = function(uii){
         UIModel.getInstance().oneToOneOutdialCancelRequest = new OneToOneOutdialCancelRequest(uii);
@@ -6461,7 +6488,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Pause call recording
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {boolean} record Whether we are recording or not
      * @param {function} [callback=null] Callback function when pause record response received
      */
@@ -6475,7 +6502,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Sends a preview dial request to call lead based on request id. Call previewFetch method first to get request id.
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {number} requestId Pending request id sent back with lead, required to dial lead.
      */
     AgentLibrary.prototype.previewDial = function(requestId){
@@ -6486,7 +6513,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Sends a message to fetch preview dialable leads
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
      * e.g. [ {key: "name", value: "Geoff"} ]
      * @param {function} [callback=null] Callback function when preview fetch completed, returns matched leads
@@ -6501,7 +6528,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Pull back leads that match search criteria
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
      * e.g. [ {key: "name", value: "Geoff"} ]
      * @param {function} [callback=null] Callback function when lead search completed, returns matched leads
@@ -6516,7 +6543,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Set agent notes for a call
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {string} notes Agent notes to add to call
      * @param {function} [callback=null] Callback function when call notes response received
      */
@@ -6530,7 +6557,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Add a silent monitor session to a call, can hear all channels but can't be heard by any party
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {function} [callback=null] Callback function when silent monitor response received
      */
     AgentLibrary.prototype.monitor = function(callback){
@@ -6543,7 +6570,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Toggle call recording based on passed in boolean true | false
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {boolean} record Whether we are recording or not
      * @param {function} [callback=null] Callback function when record response received
      */
@@ -6557,7 +6584,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Requeue a call
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {number} queueId Queue Id to send the call to
      * @param {number} skillId Skill Id for the requeued call
      * @param {boolean} maintain Whether or not to maintain the current agent
@@ -6573,7 +6600,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Sends a TCPA Safe call request message
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {string} [action=""] Action to take
      * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
      * e.g. [ {key: "name", value: "Geoff"} ]
@@ -6587,7 +6614,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Transfer to another number while keeping the original agent on the line (warm transfer).
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when warm transfer response received
@@ -6602,7 +6629,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Cancel a warm transfer
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {number} dialDest Number that was transfered to
      */
     AgentLibrary.prototype.warmXferCancel = function(dialDest){
@@ -6613,8 +6640,11 @@ function initAgentLibraryCall (context) {
 
     /**
      * Requests a script object based on given id
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
      * @param {number} scriptId Id of script
+     * @param {number} version The version number of the script, if the current loaded script version matches,
+     *                 just return current script. Otherwise, fetch new version of script.
+     * @param {function} [callback=null] Callback function when warm transfer response received
      */
     AgentLibrary.prototype.getScript = function(scriptId, version, callback){
         var model = UIModel.getInstance();
@@ -6634,8 +6664,10 @@ function initAgentLibraryCall (context) {
 
     /**
      * Saves the results from a script
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Call
+     * @param {string} uii The UII of the call the script results belong to
      * @param {number} scriptId Id of script
+     * @param {object} jsonResult JSON object of script results, name/value pairs
      */
     AgentLibrary.prototype.saveScriptResult = function(uii, scriptId, jsonResult){
         UIModel.getInstance().scriptResultRequest = new ScriptResultRequest(uii, scriptId, jsonResult);
@@ -6646,14 +6678,19 @@ function initAgentLibraryCall (context) {
 }
 
 function initAgentLibraryLead (context) {
-
+    /**
+     * @namespace Lead
+     * @memberof AgentLibrary
+     */
+    
     'use strict';
 
     var AgentLibrary = context.AgentLibrary;
 
     /**
      * Get the history for a given lead
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Lead
+     * @param {number} leadId The lead id to retrieve history for
      * @param {function} [callback=null] Callback function when lead history response received
      */
     AgentLibrary.prototype.leadHistory = function(leadId, callback){
@@ -6666,8 +6703,8 @@ function initAgentLibraryLead (context) {
 
     /**
      * Insert a lead to the given campaign
-     * @memberof AgentLibrary
-     * @param {object} Contains agentId, campaignId, and lead info
+     * @memberof AgentLibrary.Lead
+     * @param {object} dataObj agentId, campaignId, and lead info
      * @param {function} [callback=null] Callback function when lead history response received
      */
     AgentLibrary.prototype.leadInsert = function(dataObj, callback){
@@ -6680,7 +6717,7 @@ function initAgentLibraryLead (context) {
 
     /**
      * Update lead information
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Lead
      * @param {string} leadId Id for lead to update
      * @param {string} leadPhone Lead phone number
      * @param {object} baggage Object containing lead information
@@ -6697,6 +6734,10 @@ function initAgentLibraryLead (context) {
 }
 
 function initAgentLibraryChat (context) {
+    /**
+     * @namespace Chat
+     * @memberof AgentLibrary
+     */
 
     'use strict';
 
@@ -6704,7 +6745,7 @@ function initAgentLibraryChat (context) {
 
     /**
      * Set the agent chat alias
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Chat
      * @param {string} alias The alias string to be used for agent chat messages
      */
     AgentLibrary.prototype.setChatAlias = function(alias){
@@ -6716,7 +6757,7 @@ function initAgentLibraryChat (context) {
 
     /**
      * Request to enter/exit a public chat room
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Chat
      * @param {string} action "ENTER" | "EXIT"
      * @param {integer} roomId Chat room id
      */
@@ -6729,7 +6770,7 @@ function initAgentLibraryChat (context) {
 
     /**
      * Request to enter/exit a private chat room
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Chat
      * @param {string} action "ENTER" | "EXIT"
      * @param {integer} roomId Chat room id
      * @param {integer} agentOne Id for the logged in agent
@@ -6744,7 +6785,7 @@ function initAgentLibraryChat (context) {
 
     /**
      * Send a chat message to the given room
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Chat
      * @param {integer} roomId Id for chat room
      * @param {string} message The message to be sent
      * @param {function} [callback=null] Callback function when chat message received
@@ -6759,7 +6800,7 @@ function initAgentLibraryChat (context) {
 
     /**
      * Get list of supervisors for logged in agent
-     * @memberof AgentLibrary
+     * @memberof AgentLibrary.Chat
      * @param {function} [callback=null] Callback function when chat message received
      */
     AgentLibrary.prototype.getSupervisors = function(callback){

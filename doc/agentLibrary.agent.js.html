@@ -1,8 +1,32 @@
-function initAgentLibraryAgent (context) {
-    /**
-     * @namespace Agent
-     * @memberof AgentLibrary
-     */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: agentLibrary.agent.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: agentLibrary.agent.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>function initAgentLibraryAgent (context) {
 
     'use strict';
 
@@ -10,7 +34,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Sends agent login message to IntelliServices
-     * @memberof AgentLibrary.Agent
+     * @memberof AgentLibrary
      * @param {string} username Agent's username
      * @param {string} password Agent's password
      * @param {function} [callback=null] Callback function when loginAgent response received
@@ -25,17 +49,17 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Sends agent configure message (2nd layer login) to IntelliQueue
-     * @memberof AgentLibrary.Agent
-     * @param {string} dialDest The agent's number, sip | DID.
+     * @memberof AgentLibrary
      * @param {string[]} [queueIds=null] The queue ids the agent will be logged into.
      * @param {string[]} [chatIds=null] The chat ids the agent will be logged into.
      * @param {string} [skillProfileId=null] The skill profile the agent will be logged into.
      * @param {string} [dialGroupId=null] The outbound dial group id the agent will be logged into.
+     * @param {string} dialDest The agent's number, sip | DID.
      * @param {string} [updateFromAdminUI=false] Whether the request is generated from the AdminUI or not.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI);
+    AgentLibrary.prototype.configureAgent = function(queueIds, chatIds, skillProfileId, dialGroupId, dialDest, updateFromAdminUI, callback){
+        UIModel.getInstance().configRequest = new ConfigRequest(queueIds, chatIds, skillProfileId, dialGroupId, dialDest, updateFromAdminUI);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);
@@ -44,7 +68,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Sends agent logout message to IntelliQueue
-     * @memberof AgentLibrary.Agent
+     * @memberof AgentLibrary
      * @param {number} agentId Id of the agent that will be logged out.
      * @param {function} [callback=null] Callback function when logoutAgent response received.
      */
@@ -66,8 +90,8 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Sends agent state change message to IntelliQueue
-     * @memberof AgentLibrary.Agent
-     * @param {string} agentState The system/base state to transition to <br />
+     * @memberof AgentLibrary
+     * @param {string} agentState The system/base state to transition to &lt;br />
      * AVAILABLE | TRANSITION | ENGAGED | ON-BREAK | WORKING | AWAY | LUNCH | AUX-UNAVAIL-NO-OFFHOOK | AUX-UNAVAIL-OFFHOOK
      * @param {string} [agentAuxState=""] The aux state display label
      * @param {function} [callback=null] Callback function when agentState response received
@@ -82,7 +106,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Initiates an agent offhook session
-     * @memberof AgentLibrary.Agent
+     * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when offhookInit response received
      */
     AgentLibrary.prototype.offhookInit = function(callback){
@@ -95,7 +119,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Terminates agent's offhook session
-     * @memberof AgentLibrary.Agent
+     * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when offhookTerm response received
      */
     AgentLibrary.prototype.offhookTerm = function(){
@@ -106,7 +130,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Returns scheduled callbacks for the given agent
-     * @memberof AgentLibrary.Agent
+     * @memberof AgentLibrary
      * @param {number} [agentId=logged in agent id] Id of agent to get callbacks for
      * @param {function} [callback=null] Callback function when pending callbacks response received
      */
@@ -120,7 +144,7 @@ function initAgentLibraryAgent (context) {
 
     /**
      * Cancel a scheduled callback for the given agent based on lead id
-     * @memberof AgentLibrary.Agent
+     * @memberof AgentLibrary
      * @param {number} leadId Id of lead callback to cancel
      * @param {number} [agentId=logged in agent id] Id of agent to cancel specified lead callback for
      * @param {function} [callback=null] Callback function when callback is canceled
@@ -136,7 +160,7 @@ function initAgentLibraryAgent (context) {
     /**
      * Request stats messages to be sent every 5 seconds. The stats responses will be sent as
      * four possible callback types: agentStats, agentDailyStats, campaignStats, or queueStats
-     * @memberof AgentLibrary.Agent
+     * @memberof AgentLibrary
      */
     AgentLibrary.prototype.requestStats = function(){
         // start stats interval timer, request stats every 5 seconds
@@ -146,7 +170,7 @@ function initAgentLibraryAgent (context) {
     /**
      * Reconnect the agent session, similar to configureAgent, but doesn't reset set all
      * configure values if not needed.
-     * @memberof AgentLibrary.Agent
+     * @memberof AgentLibrary
      */
     AgentLibrary.prototype.reconnect = function(){
         UIModel.getInstance().reconnectRequest = new ReconnectRequest();
@@ -156,3 +180,26 @@ function initAgentLibraryAgent (context) {
     };
 
 }
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AgentLibrary.AgentLibrary.html">AgentLibrary</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon Jan 23 2017 09:27:35 GMT-0700 (MST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

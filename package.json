@@ -34,6 +34,7 @@
     "grunt-contrib-watch": "^0.4.4",
     "grunt-conventional-changelog": "^0.1.2",
     "grunt-html2js": "^0.1.9",
+    "grunt-jsdoc": "^2.1.0",
     "grunt-karma": "^0.8.3",
     "grunt-ng-annotate": "latest",
     "jasmine-core": "^2.4.1",
