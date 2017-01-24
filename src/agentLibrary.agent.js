@@ -1,4 +1,3 @@
-// test commit
 function initAgentLibraryAgent (context) {
     /**
      * @namespace Agent
