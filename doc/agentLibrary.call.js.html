@@ -1,8 +1,32 @@
-function initAgentLibraryCall (context) {
-    /**
-     * @namespace Call
-     * @memberof AgentLibrary
-     */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: agentLibrary.call.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: agentLibrary.call.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>function initAgentLibraryCall (context) {
 
     'use strict';
 
@@ -10,7 +34,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Barge in on a call, can hear all parties and be heard by all
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when barge in response received
      */
     AgentLibrary.prototype.bargeIn = function(callback){
@@ -23,7 +47,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Add a coaching session to the call, can hear all parties but only able to speak on agent channel
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when coaching session response received
      */
     AgentLibrary.prototype.coach = function(callback){
@@ -36,7 +60,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Transfer to another number and end the call for the original agent (cold transfer).
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when cold transfer response received
@@ -51,7 +75,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Send a disposition for an inbound or outbound call
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {string} uii UII (unique id) for call
      * @param {string} dispId The disposition id
      * @param {string} notes Agent notes for call
@@ -73,7 +97,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Send a disposition for a manual pass on a lead
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {string} dispId The disposition id
      * @param {string} notes Agent notes for call
      * @param {boolean} callback Boolean for whether or not this call is a callback
@@ -90,7 +114,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Get a list of all campaign dispositions for given campaign id
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {string} campaignId Id for campaign to get dispositions for
      * @param {function} [callback=null] Callback function when campaign dispositions response received
      */
@@ -104,7 +128,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Sends a hangup request message
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
      */
     AgentLibrary.prototype.hangup = function(sessionId){
@@ -115,7 +139,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Place a call on hold
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {boolean} holdState Whether we are putting call on hold or taking off hold - values true | false
      * @param {function} [callback=null] Callback function when hold response received
      */
@@ -129,23 +153,27 @@ function initAgentLibraryCall (context) {
 
     /**
      * Sends a manual outdial request message
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {string} destination Number to call - ANI
-     * @param {number} callerId Number displayed to callee, DNIS
      * @param {number} [ringTime=60] Time in seconds to ring call
+     * @param {number} callerId Number displayed to callee, DNIS
      * @param {string} [countryId='USA'] Country for the destination number
      * @param {number} [queueId=''] Queue id to tie manual call to
      */
     AgentLibrary.prototype.manualOutdial = function(destination, callerId, ringTime, countryId, queueId){
-        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, callerId, ringTime, countryId, queueId);
+        UIModel.getInstance().oneToOneOutdialRequest = new OneToOneOutdialRequest(destination, callerId,  ringTime, countryId, queueId);
         var msg = UIModel.getInstance().oneToOneOutdialRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 
     /**
-     * Cancels a manual outdial request by UII.
-     * @memberof AgentLibrary.Call
-     * @param {string} uii UII of manual call request, the UII is returned in the EARLY_UII notification.
+     * Sends a manual outdial request message
+     * @memberof AgentLibrary
+     * @param {string} destination Number to call - ANI
+     * @param {number} [ringTime=60] Time in seconds to ring call
+     * @param {number} callerId Number displayed to callee, DNIS
+     * @param {string} [countryId='USA'] Country for the destination number
+     * @param {number} [queueId=''] Queue id to tie manual call to
      */
     AgentLibrary.prototype.manualOutdialCancel = function(uii){
         UIModel.getInstance().oneToOneOutdialCancelRequest = new OneToOneOutdialCancelRequest(uii);
@@ -155,7 +183,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Pause call recording
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {boolean} record Whether we are recording or not
      * @param {function} [callback=null] Callback function when pause record response received
      */
@@ -169,7 +197,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Sends a preview dial request to call lead based on request id. Call previewFetch method first to get request id.
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {number} requestId Pending request id sent back with lead, required to dial lead.
      */
     AgentLibrary.prototype.previewDial = function(requestId){
@@ -180,7 +208,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Sends a message to fetch preview dialable leads
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
      * e.g. [ {key: "name", value: "Geoff"} ]
      * @param {function} [callback=null] Callback function when preview fetch completed, returns matched leads
@@ -195,7 +223,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Pull back leads that match search criteria
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
      * e.g. [ {key: "name", value: "Geoff"} ]
      * @param {function} [callback=null] Callback function when lead search completed, returns matched leads
@@ -210,7 +238,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Set agent notes for a call
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {string} notes Agent notes to add to call
      * @param {function} [callback=null] Callback function when call notes response received
      */
@@ -224,7 +252,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Add a silent monitor session to a call, can hear all channels but can't be heard by any party
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {function} [callback=null] Callback function when silent monitor response received
      */
     AgentLibrary.prototype.monitor = function(callback){
@@ -237,7 +265,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Toggle call recording based on passed in boolean true | false
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {boolean} record Whether we are recording or not
      * @param {function} [callback=null] Callback function when record response received
      */
@@ -251,7 +279,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Requeue a call
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {number} queueId Queue Id to send the call to
      * @param {number} skillId Skill Id for the requeued call
      * @param {boolean} maintain Whether or not to maintain the current agent
@@ -267,7 +295,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Sends a TCPA Safe call request message
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {string} [action=""] Action to take
      * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
      * e.g. [ {key: "name", value: "Geoff"} ]
@@ -281,7 +309,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Transfer to another number while keeping the original agent on the line (warm transfer).
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when warm transfer response received
@@ -296,7 +324,7 @@ function initAgentLibraryCall (context) {
 
     /**
      * Cancel a warm transfer
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {number} dialDest Number that was transfered to
      */
     AgentLibrary.prototype.warmXferCancel = function(dialDest){
@@ -307,18 +335,15 @@ function initAgentLibraryCall (context) {
 
     /**
      * Requests a script object based on given id
-     * @memberof AgentLibrary.Call
+     * @memberof AgentLibrary
      * @param {number} scriptId Id of script
-     * @param {number} version The version number of the script, if the current loaded script version matches,
-     *                 just return current script. Otherwise, fetch new version of script.
-     * @param {function} [callback=null] Callback function when warm transfer response received
      */
     AgentLibrary.prototype.getScript = function(scriptId, version, callback){
         var model = UIModel.getInstance();
         var script = model.scriptSettings.loadedScripts[scriptId];
         utils.setCallback(this, CALLBACK_TYPES.SCRIPT_CONFIG, callback);
 
-        if(script && script.version === version){
+        if(script &amp;&amp; script.version === version){
             // return from memory
             return script;
         }else{
@@ -331,10 +356,8 @@ function initAgentLibraryCall (context) {
 
     /**
      * Saves the results from a script
-     * @memberof AgentLibrary.Call
-     * @param {string} uii The UII of the call the script results belong to
+     * @memberof AgentLibrary
      * @param {number} scriptId Id of script
-     * @param {object} jsonResult JSON object of script results, name/value pairs
      */
     AgentLibrary.prototype.saveScriptResult = function(uii, scriptId, jsonResult){
         UIModel.getInstance().scriptResultRequest = new ScriptResultRequest(uii, scriptId, jsonResult);
@@ -343,3 +366,26 @@ function initAgentLibraryCall (context) {
     };
 
 }
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AgentLibrary.AgentLibrary.html">AgentLibrary</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon Jan 23 2017 09:27:35 GMT-0700 (MST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

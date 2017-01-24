@@ -30,14 +30,14 @@
     "survey": {
       "response": [
         {
-          "@extern_id": "text_box",
-          "@lead_update_column": "",
-          "#text": "hello"
+          "@extern_id": "",
+          "@lead_update_column": "first_name",
+          "#text": "Geoff"
         },
         {
-          "@extern_id": "check_box",
-          "@lead_update_column": "",
-          "#text": "20"
+          "@extern_id": "",
+          "@lead_update_column": "title",
+          "#text": "CEO"
         }
       ]
     }

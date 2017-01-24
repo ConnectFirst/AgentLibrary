@@ -68,7 +68,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-karma');
-
+  grunt.loadNpmTasks('grunt-jsdoc');
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -120,6 +120,14 @@ module.exports = function(grunt) {
         sub: true,
         boss: true,
         eqnull: true
+      }
+    },
+    jsdoc : {
+      dist : {
+        src: ['dist/*.js'],
+        options: {
+          destination: 'doc'
+        }
       }
     }
   });

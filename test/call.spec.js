@@ -112,7 +112,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
         Lib.bargeIn("FULL");
 
@@ -147,7 +147,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
         Lib.setCallNotes("A new Note!");
 
@@ -180,7 +180,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
         Lib.getCampaignDispositions(campaignId);
 
@@ -227,7 +227,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process warm-xfer response
@@ -299,7 +299,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
         Lib.hold(holdState);
 
@@ -367,10 +367,10 @@ describe( 'Tests for Agent Library agent methods', function() {
         var dispId = "1";
         var notes = "A note!";
         var callback = false;
-        var survey = [
-            { label: "hello", externId: "text_box", leadUpdateColumn: ""},
-            { label: "20", externId: "check_box", leadUpdateColumn: ""}
-        ];
+        var survey = {
+            "name": {value: "Geoff", leadField: "first_name"},
+            "title": {value: "CEO", leadField: "title"}
+        };
 
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
@@ -450,7 +450,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
         Lib.pauseRecord(record);
 
@@ -508,7 +508,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process preview dial response
@@ -557,7 +557,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
         Lib.record(record);
 
@@ -613,7 +613,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process tcpa safe response
@@ -652,7 +652,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process warm-xfer response

@@ -110,6 +110,7 @@ var UIModel = (function() {
 
             // current agent settings
             agentSettings : {
+                accountId: null,                    // account agent belongs to
                 agentId : 0,
                 agentType : "AGENT",                // AGENT | SUPERVISOR
                 altDefaultLoginDest : "",
@@ -123,6 +124,7 @@ var UIModel = (function() {
                 email : "",
                 externalAgentId : "",
                 firstName : "",
+                guid: "",                           // unique key generated on login, used for accessing spring endpoints
                 isLoggedIn : false,                 // agent is logged in to the platform
                 isOffhook : false,                  // track whether or not the agent has an active offhook session
                 initLoginState : "AVAILABLE",       // state agent is placed in on successful login

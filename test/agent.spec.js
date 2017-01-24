@@ -110,7 +110,7 @@ describe( 'Tests for Agent Library agent methods', function() {
          Lib.socket = windowMock.WebSocket(address);
          Lib.socket._open();
 
-         Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
          var msg = Lib.getConfigRequest().formatJSON();
 
          Lib.socket._message(msg);
@@ -126,7 +126,7 @@ describe( 'Tests for Agent Library agent methods', function() {
 
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         var settings = Lib.getAgentSettings();
@@ -159,7 +159,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set expected skill profile
         for(var p = 0; p < expectedInbound.availableSkillProfiles.length; p++){
             var profile = expectedInbound.availableSkillProfiles[p];
-            if(skillProfileId === profile.skillProfileId){
+            if(skillProfileId === profile.profileId){
                 expectedInbound.skillProfile = profile;
             }
         }

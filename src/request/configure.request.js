@@ -1,8 +1,8 @@
 
-var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dialDest, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
-    this.skillPofileId = skillPofileId || "";
+    this.skillProfileId = skillProfileId || "";
     this.dialGroupId = dialGroupId || "";
     this.dialDest = dialDest || "";
     this.updateFromAdminUI = updateFromAdminUI || false;
@@ -13,7 +13,7 @@ var ConfigRequest = function(queueIds, chatIds, skillPofileId, dialGroupId, dial
     var model = UIModel.getInstance();
     this.queueIds = utils.checkExistingIds(model.inboundSettings.availableQueues, this.queueIds, "gateId");
     this.chatIds = utils.checkExistingIds(model.chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
-    this.skillPofileId = utils.checkExistingIds(model.inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
+    this.skillProfileId = utils.checkExistingIds(model.inboundSettings.availableSkillProfiles, [this.skillProfileId], "profileId")[0] || "";
     this.dialGroupId = utils.checkExistingIds(model.outboundSettings.availableOutdialGroups, [this.dialGroupId], "dialGroupId")[0] || "";
 
     // Set loginType value
@@ -65,7 +65,7 @@ ConfigRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.dialGroupId)
             },
             "skill_profile_id":{
-                "#text":utils.toString(this.skillPofileId)
+                "#text":utils.toString(this.skillProfileId)
             },
             "update_from_adminui":{
                 "#text":utils.toString(this.updateFromAdminUI)
@@ -156,6 +156,8 @@ ConfigRequest.prototype.processResponse = function(response) {
             model.agentPermissions.allowLeadSearch = false;
             model.agentSettings.dialDest = model.configRequest.dialDest; // not sent in response
             model.agentSettings.loginType = utils.getText(resp, "login_type");
+            model.agentSettings.guid = utils.getText(resp,"guid");
+            model.agentSettings.accountId = utils.getText(resp,"account_id");
 
             // Set collection values
             setDialGroupSettings(response);
@@ -167,6 +169,8 @@ ConfigRequest.prototype.processResponse = function(response) {
             if(model.agentSettings.updateLoginMode){
                 model.agentSettings.dialDest = model.configRequest.dialDest;
                 model.agentSettings.loginType = utils.getText(resp, "login_type");
+                model.agentSettings.guid = utils.getText(resp,"guid");
+                model.agentSettings.accountId = utils.getText(resp,"account_id");
 
                 // This was an update login request
                 model.agentSettings.updateLoginMode = false;
@@ -216,7 +220,7 @@ function setDialGroupSettings(response){
         if(group.dialGroupId === response.ui_response.outdial_group_id['#text']){
             model.agentPermissions.allowLeadSearch = group.allowLeadSearch;
             model.agentPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
-            model.agentPermissions.progressiveEnabled = group.progressiveEnabled === 1;
+            model.agentPermissions.progressiveEnabled = group.progressiveEnabled;
             model.outboundSettings.outdialGroup = JSON.parse(JSON.stringify(group)); // copy object
 
             // Only used for Preview or TCPA Safe accounts.
@@ -231,7 +235,8 @@ function setSkillProfileSettings(response){
     var skillProfiles = model.inboundSettings.availableSkillProfiles;
     for(var s = 0; s < skillProfiles.length; s++){
         var profile = skillProfiles[s];
-        if(profile.skillProfileId === response.ui_response.skill_profile_id){
+        var responseId = utils.getText(response.ui_response, "skill_profile_id");
+        if(profile.profileId === responseId){
             model.inboundSettings.skillProfile = JSON.parse(JSON.stringify(profile)); // copy object
         }
     }

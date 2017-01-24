@@ -21,7 +21,7 @@
     "3": "2"
   },
   "disableSupervisorMonitoring": true,
+  "progressiveEnabled": false,
   "requireFetchedLeadsCalled": false,
-  "showLeadHistory": true,
-  "progressiveEnabled":false
+  "showLeadHistory": true
 }

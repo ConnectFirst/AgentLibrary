@@ -90,7 +90,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // for change dial group event, first we receive a IQ LOGIN message
@@ -117,6 +117,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
                 updatedExpectedPermissions.allowLeadSearch = group.allowLeadSearch;
                 updatedExpectedPermissions.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled;
                 updatedExpectedPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
+                updatedExpectedPermissions.progressiveEnabled = group.progressiveEnabled;
             }
         }
 
@@ -133,7 +134,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process end call event
@@ -164,7 +165,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process gates change event
@@ -196,7 +197,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process gates change event
@@ -220,7 +221,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process new call event
@@ -245,7 +246,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process add session event
@@ -279,7 +280,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process early uii event
@@ -306,7 +307,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         // set login and config values
         Lib.loginAgent(username, password);
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
-        Lib.configureAgent(gateIds, chatIds, skillProfileId, dialGroupId, dialDest);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         // process early uii event

@@ -14,26 +14,26 @@ var NewCallNotification = function() {
  *      "@response_to":"",
  *      "@type":"NEW-CALL",
  *      "uii":{"#text":"201002091133350139990000000010"},
- *      "agent_id":{"#text":"657"},
- *      "dial_dest":{"#text":"sip:+16789050673@sip.connectfirst.com"},
- *      "queue_dts":{"#text":"2010-02-09 11:33:53"},
- *      "queue_time":{"#text":"-1"},
  *      "ani":{"#text":"9548298548"},
  *      "dnis":{},
+ *      "dial_dest":{"#text":"sip:+16789050673@sip.connectfirst.com"},
  *      "call_type":{"#text":"OUTBOUND"},
+ *      "queue_dts":{"#text":"2010-02-09 11:33:53"},
+ *      "queue_time":{"#text":"-1"},
+ *      "agent_id":{"#text":"657"},
  *      "app_url":{},
  *      "is_monitoring":{"#text":"FALSE"},
+ *      "script_id":{},
+ *      "script_version":{},
+ *      "survey_id":{},
+ *      "survey_pop_type":{"#text":"SUPPRESS"},
+ *      "message":{},
+ *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
  *      "gate":{
  *          "@number":"17038",
  *          "name":{"#text":"AM Campaign"},
  *          "description":{}
  *      },
- *      "message":{},
- *      "script_id":{},
- *      "script_version":{},
- *      "survey_id":{},
- *      "survey_pop_type":{"#text":"SUPPRESS"},
- *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
  *      "outdial_dispositions":{
  *          "@type":"CAMPAIGN|GATE",
  *          "disposition":[
@@ -50,25 +50,25 @@ var NewCallNotification = function() {
  *          "@allow_updates":"TRUE",
  *          "@show_lead_passes":"TRUE",
  *          "@show_list_name":"TRUE",
- *          "state":{"#text":"OH"},
- *          "aux_data4":{},
- *          "address2":{},
- *          "mid_name":{},
- *          "extern_id":{"#text":"9548298548"},
- *          "aux_data1":{"#text":"BMAK"},
+ *          "aux_phone":{},
+ *          "aux_greeting":{},
  *          "aux_external_url":{},
- *          "lead_id":{"#text":"64306"},
- *          "aux_data5":{},
+ *          "aux_data1":{"#text":"BMAK"},
  *          "aux_data2":{"#text":"BMAK-041653-934"},
- *          "last_name":{"#text":"Taylor"},
+ *          "aux_data3":{"#text":"Call Ctr 1"},
+ *          "aux_data4":{},
+ *          "aux_data5":{},
+ *          "extern_id":{"#text":"9548298548"},
+ *          "lead_id":{"#text":"64306"},
  *          "lead_passes":{"#text":"1"},
  *          "first_name":{"#text":"Ryant"},
- *          "city":{"#text":"Cleveland"},
- *          "aux_greeting":{},
+ *          "last_name":{"#text":"Taylor"},
+ *          "mid_name":{},
  *          "address1":{"#text":"8010 Maryland Ave"},
+ *          "address2":{},
+ *          "city":{"#text":"Cleveland"},
+ *          "state":{"#text":"OH"},
  *          "zip":{"#text":"44105"},
- *          "aux_data3":{"#text":"Call Ctr 1"},
- *          "aux_phone":{},
  *          "custom_labels":{
  *              "aux_1_label":{},
  *              "aux_2_label":{},
@@ -244,8 +244,8 @@ function buildTokenMap(notif, newCall){
         tokens["agent_first_name"] = model.agentSettings.firstName;
         tokens["agent_last_name"] = model.agentSettings.lastName;
         tokens["agent_external_id"] = model.agentSettings.externalAgentId;
-        tokens["agent_extern_id"] = model.agentSettings.externalAgentId;
         tokens["agent_type"] = model.agentSettings.agentType;
+        tokens["agent_email"] = model.agentSettings.email;
     }catch(any){
         console.error("There was an error parsing tokens for agent info. ", any);
     }
