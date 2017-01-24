@@ -1,8 +1,8 @@
 
-var ConfigRequest = function(dialDest, queueIds, chatIds, skillPofileId, dialGroupId, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
-    this.skillPofileId = skillPofileId || "";
+    this.skillProfileId = skillProfileId || "";
     this.dialGroupId = dialGroupId || "";
     this.dialDest = dialDest || "";
     this.updateFromAdminUI = updateFromAdminUI || false;
@@ -13,7 +13,7 @@ var ConfigRequest = function(dialDest, queueIds, chatIds, skillPofileId, dialGro
     var model = UIModel.getInstance();
     this.queueIds = utils.checkExistingIds(model.inboundSettings.availableQueues, this.queueIds, "gateId");
     this.chatIds = utils.checkExistingIds(model.chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
-    this.skillPofileId = utils.checkExistingIds(model.inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
+    this.skillProfileId = utils.checkExistingIds(model.inboundSettings.availableSkillProfiles, [this.skillProfileId], "profileId")[0] || "";
     this.dialGroupId = utils.checkExistingIds(model.outboundSettings.availableOutdialGroups, [this.dialGroupId], "dialGroupId")[0] || "";
 
     // Set loginType value
@@ -65,7 +65,7 @@ ConfigRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.dialGroupId)
             },
             "skill_profile_id":{
-                "#text":utils.toString(this.skillPofileId)
+                "#text":utils.toString(this.skillProfileId)
             },
             "update_from_adminui":{
                 "#text":utils.toString(this.updateFromAdminUI)
@@ -235,7 +235,8 @@ function setSkillProfileSettings(response){
     var skillProfiles = model.inboundSettings.availableSkillProfiles;
     for(var s = 0; s < skillProfiles.length; s++){
         var profile = skillProfiles[s];
-        if(profile.skillProfileId === response.ui_response.skill_profile_id){
+        var responseId = utils.getText(response.ui_response, "skill_profile_id");
+        if(profile.profileId === responseId){
             model.inboundSettings.skillProfile = JSON.parse(JSON.stringify(profile)); // copy object
         }
     }
