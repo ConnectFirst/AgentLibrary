@@ -159,7 +159,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         // set expected skill profile
         for(var p = 0; p < expectedInbound.availableSkillProfiles.length; p++){
             var profile = expectedInbound.availableSkillProfiles[p];
-            if(skillProfileId === profile.skillProfileId){
+            if(skillProfileId === profile.profileId){
                 expectedInbound.skillProfile = profile;
             }
         }
