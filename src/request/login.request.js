@@ -116,10 +116,10 @@ LoginRequest.prototype.formatJSON = function() {
  *          ]
  *      },
  *      "chat_rooms":{},
- *      "surveys": {
- *           "survey": {
- *               "@survey_id": "15",
- *               "@survey_name": "Don't Read This Survey"
+ *      "scripts": {
+ *           "script": {
+ *               "@script_id": "15",
+ *               "@script_name": "Don't Read This Script"
  *           }
  *      },
  *      "campaigns": {
@@ -208,7 +208,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
             model.inboundSettings.availableRequeueQueues = utils.processResponseCollection(response.ui_response, "requeue_gates", "gate_group");
             model.chatSettings.availableChatRooms = utils.processResponseCollection(response.ui_response, "chat_rooms", "room");
-            model.scriptSettings.availableScripts = utils.processResponseCollection(response.ui_response, "surveys", "survey");
+            model.scriptSettings.availableScripts = utils.processResponseCollection(response.ui_response, "scripts", "script");
             model.agentSettings.callerIds = utils.processResponseCollection(response.ui_response, "caller_ids", "caller_id");
             model.agentSettings.availableAgentStates = utils.processResponseCollection(response.ui_response, "agent_states", "agent_state");
             model.applicationSettings.availableCountries = utils.processResponseCollection(response.ui_response, "account_countries", "country");
