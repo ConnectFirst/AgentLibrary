@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-01-26 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-01-30 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1772,7 +1772,7 @@ DispositionRequest.prototype.formatJSON = function() {
             var obj = {
                 "@extern_id": "",
                 "@lead_update_column": utils.toString(this.survey[key].leadField),
-                "#text": this.survey[key].value
+                "#text": utils.toString(this.survey[key].value)
             };
             response.push(obj);
         }
@@ -4539,7 +4539,7 @@ var UIModel = (function() {
             },
 
             scriptSettings : {
-                availableScripts : [],
+                availableScripts : [],              // array of all scripts associated with any campaigns or queues agent is logged into
                 loadedScripts: {}                   // stores script data by script id e.g. {1:{}, 32:{}}
             },
 
