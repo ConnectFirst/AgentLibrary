@@ -173,7 +173,6 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentSettings.realAgentType = utils.getText(resp, 'real_agent_type');
             model.agentSettings.defaultLoginDest = utils.getText(resp, 'default_login_dest');
             model.agentSettings.altDefaultLoginDest = utils.getText(resp, 'alt_default_login_dest');
-            model.agentSettings.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring');
             model.agentSettings.initLoginState = utils.getText(resp, 'init_login_state');
             model.agentSettings.initLoginStateLabel = utils.getText(resp, 'init_login_state_label');
             model.agentSettings.outboundManualDefaultRingtime = utils.getText(resp, 'outbound_manual_default_ringtime');
@@ -194,6 +193,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.allowBlended = utils.getText(resp, 'allow_blended') === "1";
             model.agentPermissions.allowLoginControl = utils.getText(resp, 'allow_login_control') === "1";
             model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
+            model.agentPermissions.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring') === "1";
 
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
