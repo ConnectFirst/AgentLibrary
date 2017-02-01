@@ -52,15 +52,29 @@ function initAgentLibraryAgent (context) {
         UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
         utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
 
+        // Agent requested logout, just close socket??
+        utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
+        this.closeSocket();
+
+    };
+
+    /**
+     * Sends agent logout for the given agent to logout message to IntelliQueue
+     * @memberof AgentLibrary.Agent
+     * @param {number} agentToLogout Id of the agent that will be logged out.
+     * @param {number} [requestMessage=""] Message to send for the logout request.
+     * @param {function} [callback=null] Callback function when logoutAgent response received.
+     */
+    AgentLibrary.prototype.requestLogoutAgent = function(agentToLogout, requestMessage, callback){
+        var isSupervisor = UIModel.getInstance().agentSettings.agentType === 'SUPERVISOR';
+        UIModel.getInstance().logoutRequest = new LogoutRequest(agentToLogout, requestMessage, isSupervisor);
+        utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
+
         if(UIModel.getInstance().logoutRequest.isSupervisor){
             //This is a supervisor request to log an agent out. Create the
             //logout packet and then send the packet to IntelliQueue.
             var msg = UIModel.getInstance().logoutRequest.formatJSON();
             utils.sendMessage(this, msg);
-        }else{
-            // Agent requested logout, just close socket??
-            utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
-            this.closeSocket();
         }
     };
 
