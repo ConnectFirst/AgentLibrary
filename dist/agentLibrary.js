@@ -6680,7 +6680,8 @@ function initAgentLibraryCall (context) {
 
         if(script && script.version === version){
             // return from memory
-            return script;
+            var savedScript = UIModel.getInstance().scriptSettings.loadedScripts[scriptId];
+            callback(savedScript);
         }else{
             // load script
             model.scriptConfigRequest = new ScriptConfigRequest(scriptId);
