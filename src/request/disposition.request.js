@@ -112,7 +112,7 @@ DispositionRequest.prototype.formatJSON = function() {
             var obj = {
                 "@extern_id": "",
                 "@lead_update_column": utils.toString(this.survey[key].leadField),
-                "#text": this.survey[key].value
+                "#text": utils.toString(this.survey[key].value)
             };
             response.push(obj);
         }

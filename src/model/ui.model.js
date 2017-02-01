@@ -210,7 +210,7 @@ var UIModel = (function() {
             },
 
             scriptSettings : {
-                availableScripts : [],
+                availableScripts : [],              // array of all scripts associated with any campaigns or queues agent is logged into
                 loadedScripts: {}                   // stores script data by script id e.g. {1:{}, 32:{}}
             },
 
