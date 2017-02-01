@@ -1,7 +1,7 @@
 
 var LogoutRequest = function(agentId, message, isSupervisor) {
     this.agentId = agentId;
-    this.message = message;
+    this.message = message || "";
     this.isSupervisor = isSupervisor;
 };
 
