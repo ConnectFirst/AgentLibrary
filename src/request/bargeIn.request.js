@@ -1,6 +1,9 @@
 
-var BargeInRequest = function(audioType) {
+var BargeInRequest = function(audioType, agentId, uii, monitorAgentId) {
     this.audioType = audioType || "FULL";
+    this.agentId = agentId;
+    this.uii = uii;
+    this.monitorAgentId = monitorAgentId;
 };
 
 /*
@@ -26,16 +29,16 @@ BargeInRequest.prototype.formatJSON = function() {
             "@message_id":utils.getMessageId(),
             "@response_to":"",
             "agent_id":{
-                "#text":utils.toString(model.agentSettings.agentId)
+                "#text":utils.toString(this.agentId)
             },
             "uii":{
-                "#text":utils.toString(model.currentCall.uii)
+                "#text":utils.toString(this.uii)
             },
             "audio_state":{
                 "#text":utils.toString(this.audioType)
             },
             "monitor_agent_id":{
-                "#text":utils.toString(model.currentCall.monitorAgentId)
+                "#text":utils.toString(this.monitorAgentId)
             }
         }
     };

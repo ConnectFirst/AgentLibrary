@@ -80,7 +80,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        Lib.bargeIn("FULL");
+        Lib.bargeIn(1, "", "");
         var msg = Lib.getBargeInRequest().formatJSON();
         var requestMsg = JSON.parse(msg);
         delete requestMsg.ui_request['@message_id']; // won't match

@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-01-30 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-01-31 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -964,8 +964,11 @@ AgentStateRequest.prototype.processResponse = function(response) {
 
 
 
-var BargeInRequest = function(audioType) {
+var BargeInRequest = function(audioType, agentId, uii, monitorAgentId) {
     this.audioType = audioType || "FULL";
+    this.agentId = agentId;
+    this.uii = uii;
+    this.monitorAgentId = monitorAgentId;
 };
 
 /*
@@ -991,16 +994,16 @@ BargeInRequest.prototype.formatJSON = function() {
             "@message_id":utils.getMessageId(),
             "@response_to":"",
             "agent_id":{
-                "#text":utils.toString(model.agentSettings.agentId)
+                "#text":utils.toString(this.agentId)
             },
             "uii":{
-                "#text":utils.toString(model.currentCall.uii)
+                "#text":utils.toString(this.uii)
             },
             "audio_state":{
                 "#text":utils.toString(this.audioType)
             },
             "monitor_agent_id":{
-                "#text":utils.toString(model.currentCall.monitorAgentId)
+                "#text":utils.toString(this.monitorAgentId)
             }
         }
     };
@@ -6345,10 +6348,13 @@ function initAgentLibraryCall (context) {
     /**
      * Barge in on a call, can hear all parties and be heard by all
      * @memberof AgentLibrary.Call
+     * @param {number} agentId Agent Id of the current logged in agent
+     * @param {string} uii UII of the active call you wish to monitor
+     * @param {number} monitorAgentId UII Agent Id of the agent you wish to monitor
      * @param {function} [callback=null] Callback function when barge in response received
      */
-    AgentLibrary.prototype.bargeIn = function(callback){
-        UIModel.getInstance().bargeInRequest = new BargeInRequest("FULL");
+    AgentLibrary.prototype.bargeIn = function(agentId, uii, monitorAgentId, callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("FULL", agentId, uii, monitorAgentId);
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.BARGE_IN, callback);
@@ -6358,10 +6364,13 @@ function initAgentLibraryCall (context) {
     /**
      * Add a coaching session to the call, can hear all parties but only able to speak on agent channel
      * @memberof AgentLibrary.Call
+     * @param {number} agentId Agent Id of the current logged in agent
+     * @param {string} uii UII of the active call you wish to monitor
+     * @param {number} monitorAgentId UII Agent Id of the agent you wish to monitor
      * @param {function} [callback=null] Callback function when coaching session response received
      */
-    AgentLibrary.prototype.coach = function(callback){
-        UIModel.getInstance().bargeInRequest = new BargeInRequest("COACHING");
+    AgentLibrary.prototype.coach = function(agentId, uii, monitorAgentId, callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("COACHING", agentId, uii, monitorAgentId);
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.COACH_CALL, callback);
@@ -6559,10 +6568,13 @@ function initAgentLibraryCall (context) {
     /**
      * Add a silent monitor session to a call, can hear all channels but can't be heard by any party
      * @memberof AgentLibrary.Call
+     * @param {number} agentId Agent Id of the current logged in agent
+     * @param {string} uii UII of the active call you wish to monitor
+     * @param {number} monitorAgentId UII Agent Id of the agent you wish to monitor
      * @param {function} [callback=null] Callback function when silent monitor response received
      */
-    AgentLibrary.prototype.monitor = function(callback){
-        UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE");
+    AgentLibrary.prototype.monitor = function(agentId, uii, monitorAgentId, callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE", agentId, uii, monitorAgentId);
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.SILENT_MONITOR, callback);
