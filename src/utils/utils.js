@@ -64,10 +64,10 @@ var utils = {
                 break;
             case MESSAGE_TYPES.BARGE_IN:
                 var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
-                var responseTo = data.ui_response['@response_to'];
+                var responseTo = response.ui_response['@response_to'];
                 if(instance._requests[responseTo]){
                     // found corresponding request, fire registered callback for type
-                    var audioState = instance._requests[responseTo].msg.audioState;
+                    var audioState = instance._requests[responseTo].msg.audio_state['#text'];
                     if(audioState === "MUTE"){
                         utils.fireCallback(instance, CALLBACK_TYPES.SILENT_MONITOR, resp);
                     }else if(audioState === "COACHING"){
@@ -127,7 +127,8 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
                 break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
-                var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
+                var offhook = new OffhookInitRequest();
+                var initResponse =  offhook.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
             case MESSAGE_TYPES.PAUSE_RECORD:

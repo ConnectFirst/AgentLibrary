@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-01 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-02-02 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2768,7 +2768,7 @@ OffhookInitRequest.prototype.processResponse = function(response) {
 
 
 
-var OffhookTermRequest = function(showWarning) {
+var OffhookTermRequest = function() {
 
 };
 
@@ -4635,10 +4635,10 @@ var utils = {
                 break;
             case MESSAGE_TYPES.BARGE_IN:
                 var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
-                var responseTo = data.ui_response['@response_to'];
+                var responseTo = response.ui_response['@response_to'];
                 if(instance._requests[responseTo]){
                     // found corresponding request, fire registered callback for type
-                    var audioState = instance._requests[responseTo].msg.audioState;
+                    var audioState = instance._requests[responseTo].msg.audio_state['#text'];
                     if(audioState === "MUTE"){
                         utils.fireCallback(instance, CALLBACK_TYPES.SILENT_MONITOR, resp);
                     }else if(audioState === "COACHING"){
@@ -4698,7 +4698,8 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
                 break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
-                var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
+                var offhook = new OffhookInitRequest();
+                var initResponse =  offhook.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
             case MESSAGE_TYPES.PAUSE_RECORD:
@@ -6290,8 +6291,8 @@ function initAgentLibraryAgent (context) {
      * @memberof AgentLibrary.Agent
      * @param {function} [callback=null] Callback function when offhookTerm response received
      */
-    AgentLibrary.prototype.offhookTerm = function(){
-        UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
+    AgentLibrary.prototype.offhookTerm = function(forceOffhook){
+        UIModel.getInstance().offhookTermRequest = new OffhookTermRequest(forceOffhook);
         var msg = UIModel.getInstance().offhookTermRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
