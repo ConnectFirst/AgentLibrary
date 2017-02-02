@@ -1,5 +1,5 @@
 
-var OffhookTermRequest = function(showWarning) {
+var OffhookTermRequest = function() {
 
 };
 
