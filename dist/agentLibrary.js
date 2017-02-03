@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-02 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-02-03 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -629,42 +629,56 @@ function buildTokenMap(notif, newCall){
 
     try{
         if(newCall.queue.number){
-            tokens["source_id"] = newCall.number || "";
-            tokens["source_name"] = newCall.name || "";
-            tokens["source_desc"] = newCall.description || "";
+            tokens["sourceId"] = newCall.number || "";
+            tokens["sourceName"] = newCall.name || "";
+            tokens["sourceDesc"] = newCall.description || "";
 
             if(newCall.queue.isCampaign === "0"){
-                tokens["source_type"] = "INBOUND";
+                tokens["sourceType"] = "INBOUND";
             }else{
-                tokens["source_type"] = "OUTBOUND";
+                tokens["sourceType"] = "OUTBOUND";
             }
         }else{
-            tokens["source_id"] = "0";
-            tokens["source_type"] = "MANUAL";
-            tokens["source_name"] = "";
-            tokens["source_desc"] = "";
+            tokens["sourceId"] = "0";
+            tokens["sourceType"] = "MANUAL";
+            tokens["sourceName"] = "";
+            tokens["sourceDesc"] = "";
         }
     }catch(any){
         console.error("There was an error processing source tokenization", + any);
     }
 
     try{
-        tokens["agent_first_name"] = model.agentSettings.firstName;
-        tokens["agent_last_name"] = model.agentSettings.lastName;
-        tokens["agent_external_id"] = model.agentSettings.externalAgentId;
-        tokens["agent_type"] = model.agentSettings.agentType;
-        tokens["agent_email"] = model.agentSettings.email;
+        tokens["agentFirstName"] = model.agentSettings.firstName;
+        tokens["agentLastName"] = model.agentSettings.lastName;
+        tokens["agentExternalId"] = model.agentSettings.externalAgentId;
+        tokens["agentType"] = model.agentSettings.agentType;
+        tokens["agentEmail"] = model.agentSettings.email;
     }catch(any){
         console.error("There was an error parsing tokens for agent info. ", any);
     }
 
     if(notif.baggage){
+        // loop over all items in baggage and add to token map
         try{
-            tokens["lead_id"] = newCall.baggage.leadId || "";
-            tokens["extern_id"] = newCall.baggage.externId || "";
-            tokens["first_name"] = newCall.baggage.firstName || "";
-            tokens["mid_name"] = newCall.baggage.midName || "";
-            tokens["last_name"] = newCall.baggage.lastName || "";
+            var key;
+            for(var i = 0; i < Object.keys(newCall.baggage).length; i++){
+                key = Object.keys(newCall.baggage)[i];
+                if(key !== "customLabels"){ // ignore custom label array
+                    tokens[key] = newCall.baggage[key];
+                }
+
+            }
+        }catch(any){
+            console.error("There was an error parsing baggage tokens. ", any);
+        }
+
+        /*try{
+            tokens["leadId"] = newCall.baggage.leadId || "";
+            tokens["externId"] = newCall.baggage.externId || "";
+            tokens["firstName"] = newCall.baggage.firstName || "";
+            tokens["midName"] = newCall.baggage.midName || "";
+            tokens["lastName"] = newCall.baggage.lastName || "";
             tokens["address1"] = newCall.baggage.address1 || "";
             tokens["address2"] = newCall.baggage.address2 || "";
             tokens["suffix"] = newCall.baggage.suffix || "";
@@ -672,24 +686,24 @@ function buildTokenMap(notif, newCall){
             tokens["city"] = newCall.baggage.city || "";
             tokens["state"] = newCall.baggage.state || "";
             tokens["zip"] = newCall.baggage.zip || "";
-            tokens["aux_data1"] = newCall.baggage.auxData1 || "";
-            tokens["aux_data2"] = newCall.baggage.auxData2 || "";
-            tokens["aux_data3"] = newCall.baggage.auxData3 || "";
-            tokens["aux_data4"] = newCall.baggage.auxData4 || "";
-            tokens["aux_data5"] = newCall.baggage.auxData5 || "";
-            tokens["aux_phone"] = newCall.baggage.auxPhone || "";
+            tokens["auxData1"] = newCall.baggage.auxData1 || "";
+            tokens["auxData2"] = newCall.baggage.auxData2 || "";
+            tokens["auxData3"] = newCall.baggage.auxData3 || "";
+            tokens["auxData4"] = newCall.baggage.auxData4 || "";
+            tokens["auxData5"] = newCall.baggage.auxData5 || "";
+            tokens["auxPhone"] = newCall.baggage.auxPhone || "";
             tokens["email"] = newCall.baggage.email || "";
-            tokens["gate_keeper"] = newCall.baggage.gateKeeper || "";
+            tokens["gateKeeper"] = newCall.baggage.gateKeeper || "";
 
         }catch(any){
             console.error("There was an error parsing baggage tokens. ", any);
         }
     }else{
-        tokens["lead_id"] = "";
-        tokens["extern_id"] = "";
-        tokens["first_name"] = "";
-        tokens["mid_name"] = "";
-        tokens["last_name"] = "";
+        tokens["leadId"] = "";
+        tokens["externId"] = "";
+        tokens["firstName"] = "";
+        tokens["midName"] = "";
+        tokens["lastName"] = "";
         tokens["address1"] = "";
         tokens["address2"] = "";
         tokens["suffix"] = "";
@@ -697,14 +711,14 @@ function buildTokenMap(notif, newCall){
         tokens["city"] = "";
         tokens["state"] = "";
         tokens["zip"] = "";
-        tokens["aux_data1"] = "";
-        tokens["aux_data2"] = "";
-        tokens["aux_data3"] = "";
-        tokens["aux_data4"] = "";
-        tokens["aux_data5"] = "";
-        tokens["aux_phone"] = "";
+        tokens["auxData1"] = "";
+        tokens["auxData2"] = "";
+        tokens["auxData3"] = "";
+        tokens["auxData4"] = "";
+        tokens["auxData5"] = "";
+        tokens["auxPhone"] = "";
         tokens["email"] = "";
-        tokens["gate_keeper"] = "";
+        tokens["gateKeeper"] = "";*/
     }
 
     return tokens;
