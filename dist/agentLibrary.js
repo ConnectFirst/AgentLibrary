@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-03 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-02-06 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -660,6 +660,27 @@ function buildTokenMap(notif, newCall){
 
     if(notif.baggage){
         // loop over all items in baggage and add to token map
+        // standard tokens:
+        // "leadId"
+        // "externId"
+        // "firstName"
+        // "midName"
+        // "lastName"
+        // "address1"
+        // "address2"
+        // "suffix"
+        // "title"
+        // "city"
+        // "state"
+        // "zip"
+        // "auxData1"
+        // "auxData2"
+        // "auxData3"
+        // "auxData4"
+        // "auxData5"
+        // "auxPhone"
+        // "email"
+        // "gateKeeper"
         try{
             var key;
             for(var i = 0; i < Object.keys(newCall.baggage).length; i++){
@@ -667,58 +688,10 @@ function buildTokenMap(notif, newCall){
                 if(key !== "customLabels"){ // ignore custom label array
                     tokens[key] = newCall.baggage[key];
                 }
-
             }
         }catch(any){
             console.error("There was an error parsing baggage tokens. ", any);
         }
-
-        /*try{
-            tokens["leadId"] = newCall.baggage.leadId || "";
-            tokens["externId"] = newCall.baggage.externId || "";
-            tokens["firstName"] = newCall.baggage.firstName || "";
-            tokens["midName"] = newCall.baggage.midName || "";
-            tokens["lastName"] = newCall.baggage.lastName || "";
-            tokens["address1"] = newCall.baggage.address1 || "";
-            tokens["address2"] = newCall.baggage.address2 || "";
-            tokens["suffix"] = newCall.baggage.suffix || "";
-            tokens["title"] = newCall.baggage.title || "";
-            tokens["city"] = newCall.baggage.city || "";
-            tokens["state"] = newCall.baggage.state || "";
-            tokens["zip"] = newCall.baggage.zip || "";
-            tokens["auxData1"] = newCall.baggage.auxData1 || "";
-            tokens["auxData2"] = newCall.baggage.auxData2 || "";
-            tokens["auxData3"] = newCall.baggage.auxData3 || "";
-            tokens["auxData4"] = newCall.baggage.auxData4 || "";
-            tokens["auxData5"] = newCall.baggage.auxData5 || "";
-            tokens["auxPhone"] = newCall.baggage.auxPhone || "";
-            tokens["email"] = newCall.baggage.email || "";
-            tokens["gateKeeper"] = newCall.baggage.gateKeeper || "";
-
-        }catch(any){
-            console.error("There was an error parsing baggage tokens. ", any);
-        }
-    }else{
-        tokens["leadId"] = "";
-        tokens["externId"] = "";
-        tokens["firstName"] = "";
-        tokens["midName"] = "";
-        tokens["lastName"] = "";
-        tokens["address1"] = "";
-        tokens["address2"] = "";
-        tokens["suffix"] = "";
-        tokens["title"] = "";
-        tokens["city"] = "";
-        tokens["state"] = "";
-        tokens["zip"] = "";
-        tokens["auxData1"] = "";
-        tokens["auxData2"] = "";
-        tokens["auxData3"] = "";
-        tokens["auxData4"] = "";
-        tokens["auxData5"] = "";
-        tokens["auxPhone"] = "";
-        tokens["email"] = "";
-        tokens["gateKeeper"] = "";*/
     }
 
     return tokens;
@@ -3374,8 +3347,6 @@ var ScriptResultRequest = function(uii, scriptId, jsonResult) {
 * This event is responsible for sending the script result object
 */
 ScriptResultRequest.prototype.formatJSON = function() {
-    // format survey response object
-    var formattedJson = _formatResponse(this.jsonResult);
     var msg = {
         "ui_request": {
             "@destination":"IQ",
@@ -3392,24 +3363,12 @@ ScriptResultRequest.prototype.formatJSON = function() {
                 "#text" : utils.toString(this.scriptId)
             },
             "json_result": {
-                "#text": JSON.stringify(formattedJson)
+                "#text": JSON.stringify(this.jsonResult)
             }
         }
     };
 
     return JSON.stringify(msg);
-};
-
-
-_formatResponse = function(result){
-    var res = {};
-
-    for(var i = 0; i < Object.keys(result).length; i++){
-        var key = Object.keys(result)[i];
-        res[key] = result[key].value || "";
-    }
-
-    return res;
 };
 
 
