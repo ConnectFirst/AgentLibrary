@@ -9,8 +9,6 @@ var ScriptResultRequest = function(uii, scriptId, jsonResult) {
 * This event is responsible for sending the script result object
 */
 ScriptResultRequest.prototype.formatJSON = function() {
-    // format survey response object
-    var formattedJson = _formatResponse(this.jsonResult);
     var msg = {
         "ui_request": {
             "@destination":"IQ",
@@ -27,22 +25,10 @@ ScriptResultRequest.prototype.formatJSON = function() {
                 "#text" : utils.toString(this.scriptId)
             },
             "json_result": {
-                "#text": JSON.stringify(formattedJson)
+                "#text": JSON.stringify(this.jsonResult)
             }
         }
     };
 
     return JSON.stringify(msg);
-};
-
-
-_formatResponse = function(result){
-    var res = {};
-
-    for(var i = 0; i < Object.keys(result).length; i++){
-        var key = Object.keys(result)[i];
-        res[key] = result[key].value || "";
-    }
-
-    return res;
 };
