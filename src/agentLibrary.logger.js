@@ -112,17 +112,18 @@ function initAgentLibraryLogger (context) {
          };
     };
 
-    AgentLibrary.prototype.getLogRecords = function(logLevel, startDate, endDate, callback){
+    AgentLibrary.prototype.getLogRecords = function(logLevel, startDate, endDate, maxRows, callback){
         logLevel = logLevel || "";
         var instance = this;
         var transaction = instance._db.transaction(["logger"], "readonly");
         var objStore = transaction.objectStore("logger");
         var index = null,
             cursor = null,
-            range = null;
+            range = null,
+            limit = maxRows || 100;
         utils.setCallback(instance, CALLBACK_TYPES.LOG_RESULTS, callback);
 
-        if(logLevel.toUpperCase() !== "ALL") { // looking for specific log level type
+        if(logLevel !== "" && logLevel.toUpperCase() !== "ALL") { // looking for specific log level type
             if(startDate && endDate){
                 var lowerBound = [logLevel.toLowerCase(), startDate];
                 var upperBound = [logLevel.toLowerCase(), endDate];
@@ -136,11 +137,13 @@ function initAgentLibraryLogger (context) {
             if(range !== null){
                 // with the provided date range
                 var levelAndDateReturn = [];
+                var idxLevelAndDate = 0;
                 index = objStore.index("levelAndDate");
-                index.openCursor(range).onsuccess = function(event){
+                index.openCursor(range, "prev").onsuccess = function(event){
                     cursor = event.target.result;
-                    if(cursor){
+                    if(cursor && idxLevelAndDate < limit){
                         levelAndDateReturn.push(cursor.value);
+                        idxLevelAndDate = idxLevelAndDate + 1;
                         cursor.continue();
                     }
                     utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, levelAndDateReturn);
@@ -149,11 +152,13 @@ function initAgentLibraryLogger (context) {
             }else{
                 // no date range specified, return all within log level
                 var logLevelReturn = [];
+                var idxLogLevel = 0;
                 index = objStore.index("logLevel");
-                index.openCursor(logLevel).onsuccess = function(event){
+                index.openCursor(logLevel, "prev").onsuccess = function(event){
                     cursor = event.target.result;
-                    if(cursor){
+                    if(cursor && idxLogLevel < limit){
                         logLevelReturn.push(cursor.value);
+                        idxLogLevel = idxLogLevel + 1;
                         cursor.continue();
                     }
                     utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, logLevelReturn);
@@ -173,12 +178,14 @@ function initAgentLibraryLogger (context) {
             if(range !== null){
                 // with the provided date range
                 var dtsReturn = [];
+                var idxDTS = 0;
                 index = objStore.index("dts");
 
-                index.openCursor(range).onsuccess = function(event){
+                index.openCursor(range, "prev").onsuccess = function(event){
                     cursor = event.target.result;
-                    if(cursor){
+                    if(cursor && idxDTS < limit){
                         dtsReturn.push(cursor.value);
+                        idxDTS = idxDTS + 1;
                         cursor.continue();
                     }
                     utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsReturn);
@@ -186,10 +193,12 @@ function initAgentLibraryLogger (context) {
             }else{
                 // no date range specified, return all records
                 var allValsReturn = [];
+                var idxAll = 0;
                 objStore.openCursor().onsuccess = function(event){
                     cursor = event.target.result;
-                    if(cursor){
+                    if(cursor && idxAll < limit){
                         allValsReturn.push(cursor.value);
+                        idxAll = idxAll + 1;
                         cursor.continue();
                     }
                     utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, allValsReturn);
