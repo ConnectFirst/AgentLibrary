@@ -147,6 +147,7 @@ var UIModel = (function() {
                 transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
                 updateDGFromAdminUI : false,        // if pending Dial Group change came from AdminUI, set to true (only used if request is pending)
                 updateLoginMode : false,            // gets set to true when doing an update login (for events control)
+                username : "",                      // Agent's username
                 wasMonitoring : false               // used to track if the last call was a monitoring call
             },
 

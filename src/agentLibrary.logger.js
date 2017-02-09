@@ -145,8 +145,9 @@ function initAgentLibraryLogger (context) {
                         levelAndDateReturn.push(cursor.value);
                         idxLevelAndDate = idxLevelAndDate + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, levelAndDateReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, levelAndDateReturn);
                 };
 
             }else{
@@ -160,8 +161,9 @@ function initAgentLibraryLogger (context) {
                         logLevelReturn.push(cursor.value);
                         idxLogLevel = idxLogLevel + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, logLevelReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, logLevelReturn);
                 };
 
             }
@@ -187,8 +189,9 @@ function initAgentLibraryLogger (context) {
                         dtsReturn.push(cursor.value);
                         idxDTS = idxDTS + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsReturn);
                 };
             }else{
                 // no date range specified, return all records
@@ -200,8 +203,9 @@ function initAgentLibraryLogger (context) {
                         allValsReturn.push(cursor.value);
                         idxAll = idxAll + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, allValsReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, allValsReturn);
                 };
             }
 

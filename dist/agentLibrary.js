@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-08 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-02-09 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2525,6 +2525,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentSettings.outboundManualDefaultRingtime = utils.getText(resp, 'outbound_manual_default_ringtime');
             model.agentSettings.isOutboundPrepay = utils.getText(resp, 'outbound_prepay') === "1";
             model.agentSettings.phoneLoginPin = utils.getText(resp, 'phone_login_pin');
+            model.agentSettings.username = model.loginRequest.username;
 
             model.agentPermissions.allowCallControl = utils.getText(resp, 'allow_call_control') === "1";
             model.agentPermissions.allowChat = utils.getText(resp, 'allow_chat') === "1";
@@ -4452,6 +4453,7 @@ var UIModel = (function() {
                 transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
                 updateDGFromAdminUI : false,        // if pending Dial Group change came from AdminUI, set to true (only used if request is pending)
                 updateLoginMode : false,            // gets set to true when doing an update login (for events control)
+                username : "",                      // Agent's username
                 wasMonitoring : false               // used to track if the last call was a monitoring call
             },
 
@@ -6962,8 +6964,9 @@ function initAgentLibraryLogger (context) {
                         levelAndDateReturn.push(cursor.value);
                         idxLevelAndDate = idxLevelAndDate + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, levelAndDateReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, levelAndDateReturn);
                 };
 
             }else{
@@ -6977,8 +6980,9 @@ function initAgentLibraryLogger (context) {
                         logLevelReturn.push(cursor.value);
                         idxLogLevel = idxLogLevel + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, logLevelReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, logLevelReturn);
                 };
 
             }
@@ -7004,8 +7008,9 @@ function initAgentLibraryLogger (context) {
                         dtsReturn.push(cursor.value);
                         idxDTS = idxDTS + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsReturn);
                 };
             }else{
                 // no date range specified, return all records
@@ -7017,8 +7022,9 @@ function initAgentLibraryLogger (context) {
                         allValsReturn.push(cursor.value);
                         idxAll = idxAll + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, allValsReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, allValsReturn);
                 };
             }
 
