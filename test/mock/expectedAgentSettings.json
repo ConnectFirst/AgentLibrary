@@ -75,5 +75,6 @@
   "transferNumber": "",
   "updateDGFromAdminUI": false,
   "updateLoginMode": false,
+  "username": "testUser",
   "wasMonitoring": false
 }
