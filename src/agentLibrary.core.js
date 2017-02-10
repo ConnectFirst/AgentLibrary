@@ -190,7 +190,7 @@ function initAgentLibraryCore (context) {
      * @namespace Core
      * @memberof AgentLibrary
      * @property {object} callbacks Internal map of registered callback functions
-     * @property {object} _requests Internal map of requests by message id, private property.
+     * @property {array} _requests Internal map of requests by message id, private property.
      * @property {object} _db Internal IndexedDB used for logging
      * @example
      * var Lib = new AgentLibrary({
@@ -207,7 +207,7 @@ function initAgentLibraryCore (context) {
 
         // define properties
         this.callbacks = {};
-        this._requests = {};
+        this._requests = [];
 
         // set instance on model object
         UIModel.getInstance().libraryInstance = this;

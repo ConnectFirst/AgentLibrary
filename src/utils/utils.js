@@ -26,7 +26,13 @@ var utils = {
             var type = msgObj.ui_request['@type'];
             var destination = msgObj.ui_request['@destination'];
             var message = "Sending " + type + " request message to " + destination;
-            instance._requests[msgObj.ui_request['@message_id']] = { type: msgObj.ui_request['@type'], msg: msgObj.ui_request };
+            instance._requests.push({ id: msgObj.ui_request['@message_id'], type: msgObj.ui_request['@type'], msg: msgObj.ui_request });
+
+            // keep rolling window of latest 1000 requests
+            if(instance._requests.length > 1000){
+                instance._requests.pop();
+            }
+
             instance.socket.send(msg);
 
             if(type === 'STATS'){
@@ -65,9 +71,10 @@ var utils = {
             case MESSAGE_TYPES.BARGE_IN:
                 var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
                 var responseTo = response.ui_response['@response_to'];
-                if(instance._requests[responseTo]){
+                var request = utils.findRequestById(instance, responseTo);
+                if(request){
                     // found corresponding request, fire registered callback for type
-                    var audioState = instance._requests[responseTo].msg.audio_state['#text'];
+                    var audioState = request.msg.audio_state['#text'];
                     if(audioState === "MUTE"){
                         utils.fireCallback(instance, CALLBACK_TYPES.SILENT_MONITOR, resp);
                     }else if(audioState === "COACHING"){
@@ -217,9 +224,10 @@ var utils = {
                 var genericNotif = new GenericNotification();
                 var generic = genericNotif.processResponse(data);
                 var responseTo = data.ui_notification['@response_to'];
-                if(instance._requests[responseTo]){
+                var request = utils.findRequestById(instance, responseTo);
+                if(request){
                     // found corresponding request, fire registered callback for type
-                    var type = instance._requests[responseTo].type;
+                    var type = request.type;
                     var callbackFnName = utils.findCallbackBasedOnMessageType(type);
                     utils.fireCallback(instance, callbackFnName, generic);
                 }else{
@@ -767,6 +775,17 @@ var utils = {
         return arr;
     },
 
+    // Finds a request by responseTo id
+    findRequestById: function(instance, id){
+        var request = null;
+        for(var i = 0; i < instance._requests.length; i++){
+            if(instance._requests[i].id === id){
+                request = instance._requests[i];
+                break;
+            }
+        }
+        return request;
+    },
 
     // called every 30 seconds letting intelliQueue know
     // not to archive the call so dispositions and other call
