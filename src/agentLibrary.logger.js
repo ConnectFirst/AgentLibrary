@@ -184,9 +184,11 @@ function initAgentLibraryLogger (context) {
 
                 index.openCursor(range, "prev").onsuccess = function(event){
                     cursor = event.target.result;
-                    if(cursor && idxDTSNoStats < limit && cursor.value.logLevel !== "stats"){
-                        dtsNoStatsReturn.push(cursor.value);
-                        idxDTSNoStats = idxDTSNoStats + 1;
+                    if(cursor && idxDTSNoStats < limit){
+                        if(cursor.value.logLevel !== "stats"){
+                            dtsNoStatsReturn.push(cursor.value);
+                            idxDTSNoStats = idxDTSNoStats + 1;
+                        }
                         cursor.continue();
                     }else{
                         utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsNoStatsReturn);
@@ -198,9 +200,11 @@ function initAgentLibraryLogger (context) {
                 var idxNoStats = 0;
                 objStore.openCursor().onsuccess = function(event){
                     cursor = event.target.result;
-                    if(cursor && idxNoStats < limit && cursor.value.logLevel !== "stats"){
-                        noStatsReturn.push(cursor.value);
-                        idxNoStats = idxNoStats + 1;
+                    if(cursor && idxNoStats < limit){
+                        if(cursor.value.logLevel !== "stats"){
+                            noStatsReturn.push(cursor.value);
+                            idxNoStats = idxNoStats + 1;
+                        }
                         cursor.continue();
                     }else{
                         utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, noStatsReturn);
