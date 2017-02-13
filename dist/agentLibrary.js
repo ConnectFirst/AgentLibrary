@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-10 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-02-13 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -6961,7 +6961,7 @@ function initAgentLibraryLogger (context) {
             limit = maxRows || 100;
         utils.setCallback(instance, CALLBACK_TYPES.LOG_RESULTS, callback);
 
-        if(logLevel !== "" && logLevel.toUpperCase() !== "ALL") { // looking for specific log level type
+        if(logLevel !== "" && logLevel.toUpperCase() !== "ALL" && logLevel.toUpperCase() !== "NO-STATS") { // looking for specific log level type
             if(startDate && endDate){
                 var lowerBound = [logLevel.toLowerCase(), startDate];
                 var upperBound = [logLevel.toLowerCase(), endDate];
@@ -7005,8 +7005,47 @@ function initAgentLibraryLogger (context) {
                 };
 
             }
-        } else { // give us all log level types
+        } else if(logLevel.toUpperCase() === "NO-STATS"){ // give us all types except stats
+            if(startDate && endDate){
+                range = IDBKeyRange.bound(startDate,endDate);
+            }else if(startDate){
+                range = IDBKeyRange.lowerBound(startDate);
+            }else if(endDate){
+                range = IDBKeyRange.upperBound(endDate);
+            }
 
+            if(range !== null){
+                // with the provided date range
+                var dtsNoStatsReturn = [];
+                var idxDTSNoStats = 0;
+                index = objStore.index("dts");
+
+                index.openCursor(range, "prev").onsuccess = function(event){
+                    cursor = event.target.result;
+                    if(cursor && idxDTSNoStats < limit && cursor.value.logLevel !== "stats"){
+                        dtsNoStatsReturn.push(cursor.value);
+                        idxDTSNoStats = idxDTSNoStats + 1;
+                        cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsNoStatsReturn);
+                    }
+                };
+            }else{
+                // no date range specified, return all records
+                var noStatsReturn = [];
+                var idxNoStats = 0;
+                objStore.openCursor().onsuccess = function(event){
+                    cursor = event.target.result;
+                    if(cursor && idxNoStats < limit && cursor.value.logLevel !== "stats"){
+                        noStatsReturn.push(cursor.value);
+                        idxNoStats = idxNoStats + 1;
+                        cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, noStatsReturn);
+                    }
+                };
+            }
+        } else { // give us all log level types
             if(startDate && endDate){
                 range = IDBKeyRange.bound(startDate,endDate);
             }else if(startDate){
@@ -7046,7 +7085,6 @@ function initAgentLibraryLogger (context) {
                     }
                 };
             }
-
         }
 
         return null;
