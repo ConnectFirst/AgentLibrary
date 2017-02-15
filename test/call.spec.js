@@ -14,6 +14,12 @@ var dialDest = "sip:99@boulder-voip.connectfirst.com";
 
 describe( 'Tests for Agent Library agent methods', function() {
     beforeEach(function() {
+        dialGroupId = "1";
+        gateIds = ["1","2"];
+        chatIds = ["1"];
+        skillProfileId = "1";
+        dialDest = "sip:99@boulder-voip.connectfirst.com";
+
         fixture.setBase('mock');  // If base path is different from the default `spec/fixtures`
         this.loginResponseRaw = fixture.load('loginResponseRaw.json');
         this.configResponseRaw = fixture.load('configResponseRaw.json');
@@ -207,6 +213,11 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
         Lib.coldXfer(dest, callerId);
         var msg = Lib.getColdTransferRequest().formatJSON();
         var requestMsg = JSON.parse(msg);
@@ -221,6 +232,9 @@ describe( 'Tests for Agent Library agent methods', function() {
 
     it( 'should process a cold-xfer response message', function() {
         var Lib = new AgentLibrary();
+        var dest = "5555555555";
+        var callerId = "5555555551";
+
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
@@ -229,6 +243,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.coldXfer(dest, callerId);
 
         // process warm-xfer response
         var response = Lib.getColdTransferRequest().processResponse(this.coldXferResponseRaw);
@@ -375,6 +390,12 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
         Lib.dispositionCall(uii, dispId, notes, callback, null, null, survey);
         var msg = Lib.getDispositionRequest().formatJSON();
         var requestMsg = JSON.parse(msg);
@@ -398,6 +419,12 @@ describe( 'Tests for Agent Library agent methods', function() {
 
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         Lib.dispositionManualPass(dispId, notes, callback, null, leadId, requestKey, externId);
         var msg = Lib.getDispositionManualPassRequest().formatJSON();
@@ -501,6 +528,13 @@ describe( 'Tests for Agent Library agent methods', function() {
     });
 
     it( 'should process a preview-dial dialer response message', function() {
+        var action = "";
+        var requestId = "";
+        var searchFields = [
+            {"key":"name", "value":"Danielle"},
+            {"key":"number", "value":"5555555555"}
+        ];
+
         var Lib = new AgentLibrary();
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
@@ -510,6 +544,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.previewDial(action, searchFields, requestId);
 
         // process preview dial response
         var previewDialResponse = JSON.parse(JSON.stringify(this.previewDialResponseRaw));
@@ -607,6 +642,13 @@ describe( 'Tests for Agent Library agent methods', function() {
 
     it( 'should process a tcpa-safe dialer response message', function() {
         var Lib = new AgentLibrary();
+        var action = "";
+        var requestId = "";
+        var searchFields = [
+            {"key":"name", "value":"Danielle"},
+            {"key":"number", "value":"5555555555"}
+        ];
+
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
@@ -615,6 +657,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.tcpaSafeCall(action, searchFields, requestId);
 
         // process tcpa safe response
         var tcpaSafeResponse = JSON.parse(JSON.stringify(this.previewDialResponseRaw));
@@ -632,6 +675,12 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
         Lib.warmXfer(dest, callerId);
         var msg = Lib.getWarmTransferRequest().formatJSON();
         var requestMsg = JSON.parse(msg);
@@ -646,6 +695,8 @@ describe( 'Tests for Agent Library agent methods', function() {
 
     it( 'should process a warm-xfer response message', function() {
         var Lib = new AgentLibrary();
+        var dest = "5555555555";
+        var callerId = "5555555551";
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
@@ -654,6 +705,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.warmXfer(dest, callerId);
 
         // process warm-xfer response
         var response = Lib.getWarmTransferRequest().processResponse(this.warmXferResponseRaw);
@@ -676,6 +728,12 @@ describe( 'Tests for Agent Library agent methods', function() {
 
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
         Lib.warmXferCancel(dest);
         var msg = Lib.getWarmTransferCancelRequest().formatJSON();

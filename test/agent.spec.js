@@ -14,6 +14,11 @@ var dialDest = "sip:99@boulder-voip.connectfirst.com";
 
 describe( 'Tests for Agent Library agent methods', function() {
     beforeEach(function() {
+        gateIds = ["1","2"];
+        chatIds = ["1"];
+        skillProfileId = "1";
+        dialDest = "sip:99@boulder-voip.connectfirst.com";
+
         fixture.setBase('mock');  // If base path is different from the default `spec/fixtures`
         this.loginResponseRaw = fixture.load('loginResponseRaw.json');
         this.configResponseRaw = fixture.load('configResponseRaw.json');
@@ -110,6 +115,7 @@ describe( 'Tests for Agent Library agent methods', function() {
          Lib.socket = windowMock.WebSocket(address);
          Lib.socket._open();
 
+         Lib.loginAgent(username, password);
          Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
          var msg = Lib.getConfigRequest().formatJSON();
 

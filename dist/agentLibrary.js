@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-14 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-02-15 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4551,6 +4551,10 @@ var UIModel = (function() {
                 instance = init();
             }
             return instance;
+        },
+
+        resetInstance: function () {
+            instance = null;
         }
     };
 
@@ -5574,6 +5578,9 @@ function initAgentLibraryCore (context) {
         this.callbacks = {};
         this._requests = [];
 
+        // start with new model instance
+        UIModel.resetInstance();
+
         // set instance on model object
         UIModel.getInstance().libraryInstance = this;
 
@@ -6237,6 +6244,7 @@ function initAgentLibraryAgent (context) {
     AgentLibrary.prototype.logoutAgent = function(agentId, callback){
         UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
         utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
+        UIModel.getInstance().agentSettings.isLoggedIn = false;
 
         // Agent requested logout, just close socket??
         utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");

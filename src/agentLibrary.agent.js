@@ -51,6 +51,7 @@ function initAgentLibraryAgent (context) {
     AgentLibrary.prototype.logoutAgent = function(agentId, callback){
         UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
         utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
+        UIModel.getInstance().agentSettings.isLoggedIn = false;
 
         // Agent requested logout, just close socket??
         utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
