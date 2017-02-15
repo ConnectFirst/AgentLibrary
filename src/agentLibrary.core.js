@@ -209,6 +209,9 @@ function initAgentLibraryCore (context) {
         this.callbacks = {};
         this._requests = [];
 
+        // start with new model instance
+        UIModel.resetInstance();
+
         // set instance on model object
         UIModel.getInstance().libraryInstance = this;
 

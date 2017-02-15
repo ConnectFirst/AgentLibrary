@@ -232,6 +232,10 @@ var UIModel = (function() {
                 instance = init();
             }
             return instance;
+        },
+
+        resetInstance: function () {
+            instance = null;
         }
     };
 
