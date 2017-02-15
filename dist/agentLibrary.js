@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-13 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-02-14 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -545,7 +545,20 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
     newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
+    newCall.scriptResponse = {};
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+
+    // set saved script response if present
+    try{
+        var savedModel = JSON.parse(notif.script_result["#text"]).model;
+        var results = {};
+        for(var idx = 0; idx < Object.keys(savedModel).length; idx++){
+            var key = Object.keys(savedModel)[idx];
+            var value = savedModel[key].value;
+            results[key] = value;
+        }
+        newCall.scriptResponse = results;
+    }catch(err){}
 
     // fix phonebook format
     if(newCall.transferPhoneBook && newCall.transferPhoneBook.entrys){
