@@ -144,8 +144,9 @@ NewCallNotification.prototype.processResponse = function(notification) {
     try{
         var savedModel = JSON.parse(notif.script_result["#text"]).model;
         var results = {};
-        for(var idx = 0; idx < Object.keys(savedModel).length; idx++){
-            var key = Object.keys(savedModel)[idx];
+        var keys = Object.keys(savedModel);
+        for(var idx = 0; idx < keys.length; idx++){
+            var key = keys[idx];
             var value = savedModel[key].value;
             results[key] = value;
         }
