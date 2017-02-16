@@ -215,6 +215,7 @@ ConfigRequest.prototype.processResponse = function(response) {
 function setDialGroupSettings(response){
     var model = UIModel.getInstance();
     var outdialGroups = model.outboundSettings.availableOutdialGroups;
+    model.outboundSettings.outdialGroup = {}; // reset
     for(var g = 0; g < outdialGroups.length; g++){
         var group = outdialGroups[g];
         if(group.dialGroupId === response.ui_response.outdial_group_id['#text']){
@@ -232,6 +233,7 @@ function setDialGroupSettings(response){
 
 function setSkillProfileSettings(response){
     var model = UIModel.getInstance();
+    model.inboundSettings.skillProfile = {};
     var skillProfiles = model.inboundSettings.availableSkillProfiles;
     for(var s = 0; s < skillProfiles.length; s++){
         var profile = skillProfiles[s];
