@@ -107,10 +107,11 @@ DispositionRequest.prototype.formatJSON = function() {
      */
     if(this.survey !== null){
         var response = [];
-        for(var i = 0; i < Object.keys(this.survey).length; i++){
-            var key = Object.keys(this.survey)[i];
+        var keys = Object.keys(this.survey);
+        for(var i = 0; i < keys.length; i++){
+            var key = keys[i];
             var obj = {
-                "@extern_id": "",
+                "@extern_id": key,
                 "@lead_update_column": utils.toString(this.survey[key].leadField),
                 "#text": utils.toString(this.survey[key].value)
             };

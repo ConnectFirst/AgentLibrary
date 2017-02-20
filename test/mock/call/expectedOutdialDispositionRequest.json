@@ -30,12 +30,12 @@
     "survey": {
       "response": [
         {
-          "@extern_id": "",
+          "@extern_id": "name",
           "@lead_update_column": "first_name",
           "#text": "Geoff"
         },
         {
-          "@extern_id": "",
+          "@extern_id": "title",
           "@lead_update_column": "title",
           "#text": "CEO"
         }

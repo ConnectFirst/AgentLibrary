@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-16 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-02-20 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1773,10 +1773,11 @@ DispositionRequest.prototype.formatJSON = function() {
      */
     if(this.survey !== null){
         var response = [];
-        for(var i = 0; i < Object.keys(this.survey).length; i++){
-            var key = Object.keys(this.survey)[i];
+        var keys = Object.keys(this.survey);
+        for(var i = 0; i < keys.length; i++){
+            var key = keys[i];
             var obj = {
-                "@extern_id": "",
+                "@extern_id": key,
                 "@lead_update_column": utils.toString(this.survey[key].leadField),
                 "#text": utils.toString(this.survey[key].value)
             };
