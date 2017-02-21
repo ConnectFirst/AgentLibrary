@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-20 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-02-21 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -6308,10 +6308,9 @@ function initAgentLibraryAgent (context) {
     /**
      * Terminates agent's offhook session
      * @memberof AgentLibrary.Agent
-     * @param {function} [callback=null] Callback function when offhookTerm response received
      */
-    AgentLibrary.prototype.offhookTerm = function(forceOffhook){
-        UIModel.getInstance().offhookTermRequest = new OffhookTermRequest(forceOffhook);
+    AgentLibrary.prototype.offhookTerm = function(){
+        UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
         var msg = UIModel.getInstance().offhookTermRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
