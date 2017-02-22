@@ -199,7 +199,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
             if(response.ui_response.allow_lead_inserts && typeof resp.insert_campaigns !== 'undefined' && response.ui_response.insert_campaigns.campaign){
-                model.agentPermissions.allowLeadInserts = true;
+                model.agentPermissions.allowLeadInserts = utils.getText(resp, 'allow_lead_inserts') === "1";
             }
 
             // Set collection values
