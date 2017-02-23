@@ -49,15 +49,16 @@ const LOG_LEVELS ={
  * <li>"recordResponse"</li>
  * <li>"requeueResponse"</li>
  * <li>"reverseMatchNotification"</li>
+ * <li>"safeModeFetchResponse"</li>
+ * <li>"safeModeSearchResponse"</li>
+ * <li>"scriptConfigResponse"</li>
+ * <li>"supervisorListResponse"</li>
+ * <li>"coldXferResponse"</li>
+ * <li>"warmXferResponse"</li>
  * <li>"agentStats"</li>
  * <li>"agentDailyStats"</li>
  * <li>"campaignStats"</li>
  * <li>"queueStats"</li>
- * <li>"scriptConfigResponse"</li>
- * <li>"supervisorListResponse"</li>
- * <li>"tcpaSafeResponse"</li>
- * <li>"coldXferResponse"</li>
- * <li>"warmXferResponse"</li>
  * @type {object}
  */
 const CALLBACK_TYPES = {
@@ -100,6 +101,8 @@ const CALLBACK_TYPES = {
     "RECORD":"recordResponse",
     "REQUEUE":"requeueResponse",
     "REVERSE_MATCH":"reverseMatchNotification",
+    "SAFE_MODE_FETCH":"safeModeFetchResponse",
+    "SAFE_MODE_SEARCH":"safeModeSearchResponse",
     "SCRIPT_CONFIG":"scriptConfigResponse",
     "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
@@ -107,7 +110,6 @@ const CALLBACK_TYPES = {
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
     "SUPERVISOR_LIST":"supervisorListResponse",
-    "TCPA_SAFE":"tcpaSafeResponse",
     "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse"

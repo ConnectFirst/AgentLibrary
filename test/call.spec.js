@@ -631,7 +631,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        Lib.tcpaSafeCall(action, searchFields, requestId);
+        Lib.safeModeCall(action, searchFields, requestId);
         var msg = Lib.getTcpaSafeRequest().formatJSON();
 
         Lib.socket._message(msg);
@@ -657,7 +657,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
-        Lib.tcpaSafeCall(action, searchFields, requestId);
+        Lib.safeModeCall(action, searchFields, requestId);
 
         // process tcpa safe response
         var tcpaSafeResponse = JSON.parse(JSON.stringify(this.previewDialResponseRaw));

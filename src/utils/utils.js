@@ -229,7 +229,13 @@ var utils = {
                     // found corresponding request, fire registered callback for type
                     var type = request.type;
                     var callbackFnName = utils.findCallbackBasedOnMessageType(type);
-                    utils.fireCallback(instance, callbackFnName, generic);
+
+                    if(callbackFnName){
+                        utils.fireCallback(instance, callbackFnName, generic);
+                    }else{
+                        // no registered callback, fallback to generic notification
+                        utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
+                    }
                 }else{
                     // no corresponding request, just fire generic notification callback
                     utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
@@ -294,12 +300,15 @@ var utils = {
                 }else{
                     utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_FETCH, dialResponse);
                 }
-
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_ID:
                 var tcpaRequest = new TcpaSafeRequest();
                 var tcpaResponse = tcpaRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
+                if(tcpaResponse.action.toUpperCase() === "SEARCH"){
+                    utils.fireCallback(instance, CALLBACK_TYPES.SAFE_MODE_SEARCH, tcpaResponse);
+                }else{
+                    utils.fireCallback(instance, CALLBACK_TYPES.SAFE_MODE_FETCH, tcpaResponse);
+                }
                 break;
         }
 

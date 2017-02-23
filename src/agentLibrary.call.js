@@ -275,16 +275,43 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a TCPA Safe call request message
+     * Sends a TCPA Safe call request to call lead based on request id. Call safeModeFetch method first to get request id.
      * @memberof AgentLibrary.Call
-     * @param {string} [action=""] Action to take
-     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
-     * e.g. [ {key: "name", value: "Geoff"} ]
      * @param {number} [requestId=""] Number displayed to callee, DNIS
      */
-    AgentLibrary.prototype.tcpaSafeCall = function(action, searchFields, requestId){
-        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest(action, searchFields, requestId);
+    AgentLibrary.prototype.safeModeCall = function(requestId){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", [], requestId);
         var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a message to fetch safe mode dialable leads
+     * @memberof AgentLibrary.Call
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {function} [callback=null] Callback function when safe mode fetch completed, returns matched leads
+     */
+    AgentLibrary.prototype.safeModeFetch = function(searchFields, callback){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", searchFields, "");
+        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.SAFE_MODE_FETCH, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Pull back Safe Mode leads that match search criteria
+     * @memberof AgentLibrary.Call
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {function} [callback=null] Callback function when safe mode fetch completed, returns matched leads
+     */
+    AgentLibrary.prototype.safeSearchLeads = function(searchFields, callback){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("search", searchFields, "");
+        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.SAFE_MODE_SEARCH, callback);
         utils.sendMessage(this, msg);
     };
 

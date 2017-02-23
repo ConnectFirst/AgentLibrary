@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-20 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-02-21 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2563,7 +2563,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
             if(response.ui_response.allow_lead_inserts && typeof resp.insert_campaigns !== 'undefined' && response.ui_response.insert_campaigns.campaign){
-                model.agentPermissions.allowLeadInserts = true;
+                model.agentPermissions.allowLeadInserts = utils.getText(resp, 'allow_lead_inserts') === "1";
             }
 
             // Set collection values
@@ -4796,7 +4796,13 @@ var utils = {
                     // found corresponding request, fire registered callback for type
                     var type = request.type;
                     var callbackFnName = utils.findCallbackBasedOnMessageType(type);
-                    utils.fireCallback(instance, callbackFnName, generic);
+
+                    if(callbackFnName){
+                        utils.fireCallback(instance, callbackFnName, generic);
+                    }else{
+                        // no registered callback, fallback to generic notification
+                        utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
+                    }
                 }else{
                     // no corresponding request, just fire generic notification callback
                     utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
@@ -4861,12 +4867,15 @@ var utils = {
                 }else{
                     utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_FETCH, dialResponse);
                 }
-
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_ID:
                 var tcpaRequest = new TcpaSafeRequest();
                 var tcpaResponse = tcpaRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
+                if(tcpaResponse.action.toUpperCase() === "SEARCH"){
+                    utils.fireCallback(instance, CALLBACK_TYPES.SAFE_MODE_SEARCH, tcpaResponse);
+                }else{
+                    utils.fireCallback(instance, CALLBACK_TYPES.SAFE_MODE_FETCH, tcpaResponse);
+                }
                 break;
         }
 
@@ -5422,15 +5431,16 @@ const LOG_LEVELS ={
  * <li>"recordResponse"</li>
  * <li>"requeueResponse"</li>
  * <li>"reverseMatchNotification"</li>
+ * <li>"safeModeFetchResponse"</li>
+ * <li>"safeModeSearchResponse"</li>
+ * <li>"scriptConfigResponse"</li>
+ * <li>"supervisorListResponse"</li>
+ * <li>"coldXferResponse"</li>
+ * <li>"warmXferResponse"</li>
  * <li>"agentStats"</li>
  * <li>"agentDailyStats"</li>
  * <li>"campaignStats"</li>
  * <li>"queueStats"</li>
- * <li>"scriptConfigResponse"</li>
- * <li>"supervisorListResponse"</li>
- * <li>"tcpaSafeResponse"</li>
- * <li>"coldXferResponse"</li>
- * <li>"warmXferResponse"</li>
  * @type {object}
  */
 const CALLBACK_TYPES = {
@@ -5473,6 +5483,8 @@ const CALLBACK_TYPES = {
     "RECORD":"recordResponse",
     "REQUEUE":"requeueResponse",
     "REVERSE_MATCH":"reverseMatchNotification",
+    "SAFE_MODE_FETCH":"safeModeFetchResponse",
+    "SAFE_MODE_SEARCH":"safeModeSearchResponse",
     "SCRIPT_CONFIG":"scriptConfigResponse",
     "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
@@ -5480,7 +5492,6 @@ const CALLBACK_TYPES = {
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
     "SUPERVISOR_LIST":"supervisorListResponse",
-    "TCPA_SAFE":"tcpaSafeResponse",
     "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse"
@@ -6308,10 +6319,9 @@ function initAgentLibraryAgent (context) {
     /**
      * Terminates agent's offhook session
      * @memberof AgentLibrary.Agent
-     * @param {function} [callback=null] Callback function when offhookTerm response received
      */
-    AgentLibrary.prototype.offhookTerm = function(forceOffhook){
-        UIModel.getInstance().offhookTermRequest = new OffhookTermRequest(forceOffhook);
+    AgentLibrary.prototype.offhookTerm = function(){
+        UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
         var msg = UIModel.getInstance().offhookTermRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -6646,16 +6656,43 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a TCPA Safe call request message
+     * Sends a TCPA Safe call request to call lead based on request id. Call safeModeFetch method first to get request id.
      * @memberof AgentLibrary.Call
-     * @param {string} [action=""] Action to take
-     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
-     * e.g. [ {key: "name", value: "Geoff"} ]
      * @param {number} [requestId=""] Number displayed to callee, DNIS
      */
-    AgentLibrary.prototype.tcpaSafeCall = function(action, searchFields, requestId){
-        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest(action, searchFields, requestId);
+    AgentLibrary.prototype.safeModeCall = function(requestId){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", [], requestId);
         var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a message to fetch safe mode dialable leads
+     * @memberof AgentLibrary.Call
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {function} [callback=null] Callback function when safe mode fetch completed, returns matched leads
+     */
+    AgentLibrary.prototype.safeModeFetch = function(searchFields, callback){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", searchFields, "");
+        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.SAFE_MODE_FETCH, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Pull back Safe Mode leads that match search criteria
+     * @memberof AgentLibrary.Call
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {function} [callback=null] Callback function when safe mode fetch completed, returns matched leads
+     */
+    AgentLibrary.prototype.safeSearchLeads = function(searchFields, callback){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("search", searchFields, "");
+        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.SAFE_MODE_SEARCH, callback);
         utils.sendMessage(this, msg);
     };
 
