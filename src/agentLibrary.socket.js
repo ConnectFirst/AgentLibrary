@@ -15,11 +15,7 @@ function initAgentLibrarySocket (context) {
 
                 instance.socket.onopen = function() {
                     UIModel.getInstance().applicationSettings.socketConnected = true;
-                    if(instance._isReconnect){
-                        utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, {reconnect:true});
-                    }else{
-                        utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, '');
-                    }
+                    utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, {reconnect:instance._isReconnect});
                     instance.socketOpened();
                 };
 
