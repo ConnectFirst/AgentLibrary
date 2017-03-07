@@ -1,4 +1,4 @@
-/*! cf-agent-library - v0.0.0 - 2017-02-21 - Connect First */
+/*! cf-agent-library - v0.0.0 - 2017-03-07 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3122,21 +3122,6 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
 };
 
 
-var ReconnectRequest = function() {
-
-};
-
-ReconnectRequest.prototype.formatJSON = function() {
-    var model = UIModel.getInstance();
-    var loginMsg = JSON.parse(model.loginRequest.formatJSON());
-
-    loginMsg.hash_code = {"#text":model.hashCode};
-    loginMsg.update_login = {"#text":"FALSE"};
-    loginMsg.reconnect = {"#text":"TRUE"};
-
-    return JSON.stringify(loginMsg);
-};
-
 var RecordRequest = function(record) {
     this.record = record;
 };
@@ -4587,9 +4572,10 @@ var utils = {
     },
 
     sendMessage: function(instance, msg) {
-        if (instance.socket.readyState === 1) {
+        var msgObj = JSON.parse(msg);
+
+        if (instance.socket && instance.socket.readyState === 1) {
             // add message id to request map, then send message
-            var msgObj = JSON.parse(msg);
             var type = msgObj.ui_request['@type'];
             var destination = msgObj.ui_request['@destination'];
             var message = "Sending " + type + " request message to " + destination;
@@ -4609,7 +4595,15 @@ var utils = {
             }
 
         } else {
-            console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
+            // add message to queue
+            instance._queuedMsgs.push({dts: new Date(), msg: msg});
+
+            if(UIModel.getInstance().agentSettings.isLoggedIn){
+                // try to reconnect
+                instance._isReconnect = true;
+                instance.openSocket();
+                console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
+            }
         }
     },
 
@@ -5575,7 +5569,8 @@ function initAgentLibraryCore (context) {
      * @memberof AgentLibrary
      * @property {object} callbacks Internal map of registered callback functions
      * @property {array} _requests Internal map of requests by message id, private property.
-     * @property {object} _db Internal IndexedDB used for logging
+     * @property {array} _queuedMsgs Array of pending messages to be sent when socket reconnected
+     * @property {boolean} _isReconnect Whether or not we are doing a reconnect for the socket
      * @example
      * var Lib = new AgentLibrary({
      *      socketDest:'ws://d01-test.cf.dev:8080',
@@ -5592,6 +5587,8 @@ function initAgentLibraryCore (context) {
         // define properties
         this.callbacks = {};
         this._requests = [];
+        this._queuedMsgs = [];
+        this._isReconnect = false;
 
         // start with new model instance
         UIModel.resetInstance();
@@ -6164,38 +6161,54 @@ function initAgentLibrarySocket (context) {
         var instance = this;
         utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
         if("WebSocket" in context){
-            var socketDest = UIModel.getInstance().applicationSettings.socketDest;
-            utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
-            instance.socket = new WebSocket(socketDest);
+            if(!instance.socket){
+                var socketDest = UIModel.getInstance().applicationSettings.socketDest;
+                utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
+                instance.socket = new WebSocket(socketDest);
 
-            instance.socket.onopen = function() {
-                UIModel.getInstance().applicationSettings.socketConnected = true;
-                utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, '');
-            };
+                instance.socket.onopen = function() {
+                    UIModel.getInstance().applicationSettings.socketConnected = true;
+                    if(instance._isReconnect){
+                        utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, {reconnect:true});
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, '');
+                    }
+                    instance.socketOpened();
+                };
 
-            instance.socket.onmessage = function(evt){
-                var data = JSON.parse(evt.data);
-                if(data.ui_response){
-                    utils.processResponse(instance, data);
-                }else if(data.ui_notification){
-                    utils.processNotification(instance, data);
-                }else if(data.dialer_request){
-                    utils.processDialerResponse(instance, data);
-                }else if(data.ui_stats){
-                    utils.processStats(instance, data);
-                }else if(data.ui_request){
-                    utils.processRequest(instance, data);
-                }
-            };
+                instance.socket.onmessage = function(evt){
+                    var data = JSON.parse(evt.data);
+                    if(data.ui_response){
+                        utils.processResponse(instance, data);
+                    }else if(data.ui_notification){
+                        utils.processNotification(instance, data);
+                    }else if(data.dialer_request){
+                        utils.processDialerResponse(instance, data);
+                    }else if(data.ui_stats){
+                        utils.processStats(instance, data);
+                    }else if(data.ui_request){
+                        utils.processRequest(instance, data);
+                    }
+                };
 
-            instance.socket.onclose = function(){
-                utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
-                UIModel.getInstance().applicationSettings.socketConnected = false;
+                instance.socket.onclose = function(){
+                    utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
+                    UIModel.getInstance().applicationSettings.socketConnected = false;
+                    instance.socket = null;
 
-                // cancel stats timer
-                clearInterval(UIModel.getInstance().statsIntervalId);
-                UIModel.getInstance().statsIntervalId = null;
-            };
+                    // cancel stats timer
+                    clearInterval(UIModel.getInstance().statsIntervalId);
+                    UIModel.getInstance().statsIntervalId = null;
+
+                    // if we are still logged in, try to reconnect
+                    if(UIModel.getInstance().agentSettings.isLoggedIn){
+                        setTimeout(function(){
+                            instance.openSocket();
+                        }, 5000);
+                    }
+
+                };
+            }
         }else{
             utils.logMessage(LOG_LEVELS.WARN, "WebSocket NOT supported by your Browser", "");
         }
@@ -6203,6 +6216,60 @@ function initAgentLibrarySocket (context) {
 
     AgentLibrary.prototype.closeSocket = function(){
         this.socket.close();
+    };
+
+    // when socket is successfully opened, check to see if there are any queued messaged
+    // and if so, send them.
+    AgentLibrary.prototype.socketOpened = function(){
+        var instance = this;
+        var currDts = new Date();
+        var threeMins = 3 * 60 * 1000; // milliseconds
+        var queuedMsg;
+
+        // if this is a reconnect, we need to re-authenticate with IntelliServices & IntelliQueue
+        if(instance._isReconnect){
+            instance._isReconnect = false;
+
+            // Add IntelliQueue reconnect
+            var configRequest = JSON.parse(UIModel.getInstance().configRequest.formatJSON());
+            var hashCode = UIModel.getInstance().connectionSettings.hashCode;
+            configRequest.ui_request.hash_code = {
+                "#text":hashCode
+            };
+            configRequest.ui_request.update_login = {
+                "#text": "FALSE"
+            };
+            configRequest.ui_request.reconnect = {
+                "#text": "TRUE"
+            };
+            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(configRequest)});
+
+            // Add IntelliServices reconnect
+            var loginRequest = JSON.parse(UIModel.getInstance().loginRequest.formatJSON());
+            var agentId = UIModel.getInstance().agentSettings.agentId;
+            loginRequest.ui_request.reconnect = {
+                "#text":"TRUE"
+            };
+            loginRequest.ui_request.agent_id = {
+                "#text": utils.toString(agentId)
+            };
+            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(loginRequest)});
+        }
+
+        for(var idx=0; idx < instance._queuedMsgs.length; idx++){
+            queuedMsg = instance._queuedMsgs[idx];
+            if(currDts.getTime() - queuedMsg.dts.getTime() < threeMins){
+                // message queued less than 3 mins ago, send
+                utils.logMessage(LOG_LEVELS.DEBUG, "Sending queued message to IntelliSocket.", queuedMsg.msg);
+                utils.sendMessage(instance,queuedMsg.msg);
+            }else{
+                // message expired, don't send
+                utils.logMessage(LOG_LEVELS.DEBUG, "Queued message expired, discarding.", queuedMsg.msg);
+            }
+        }
+
+        // reset queued messages
+        instance._queuedMsgs = [];
     };
 
 }
@@ -6362,18 +6429,6 @@ function initAgentLibraryAgent (context) {
      */
     AgentLibrary.prototype.requestStats = function(){
         // start stats interval timer, request stats every 5 seconds
-        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
-    };
-
-    /**
-     * Reconnect the agent session, similar to configureAgent, but doesn't reset set all
-     * configure values if not needed.
-     * @memberof AgentLibrary.Agent
-     */
-    AgentLibrary.prototype.reconnect = function(){
-        UIModel.getInstance().reconnectRequest = new ReconnectRequest();
-        var msg = UIModel.getInstance().reconnectRequest.formatJSON();
-
         UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
     };
 

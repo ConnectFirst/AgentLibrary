@@ -20,9 +20,10 @@ var utils = {
     },
 
     sendMessage: function(instance, msg) {
-        if (instance.socket.readyState === 1) {
+        var msgObj = JSON.parse(msg);
+
+        if (instance.socket && instance.socket.readyState === 1) {
             // add message id to request map, then send message
-            var msgObj = JSON.parse(msg);
             var type = msgObj.ui_request['@type'];
             var destination = msgObj.ui_request['@destination'];
             var message = "Sending " + type + " request message to " + destination;
@@ -42,7 +43,15 @@ var utils = {
             }
 
         } else {
-            console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
+            // add message to queue
+            instance._queuedMsgs.push({dts: new Date(), msg: msg});
+
+            if(UIModel.getInstance().agentSettings.isLoggedIn){
+                // try to reconnect
+                instance._isReconnect = true;
+                instance.openSocket();
+                console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
+            }
         }
     },
 
