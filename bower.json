@@ -1,6 +1,6 @@
 {
   "name": "cf-agent-library",
-  "version":"0.0.0",
+  "version":"1.0.0",
   "authors": [
     "Danielle Lamb-Books <dlbooks@connectfirst.com>"
   ],
@@ -9,14 +9,20 @@
   "keywords": [
     "JavaScript"
   ],
-  "license": "MIT",
   "homepage": "",
   "private": true,
   "ignore": [
-    "**/.*",
+    ".bowerrc",
+    ".gitignore",
+    "bower.json",
+    "build.config.js",
+    "Gruntfile.js",
+    "karma.conf.js",
+    "package.json",
+    "README.md",
+    "doc",
     "node_modules",
-    "bower_components",
-    "test",
-    "tests"
+    "src",
+    "test"
   ]
 }
