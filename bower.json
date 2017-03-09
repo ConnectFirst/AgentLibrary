@@ -14,7 +14,6 @@
   "ignore": [
     ".bowerrc",
     ".gitignore",
-    "bower.json",
     "build.config.js",
     "Gruntfile.js",
     "karma.conf.js",
