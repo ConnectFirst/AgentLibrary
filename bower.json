@@ -20,9 +20,7 @@
     "karma.conf.js",
     "package.json",
     "README.md",
-    "doc",
     "node_modules",
-    "src",
     "test"
   ]
 }
