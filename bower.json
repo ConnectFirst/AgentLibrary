@@ -12,14 +12,10 @@
   "homepage": "",
   "private": true,
   "ignore": [
-    ".bowerrc",
-    ".gitignore",
-    "build.config.js",
-    "Gruntfile.js",
-    "karma.conf.js",
-    "package.json",
-    "README.md",
+    "**/.*",
     "node_modules",
-    "test"
+    "bower_components",
+    "test",
+    "tests"
   ]
 }
