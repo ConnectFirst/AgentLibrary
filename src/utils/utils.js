@@ -358,6 +358,11 @@ var utils = {
             case MESSAGE_TYPES.STATS_AGENT_DAILY:
                 var agentDailyStats = UIModel.getInstance().agentDailyStatsPacket.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_AGENT_DAILY, agentDailyStats);
+
+                // start daily stats interval timer, request update every second
+                if(UIModel.getInstance().agentDailyIntervalId === null){
+                    UIModel.getInstance().agentDailyIntervalId = setInterval(utils.onAgentDailyStats, 1000);
+                }
                 break;
             case MESSAGE_TYPES.STATS_CAMPAIGN:
                 var campaignStats = UIModel.getInstance().campaignStatsPacket.processResponse(data);
@@ -819,5 +824,32 @@ var utils = {
         UIModel.getInstance().statsRequest = new StatsRequest();
         var msg = UIModel.getInstance().statsRequest.formatJSON();
         utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+    },
+
+    // called every second
+    // if we have received agent daily stats
+    // start incrementing various data points since not all
+    // data is incremented when we want on the IntelliServices side
+    onAgentDailyStats: function(){
+        if(Object.keys(UIModel.getInstance().agentDailyStats).length !== 0){
+            var model = UIModel.getInstance();
+
+            var curLoginTime = model.agentDailyStats.totalLoginTime;
+            model.agentDailyStats.totalLoginTime = curLoginTime+1;
+
+            if(model.agentSettings.isOffhook){
+                var curOffhookTime = model.agentDailyStats.totalOffhookTime;
+                model.agentDailyStats.totalOffhookTime = curOffhookTime+1;
+            }
+
+            if(model.agentSettings.currentState == 'ENGAGED'){
+                var curTalkTime = model.agentDailyStats.totalTalkTime;
+                model.agentDailyStats.totalTalkTime = curTalkTime+1;
+
+                var curCallTime = model.agentDailyStats.currCallTime;
+                model.agentDailyStats.currCallTime = curCallTime+1;
+            }
+        }
     }
+
 };

@@ -24,6 +24,7 @@ var AgentDailyStats = function() {
  * }
  */
 AgentDailyStats.prototype.processResponse = function(stats) {
+    var model = UIModel.getInstance();
     var resp = stats.ui_stats;
     var agentDailyStats = {
         agentId: utils.getText(resp, "agent_id"),
@@ -32,11 +33,11 @@ AgentDailyStats.prototype.processResponse = function(stats) {
         totalPreviewDials: utils.getText(resp, "total_preview_dials"),
         totalManualDials: utils.getText(resp, "total_manual_dials"),
         totalRna: utils.getText(resp, "total_rna"),
-        totalTalkTime: utils.getText(resp, "total_talk_time"),
-        totalOffhookTime: utils.getText(resp, "total_offhook_time"),
-        totalLoginTime: utils.getText(resp, "total_login_time"),
+        totalTalkTime:  model.agentDailyStats.totalTalkTime,
+        totalOffhookTime: model.agentDailyStats.totalOffhookTime,
+        totalLoginTime: model.agentDailyStats.totalLoginTime,
         totalSuccessDispositions: utils.getText(resp, "total_success_dispositions"),
-        currCallTime: UIModel.getInstance().agentDailyStats.currCallTime
+        currCallTime: model.agentDailyStats.currCallTime
     };
 
     UIModel.getInstance().agentDailyStats = agentDailyStats;

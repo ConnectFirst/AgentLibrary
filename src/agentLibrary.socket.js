@@ -1,78 +1,24 @@
-function initAgentLibrarySocket (context) {
 
-    'use strict';
-
-    var AgentLibrary = context.AgentLibrary;
-
-    AgentLibrary.prototype.openSocket = function(callback){
-        var instance = this;
-        utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
-        if("WebSocket" in context){
-            if(!instance.socket){
-                var socketDest = UIModel.getInstance().applicationSettings.socketDest;
-                utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
-                instance.socket = new WebSocket(socketDest);
-
-                instance.socket.onopen = function() {
-                    UIModel.getInstance().applicationSettings.socketConnected = true;
-                    utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, {reconnect:instance._isReconnect});
-                    instance.socketOpened();
-                };
-
-                instance.socket.onmessage = function(evt){
-                    var data = JSON.parse(evt.data);
-                    if(data.ui_response){
-                        utils.processResponse(instance, data);
-                    }else if(data.ui_notification){
-                        utils.processNotification(instance, data);
-                    }else if(data.dialer_request){
-                        utils.processDialerResponse(instance, data);
-                    }else if(data.ui_stats){
-                        utils.processStats(instance, data);
-                    }else if(data.ui_request){
-                        utils.processRequest(instance, data);
-                    }
-                };
-
-                instance.socket.onclose = function(){
-                    utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
-                    UIModel.getInstance().applicationSettings.socketConnected = false;
-                    instance.socket = null;
-
-                    // cancel stats timer
-                    clearInterval(UIModel.getInstance().statsIntervalId);
-                    UIModel.getInstance().statsIntervalId = null;
-
+<<<<<<< Updated upstream
+            instance.socket.onclose = function(){
+                utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
+                UIModel.getInstance().applicationSettings.socketConnected = false;
+=======
+                    // cancel daily stats timer
+                    clearInterval(UIModel.getInstance().agentDailyIntervalId);
+                    UIModel.getInstance().agentDailyIntervalId = null;
                     // if we are still logged in, try to reconnect
                     if(UIModel.getInstance().agentSettings.isLoggedIn){
                         setTimeout(function(){
                             instance.openSocket();
                         }, 5000);
                     }
+>>>>>>> Stashed changes
 
-                };
-            }
-        }else{
-            utils.logMessage(LOG_LEVELS.WARN, "WebSocket NOT supported by your Browser", "");
-        }
-    };
-
-    AgentLibrary.prototype.closeSocket = function(){
-        this.socket.close();
-    };
-
-    // when socket is successfully opened, check to see if there are any queued messaged
-    // and if so, send them.
-    AgentLibrary.prototype.socketOpened = function(){
-        var instance = this;
-        var currDts = new Date();
-        var threeMins = 3 * 60 * 1000; // milliseconds
-        var queuedMsg;
-
-        // if this is a reconnect, we need to re-authenticate with IntelliServices & IntelliQueue
-        if(instance._isReconnect){
-            instance._isReconnect = false;
-
+                // cancel stats timer
+                clearInterval(UIModel.getInstance().statsIntervalId);
+                UIModel.getInstance().statsIntervalId = null;
+            };
             // Add IntelliQueue reconnect
             var configRequest = JSON.parse(UIModel.getInstance().configRequest.formatJSON());
             var hashCode = UIModel.getInstance().connectionSettings.hashCode;

@@ -1,4 +1,9 @@
 /*! cf-agent-library - v1.0.0 - 2017-03-08 - Connect First */
+<<<<<<< Updated upstream
+/*! cf-agent-library - v0.0.0 - 2017-03-08 - Connect First */
+=======
+/*! cf-agent-library - v1.0.0 - 2017-03-22 - Connect First */
+>>>>>>> Stashed changes
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4038,6 +4043,7 @@ var AgentDailyStats = function() {
  * }
  */
 AgentDailyStats.prototype.processResponse = function(stats) {
+    var model = UIModel.getInstance();
     var resp = stats.ui_stats;
     var agentDailyStats = {
         agentId: utils.getText(resp, "agent_id"),
@@ -4046,11 +4052,11 @@ AgentDailyStats.prototype.processResponse = function(stats) {
         totalPreviewDials: utils.getText(resp, "total_preview_dials"),
         totalManualDials: utils.getText(resp, "total_manual_dials"),
         totalRna: utils.getText(resp, "total_rna"),
-        totalTalkTime: utils.getText(resp, "total_talk_time"),
-        totalOffhookTime: utils.getText(resp, "total_offhook_time"),
-        totalLoginTime: utils.getText(resp, "total_login_time"),
+        totalTalkTime:  model.agentDailyStats.totalTalkTime,
+        totalOffhookTime: model.agentDailyStats.totalOffhookTime,
+        totalLoginTime: model.agentDailyStats.totalLoginTime,
         totalSuccessDispositions: utils.getText(resp, "total_success_dispositions"),
-        currCallTime: UIModel.getInstance().agentDailyStats.currCallTime
+        currCallTime: model.agentDailyStats.currCallTime
     };
 
     UIModel.getInstance().agentDailyStats = agentDailyStats;
@@ -4329,6 +4335,7 @@ var UIModel = (function() {
             libraryInstance: null,                  // Initialized to the library instance on startup
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
+            agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
 
             // chat requests
             chatAliasRequest : null,
@@ -4910,6 +4917,11 @@ var utils = {
             case MESSAGE_TYPES.STATS_AGENT_DAILY:
                 var agentDailyStats = UIModel.getInstance().agentDailyStatsPacket.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_AGENT_DAILY, agentDailyStats);
+
+                // start daily stats interval timer, request update every second
+                if(UIModel.getInstance().agentDailyIntervalId === null){
+                    UIModel.getInstance().agentDailyIntervalId = setInterval(utils.onAgentDailyStats, 1000);
+                }
                 break;
             case MESSAGE_TYPES.STATS_CAMPAIGN:
                 var campaignStats = UIModel.getInstance().campaignStatsPacket.processResponse(data);
@@ -5371,7 +5383,34 @@ var utils = {
         UIModel.getInstance().statsRequest = new StatsRequest();
         var msg = UIModel.getInstance().statsRequest.formatJSON();
         utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+    },
+
+    // called every second
+    // if we have received agent daily stats
+    // start incrementing various data points since not all
+    // data is incremented when we want on the IntelliServices side
+    onAgentDailyStats: function(){
+        if(Object.keys(UIModel.getInstance().agentDailyStats).length !== 0){
+            var model = UIModel.getInstance();
+
+            var curLoginTime = model.agentDailyStats.totalLoginTime;
+            model.agentDailyStats.totalLoginTime = curLoginTime+1;
+
+            if(model.agentSettings.isOffhook){
+                var curOffhookTime = model.agentDailyStats.totalOffhookTime;
+                model.agentDailyStats.totalOffhookTime = curOffhookTime+1;
+            }
+
+            if(model.agentSettings.currentState == 'ENGAGED'){
+                var curTalkTime = model.agentDailyStats.totalTalkTime;
+                model.agentDailyStats.totalTalkTime = curTalkTime+1;
+
+                var curCallTime = model.agentDailyStats.currCallTime;
+                model.agentDailyStats.currCallTime = curCallTime+1;
+            }
+        }
     }
+
 };
 
 
@@ -6192,9 +6231,15 @@ function initAgentLibrarySocket (context) {
                     UIModel.getInstance().applicationSettings.socketConnected = false;
                     instance.socket = null;
 
-                    // cancel stats timer
-                    clearInterval(UIModel.getInstance().statsIntervalId);
-                    UIModel.getInstance().statsIntervalId = null;
+<<<<<<< Updated upstream
+                // cancel stats timer
+                clearInterval(UIModel.getInstance().statsIntervalId);
+                UIModel.getInstance().statsIntervalId = null;
+            };
+=======
+                    // cancel daily stats timer
+                    clearInterval(UIModel.getInstance().agentDailyIntervalId);
+                    UIModel.getInstance().agentDailyIntervalId = null;
 
                     // if we are still logged in, try to reconnect
                     if(UIModel.getInstance().agentSettings.isLoggedIn){
@@ -6205,6 +6250,7 @@ function initAgentLibrarySocket (context) {
 
                 };
             }
+>>>>>>> Stashed changes
         }else{
             utils.logMessage(LOG_LEVELS.WARN, "WebSocket NOT supported by your Browser", "");
         }

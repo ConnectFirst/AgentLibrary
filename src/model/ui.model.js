@@ -21,6 +21,7 @@ var UIModel = (function() {
             libraryInstance: null,                  // Initialized to the library instance on startup
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
+            agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
 
             // chat requests
             chatAliasRequest : null,
