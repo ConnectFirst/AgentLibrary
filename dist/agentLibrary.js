@@ -1,9 +1,4 @@
-/*! cf-agent-library - v1.0.0 - 2017-03-08 - Connect First */
-<<<<<<< Updated upstream
-/*! cf-agent-library - v0.0.0 - 2017-03-08 - Connect First */
-=======
 /*! cf-agent-library - v1.0.0 - 2017-03-22 - Connect First */
->>>>>>> Stashed changes
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -6191,11 +6186,8 @@ function initAgentLibraryCore (context) {
 }
 
 function initAgentLibrarySocket (context) {
-
     'use strict';
-
     var AgentLibrary = context.AgentLibrary;
-
     AgentLibrary.prototype.openSocket = function(callback){
         var instance = this;
         utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
@@ -6204,13 +6196,11 @@ function initAgentLibrarySocket (context) {
                 var socketDest = UIModel.getInstance().applicationSettings.socketDest;
                 utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
                 instance.socket = new WebSocket(socketDest);
-
                 instance.socket.onopen = function() {
                     UIModel.getInstance().applicationSettings.socketConnected = true;
                     utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, {reconnect:instance._isReconnect});
                     instance.socketOpened();
                 };
-
                 instance.socket.onmessage = function(evt){
                     var data = JSON.parse(evt.data);
                     if(data.ui_response){
@@ -6225,21 +6215,18 @@ function initAgentLibrarySocket (context) {
                         utils.processRequest(instance, data);
                     }
                 };
-
                 instance.socket.onclose = function(){
                     utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
                     UIModel.getInstance().applicationSettings.socketConnected = false;
                     instance.socket = null;
 
-<<<<<<< Updated upstream
-                // cancel stats timer
-                clearInterval(UIModel.getInstance().statsIntervalId);
-                UIModel.getInstance().statsIntervalId = null;
-            };
-=======
                     // cancel daily stats timer
                     clearInterval(UIModel.getInstance().agentDailyIntervalId);
                     UIModel.getInstance().agentDailyIntervalId = null;
+
+                    // cancel stats timer
+                    clearInterval(UIModel.getInstance().statsIntervalId);
+                    UIModel.getInstance().statsIntervalId = null;
 
                     // if we are still logged in, try to reconnect
                     if(UIModel.getInstance().agentSettings.isLoggedIn){
@@ -6247,19 +6234,15 @@ function initAgentLibrarySocket (context) {
                             instance.openSocket();
                         }, 5000);
                     }
-
                 };
             }
->>>>>>> Stashed changes
         }else{
             utils.logMessage(LOG_LEVELS.WARN, "WebSocket NOT supported by your Browser", "");
         }
     };
-
     AgentLibrary.prototype.closeSocket = function(){
         this.socket.close();
     };
-
     // when socket is successfully opened, check to see if there are any queued messaged
     // and if so, send them.
     AgentLibrary.prototype.socketOpened = function(){
@@ -6267,11 +6250,9 @@ function initAgentLibrarySocket (context) {
         var currDts = new Date();
         var threeMins = 3 * 60 * 1000; // milliseconds
         var queuedMsg;
-
         // if this is a reconnect, we need to re-authenticate with IntelliServices & IntelliQueue
         if(instance._isReconnect){
             instance._isReconnect = false;
-
             // Add IntelliQueue reconnect
             var configRequest = JSON.parse(UIModel.getInstance().configRequest.formatJSON());
             var hashCode = UIModel.getInstance().connectionSettings.hashCode;
@@ -6285,7 +6266,6 @@ function initAgentLibrarySocket (context) {
                 "#text": "TRUE"
             };
             instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(configRequest)});
-
             // Add IntelliServices reconnect
             var loginRequest = JSON.parse(UIModel.getInstance().loginRequest.formatJSON());
             var agentId = UIModel.getInstance().agentSettings.agentId;
@@ -6297,7 +6277,6 @@ function initAgentLibrarySocket (context) {
             };
             instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(loginRequest)});
         }
-
         for(var idx=0; idx < instance._queuedMsgs.length; idx++){
             queuedMsg = instance._queuedMsgs[idx];
             if(currDts.getTime() - queuedMsg.dts.getTime() < threeMins){
@@ -6309,11 +6288,9 @@ function initAgentLibrarySocket (context) {
                 utils.logMessage(LOG_LEVELS.DEBUG, "Queued message expired, discarding.", queuedMsg.msg);
             }
         }
-
         // reset queued messages
         instance._queuedMsgs = [];
     };
-
 }
 function initAgentLibraryAgent (context) {
     /**
