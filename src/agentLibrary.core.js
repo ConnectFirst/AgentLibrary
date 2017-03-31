@@ -193,7 +193,8 @@ function initAgentLibraryCore (context) {
      * @memberof AgentLibrary
      * @property {object} callbacks Internal map of registered callback functions
      * @property {array} _requests Internal map of requests by message id, private property.
-     * @property {object} _db Internal IndexedDB used for logging
+     * @property {array} _queuedMsgs Array of pending messages to be sent when socket reconnected
+     * @property {boolean} _isReconnect Whether or not we are doing a reconnect for the socket
      * @example
      * var Lib = new AgentLibrary({
      *      socketDest:'ws://d01-test.cf.dev:8080',
@@ -210,6 +211,8 @@ function initAgentLibraryCore (context) {
         // define properties
         this.callbacks = {};
         this._requests = [];
+        this._queuedMsgs = [];
+        this._isReconnect = false;
 
         // start with new model instance
         UIModel.resetInstance();

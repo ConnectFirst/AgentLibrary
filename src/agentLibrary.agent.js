@@ -157,16 +157,4 @@ function initAgentLibraryAgent (context) {
         UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
     };
 
-    /**
-     * Reconnect the agent session, similar to configureAgent, but doesn't reset set all
-     * configure values if not needed.
-     * @memberof AgentLibrary.Agent
-     */
-    AgentLibrary.prototype.reconnect = function(){
-        UIModel.getInstance().reconnectRequest = new ReconnectRequest();
-        var msg = UIModel.getInstance().reconnectRequest.formatJSON();
-
-        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
-    };
-
 }
