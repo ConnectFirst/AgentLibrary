@@ -100,7 +100,8 @@ module.exports = function(grunt) {
                 } ())
             },
             options: {
-                banner: BANNER
+                banner: BANNER,
+                mangle: false
             }
         },
         karma: {
@@ -139,7 +140,7 @@ module.exports = function(grunt) {
                 },
                 expand: true,
                 cwd: 'dist/',
-                src: ['**/*'],
+                src: ['**/*.js'],
                 dest: 'dist/',
                 rename: function(dest, src) {
                     return dest + '/' + src + '.gz';
