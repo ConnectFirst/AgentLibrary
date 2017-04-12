@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.0 - 2017-03-22 - Connect First */
+/*! cf-agent-library - v1.0.0 - 2017-04-12 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3642,6 +3642,60 @@ ChatAliasRequest.prototype.formatJSON = function() {
 };
 
 
+var ChatPresentedRequest = function(uii, sessionId, response, responseReason) {
+    this.uii = uii;
+    this.sessionId = sessionId;
+    this.response = response;
+    this.responseReason = responseReason || "";
+};
+
+/*
+ * External Chat:
+ * When Agent receives a CHAT-PRESENTED notification, repond with
+ * either ACCEPT or REJECT for presented chat.
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-PRESENTED",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "session_id":{"#text":""},
+ *      "response":{"#text":"ACCEPT|REJECT"},
+ *      "response_reason":{"#text":""}
+ *    }
+ * }
+ */
+ChatPresentedRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_PRESENTED,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "session_id":{
+                "#text":utils.toString(this.sessionId)
+            },
+            "response":{
+                "#text":utils.toString(this.response)
+            },
+            "response_reason":{
+                "#text":utils.toString(this.responseReason)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
 var ChatRoomRequest = function(action, roomType, roomId, agentOne, agentTwo) {
     this.action = action;
     this.roomType = roomType;
@@ -3899,6 +3953,148 @@ SupervisorListRequest.prototype.processResponse = function(response) {
 
     return model.supervisors;
 };
+
+var ChatActiveNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-ACTIVE" packets from IntelliQueue.
+ * This is sent in response to an agent's CHAT-PRESENTED accept request.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-ACTIVE",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "agent_id":{"#text":"1180958"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+ChatActiveNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-ACTIVE notification",
+        status: "OK",
+        agentId: utils.getText(notif, "agent_id"),
+        uii: utils.getText(notif, "uii")
+    };
+
+};
+
+
+var ChatInactiveNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-INACTIVE" packets from IntelliQueue.
+ * This is sent to the agent when the last session is disconnected from a chat.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-INACTIVE",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "agent_id":{"#text":"1180958"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+ChatInactiveNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-INACTIVE notification",
+        status: "OK",
+        agentId: utils.getText(notif, "agent_id"),
+        uii: utils.getText(notif, "uii")
+    };
+
+};
+
+
+var ChatPresentedNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-PRESENTED" packets from IntelliQueue.
+ * When this notification is received, the Agent can either Accept or Decline which will
+ * be sent back to IntelliQueue as a CHAT-PRESENTED response.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-PRESENTED",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "agent_id":{"#text":"1180958"},
+ *          "session_id":{"#text":"2"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+ChatPresentedNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-PRESENTED notification",
+        status: "OK",
+        agentId: utils.getText(notif, "agent_id"),
+        sessionId: utils.getText(notif, "session_id"),
+        uii: utils.getText(notif, "uii")
+    };
+
+};
+
+
+var ChatTypingNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-TYPING" packets from IntelliQueue.
+ * When this notification is received, the AgentUI will show the pending message
+ * so far from the client chat widget and typing notification.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-TYPING",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "agent_id":{"#text":"1180958"},
+ *          "account_id":{"#text":"99999999"},
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "is_typing":{"#text":"true"},
+ *          "pending_message":{"#text":"this is the message before actual send"}
+ *      }
+ *  }
+ */
+ChatTypingNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-TYPING notification",
+        status: "OK",
+        agentId: utils.getText(notif, "agent_id"),
+        accountId: utils.getText(notif, "account_id"),
+        uii: utils.getText(notif, "uii"),
+        isTyping: utils.getText(notif, "is_typing"),
+        pendingMessage: utils.getText(notif, "pending_message")
+    };
+
+};
+
 
 var AgentStats = function() {
 
@@ -5533,10 +5729,11 @@ const MESSAGE_TYPES = {
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
     "CAMPAIGN_DISPOSITIONS":"CAMPAIGN-DISPOSITIONS",
-    "CHAT_SEND":"CHAT",
-    "CHAT_ALIAS":"CHAT-ALIAS",
-    "CHAT_ROOM":"CHAT-ROOM",
-    "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",
+    "CHAT_SEND":"CHAT",                                     // internal chat
+    "CHAT_ALIAS":"CHAT-ALIAS",                              // internal chat
+    "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
+    "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
+    "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -6201,6 +6398,7 @@ function initAgentLibrarySocket (context) {
                     utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, {reconnect:instance._isReconnect});
                     instance.socketOpened();
                 };
+                
                 instance.socket.onmessage = function(evt){
                     var data = JSON.parse(evt.data);
                     if(data.ui_response){
@@ -6215,6 +6413,7 @@ function initAgentLibrarySocket (context) {
                         utils.processRequest(instance, data);
                     }
                 };
+
                 instance.socket.onclose = function(){
                     utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
                     UIModel.getInstance().applicationSettings.socketConnected = false;
@@ -6292,6 +6491,7 @@ function initAgentLibrarySocket (context) {
         instance._queuedMsgs = [];
     };
 }
+
 function initAgentLibraryAgent (context) {
     /**
      * @namespace Agent
