@@ -816,7 +816,14 @@ var utils = {
     sendPingCallMessage: function(){
         UIModel.getInstance().pingCallRequest = new PingCallRequest();
         var msg = UIModel.getInstance().pingCallRequest.formatJSON();
-        utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+        var msgObj = JSON.parse(msg);
+        var agentId = utils.getText(msgObj.ui_request,'agent_id');
+        var uii = utils.getText(msgObj.ui_request,'uii');
+        if(agentId === "" || uii === ""){
+            utils.logMessage(LOG_LEVELS.WARN, "PING-CALL message failed, agentId or UII is empty", msgObj);
+        }else{
+            utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+        }
     },
 
     // called every 5 seconds to request stats from IntelliServices
