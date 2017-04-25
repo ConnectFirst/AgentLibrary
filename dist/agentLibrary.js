@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.0 - 2017-04-12 - Connect First */
+/*! cf-agent-library - v1.0.0 - 2017-04-25 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -668,6 +668,7 @@ function buildTokenMap(notif, newCall){
         tokens["agentExternalId"] = model.agentSettings.externalAgentId;
         tokens["agentType"] = model.agentSettings.agentType;
         tokens["agentEmail"] = model.agentSettings.email;
+        tokens["agentUserName"] = model.agentSettings.username;
     }catch(any){
         console.error("There was an error parsing tokens for agent info. ", any);
     }
@@ -3642,60 +3643,6 @@ ChatAliasRequest.prototype.formatJSON = function() {
 };
 
 
-var ChatPresentedRequest = function(uii, sessionId, response, responseReason) {
-    this.uii = uii;
-    this.sessionId = sessionId;
-    this.response = response;
-    this.responseReason = responseReason || "";
-};
-
-/*
- * External Chat:
- * When Agent receives a CHAT-PRESENTED notification, repond with
- * either ACCEPT or REJECT for presented chat.
- * {"ui_request":{
- *      "@destination":"IQ",
- *      "@type":"CHAT-PRESENTED",
- *      "@message_id":"",
- *      "@response_to":"",
- *      "uii":{"#text":""},
- *      "agent_id":{"#text":""},
- *      "session_id":{"#text":""},
- *      "response":{"#text":"ACCEPT|REJECT"},
- *      "response_reason":{"#text":""}
- *    }
- * }
- */
-ChatPresentedRequest.prototype.formatJSON = function() {
-    var msg = {
-        "ui_request": {
-            "@destination":"IQ",
-            "@type":MESSAGE_TYPES.CHAT_PRESENTED,
-            "@message_id":utils.getMessageId(),
-            "@response_to":"",
-            "uii":{
-                "#text":utils.toString(this.uii)
-            },
-            "agent_id":{
-                "#text":UIModel.getInstance().agentSettings.agentId
-            },
-            "session_id":{
-                "#text":utils.toString(this.sessionId)
-            },
-            "response":{
-                "#text":utils.toString(this.response)
-            },
-            "response_reason":{
-                "#text":utils.toString(this.responseReason)
-            }
-        }
-    };
-
-    return JSON.stringify(msg);
-};
-
-
-
 var ChatRoomRequest = function(action, roomType, roomId, agentOne, agentTwo) {
     this.action = action;
     this.roomType = roomType;
@@ -5566,7 +5513,14 @@ var utils = {
     sendPingCallMessage: function(){
         UIModel.getInstance().pingCallRequest = new PingCallRequest();
         var msg = UIModel.getInstance().pingCallRequest.formatJSON();
-        utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+        var msgObj = JSON.parse(msg);
+        var agentId = utils.getText(msgObj.ui_request,'agent_id');
+        var uii = utils.getText(msgObj.ui_request,'uii');
+        if(agentId === "" || uii === ""){
+            utils.logMessage(LOG_LEVELS.WARN, "PING-CALL message failed, agentId or UII is empty", msgObj);
+        }else{
+            utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+        }
     },
 
     // called every 5 seconds to request stats from IntelliServices
@@ -5729,11 +5683,10 @@ const MESSAGE_TYPES = {
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
     "CAMPAIGN_DISPOSITIONS":"CAMPAIGN-DISPOSITIONS",
-    "CHAT_SEND":"CHAT",                                     // internal chat
-    "CHAT_ALIAS":"CHAT-ALIAS",                              // internal chat
-    "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
-    "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
-    "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
+    "CHAT_SEND":"CHAT",
+    "CHAT_ALIAS":"CHAT-ALIAS",
+    "CHAT_ROOM":"CHAT-ROOM",
+    "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
