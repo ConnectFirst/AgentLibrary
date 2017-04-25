@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.0 - 2017-03-22 - Connect First */
+/*! cf-agent-library - v1.0.0 - 2017-03-31 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -6201,6 +6201,7 @@ function initAgentLibrarySocket (context) {
                     utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, {reconnect:instance._isReconnect});
                     instance.socketOpened();
                 };
+                
                 instance.socket.onmessage = function(evt){
                     var data = JSON.parse(evt.data);
                     if(data.ui_response){
@@ -6215,6 +6216,7 @@ function initAgentLibrarySocket (context) {
                         utils.processRequest(instance, data);
                     }
                 };
+
                 instance.socket.onclose = function(){
                     utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
                     UIModel.getInstance().applicationSettings.socketConnected = false;
@@ -6292,6 +6294,7 @@ function initAgentLibrarySocket (context) {
         instance._queuedMsgs = [];
     };
 }
+
 function initAgentLibraryAgent (context) {
     /**
      * @namespace Agent
