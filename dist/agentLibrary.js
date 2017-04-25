@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/*! cf-agent-library - v1.0.0 - 2017-03-31 - Connect First */
-=======
-/*! cf-agent-library - v1.0.0 - 2017-04-12 - Connect First */
->>>>>>> sprint-50
+/*! cf-agent-library - v1.0.2 - 2017-04-25 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -672,6 +668,7 @@ function buildTokenMap(notif, newCall){
         tokens["agentExternalId"] = model.agentSettings.externalAgentId;
         tokens["agentType"] = model.agentSettings.agentType;
         tokens["agentEmail"] = model.agentSettings.email;
+        tokens["agentUserName"] = model.agentSettings.username;
     }catch(any){
         console.error("There was an error parsing tokens for agent info. ", any);
     }
@@ -1768,7 +1765,7 @@ DispositionRequest.prototype.formatJSON = function() {
     }
 
     /*
-     * converts survey to this reponse
+     * converts survey to this response
      * survey : {
      *      response: [
      *          { "@extern_id":"", "@lead_update_column":"", "#text":"" }
@@ -3646,6 +3643,186 @@ ChatAliasRequest.prototype.formatJSON = function() {
 };
 
 
+var ChatDispositionRequest = function(uii, agentId, dispositionId, sessionId, notes, script) {
+    this.uii = uii;
+    this.agentId = agentId;
+    this.dispositionId = dispositionId;
+    this.sessionId = sessionId;
+    this.notes = notes || "";
+
+    /*
+     * script = {
+     *      first_name: {
+     *          leadField: "first_name"
+     *          value: "Geoff"
+     *      },
+     *      last_name: {
+     *          leadField: "last_name"
+     *          value: "Mina"
+     *      }
+     *      ...
+     * }
+     */
+    this.script = script || null;
+};
+
+/*
+ * External Chat:
+ * When agent dispositions a chat, send "CHAT-DISPOSITION" request to IntelliQueue
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-DISPOSITION",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "disposition_id":{"#text":""},
+ *      "session_id":{"#text":""},
+ *      "notes":{"#text":"hello"},
+ *      "script":{
+ *          "response":[
+ *              {"@extern_id":"text_box","#text":"hello"},
+ *              {"@extern_id":"check_box","#text":"20"},
+ *              {"@extern_id":"radio_save","#text":"23"}
+ *          ]
+ *      }
+ *    }
+ * }
+ */
+ChatDispositionRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_DISPOSITION,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":utils.toString(this.accountId)
+            },
+            "disposition_id":{
+                "#text":utils.toString(this.dispositionId)
+            },
+            "session_id":{
+                "#text": utils.toString(this.sessionId)
+            },
+            "notes":{
+                "#text":utils.toString(this.notes)
+            }
+        }
+    };
+
+    /*
+     * converts script to this response
+     * script : {
+     *      response: [
+     *          { "@extern_id":"", "@lead_update_column":"", "#text":"" }
+     *      ]
+     * }
+     */
+    if(this.script !== null){
+        var response = [];
+        var keys = Object.keys(this.script);
+        for(var i = 0; i < keys.length; i++){
+            var key = keys[i];
+            var obj = {
+                "@extern_id": key,
+                "#text": utils.toString(this.script[key].value)
+            };
+            response.push(obj);
+        }
+        msg.ui_request.script = {"response":response};
+    }
+
+    return JSON.stringify(msg);
+};
+
+
+
+var ChatMessageRequest = function(uii, accountId, message) {
+    this.uii = uii;
+    this.accountId = accountId;
+    this.message = message;
+};
+
+/*
+ * External Chat:
+ * When agent submits a chat message, send "CHAT-MESSAGE" request to IntelliQueue
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-MESSAGE",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "account_id":{"#text":""},
+ *      "from":{"#text":""}, <--- injected by IQ
+ *      "type":{"#text":"SYSTEM | AGENT | CLIENT"},
+ *      "message":{"#text":"hello"}
+ *    }
+ * }
+ */
+ChatMessageRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_MESSAGE,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "account_id":{
+                "#text":utils.toString(this.accountId)
+            },
+            "from":{
+                "#text":""
+            },
+            "type":{
+                "#text":"AGENT"
+            },
+            "message":{
+                "#text":utils.toString(this.message)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class is responsible for handling external CHAT-MESSAGE packets received from
+ * IntelliQueue.
+ *
+ * {"ui_request":{
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "@type":"CHAT-MESSAGE",
+ *      "uii":{"#text":""},
+ *      "account_id":{"#text":""},
+ *      "from":{"#text":""},
+ *      "type":{"#text":"SYSTEM | AGENT | CLIENT"},
+ *      "message":{"#text":"hello"}
+ *    }
+ * }
+ */
+
+ChatMessageRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_request;
+    var formattedResponse = {
+        uii: utils.getText(resp, 'uii'),
+        accountId: utils.getText(resp, 'account_id'),
+        from: utils.getText(resp, 'from'),
+        type: utils.getText(resp, 'type'),
+        message: utils.getText(resp, 'message')
+    };
+
+    utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);
+
+    return formattedResponse;
+};
+
 var ChatPresentedRequest = function(uii, sessionId, response, responseReason) {
     this.uii = uii;
     this.sessionId = sessionId;
@@ -3691,6 +3868,60 @@ ChatPresentedRequest.prototype.formatJSON = function() {
             },
             "response_reason":{
                 "#text":utils.toString(this.responseReason)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
+var ChatRequeueRequest = function(uii, agentId, chatQueueId, skillId, maintainAgent) {
+    this.uii = uii;
+    this.agentId = agentId;
+    this.chatQueueId = chatQueueId;
+    this.skillId = skillId || "";
+    this.maintainAgent = maintainAgent || false;
+};
+
+/*
+ * External Chat:
+ * When agent submits a chat message, send "CHAT-REQUEUE" request to IntelliQueue
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-REQUEUE",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "chat_queue_id":{"#text":""},
+ *      "skill_id":{"#text":""},
+ *      "maintain_agent":{"#text":"true|false"}
+ *    }
+ * }
+ */
+ChatRequeueRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_REQUEUE,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":utils.toString(this.agentId)
+            },
+            "chat_queue_id":{
+                "#text":utils.toString(this.chatQueueId)
+            },
+            "skill_id":{
+                "#text":utils.toString(this.skillId)
+            },
+            "maintain_agent":{
+                "#text":utils.toString(this.maintainAgent)
             }
         }
     };
@@ -3885,6 +4116,59 @@ ChatSendRequest.prototype.processResponse = function(response) {
 
     return formattedResponse;
 };
+
+var ChatTypingRequest = function(uii, accountId, isTyping) {
+    this.uii = uii;
+    this.accountId = accountId;
+    this.isTyping = isTyping;
+};
+
+/*
+ * External Chat:
+ * Agent sends typing message to notify client widgets,
+ * but the agent's pending message is not sent going this direction (just empty string).
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-TYPING",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "account_id":{"#text":""},
+ *      "isTyping":{"#text":"true|false"},
+ *      "pendingMessage":{"#text":""}
+ *    }
+ * }
+ */
+ChatTypingRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_TYPING,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "account_id":{
+                "#text":utils.toString(this.accountId)
+            },
+            "is_typing":{
+                "#text":utils.toString(this.isTyping)
+            },
+            "pending_message":{
+                "#text":""
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
 
 var SupervisorListRequest = function() {
 
@@ -4532,13 +4816,19 @@ var UIModel = (function() {
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
 
-            // chat requests
+            // internal chat requests
             chatAliasRequest : null,
             chatRoomRequest : null,
             chatSendRequest : null,
             supervisorListRequest : null,
             chatRoomStateRequest : new ChatRoomStateRequest(),
 
+            // external chat requests
+            chatDispositionRequest : null,
+            chatMessageRequest : null,
+            chatPresentedRequest : null,
+            chatRequeueRequest : null,
+            chatTypingRequest : null,
 
             // request instances
             agentStateRequest : null,
@@ -5570,7 +5860,14 @@ var utils = {
     sendPingCallMessage: function(){
         UIModel.getInstance().pingCallRequest = new PingCallRequest();
         var msg = UIModel.getInstance().pingCallRequest.formatJSON();
-        utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+        var msgObj = JSON.parse(msg);
+        var agentId = utils.getText(msgObj.ui_request,'agent_id');
+        var uii = utils.getText(msgObj.ui_request,'uii');
+        if(agentId === "" || uii === ""){
+            utils.logMessage(LOG_LEVELS.WARN, "PING-CALL message failed, agentId or UII is empty", msgObj);
+        }else{
+            utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+        }
     },
 
     // called every 5 seconds to request stats from IntelliServices
@@ -5683,6 +5980,7 @@ const CALLBACK_TYPES = {
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "CHAT":"chatResponse",
+    "CHAT_MESSAGE":"chatMessageResponse", // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -5737,7 +6035,11 @@ const MESSAGE_TYPES = {
     "CHAT_ALIAS":"CHAT-ALIAS",                              // internal chat
     "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
     "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
+    "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
+    "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat
     "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
+    "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
+    "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -6100,6 +6402,46 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getRecordRequest = function() {
         return UIModel.getInstance().recordRequest;
+    };
+    /**
+     * Get latest Chat Presented Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatPresentedRequest = function() {
+        return UIModel.getInstance().chatPresentedRequest;
+    };
+    /**
+     * Get latest Chat Disposition Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatDispositionRequest = function() {
+        return UIModel.getInstance().chatDispositionRequest;
+    };
+    /**
+     * Get latest Chat Message Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatMessageRequest = function() {
+        return UIModel.getInstance().chatMessageRequest;
+    };
+    /**
+     * Get latest Chat Requeue Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatRequeueRequest = function() {
+        return UIModel.getInstance().chatRequeueRequest;
+    };
+    /**
+     * Get latest Chat Typing Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatTypingRequest = function() {
+        return UIModel.getInstance().chatTypingRequest;
     };
     /**
      * Get latest Agent Stats object
@@ -7174,6 +7516,78 @@ function initAgentLibraryChat (context) {
         utils.sendMessage(this, msg);
     };
 
+    /**
+     * Send accept/decline response when a chat is presented to an agent
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {number} sessionId The agent's session id
+     * @param {string} response ACCEPT|REJECT response
+     * @param {string} responseReason Agent reason for Reject
+     */
+    AgentLibrary.prototype.chatPresentedResponse = function(uii, sessionId, response, responseReason){
+        UIModel.getInstance().chatPresentedRequest = new ChatPresentedRequest(uii, sessionId, response, responseReason);
+        var msg = UIModel.getInstance().chatPresentedRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send an external chat message
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} accountId The account associated with the chat queue
+     * @param {string} message The message sent by the agent
+     * @param {function} [callback=null] Callback function when chat message received
+     */
+    AgentLibrary.prototype.chatMessage = function(uii, accountId, message, callback){
+        UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, accountId, message);
+        var msg = UIModel.getInstance().chatMessageRequest.formatJSON();
+        utils.setCallback(this, CALLBACK_TYPES.CHAT_MESSAGE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send a disposition to end a chat session
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {number} agentId The agent's id
+     * @param {number} dispositionId Id of the selected disposition
+     * @param {number} sessionId Id of the Agent's session
+     * @param {string} [notes=""] Agent notes
+     * @param {object} [script=null] Script data associated with the chat session
+     */
+    AgentLibrary.prototype.chatDisposition = function(uii, agentId, dispositionId, sessionId, notes, script){
+        UIModel.getInstance().chatDispositionRequest = new ChatDispositionRequest(uii, agentId, dispositionId, sessionId, notes, script);
+        var msg = UIModel.getInstance().chatDispositionRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send the chat to a different Chat Queue
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {number} agentId The agent's id
+     * @param {number} chatQueueId Id of the Chat Queue to requeue to
+     * @param {number} skillId Skill id associated with the Chat Queue
+     * @param {boolean} [maintainAgent=fakse] Whether or not to keep the current agent connected to the chat on requeue
+     */
+    AgentLibrary.prototype.chatRequeue = function(uii, agentId, chatQueueId, skillId, maintainAgent){
+        UIModel.getInstance().chatRequeueRequest = new ChatRequeueRequest(uii, agentId, chatQueueId, skillId, maintainAgent);
+        var msg = UIModel.getInstance().chatRequeueRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sent when agent starts/stops typing
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {number} accountId The account id associated with the Chat Queue
+     * @param {boolean} isTyping Whether or not the agent is currently typing
+     */
+    AgentLibrary.prototype.chatTyping = function(uii, accountId, isTyping){
+        UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii, accountId, isTyping);
+        var msg = UIModel.getInstance().chatTypingRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
 }
 
 function initAgentLibraryLogger (context) {

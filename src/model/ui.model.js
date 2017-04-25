@@ -23,13 +23,19 @@ var UIModel = (function() {
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
 
-            // chat requests
+            // internal chat requests
             chatAliasRequest : null,
             chatRoomRequest : null,
             chatSendRequest : null,
             supervisorListRequest : null,
             chatRoomStateRequest : new ChatRoomStateRequest(),
 
+            // external chat requests
+            chatDispositionRequest : null,
+            chatMessageRequest : null,
+            chatPresentedRequest : null,
+            chatRequeueRequest : null,
+            chatTypingRequest : null,
 
             // request instances
             agentStateRequest : null,
