@@ -705,6 +705,46 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getEarlyUiiNotification = function() {
         return UIModel.getInstance().earlyUiiNotification;
     };
+    /**
+     * Get Chat Active notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatActiveNotification = function() {
+        return UIModel.getInstance().chatActiveNotification;
+    };
+    /**
+     * Get Chat Inactive notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatInactiveNotification = function() {
+        return UIModel.getInstance().chatInactiveNotification;
+    };
+    /**
+     * Get Chat Presented notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatPresentedNotification = function() {
+        return UIModel.getInstance().chatPresentedNotification;
+    };
+    /**
+     * Get Chat Typing notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatTypingNotification = function() {
+        return UIModel.getInstance().chatTypingNotification;
+    };
+    /**
+     * Get New Chat notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getNewChatNotification = function() {
+        return UIModel.getInstance().newChatNotification;
+    };
 
     /**
      * @namespace Settings

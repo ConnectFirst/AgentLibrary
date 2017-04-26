@@ -30,12 +30,17 @@ var UIModel = (function() {
             supervisorListRequest : null,
             chatRoomStateRequest : new ChatRoomStateRequest(),
 
-            // external chat requests
+            // external chat requests/notifications
+            chatActiveNotification : new ChatActiveNotification(),
+            chatInactiveNotification : new ChatInactiveNotification(),
             chatDispositionRequest : null,
             chatMessageRequest : null,
+            chatPresentedNotification : new ChatPresentedNotification(),
             chatPresentedRequest : null,
             chatRequeueRequest : null,
+            chatTypingNotification : new ChatTypingNotification(),
             chatTypingRequest : null,
+            newChatNotification : new NewChatNotification(),
 
             // request instances
             agentStateRequest : null,
