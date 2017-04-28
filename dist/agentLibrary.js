@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.0 - 2017-03-31 - Connect First */
+/*! cf-agent-library - v1.0.0 - 2017-04-28 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -668,6 +668,7 @@ function buildTokenMap(notif, newCall){
         tokens["agentExternalId"] = model.agentSettings.externalAgentId;
         tokens["agentType"] = model.agentSettings.agentType;
         tokens["agentEmail"] = model.agentSettings.email;
+        tokens["agentUserName"] = model.agentSettings.username;
     }catch(any){
         console.error("There was an error parsing tokens for agent info. ", any);
     }
@@ -3900,6 +3901,148 @@ SupervisorListRequest.prototype.processResponse = function(response) {
     return model.supervisors;
 };
 
+var ChatActiveNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-ACTIVE" packets from IntelliQueue.
+ * This is sent in response to an agent's CHAT-PRESENTED accept request.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-ACTIVE",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "agent_id":{"#text":"1180958"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+ChatActiveNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-ACTIVE notification",
+        status: "OK",
+        agentId: utils.getText(notif, "agent_id"),
+        uii: utils.getText(notif, "uii")
+    };
+
+};
+
+
+var ChatInactiveNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-INACTIVE" packets from IntelliQueue.
+ * This is sent to the agent when the last session is disconnected from a chat.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-INACTIVE",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "agent_id":{"#text":"1180958"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+ChatInactiveNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-INACTIVE notification",
+        status: "OK",
+        agentId: utils.getText(notif, "agent_id"),
+        uii: utils.getText(notif, "uii")
+    };
+
+};
+
+
+var ChatPresentedNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-PRESENTED" packets from IntelliQueue.
+ * When this notification is received, the Agent can either Accept or Decline which will
+ * be sent back to IntelliQueue as a CHAT-PRESENTED response.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-PRESENTED",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "agent_id":{"#text":"1180958"},
+ *          "session_id":{"#text":"2"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+ChatPresentedNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-PRESENTED notification",
+        status: "OK",
+        agentId: utils.getText(notif, "agent_id"),
+        sessionId: utils.getText(notif, "session_id"),
+        uii: utils.getText(notif, "uii")
+    };
+
+};
+
+
+var ChatTypingNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-TYPING" packets from IntelliQueue.
+ * When this notification is received, the AgentUI will show the pending message
+ * so far from the client chat widget and typing notification.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-TYPING",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "agent_id":{"#text":"1180958"},
+ *          "account_id":{"#text":"99999999"},
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "is_typing":{"#text":"true"},
+ *          "pending_message":{"#text":"this is the message before actual send"}
+ *      }
+ *  }
+ */
+ChatTypingNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-TYPING notification",
+        status: "OK",
+        agentId: utils.getText(notif, "agent_id"),
+        accountId: utils.getText(notif, "account_id"),
+        uii: utils.getText(notif, "uii"),
+        isTyping: utils.getText(notif, "is_typing"),
+        pendingMessage: utils.getText(notif, "pending_message")
+    };
+
+};
+
+
 var AgentStats = function() {
 
 };
@@ -5370,7 +5513,14 @@ var utils = {
     sendPingCallMessage: function(){
         UIModel.getInstance().pingCallRequest = new PingCallRequest();
         var msg = UIModel.getInstance().pingCallRequest.formatJSON();
-        utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+        var msgObj = JSON.parse(msg);
+        var agentId = utils.getText(msgObj.ui_request,'agent_id');
+        var uii = utils.getText(msgObj.ui_request,'uii');
+        if(agentId === "" || uii === ""){
+            utils.logMessage(LOG_LEVELS.WARN, "PING-CALL message failed, agentId or UII is empty", msgObj);
+        }else{
+            utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+        }
     },
 
     // called every 5 seconds to request stats from IntelliServices
