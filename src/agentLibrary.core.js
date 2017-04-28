@@ -73,6 +73,7 @@ const CALLBACK_TYPES = {
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "CHAT":"chatResponse",
+    "CHAT_MESSAGE":"chatMessageResponse", // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -123,10 +124,15 @@ const MESSAGE_TYPES = {
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
     "CAMPAIGN_DISPOSITIONS":"CAMPAIGN-DISPOSITIONS",
-    "CHAT_SEND":"CHAT",
-    "CHAT_ALIAS":"CHAT-ALIAS",
-    "CHAT_ROOM":"CHAT-ROOM",
-    "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",
+    "CHAT_SEND":"CHAT",                                     // internal chat
+    "CHAT_ALIAS":"CHAT-ALIAS",                              // internal chat
+    "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
+    "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
+    "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
+    "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat
+    "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
+    "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
+    "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -491,6 +497,46 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().recordRequest;
     };
     /**
+     * Get latest Chat Presented Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatPresentedRequest = function() {
+        return UIModel.getInstance().chatPresentedRequest;
+    };
+    /**
+     * Get latest Chat Disposition Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatDispositionRequest = function() {
+        return UIModel.getInstance().chatDispositionRequest;
+    };
+    /**
+     * Get latest Chat Message Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatMessageRequest = function() {
+        return UIModel.getInstance().chatMessageRequest;
+    };
+    /**
+     * Get latest Chat Requeue Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatRequeueRequest = function() {
+        return UIModel.getInstance().chatRequeueRequest;
+    };
+    /**
+     * Get latest Chat Typing Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatTypingRequest = function() {
+        return UIModel.getInstance().chatTypingRequest;
+    };
+    /**
      * Get latest Agent Stats object
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
@@ -658,6 +704,46 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getEarlyUiiNotification = function() {
         return UIModel.getInstance().earlyUiiNotification;
+    };
+    /**
+     * Get Chat Active notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatActiveNotification = function() {
+        return UIModel.getInstance().chatActiveNotification;
+    };
+    /**
+     * Get Chat Inactive notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatInactiveNotification = function() {
+        return UIModel.getInstance().chatInactiveNotification;
+    };
+    /**
+     * Get Chat Presented notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatPresentedNotification = function() {
+        return UIModel.getInstance().chatPresentedNotification;
+    };
+    /**
+     * Get Chat Typing notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatTypingNotification = function() {
+        return UIModel.getInstance().chatTypingNotification;
+    };
+    /**
+     * Get New Chat notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getNewChatNotification = function() {
+        return UIModel.getInstance().newChatNotification;
     };
 
     /**

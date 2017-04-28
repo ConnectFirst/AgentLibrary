@@ -200,7 +200,6 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
-        // process gates change event
         var response = Lib.getGenericNotification().processResponse(this.genericCancelCallbackNotificationRaw);
         var expectedResponse = {
             message: "OK",

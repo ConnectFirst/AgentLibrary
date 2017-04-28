@@ -1,0 +1,38 @@
+{
+    "ui_notification":{
+        "@message_id":"IQ10012016081611595000289",
+        "@type":"NEW-CHAT",
+        "@destination":"IQ",
+        "@response_to":"",
+        "uii":{"#text":"201608161200240139000000000120"},
+        "session_id":{"#text":"2"},
+        "agent_id":{"#text":"1180958"},
+        "queue_time":{"#text":"-1"},
+        "queue_dts":{"#text":"2017-04-26 11:25:00"},
+        "chat_queue_name":{"#text":"Test Chat Queue"},
+        "is_sms":{"#text":"false"},
+        "app_url":{"#text":"www.test.url"},
+        "script_id":{"#text":"1"},
+        "survey_pop_type":{"#text":"SUPPRESS"},
+        "script_version":{"#text":"1"},
+        "pre_chat_data":{"#text":"json_string_form_data"},
+        "requeue_shortcuts":{
+            "requeue_shortcuts":{
+                "@chat_queue_id":"2", "@name":"test queue", "@skill_id":""
+            }
+        },
+        "chat_dispositions":{
+            "dispositions":[
+                { "@disposition_id":"2", "#text":"Complete"},
+                { "@disposition_id":"3", "#text":"Requeue"}
+            ]
+        },
+        "history":{
+            "message":[
+                { "@from":"system", "@type":"SYSTEM", "#text":"User1 connected"},
+                { "@from":"dlbooks", "@type":"AGENT", "#text":"Hello"},
+                { "@from":"user1", "@type":"CLIENT", "#text":"Hi"}
+            ]
+        }
+    }
+}

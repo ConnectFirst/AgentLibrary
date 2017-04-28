@@ -98,7 +98,7 @@ DispositionRequest.prototype.formatJSON = function() {
     }
 
     /*
-     * converts survey to this reponse
+     * converts survey to this response
      * survey : {
      *      response: [
      *          { "@extern_id":"", "@lead_update_column":"", "#text":"" }

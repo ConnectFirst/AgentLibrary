@@ -1,0 +1,14 @@
+{
+    "ui_notification":{
+        "@message_id":"IQ10012016081611595000289",
+        "@type":"CHAT-TYPING",
+        "@destination":"IQ",
+        "@response_to":"",
+        "agent_id":{"#text":"1180958"},
+        "account_id":{"#text":"99999999"},
+        "uii":{"#text":"201608161200240139000000000120"},
+        "is_typing":{"#text":"true"},
+        "pending_message":{"#text":"this is the message before actual send"}
+    }
+}
+

@@ -1,0 +1,10 @@
+{
+  "ui_notification":{
+    "@message_id":"IQ10012016081611595000289",
+    "@type":"CHAT-ACTIVE",
+    "@destination":"IQ",
+    "@response_to":"",
+    "agent_id":{"#text":"1180958"},
+    "uii":{"#text":"201608161200240139000000000120"}
+  }
+}
