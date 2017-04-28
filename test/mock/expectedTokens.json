@@ -11,6 +11,7 @@
   "agentExternalId": "",
   "agentType": "AGENT",
   "agentEmail":"test@connectfirst.com",
+  "agentUserName":"testUser",
   "allowUpdates": true, 
   "showLeadPasses": true, 
   "showListName": true, 

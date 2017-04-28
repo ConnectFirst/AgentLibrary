@@ -260,6 +260,7 @@ function buildTokenMap(notif, newCall){
         tokens["agentExternalId"] = model.agentSettings.externalAgentId;
         tokens["agentType"] = model.agentSettings.agentType;
         tokens["agentEmail"] = model.agentSettings.email;
+        tokens["agentUserName"] = model.agentSettings.username;
     }catch(any){
         console.error("There was an error parsing tokens for agent info. ", any);
     }
