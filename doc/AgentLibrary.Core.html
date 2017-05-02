@@ -100,7 +100,7 @@ attached to the context that the library was loaded in.</div>
             <td class="type">
             
                 
-<span class="param-type">object</span>
+<span class="param-type">array</span>
 
 
             
@@ -117,13 +117,13 @@ attached to the context that the library was loaded in.</div>
 
         <tr>
             
-                <td class="name"><code>_db</code></td>
+                <td class="name"><code>_queuedMsgs</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">object</span>
+<span class="param-type">array</span>
 
 
             
@@ -133,7 +133,30 @@ attached to the context that the library was loaded in.</div>
 
             
 
-            <td class="description last">Internal IndexedDB used for logging</td>
+            <td class="description last">Array of pending messages to be sent when socket reconnected</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>_isReconnect</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Whether or not we are doing a reconnect for the socket</td>
         </tr>
 
     
@@ -172,7 +195,7 @@ attached to the context that the library was loaded in.</div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line5538">line 5538</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line6151">line 6151</a>
     </li></ul></dd>
     
 
@@ -286,7 +309,7 @@ attached to the context that the library was loaded in.</div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line5626">line 5626</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line6294">line 6294</a>
     </li></ul></dd>
     
 
@@ -386,7 +409,7 @@ attached to the context that the library was loaded in.</div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line5617">line 5617</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line6285">line 6285</a>
     </li></ul></dd>
     
 
@@ -558,7 +581,7 @@ attached to the context that the library was loaded in.</div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line5608">line 5608</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line6276">line 6276</a>
     </li></ul></dd>
     
 
@@ -652,7 +675,55 @@ attached to the context that the library was loaded in.</div>
 <tt>callbackMap = {<br />
      closeResponse: onCloseFunction,<br />
      openResponse: onOpenFunction<br />
-}</tt></td>
+}
+</tt>
+<br />
+Possible callback types:
+<li>"addSessionNotification"</li>
+<li>"agentStateResponse"</li>
+<li>"bargeInResponse"</li>
+<li>"closeResponse"</li>
+<li>"coachResponse"</li>
+<li>"configureResponse"</li>
+<li>"callNotesResponse"</li>
+<li>"callbacksPendingResponse"</li>
+<li>"callbackCancelResponse"</li>
+<li>"campaignDispositionsResponse"</li>
+<li>"chatResponse"</li>
+<li>"dialGroupChangeNotification"</li>
+<li>"dialGroupChangePendingNotification"</li>
+<li>"dropSessionNotification"</li>
+<li>"earlyUiiNotification"</li>
+<li>"endCallNotification"</li>
+<li>"gatesChangeNotification"</li>
+<li>"genericNotification"</li>
+<li>"genericResponse"</li>
+<li>"holdResponse"</li>
+<li>"leadSearchResponse"</li>
+<li>"loginResponse"</li>
+<li>"logoutResponse"</li>
+<li>"monitorResponse"</li>
+<li>"newCallNotification"</li>
+<li>"offhookInitResponse"</li>
+<li>"offhookTermNotification"</li>
+<li>"openResponse"</li>
+<li>"pauseRecordResponse"</li>
+<li>"pendingDispNotification"</li>
+<li>"previewFetchResponse"</li>
+<li>"previewLeadStateNotification"</li>
+<li>"recordResponse"</li>
+<li>"requeueResponse"</li>
+<li>"reverseMatchNotification"</li>
+<li>"safeModeFetchResponse"</li>
+<li>"safeModeSearchResponse"</li>
+<li>"scriptConfigResponse"</li>
+<li>"supervisorListResponse"</li>
+<li>"coldXferResponse"</li>
+<li>"warmXferResponse"</li>
+<li>"agentStats"</li>
+<li>"agentDailyStats"</li>
+<li>"campaignStats"</li>
+<li>"queueStats"</li></td>
         </tr>
 
     
@@ -693,7 +764,7 @@ attached to the context that the library was loaded in.</div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line5595">line 5595</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line6263">line 6263</a>
     </li></ul></dd>
     
 
@@ -741,7 +812,7 @@ attached to the context that the library was loaded in.</div>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon Jan 23 2017 11:26:03 GMT-0700 (MST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Tue May 02 2017 10:07:30 GMT-0600 (MDT)
 </footer>
 
 <script> prettyPrint(); </script>
