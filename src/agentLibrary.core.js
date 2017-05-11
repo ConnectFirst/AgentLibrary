@@ -289,6 +289,15 @@ function initAgentLibraryCore (context) {
     };
 
     /**
+     * Get the socket connection to IntelliSocket
+     * @memberof AgentLibrary.Core
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getSocket = function(type){
+        return this.socket;
+    };
+
+    /**
      * @namespace Requests
      * @memberof AgentLibrary.Core
      */

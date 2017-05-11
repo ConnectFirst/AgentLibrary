@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.3 - 2017-05-02 - Connect First */
+/*! cf-agent-library - v1.0.3 - 2017-05-11 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -6293,6 +6293,15 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getCallback = function(type){
         return this.callbacks[type];
+    };
+
+    /**
+     * Get the socket connection to IntelliSocket
+     * @memberof AgentLibrary.Core
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getSocket = function(type){
+        return this.socket;
     };
 
     /**
