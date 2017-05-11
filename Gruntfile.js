@@ -168,6 +168,7 @@ module.exports = function(grunt) {
     grunt.registerTask('compile', [
         'test',
         'build',
+        'jsdoc',
         'compress:dist'
     ]);
 

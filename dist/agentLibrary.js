@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.2 - 2017-04-28 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-05-11 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -6018,56 +6018,7 @@ const LOG_LEVELS ={
     "ERROR":"error"
 };
 
-/**
- * @memberof AgentLibrary
- * Possible callback types:
- * <li>"addSessionNotification"</li>
- * <li>"agentStateResponse"</li>
- * <li>"bargeInResponse"</li>
- * <li>"closeResponse"</li>
- * <li>"coachResponse"</li>
- * <li>"configureResponse"</li>
- * <li>"callNotesResponse"</li>
- * <li>"callbacksPendingResponse"</li>
- * <li>"callbackCancelResponse"</li>
- * <li>"campaignDispositionsResponse"</li>
- * <li>"chatResponse"</li>
- * <li>"dialGroupChangeNotification"</li>
- * <li>"dialGroupChangePendingNotification"</li>
- * <li>"dropSessionNotification"</li>
- * <li>"earlyUiiNotification"</li>
- * <li>"endCallNotification"</li>
- * <li>"gatesChangeNotification"</li>
- * <li>"genericNotification"</li>
- * <li>"genericResponse"</li>
- * <li>"holdResponse"</li>
- * <li>"leadSearchResponse"</li>
- * <li>"loginResponse"</li>
- * <li>"logoutResponse"</li>
- * <li>"monitorResponse"</li>
- * <li>"newCallNotification"</li>
- * <li>"offhookInitResponse"</li>
- * <li>"offhookTermNotification"</li>
- * <li>"openResponse"</li>
- * <li>"pauseRecordResponse"</li>
- * <li>"pendingDispNotification"</li>
- * <li>"previewFetchResponse"</li>
- * <li>"previewLeadStateNotification"</li>
- * <li>"recordResponse"</li>
- * <li>"requeueResponse"</li>
- * <li>"reverseMatchNotification"</li>
- * <li>"safeModeFetchResponse"</li>
- * <li>"safeModeSearchResponse"</li>
- * <li>"scriptConfigResponse"</li>
- * <li>"supervisorListResponse"</li>
- * <li>"coldXferResponse"</li>
- * <li>"warmXferResponse"</li>
- * <li>"agentStats"</li>
- * <li>"agentDailyStats"</li>
- * <li>"campaignStats"</li>
- * <li>"queueStats"</li>
- * @type {object}
- */
+// add all callback types to setCallback method description
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
     "AGENT_STATE":"agentStateResponse",
@@ -6258,7 +6209,56 @@ function initAgentLibraryCore (context) {
      * <tt>callbackMap = {<br />
      *      closeResponse: onCloseFunction,<br />
      *      openResponse: onOpenFunction<br />
-     * }</tt>
+     * }
+     * </tt>
+     *<br />
+     * Possible callback types:
+     * <li>"addSessionNotification"</li>
+     * <li>"agentStateResponse"</li>
+     * <li>"bargeInResponse"</li>
+     * <li>"closeResponse"</li>
+     * <li>"coachResponse"</li>
+     * <li>"configureResponse"</li>
+     * <li>"callNotesResponse"</li>
+     * <li>"callbacksPendingResponse"</li>
+     * <li>"callbackCancelResponse"</li>
+     * <li>"campaignDispositionsResponse"</li>
+     * <li>"chatResponse"</li>
+     * <li>"dialGroupChangeNotification"</li>
+     * <li>"dialGroupChangePendingNotification"</li>
+     * <li>"dropSessionNotification"</li>
+     * <li>"earlyUiiNotification"</li>
+     * <li>"endCallNotification"</li>
+     * <li>"gatesChangeNotification"</li>
+     * <li>"genericNotification"</li>
+     * <li>"genericResponse"</li>
+     * <li>"holdResponse"</li>
+     * <li>"leadSearchResponse"</li>
+     * <li>"loginResponse"</li>
+     * <li>"logoutResponse"</li>
+     * <li>"monitorResponse"</li>
+     * <li>"newCallNotification"</li>
+     * <li>"offhookInitResponse"</li>
+     * <li>"offhookTermNotification"</li>
+     * <li>"openResponse"</li>
+     * <li>"pauseRecordResponse"</li>
+     * <li>"pendingDispNotification"</li>
+     * <li>"previewFetchResponse"</li>
+     * <li>"previewLeadStateNotification"</li>
+     * <li>"recordResponse"</li>
+     * <li>"requeueResponse"</li>
+     * <li>"reverseMatchNotification"</li>
+     * <li>"safeModeFetchResponse"</li>
+     * <li>"safeModeSearchResponse"</li>
+     * <li>"scriptConfigResponse"</li>
+     * <li>"supervisorListResponse"</li>
+     * <li>"coldXferResponse"</li>
+     * <li>"warmXferResponse"</li>
+     * <li>"agentStats"</li>
+     * <li>"agentDailyStats"</li>
+     * <li>"campaignStats"</li>
+     * <li>"queueStats"</li>
+     * @type {object}
      */
     AgentLibrary.prototype.setCallbacks = function(callbackMap) {
         for(var property in callbackMap) {
@@ -6293,6 +6293,15 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getCallback = function(type){
         return this.callbacks[type];
+    };
+
+    /**
+     * Get the socket connection to IntelliSocket
+     * @memberof AgentLibrary.Core
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getSocket = function(type){
+        return this.socket;
     };
 
     /**
