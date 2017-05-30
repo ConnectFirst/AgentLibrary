@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-05-11 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-05-30 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3643,15 +3643,15 @@ ChatAliasRequest.prototype.formatJSON = function() {
 };
 
 
-var ChatDispositionRequest = function(uii, agentId, dispositionId, sessionId, notes, script) {
+var ChatDispositionRequest = function(uii, agentId, dispositionId, notes, sendAcknowlegement, survey) {
     this.uii = uii;
     this.agentId = agentId;
     this.dispositionId = dispositionId;
-    this.sessionId = sessionId;
     this.notes = notes || "";
+    this.sendAcknowlegement = sendAcknowlegement || false;
 
     /*
-     * script = {
+     * survey = {
      *      first_name: {
      *          leadField: "first_name"
      *          value: "Geoff"
@@ -3663,7 +3663,7 @@ var ChatDispositionRequest = function(uii, agentId, dispositionId, sessionId, no
      *      ...
      * }
      */
-    this.script = script || null;
+    this.survey = survey || null;
 };
 
 /*
@@ -3677,9 +3677,9 @@ var ChatDispositionRequest = function(uii, agentId, dispositionId, sessionId, no
  *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
  *      "disposition_id":{"#text":""},
- *      "session_id":{"#text":""},
  *      "notes":{"#text":"hello"},
- *      "script":{
+ *      "do_ack":{"#text":"true"},
+ *      "survey":{
  *          "response":[
  *              {"@extern_id":"text_box","#text":"hello"},
  *              {"@extern_id":"check_box","#text":"20"},
@@ -3705,35 +3705,35 @@ ChatDispositionRequest.prototype.formatJSON = function() {
             "disposition_id":{
                 "#text":utils.toString(this.dispositionId)
             },
-            "session_id":{
-                "#text": utils.toString(this.sessionId)
-            },
             "notes":{
                 "#text":utils.toString(this.notes)
+            },
+            "do_ack":{
+                "#text":utils.toString(this.sendAcknowlegement)
             }
         }
     };
 
     /*
-     * converts script to this response
-     * script : {
+     * converts survey to this response
+     * survey : {
      *      response: [
      *          { "@extern_id":"", "@lead_update_column":"", "#text":"" }
      *      ]
      * }
      */
-    if(this.script !== null){
+    if(this.survey !== null){
         var response = [];
-        var keys = Object.keys(this.script);
+        var keys = Object.keys(this.survey);
         for(var i = 0; i < keys.length; i++){
             var key = keys[i];
             var obj = {
                 "@extern_id": key,
-                "#text": utils.toString(this.script[key].value)
+                "#text": utils.toString(this.survey[key].value)
             };
             response.push(obj);
         }
-        msg.ui_request.script = {"response":response};
+        msg.ui_request.survey = {"response":response};
     }
 
     return JSON.stringify(msg);
@@ -3741,9 +3741,9 @@ ChatDispositionRequest.prototype.formatJSON = function() {
 
 
 
-var ChatMessageRequest = function(uii, accountId, message) {
+var ChatMessageRequest = function(uii, agentId, message) {
     this.uii = uii;
-    this.accountId = accountId;
+    this.agentId = agentId;
     this.message = message;
 };
 
@@ -3756,9 +3756,7 @@ var ChatMessageRequest = function(uii, accountId, message) {
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},
- *      "account_id":{"#text":""},
- *      "from":{"#text":""}, <--- injected by IQ
- *      "type":{"#text":"SYSTEM | AGENT | CLIENT"},
+ *      "agent_id":{"#text":""},
  *      "message":{"#text":"hello"}
  *    }
  * }
@@ -3773,14 +3771,8 @@ ChatMessageRequest.prototype.formatJSON = function() {
             "uii":{
                 "#text":utils.toString(this.uii)
             },
-            "account_id":{
-                "#text":utils.toString(this.accountId)
-            },
-            "from":{
-                "#text":""
-            },
-            "type":{
-                "#text":"AGENT"
+            "agent_id":{
+                "#text":utils.toString(this.agentId)
             },
             "message":{
                 "#text":utils.toString(this.message)
@@ -3802,7 +3794,6 @@ ChatMessageRequest.prototype.formatJSON = function() {
  *      "uii":{"#text":""},
  *      "account_id":{"#text":""},
  *      "from":{"#text":""},
- *      "type":{"#text":"SYSTEM | AGENT | CLIENT"},
  *      "message":{"#text":"hello"}
  *    }
  * }
@@ -3814,7 +3805,6 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),
         from: utils.getText(resp, 'from'),
-        type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message')
     };
 
@@ -3824,16 +3814,15 @@ ChatMessageRequest.prototype.processResponse = function(response) {
 };
 
 
-var ChatPresentedRequest = function(uii, sessionId, response, responseReason) {
+var ChatPresentedResponseRequest = function(uii, response, responseReason) {
     this.uii = uii;
-    this.sessionId = sessionId;
     this.response = response;
     this.responseReason = responseReason || "";
 };
 
 /*
  * External Chat:
- * When Agent receives a CHAT-PRESENTED notification, repond with
+ * When Agent receives a CHAT-PRESENTED notification, respond with
  * either ACCEPT or REJECT for presented chat.
  * {"ui_request":{
  *      "@destination":"IQ",
@@ -3842,13 +3831,12 @@ var ChatPresentedRequest = function(uii, sessionId, response, responseReason) {
  *      "@response_to":"",
  *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
- *      "session_id":{"#text":""},
  *      "response":{"#text":"ACCEPT|REJECT"},
  *      "response_reason":{"#text":""}
  *    }
  * }
  */
-ChatPresentedRequest.prototype.formatJSON = function() {
+ChatPresentedResponseRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request": {
             "@destination":"IQ",
@@ -3860,9 +3848,6 @@ ChatPresentedRequest.prototype.formatJSON = function() {
             },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
-            },
-            "session_id":{
-                "#text":utils.toString(this.sessionId)
             },
             "response":{
                 "#text":utils.toString(this.response)
@@ -4118,10 +4103,8 @@ ChatSendRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-var ChatTypingRequest = function(uii, accountId, isTyping) {
+var ChatTypingRequest = function(uii) {
     this.uii = uii;
-    this.accountId = accountId;
-    this.isTyping = isTyping;
 };
 
 /*
@@ -4134,10 +4117,7 @@ var ChatTypingRequest = function(uii, accountId, isTyping) {
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},
- *      "agent_id":{"#text":""},
- *      "account_id":{"#text":""},
- *      "isTyping":{"#text":"true|false"},
- *      "pendingMessage":{"#text":""}
+ *      "agent_id":{"#text":""}
  *    }
  * }
  */
@@ -4153,15 +4133,6 @@ ChatTypingRequest.prototype.formatJSON = function() {
             },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
-            },
-            "account_id":{
-                "#text":utils.toString(this.accountId)
-            },
-            "is_typing":{
-                "#text":utils.toString(this.isTyping)
-            },
-            "pending_message":{
-                "#text":""
             }
         }
     };
@@ -4250,7 +4221,7 @@ var ChatActiveNotification = function() {
 /*
  * External Chat:
  * This class is responsible for handling "CHAT-ACTIVE" packets from IntelliQueue.
- * This is sent in response to an agent's CHAT-PRESENTED accept request.
+ * This is sent in response to an agent's CHAT-PRESENTED-RESPONSE accept request.
  *
  *  {
  *      "ui_notification":{
@@ -4258,7 +4229,7 @@ var ChatActiveNotification = function() {
  *          "@type":"CHAT-ACTIVE",
  *          "@destination":"IQ",
  *          "@response_to":"",
- *          "agent_id":{"#text":"1180958"},
+ *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"}
  *      }
  *  }
@@ -4269,7 +4240,7 @@ ChatActiveNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-ACTIVE notification",
         status: "OK",
-        agentId: utils.getText(notif, "agent_id"),
+        accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii")
     };
 
@@ -4291,7 +4262,7 @@ var ChatInactiveNotification = function() {
  *          "@type":"CHAT-INACTIVE",
  *          "@destination":"IQ",
  *          "@response_to":"",
- *          "agent_id":{"#text":"1180958"},
+ *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"}
  *      }
  *  }
@@ -4302,7 +4273,7 @@ ChatInactiveNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-INACTIVE notification",
         status: "OK",
-        agentId: utils.getText(notif, "agent_id"),
+        accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii")
     };
 
@@ -4317,7 +4288,7 @@ var ChatPresentedNotification = function() {
  * External Chat:
  * This class is responsible for handling "CHAT-PRESENTED" packets from IntelliQueue.
  * When this notification is received, the Agent can either Accept or Decline which will
- * be sent back to IntelliQueue as a CHAT-PRESENTED response.
+ * be sent back to IntelliQueue as a CHAT-PRESENTED-RESPONSE.
  *
  *  {
  *      "ui_notification":{
@@ -4325,9 +4296,11 @@ var ChatPresentedNotification = function() {
  *          "@type":"CHAT-PRESENTED",
  *          "@destination":"IQ",
  *          "@response_to":"",
- *          "agent_id":{"#text":"1180958"},
- *          "session_id":{"#text":"2"},
- *          "uii":{"#text":"201608161200240139000000000120"}
+ *          "chat_queue_id":{"#text":"3"},
+ *          "chat_queue_name":{"#text":"Support Chat"},
+ *          "account_id":{"#text":"99999999"},
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "channel_type":{"#text":""}
  *      }
  *  }
  */
@@ -4337,9 +4310,11 @@ ChatPresentedNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-PRESENTED notification",
         status: "OK",
-        agentId: utils.getText(notif, "agent_id"),
-        sessionId: utils.getText(notif, "session_id"),
-        uii: utils.getText(notif, "uii")
+        accountId: utils.getText(notif, "account_id"),
+        uii: utils.getText(notif, "uii"),
+        channelType: utils.getText(notif, "channel_type"),
+        chatQueueId: utils.getText(notif, "chat_queue_id"),
+        chatQueueName: utils.getText(notif, "chat_queue_name")
     };
 
 };
@@ -4361,11 +4336,10 @@ var ChatTypingNotification = function() {
  *          "@type":"CHAT-TYPING",
  *          "@destination":"IQ",
  *          "@response_to":"",
- *          "agent_id":{"#text":"1180958"},
- *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "is_typing":{"#text":"true"},
- *          "pending_message":{"#text":"this is the message before actual send"}
+ *          "account_id":{"#text":"99999999"},
+ *          "from":{"#text":""},
+ *          "message":{"#text":"this is the message before actual send"}
  *      }
  *  }
  */
@@ -4375,11 +4349,10 @@ ChatTypingNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-TYPING notification",
         status: "OK",
-        agentId: utils.getText(notif, "agent_id"),
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
-        isTyping: utils.getText(notif, "is_typing"),
-        pendingMessage: utils.getText(notif, "pending_message")
+        from: utils.getText(notif, "from"),
+        pendingMessage: utils.getText(notif, "message")
     };
 
 };
@@ -4400,12 +4373,20 @@ var NewChatNotification = function() {
  *          "@destination":"IQ",
  *          "@response_to":"",
  *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "account_id":{"#text":"99999999"},
  *          "session_id":{"#text":"2"},
  *          "agent_id":{"#text":"1180958"},
  *          "queue_dts":{"#text":""},
  *          "queue_time":{"#text":""},
+ *          "chat_queue_id":{"#text":""},
  *          "chat_queue_name":{"#text":""},
- *          "is_sms":{"#text":"true|false"},
+ *          "app_url":{"#text":""},
+ *          "channel_type":{"#text":""},
+ *          "ani":{"#text":""},
+ *          "dnis":{"#text":""},
+ *          "survey_pop_type":{"#text":""},
+ *          "script_id":{"#text":""},
+ *          "script_version":{"#text":""},
  *          "requeue_shortcuts":{
  *              "requeue_shortcut":{
  *                  "@chat_queue_id":"2",
@@ -4414,23 +4395,19 @@ var NewChatNotification = function() {
  *              }
  *          },
  *          "chat_dispositions":{
- *              "dispositions":[
- *                  { "@disposition_id":"2", "#text":"Complete"},
- *                  { "@disposition_id":"3", "#text":"Requeue"}
+ *              "disposition":[
+ *                  { "@disposition_id":"2", "@is_success":"true", "@is_complete":"false", "@email_template_id":"1", "#text":"Complete"},
+ *                  { "@disposition_id":"3", "@is_success":"true", "@is_complete":"false", "#text":"Requeue"}
  *              ]
  *          },
- *          "app_url":{"#text":""},
- *          "script_id":{"#text":""},
- *          "survey_pop_type":{"#text":""},
- *          "script_version":{"#text":""},
- *          "pre_chat_data":{"#text":"json_string_form_data"},
- *          "history":{
+ *          "transcript":{
  *              "message":[
- *                  { "@from":"system", "@type":"SYSTEM", "#text":"User1 connected"},
- *                  { "@from":"dlbooks", "@type":"AGENT", "#text":"Hello"},
- *                  { "@from":"user1", "@type":"CLIENT", "#text":"Hi"}
+ *                  { "@from":"system", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
+ *                  { "@from":"dlbooks", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
+ *                  { "@from":"user1", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
- *          }
+ *          },
+ *          "json_baggage":{"#text":"json_string_form_data"},
  *      }
  *  }
  */
@@ -4440,22 +4417,26 @@ NewChatNotification.prototype.processResponse = function(notification) {
     // set up new call obj
     var newChat = {
         uii: utils.getText(notif,'uii'),
+        accountId: utils.getText(notif,'account_id'),
         sessionId: utils.getText(notif,'session_id'),
         agentId: utils.getText(notif,'agent_id'),
         queueDts: utils.getText(notif,'queue_dts'),
         queueTime: utils.getText(notif,'queue_time'),
+        chatQueueId: utils.getText(notif,'chat_queue_id'),
         chatQueueName: utils.getText(notif,'chat_queue_name'),
-        isSms: utils.getText(notif,'is_sms'),
         appUrl: utils.getText(notif,'app_url'),
-        scriptId: utils.getText(notif,'script_id'),
+        channelType: utils.getText(notif,'channel_type'),
+        ani: utils.getText(notif,'ani'),
+        dnis: utils.getText(notif,'dnis'),
         surveyPopType: utils.getText(notif,'survey_pop_type'),
+        scriptId: utils.getText(notif,'script_id'),
         scriptVersion: utils.getText(notif,'script_version'),
-        preChatData: utils.getText(notif,'pre_chat_data')
+        preChatData: utils.getText(notif,'json_baggage')
     };
 
-    newChat.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
+    //newChat.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
     newChat.chatDispositions = utils.processResponseCollection(notification, 'ui_notification', 'chat_dispositions', 'disposition')[0];
-    newChat.history = utils.processResponseCollection(notification, 'ui_notification', 'history', 'message')[0];
+    newChat.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript', 'message')[0];
 
     if(newChat.chatDispositions && newChat.chatDispositions.disposition){
         newChat.outdialDispositions.dispositions = [newChat.chatDispositions]
@@ -4463,16 +4444,17 @@ NewChatNotification.prototype.processResponse = function(notification) {
         newChat.chatDispositions = newChat.chatDispositions.dispositions;
     }
 
-    if(newChat.requeueShortcuts && newChat.requeueShortcuts.name){
+    /*if(newChat.requeueShortcuts && newChat.requeueShortcuts.name){
         newChat.requeueShortcuts = [newChat.requeueShortcuts];
     }else{
         newChat.requeueShortcuts = newChat.requeueShortcuts.requeueShortcuts;
-    }
+    }*/
 
-    if(newChat.history && newChat.history.message){
-        newChat.history = [newChat.history];
+    console.log(newChat.transcript.messages);
+    if(newChat.transcript && newChat.transcript.message){
+        newChat.transcript = [newChat.transcript];
     }else{
-        newChat.history = newChat.history.messages;
+        newChat.transcript = newChat.transcript.messages;
     }
 
     return newChat;
@@ -7669,12 +7651,11 @@ function initAgentLibraryChat (context) {
      * Send accept/decline response when a chat is presented to an agent
      * @memberof AgentLibrary.Chat
      * @param {string} uii Unique identifier for the chat session
-     * @param {number} sessionId The agent's session id
      * @param {string} response ACCEPT|REJECT response
      * @param {string} responseReason Agent reason for Reject
      */
-    AgentLibrary.prototype.chatPresentedResponse = function(uii, sessionId, response, responseReason){
-        UIModel.getInstance().chatPresentedRequest = new ChatPresentedRequest(uii, sessionId, response, responseReason);
+    AgentLibrary.prototype.chatPresentedResponse = function(uii, response, responseReason){
+        UIModel.getInstance().chatPresentedRequest = new ChatPresentedResponseRequest(uii, response, responseReason);
         var msg = UIModel.getInstance().chatPresentedRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -7683,12 +7664,12 @@ function initAgentLibraryChat (context) {
      * Send an external chat message
      * @memberof AgentLibrary.Chat
      * @param {string} uii Unique identifier for the chat session
-     * @param {string} accountId The account associated with the chat queue
+     * @param {string} agentId The agent associated with the chat
      * @param {string} message The message sent by the agent
      * @param {function} [callback=null] Callback function when chat message received
      */
-    AgentLibrary.prototype.chatMessage = function(uii, accountId, message, callback){
-        UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, accountId, message);
+    AgentLibrary.prototype.chatMessage = function(uii, agentId, message, callback){
+        UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message);
         var msg = UIModel.getInstance().chatMessageRequest.formatJSON();
         utils.setCallback(this, CALLBACK_TYPES.CHAT_MESSAGE, callback);
         utils.sendMessage(this, msg);
@@ -7700,12 +7681,12 @@ function initAgentLibraryChat (context) {
      * @param {string} uii Unique identifier for the chat session
      * @param {number} agentId The agent's id
      * @param {number} dispositionId Id of the selected disposition
-     * @param {number} sessionId Id of the Agent's session
      * @param {string} [notes=""] Agent notes
+     * @param {boolean} sendAcknowlegement Whether or not to fire callback
      * @param {object} [script=null] Script data associated with the chat session
      */
-    AgentLibrary.prototype.chatDisposition = function(uii, agentId, dispositionId, sessionId, notes, script){
-        UIModel.getInstance().chatDispositionRequest = new ChatDispositionRequest(uii, agentId, dispositionId, sessionId, notes, script);
+    AgentLibrary.prototype.chatDisposition = function(uii, agentId, dispositionId, notes, sendAcknowlegement, script){
+        UIModel.getInstance().chatDispositionRequest = new ChatDispositionRequest(uii, agentId, dispositionId, notes, sendAcknowlegement, script);
         var msg = UIModel.getInstance().chatDispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -7729,11 +7710,9 @@ function initAgentLibraryChat (context) {
      * Sent when agent starts/stops typing
      * @memberof AgentLibrary.Chat
      * @param {string} uii Unique identifier for the chat session
-     * @param {number} accountId The account id associated with the Chat Queue
-     * @param {boolean} isTyping Whether or not the agent is currently typing
      */
-    AgentLibrary.prototype.chatTyping = function(uii, accountId, isTyping){
-        UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii, accountId, isTyping);
+    AgentLibrary.prototype.chatTyping = function(uii){
+        UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii);
         var msg = UIModel.getInstance().chatTypingRequest.formatJSON();
         utils.sendMessage(this, msg);
     };

@@ -71,7 +71,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7591">line 7591</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7573">line 7573</a>
     </li></ul></dd>
     
 
@@ -107,7 +107,7 @@
 
     
 
-    <h4 class="name" id="chatDisposition"><span class="type-signature">(static) </span>AgentLibrary#chatDisposition<span class="signature">(uii, agentId, dispositionId, sessionId, notes<span class="signature-attributes">opt</span>, script<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="chatDisposition"><span class="type-signature">(static) </span>AgentLibrary#chatDisposition<span class="signature">(uii, agentId, dispositionId, notes<span class="signature-attributes">opt</span>, sendAcknowlegement, script<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -259,41 +259,6 @@
 
         <tr>
             
-                <td class="name"><code>sessionId</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">Id of the Agent's session</td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>notes</code></td>
             
 
@@ -327,6 +292,41 @@
             
 
             <td class="description last">Agent notes</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>sendAcknowlegement</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Whether or not to fire callback</td>
         </tr>
 
     
@@ -406,7 +406,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7707">line 7707</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7688">line 7688</a>
     </li></ul></dd>
     
 
@@ -437,7 +437,7 @@
 
     
 
-    <h4 class="name" id="chatMessage"><span class="type-signature">(static) </span>AgentLibrary#chatMessage<span class="signature">(uii, accountId, message, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="chatMessage"><span class="type-signature">(static) </span>AgentLibrary#chatMessage<span class="signature">(uii, agentId, message, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -519,7 +519,7 @@
 
         <tr>
             
-                <td class="name"><code>accountId</code></td>
+                <td class="name"><code>agentId</code></td>
             
 
             <td class="type">
@@ -547,7 +547,7 @@
                 </td>
             
 
-            <td class="description last">The account associated with the chat queue</td>
+            <td class="description last">The agent associated with the chat</td>
         </tr>
 
     
@@ -662,7 +662,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7690">line 7690</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7671">line 7671</a>
     </li></ul></dd>
     
 
@@ -693,7 +693,7 @@
 
     
 
-    <h4 class="name" id="chatPresentedResponse"><span class="type-signature">(static) </span>AgentLibrary#chatPresentedResponse<span class="signature">(uii, sessionId, response, responseReason)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="chatPresentedResponse"><span class="type-signature">(static) </span>AgentLibrary#chatPresentedResponse<span class="signature">(uii, response, responseReason)</span><span class="type-signature"></span></h4>
 
     
 
@@ -753,29 +753,6 @@
             
 
             <td class="description last">Unique identifier for the chat session</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>sessionId</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The agent's session id</td>
         </tr>
 
     
@@ -862,7 +839,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7676">line 7676</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7657">line 7657</a>
     </li></ul></dd>
     
 
@@ -1153,7 +1130,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7722">line 7722</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7703">line 7703</a>
     </li></ul></dd>
     
 
@@ -1184,7 +1161,7 @@
 
     
 
-    <h4 class="name" id="chatTyping"><span class="type-signature">(static) </span>AgentLibrary#chatTyping<span class="signature">(uii, accountId, isTyping)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="chatTyping"><span class="type-signature">(static) </span>AgentLibrary#chatTyping<span class="signature">(uii)</span><span class="type-signature"></span></h4>
 
     
 
@@ -1247,52 +1224,6 @@
         </tr>
 
     
-
-        <tr>
-            
-                <td class="name"><code>accountId</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The account id associated with the Chat Queue</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>isTyping</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Whether or not the agent is currently typing</td>
-        </tr>
-
-    
     </tbody>
 </table>
 
@@ -1330,7 +1261,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7735">line 7735</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7714">line 7714</a>
     </li></ul></dd>
     
 
@@ -1481,7 +1412,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7660">line 7660</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7642">line 7642</a>
     </li></ul></dd>
     
 
@@ -1681,7 +1612,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7633">line 7633</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7615">line 7615</a>
     </li></ul></dd>
     
 
@@ -1835,7 +1766,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7618">line 7618</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7600">line 7600</a>
     </li></ul></dd>
     
 
@@ -2056,7 +1987,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7647">line 7647</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7629">line 7629</a>
     </li></ul></dd>
     
 
@@ -2187,7 +2118,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7605">line 7605</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line7587">line 7587</a>
     </li></ul></dd>
     
 
@@ -2235,7 +2166,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu May 11 2017 12:24:26 GMT-0600 (MDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Tue May 30 2017 13:13:30 GMT-0600 (MDT)
 </footer>
 
 <script> prettyPrint(); </script>
