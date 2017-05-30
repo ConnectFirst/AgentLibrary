@@ -14,7 +14,7 @@ var ChatInactiveNotification = function() {
  *          "@type":"CHAT-INACTIVE",
  *          "@destination":"IQ",
  *          "@response_to":"",
- *          "agent_id":{"#text":"1180958"},
+ *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"}
  *      }
  *  }
@@ -25,7 +25,7 @@ ChatInactiveNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-INACTIVE notification",
         status: "OK",
-        agentId: utils.getText(notif, "agent_id"),
+        accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii")
     };
 

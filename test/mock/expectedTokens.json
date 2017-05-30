@@ -12,7 +12,7 @@
   "agentType": "AGENT",
   "agentEmail":"test@connectfirst.com",
   "agentUserName":"testUser",
-  "allowUpdates": true,
+  "allowUpdates": true, 
   "showLeadPasses": true, 
   "showListName": true, 
   "state": "OH", 

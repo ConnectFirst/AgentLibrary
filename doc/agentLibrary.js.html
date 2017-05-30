@@ -26,7 +26,7 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v0.0.0 - 2017-01-23 - Connect First */
+            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v1.0.4 - 2017-05-30 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author &lt;a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books &lt;/a>
@@ -573,7 +573,21 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
     newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
+    newCall.scriptResponse = {};
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+
+    // set saved script response if present
+    try{
+        var savedModel = JSON.parse(notif.script_result["#text"]).model;
+        var results = {};
+        var keys = Object.keys(savedModel);
+        for(var idx = 0; idx &lt; keys.length; idx++){
+            var key = keys[idx];
+            var value = savedModel[key].value;
+            results[key] = value;
+        }
+        newCall.scriptResponse = results;
+    }catch(err){}
 
     // fix phonebook format
     if(newCall.transferPhoneBook &amp;&amp; newCall.transferPhoneBook.entrys){
@@ -657,82 +671,70 @@ function buildTokenMap(notif, newCall){
 
     try{
         if(newCall.queue.number){
-            tokens["source_id"] = newCall.number || "";
-            tokens["source_name"] = newCall.name || "";
-            tokens["source_desc"] = newCall.description || "";
+            tokens["sourceId"] = newCall.number || "";
+            tokens["sourceName"] = newCall.name || "";
+            tokens["sourceDesc"] = newCall.description || "";
 
             if(newCall.queue.isCampaign === "0"){
-                tokens["source_type"] = "INBOUND";
+                tokens["sourceType"] = "INBOUND";
             }else{
-                tokens["source_type"] = "OUTBOUND";
+                tokens["sourceType"] = "OUTBOUND";
             }
         }else{
-            tokens["source_id"] = "0";
-            tokens["source_type"] = "MANUAL";
-            tokens["source_name"] = "";
-            tokens["source_desc"] = "";
+            tokens["sourceId"] = "0";
+            tokens["sourceType"] = "MANUAL";
+            tokens["sourceName"] = "";
+            tokens["sourceDesc"] = "";
         }
     }catch(any){
         console.error("There was an error processing source tokenization", + any);
     }
 
     try{
-        tokens["agent_first_name"] = model.agentSettings.firstName;
-        tokens["agent_last_name"] = model.agentSettings.lastName;
-        tokens["agent_external_id"] = model.agentSettings.externalAgentId;
-        tokens["agent_type"] = model.agentSettings.agentType;
-        tokens["agent_email"] = model.agentSettings.email;
+        tokens["agentFirstName"] = model.agentSettings.firstName;
+        tokens["agentLastName"] = model.agentSettings.lastName;
+        tokens["agentExternalId"] = model.agentSettings.externalAgentId;
+        tokens["agentType"] = model.agentSettings.agentType;
+        tokens["agentEmail"] = model.agentSettings.email;
+        tokens["agentUserName"] = model.agentSettings.username;
     }catch(any){
         console.error("There was an error parsing tokens for agent info. ", any);
     }
 
     if(notif.baggage){
+        // loop over all items in baggage and add to token map
+        // standard tokens:
+        // "leadId"
+        // "externId"
+        // "firstName"
+        // "midName"
+        // "lastName"
+        // "address1"
+        // "address2"
+        // "suffix"
+        // "title"
+        // "city"
+        // "state"
+        // "zip"
+        // "auxData1"
+        // "auxData2"
+        // "auxData3"
+        // "auxData4"
+        // "auxData5"
+        // "auxPhone"
+        // "email"
+        // "gateKeeper"
         try{
-            tokens["lead_id"] = newCall.baggage.leadId || "";
-            tokens["extern_id"] = newCall.baggage.externId || "";
-            tokens["first_name"] = newCall.baggage.firstName || "";
-            tokens["mid_name"] = newCall.baggage.midName || "";
-            tokens["last_name"] = newCall.baggage.lastName || "";
-            tokens["address1"] = newCall.baggage.address1 || "";
-            tokens["address2"] = newCall.baggage.address2 || "";
-            tokens["suffix"] = newCall.baggage.suffix || "";
-            tokens["title"] = newCall.baggage.title || "";
-            tokens["city"] = newCall.baggage.city || "";
-            tokens["state"] = newCall.baggage.state || "";
-            tokens["zip"] = newCall.baggage.zip || "";
-            tokens["aux_data1"] = newCall.baggage.auxData1 || "";
-            tokens["aux_data2"] = newCall.baggage.auxData2 || "";
-            tokens["aux_data3"] = newCall.baggage.auxData3 || "";
-            tokens["aux_data4"] = newCall.baggage.auxData4 || "";
-            tokens["aux_data5"] = newCall.baggage.auxData5 || "";
-            tokens["aux_phone"] = newCall.baggage.auxPhone || "";
-            tokens["email"] = newCall.baggage.email || "";
-            tokens["gate_keeper"] = newCall.baggage.gateKeeper || "";
-
+            var key;
+            for(var i = 0; i &lt; Object.keys(newCall.baggage).length; i++){
+                key = Object.keys(newCall.baggage)[i];
+                if(key !== "customLabels"){ // ignore custom label array
+                    tokens[key] = newCall.baggage[key];
+                }
+            }
         }catch(any){
             console.error("There was an error parsing baggage tokens. ", any);
         }
-    }else{
-        tokens["lead_id"] = "";
-        tokens["extern_id"] = "";
-        tokens["first_name"] = "";
-        tokens["mid_name"] = "";
-        tokens["last_name"] = "";
-        tokens["address1"] = "";
-        tokens["address2"] = "";
-        tokens["suffix"] = "";
-        tokens["title"] = "";
-        tokens["city"] = "";
-        tokens["state"] = "";
-        tokens["zip"] = "";
-        tokens["aux_data1"] = "";
-        tokens["aux_data2"] = "";
-        tokens["aux_data3"] = "";
-        tokens["aux_data4"] = "";
-        tokens["aux_data5"] = "";
-        tokens["aux_phone"] = "";
-        tokens["email"] = "";
-        tokens["gate_keeper"] = "";
     }
 
     return tokens;
@@ -992,8 +994,11 @@ AgentStateRequest.prototype.processResponse = function(response) {
 
 
 
-var BargeInRequest = function(audioType) {
+var BargeInRequest = function(audioType, agentId, uii, monitorAgentId) {
     this.audioType = audioType || "FULL";
+    this.agentId = agentId;
+    this.uii = uii;
+    this.monitorAgentId = monitorAgentId;
 };
 
 /*
@@ -1019,16 +1024,16 @@ BargeInRequest.prototype.formatJSON = function() {
             "@message_id":utils.getMessageId(),
             "@response_to":"",
             "agent_id":{
-                "#text":utils.toString(model.agentSettings.agentId)
+                "#text":utils.toString(this.agentId)
             },
             "uii":{
-                "#text":utils.toString(model.currentCall.uii)
+                "#text":utils.toString(this.uii)
             },
             "audio_state":{
                 "#text":utils.toString(this.audioType)
             },
             "monitor_agent_id":{
-                "#text":utils.toString(model.currentCall.monitorAgentId)
+                "#text":utils.toString(this.monitorAgentId)
             }
         }
     };
@@ -1386,10 +1391,10 @@ XferColdRequest.prototype.processResponse = function(response) {
 };
 
 
-var ConfigRequest = function(dialDest, queueIds, chatIds, skillPofileId, dialGroupId, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
-    this.skillPofileId = skillPofileId || "";
+    this.skillProfileId = skillProfileId || "";
     this.dialGroupId = dialGroupId || "";
     this.dialDest = dialDest || "";
     this.updateFromAdminUI = updateFromAdminUI || false;
@@ -1400,7 +1405,7 @@ var ConfigRequest = function(dialDest, queueIds, chatIds, skillPofileId, dialGro
     var model = UIModel.getInstance();
     this.queueIds = utils.checkExistingIds(model.inboundSettings.availableQueues, this.queueIds, "gateId");
     this.chatIds = utils.checkExistingIds(model.chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
-    this.skillPofileId = utils.checkExistingIds(model.inboundSettings.availableSkillProfiles, [this.skillPofileId], "profileId")[0] || "";
+    this.skillProfileId = utils.checkExistingIds(model.inboundSettings.availableSkillProfiles, [this.skillProfileId], "profileId")[0] || "";
     this.dialGroupId = utils.checkExistingIds(model.outboundSettings.availableOutdialGroups, [this.dialGroupId], "dialGroupId")[0] || "";
 
     // Set loginType value
@@ -1452,7 +1457,7 @@ ConfigRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.dialGroupId)
             },
             "skill_profile_id":{
-                "#text":utils.toString(this.skillPofileId)
+                "#text":utils.toString(this.skillProfileId)
             },
             "update_from_adminui":{
                 "#text":utils.toString(this.updateFromAdminUI)
@@ -1602,6 +1607,7 @@ ConfigRequest.prototype.processResponse = function(response) {
 function setDialGroupSettings(response){
     var model = UIModel.getInstance();
     var outdialGroups = model.outboundSettings.availableOutdialGroups;
+    model.outboundSettings.outdialGroup = {}; // reset
     for(var g = 0; g &lt; outdialGroups.length; g++){
         var group = outdialGroups[g];
         if(group.dialGroupId === response.ui_response.outdial_group_id['#text']){
@@ -1619,10 +1625,12 @@ function setDialGroupSettings(response){
 
 function setSkillProfileSettings(response){
     var model = UIModel.getInstance();
+    model.inboundSettings.skillProfile = {};
     var skillProfiles = model.inboundSettings.availableSkillProfiles;
     for(var s = 0; s &lt; skillProfiles.length; s++){
         var profile = skillProfiles[s];
-        if(profile.skillProfileId === response.ui_response.skill_profile_id){
+        var responseId = utils.getText(response.ui_response, "skill_profile_id");
+        if(profile.profileId === responseId){
             model.inboundSettings.skillProfile = JSON.parse(JSON.stringify(profile)); // copy object
         }
     }
@@ -1785,7 +1793,7 @@ DispositionRequest.prototype.formatJSON = function() {
     }
 
     /*
-     * converts survey to this reponse
+     * converts survey to this response
      * survey : {
      *      response: [
      *          { "@extern_id":"", "@lead_update_column":"", "#text":"" }
@@ -1794,12 +1802,13 @@ DispositionRequest.prototype.formatJSON = function() {
      */
     if(this.survey !== null){
         var response = [];
-        for(var i = 0; i &lt; Object.keys(this.survey).length; i++){
-            var key = Object.keys(this.survey)[i];
+        var keys = Object.keys(this.survey);
+        for(var i = 0; i &lt; keys.length; i++){
+            var key = keys[i];
             var obj = {
-                "@extern_id": "",
+                "@extern_id": key,
                 "@lead_update_column": utils.toString(this.survey[key].leadField),
-                "#text": this.survey[key].value
+                "#text": utils.toString(this.survey[key].value)
             };
             response.push(obj);
         }
@@ -2500,10 +2509,10 @@ LoginRequest.prototype.formatJSON = function() {
  *          ]
  *      },
  *      "chat_rooms":{},
- *      "surveys": {
- *           "survey": {
- *               "@survey_id": "15",
- *               "@survey_name": "Don't Read This Survey"
+ *      "scripts": {
+ *           "script": {
+ *               "@script_id": "15",
+ *               "@script_name": "Don't Read This Script"
  *           }
  *      },
  *      "campaigns": {
@@ -2557,12 +2566,12 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentSettings.realAgentType = utils.getText(resp, 'real_agent_type');
             model.agentSettings.defaultLoginDest = utils.getText(resp, 'default_login_dest');
             model.agentSettings.altDefaultLoginDest = utils.getText(resp, 'alt_default_login_dest');
-            model.agentSettings.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring');
             model.agentSettings.initLoginState = utils.getText(resp, 'init_login_state');
             model.agentSettings.initLoginStateLabel = utils.getText(resp, 'init_login_state_label');
             model.agentSettings.outboundManualDefaultRingtime = utils.getText(resp, 'outbound_manual_default_ringtime');
             model.agentSettings.isOutboundPrepay = utils.getText(resp, 'outbound_prepay') === "1";
             model.agentSettings.phoneLoginPin = utils.getText(resp, 'phone_login_pin');
+            model.agentSettings.username = model.loginRequest.username;
 
             model.agentPermissions.allowCallControl = utils.getText(resp, 'allow_call_control') === "1";
             model.agentPermissions.allowChat = utils.getText(resp, 'allow_chat') === "1";
@@ -2578,11 +2587,12 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.allowBlended = utils.getText(resp, 'allow_blended') === "1";
             model.agentPermissions.allowLoginControl = utils.getText(resp, 'allow_login_control') === "1";
             model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
+            model.agentPermissions.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring') === "1";
 
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
             if(response.ui_response.allow_lead_inserts &amp;&amp; typeof resp.insert_campaigns !== 'undefined' &amp;&amp; response.ui_response.insert_campaigns.campaign){
-                model.agentPermissions.allowLeadInserts = true;
+                model.agentPermissions.allowLeadInserts = utils.getText(resp, 'allow_lead_inserts') === "1";
             }
 
             // Set collection values
@@ -2592,7 +2602,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
             model.inboundSettings.availableRequeueQueues = utils.processResponseCollection(response.ui_response, "requeue_gates", "gate_group");
             model.chatSettings.availableChatRooms = utils.processResponseCollection(response.ui_response, "chat_rooms", "room");
-            model.scriptSettings.availableScripts = utils.processResponseCollection(response.ui_response, "surveys", "survey");
+            model.scriptSettings.availableScripts = utils.processResponseCollection(response.ui_response, "scripts", "script");
             model.agentSettings.callerIds = utils.processResponseCollection(response.ui_response, "caller_ids", "caller_id");
             model.agentSettings.availableAgentStates = utils.processResponseCollection(response.ui_response, "agent_states", "agent_state");
             model.applicationSettings.availableCountries = utils.processResponseCollection(response.ui_response, "account_countries", "country");
@@ -2711,7 +2721,7 @@ processCampaigns = function(response){
 
 var LogoutRequest = function(agentId, message, isSupervisor) {
     this.agentId = agentId;
-    this.message = message;
+    this.message = message || "";
     this.isSupervisor = isSupervisor;
 };
 
@@ -2792,7 +2802,7 @@ OffhookInitRequest.prototype.processResponse = function(response) {
 
 
 
-var OffhookTermRequest = function(showWarning) {
+var OffhookTermRequest = function() {
 
 };
 
@@ -3141,21 +3151,6 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
 };
 
 
-var ReconnectRequest = function() {
-
-};
-
-ReconnectRequest.prototype.formatJSON = function() {
-    var model = UIModel.getInstance();
-    var loginMsg = JSON.parse(model.loginRequest.formatJSON());
-
-    loginMsg.hash_code = {"#text":model.hashCode};
-    loginMsg.update_login = {"#text":"FALSE"};
-    loginMsg.reconnect = {"#text":"TRUE"};
-
-    return JSON.stringify(loginMsg);
-};
-
 var RecordRequest = function(record) {
     this.record = record;
 };
@@ -3384,8 +3379,6 @@ var ScriptResultRequest = function(uii, scriptId, jsonResult) {
 * This event is responsible for sending the script result object
 */
 ScriptResultRequest.prototype.formatJSON = function() {
-    // format survey response object
-    var formattedJson = _formatResponse(this.jsonResult);
     var msg = {
         "ui_request": {
             "@destination":"IQ",
@@ -3402,24 +3395,12 @@ ScriptResultRequest.prototype.formatJSON = function() {
                 "#text" : utils.toString(this.scriptId)
             },
             "json_result": {
-                "#text": JSON.stringify(formattedJson)
+                "#text": JSON.stringify(this.jsonResult)
             }
         }
     };
 
     return JSON.stringify(msg);
-};
-
-
-_formatResponse = function(result){
-    var res = {};
-
-    for(var i = 0; i &lt; Object.keys(result).length; i++){
-        var key = Object.keys(result)[i];
-        res[key] = result[key].value || "";
-    }
-
-    return res;
 };
 
 
@@ -3690,6 +3671,280 @@ ChatAliasRequest.prototype.formatJSON = function() {
 };
 
 
+var ChatDispositionRequest = function(uii, agentId, dispositionId, notes, sendAcknowlegement, survey) {
+    this.uii = uii;
+    this.agentId = agentId;
+    this.dispositionId = dispositionId;
+    this.notes = notes || "";
+    this.sendAcknowlegement = sendAcknowlegement || false;
+
+    /*
+     * survey = {
+     *      first_name: {
+     *          leadField: "first_name"
+     *          value: "Geoff"
+     *      },
+     *      last_name: {
+     *          leadField: "last_name"
+     *          value: "Mina"
+     *      }
+     *      ...
+     * }
+     */
+    this.survey = survey || null;
+};
+
+/*
+ * External Chat:
+ * When agent dispositions a chat, send "CHAT-DISPOSITION" request to IntelliQueue
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-DISPOSITION",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "disposition_id":{"#text":""},
+ *      "notes":{"#text":"hello"},
+ *      "do_ack":{"#text":"true"},
+ *      "survey":{
+ *          "response":[
+ *              {"@extern_id":"text_box","#text":"hello"},
+ *              {"@extern_id":"check_box","#text":"20"},
+ *              {"@extern_id":"radio_save","#text":"23"}
+ *          ]
+ *      }
+ *    }
+ * }
+ */
+ChatDispositionRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_DISPOSITION,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":utils.toString(this.accountId)
+            },
+            "disposition_id":{
+                "#text":utils.toString(this.dispositionId)
+            },
+            "notes":{
+                "#text":utils.toString(this.notes)
+            },
+            "do_ack":{
+                "#text":utils.toString(this.sendAcknowlegement)
+            }
+        }
+    };
+
+    /*
+     * converts survey to this response
+     * survey : {
+     *      response: [
+     *          { "@extern_id":"", "@lead_update_column":"", "#text":"" }
+     *      ]
+     * }
+     */
+    if(this.survey !== null){
+        var response = [];
+        var keys = Object.keys(this.survey);
+        for(var i = 0; i &lt; keys.length; i++){
+            var key = keys[i];
+            var obj = {
+                "@extern_id": key,
+                "#text": utils.toString(this.survey[key].value)
+            };
+            response.push(obj);
+        }
+        msg.ui_request.survey = {"response":response};
+    }
+
+    return JSON.stringify(msg);
+};
+
+
+
+var ChatMessageRequest = function(uii, agentId, message) {
+    this.uii = uii;
+    this.agentId = agentId;
+    this.message = message;
+};
+
+/*
+ * External Chat:
+ * When agent submits a chat message, send "CHAT-MESSAGE" request to IntelliQueue
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-MESSAGE",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "message":{"#text":"hello"}
+ *    }
+ * }
+ */
+ChatMessageRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_MESSAGE,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":utils.toString(this.agentId)
+            },
+            "message":{
+                "#text":utils.toString(this.message)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class is responsible for handling external CHAT-MESSAGE packets received from
+ * IntelliQueue.
+ *
+ * {"ui_request":{
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "@type":"CHAT-MESSAGE",
+ *      "uii":{"#text":""},
+ *      "account_id":{"#text":""},
+ *      "from":{"#text":""},
+ *      "message":{"#text":"hello"}
+ *    }
+ * }
+ */
+
+ChatMessageRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_request;
+    var formattedResponse = {
+        uii: utils.getText(resp, 'uii'),
+        accountId: utils.getText(resp, 'account_id'),
+        from: utils.getText(resp, 'from'),
+        message: utils.getText(resp, 'message')
+    };
+
+    utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);
+
+    return formattedResponse;
+};
+
+
+var ChatPresentedResponseRequest = function(uii, response, responseReason) {
+    this.uii = uii;
+    this.response = response;
+    this.responseReason = responseReason || "";
+};
+
+/*
+ * External Chat:
+ * When Agent receives a CHAT-PRESENTED notification, respond with
+ * either ACCEPT or REJECT for presented chat.
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-PRESENTED",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "response":{"#text":"ACCEPT|REJECT"},
+ *      "response_reason":{"#text":""}
+ *    }
+ * }
+ */
+ChatPresentedResponseRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_PRESENTED,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "response":{
+                "#text":utils.toString(this.response)
+            },
+            "response_reason":{
+                "#text":utils.toString(this.responseReason)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
+var ChatRequeueRequest = function(uii, agentId, chatQueueId, skillId, maintainAgent) {
+    this.uii = uii;
+    this.agentId = agentId;
+    this.chatQueueId = chatQueueId;
+    this.skillId = skillId || "";
+    this.maintainAgent = maintainAgent || false;
+};
+
+/*
+ * External Chat:
+ * When agent submits a chat message, send "CHAT-REQUEUE" request to IntelliQueue
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-REQUEUE",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "chat_queue_id":{"#text":""},
+ *      "skill_id":{"#text":""},
+ *      "maintain_agent":{"#text":"true|false"}
+ *    }
+ * }
+ */
+ChatRequeueRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_REQUEUE,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":utils.toString(this.agentId)
+            },
+            "chat_queue_id":{
+                "#text":utils.toString(this.chatQueueId)
+            },
+            "skill_id":{
+                "#text":utils.toString(this.skillId)
+            },
+            "maintain_agent":{
+                "#text":utils.toString(this.maintainAgent)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
 var ChatRoomRequest = function(action, roomType, roomId, agentOne, agentTwo) {
     this.action = action;
     this.roomType = roomType;
@@ -3876,6 +4131,45 @@ ChatSendRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
+var ChatTypingRequest = function(uii) {
+    this.uii = uii;
+};
+
+/*
+ * External Chat:
+ * Agent sends typing message to notify client widgets,
+ * but the agent's pending message is not sent going this direction (just empty string).
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-TYPING",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""}
+ *    }
+ * }
+ */
+ChatTypingRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_TYPING,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
 var SupervisorListRequest = function() {
 
 };
@@ -3947,6 +4241,253 @@ SupervisorListRequest.prototype.processResponse = function(response) {
 
     return model.supervisors;
 };
+
+var ChatActiveNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-ACTIVE" packets from IntelliQueue.
+ * This is sent in response to an agent's CHAT-PRESENTED-RESPONSE accept request.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-ACTIVE",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "account_id":{"#text":"99999999"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+ChatActiveNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-ACTIVE notification",
+        status: "OK",
+        accountId: utils.getText(notif, "account_id"),
+        uii: utils.getText(notif, "uii")
+    };
+
+};
+
+
+var ChatInactiveNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-INACTIVE" packets from IntelliQueue.
+ * This is sent to the agent when the last session is disconnected from a chat.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-INACTIVE",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "account_id":{"#text":"99999999"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+ChatInactiveNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-INACTIVE notification",
+        status: "OK",
+        accountId: utils.getText(notif, "account_id"),
+        uii: utils.getText(notif, "uii")
+    };
+
+};
+
+
+var ChatPresentedNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-PRESENTED" packets from IntelliQueue.
+ * When this notification is received, the Agent can either Accept or Decline which will
+ * be sent back to IntelliQueue as a CHAT-PRESENTED-RESPONSE.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-PRESENTED",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "chat_queue_id":{"#text":"3"},
+ *          "chat_queue_name":{"#text":"Support Chat"},
+ *          "account_id":{"#text":"99999999"},
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "channel_type":{"#text":""}
+ *      }
+ *  }
+ */
+ChatPresentedNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-PRESENTED notification",
+        status: "OK",
+        accountId: utils.getText(notif, "account_id"),
+        uii: utils.getText(notif, "uii"),
+        channelType: utils.getText(notif, "channel_type"),
+        chatQueueId: utils.getText(notif, "chat_queue_id"),
+        chatQueueName: utils.getText(notif, "chat_queue_name")
+    };
+
+};
+
+
+var ChatTypingNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-TYPING" packets from IntelliQueue.
+ * When this notification is received, the AgentUI will show the pending message
+ * so far from the client chat widget and typing notification.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-TYPING",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "account_id":{"#text":"99999999"},
+ *          "from":{"#text":""},
+ *          "message":{"#text":"this is the message before actual send"}
+ *      }
+ *  }
+ */
+ChatTypingNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-TYPING notification",
+        status: "OK",
+        accountId: utils.getText(notif, "account_id"),
+        uii: utils.getText(notif, "uii"),
+        from: utils.getText(notif, "from"),
+        pendingMessage: utils.getText(notif, "message")
+    };
+
+};
+
+
+var NewChatNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "NEW-CHAT" packets from IntelliQueue.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"NEW-CHAT",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "account_id":{"#text":"99999999"},
+ *          "session_id":{"#text":"2"},
+ *          "agent_id":{"#text":"1180958"},
+ *          "queue_dts":{"#text":""},
+ *          "queue_time":{"#text":""},
+ *          "chat_queue_id":{"#text":""},
+ *          "chat_queue_name":{"#text":""},
+ *          "app_url":{"#text":""},
+ *          "channel_type":{"#text":""},
+ *          "ani":{"#text":""},
+ *          "dnis":{"#text":""},
+ *          "survey_pop_type":{"#text":""},
+ *          "script_id":{"#text":""},
+ *          "script_version":{"#text":""},
+ *          "requeue_shortcuts":{
+ *              "requeue_shortcut":{
+ *                  "@chat_queue_id":"2",
+ *                  "@name":"test queue",
+ *                  "@skill_id":""
+ *              }
+ *          },
+ *          "chat_dispositions":{
+ *              "disposition":[
+ *                  { "@disposition_id":"2", "@is_success":"true", "@is_complete":"false", "@email_template_id":"1", "#text":"Complete"},
+ *                  { "@disposition_id":"3", "@is_success":"true", "@is_complete":"false", "#text":"Requeue"}
+ *              ]
+ *          },
+ *          "transcript":{
+ *              "message":[
+ *                  { "@from":"system", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
+ *                  { "@from":"dlbooks", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
+ *                  { "@from":"user1", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
+ *              ]
+ *          },
+ *          "json_baggage":{"#text":"json_string_form_data"},
+ *      }
+ *  }
+ */
+NewChatNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    // set up new call obj
+    var newChat = {
+        uii: utils.getText(notif,'uii'),
+        accountId: utils.getText(notif,'account_id'),
+        sessionId: utils.getText(notif,'session_id'),
+        agentId: utils.getText(notif,'agent_id'),
+        queueDts: utils.getText(notif,'queue_dts'),
+        queueTime: utils.getText(notif,'queue_time'),
+        chatQueueId: utils.getText(notif,'chat_queue_id'),
+        chatQueueName: utils.getText(notif,'chat_queue_name'),
+        appUrl: utils.getText(notif,'app_url'),
+        channelType: utils.getText(notif,'channel_type'),
+        ani: utils.getText(notif,'ani'),
+        dnis: utils.getText(notif,'dnis'),
+        surveyPopType: utils.getText(notif,'survey_pop_type'),
+        scriptId: utils.getText(notif,'script_id'),
+        scriptVersion: utils.getText(notif,'script_version'),
+        preChatData: utils.getText(notif,'json_baggage')
+    };
+
+    //newChat.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
+    newChat.chatDispositions = utils.processResponseCollection(notification, 'ui_notification', 'chat_dispositions', 'disposition')[0];
+    newChat.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript', 'message')[0];
+
+    if(newChat.chatDispositions &amp;&amp; newChat.chatDispositions.disposition){
+        newChat.outdialDispositions.dispositions = [newChat.chatDispositions]
+    }else{
+        newChat.chatDispositions = newChat.chatDispositions.dispositions;
+    }
+
+    /*if(newChat.requeueShortcuts &amp;&amp; newChat.requeueShortcuts.name){
+        newChat.requeueShortcuts = [newChat.requeueShortcuts];
+    }else{
+        newChat.requeueShortcuts = newChat.requeueShortcuts.requeueShortcuts;
+    }*/
+
+    console.log(newChat.transcript.messages);
+    if(newChat.transcript &amp;&amp; newChat.transcript.message){
+        newChat.transcript = [newChat.transcript];
+    }else{
+        newChat.transcript = newChat.transcript.messages;
+    }
+
+    return newChat;
+};
+
 
 var AgentStats = function() {
 
@@ -4086,6 +4627,7 @@ var AgentDailyStats = function() {
  * }
  */
 AgentDailyStats.prototype.processResponse = function(stats) {
+    var model = UIModel.getInstance();
     var resp = stats.ui_stats;
     var agentDailyStats = {
         agentId: utils.getText(resp, "agent_id"),
@@ -4094,11 +4636,11 @@ AgentDailyStats.prototype.processResponse = function(stats) {
         totalPreviewDials: utils.getText(resp, "total_preview_dials"),
         totalManualDials: utils.getText(resp, "total_manual_dials"),
         totalRna: utils.getText(resp, "total_rna"),
-        totalTalkTime: utils.getText(resp, "total_talk_time"),
-        totalOffhookTime: utils.getText(resp, "total_offhook_time"),
-        totalLoginTime: utils.getText(resp, "total_login_time"),
+        totalTalkTime:  model.agentDailyStats.totalTalkTime,
+        totalOffhookTime: model.agentDailyStats.totalOffhookTime,
+        totalLoginTime: model.agentDailyStats.totalLoginTime,
         totalSuccessDispositions: utils.getText(resp, "total_success_dispositions"),
-        currCallTime: UIModel.getInstance().agentDailyStats.currCallTime
+        currCallTime: model.agentDailyStats.currCallTime
     };
 
     UIModel.getInstance().agentDailyStats = agentDailyStats;
@@ -4377,14 +4919,26 @@ var UIModel = (function() {
             libraryInstance: null,                  // Initialized to the library instance on startup
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
+            agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
 
-            // chat requests
+            // internal chat requests
             chatAliasRequest : null,
             chatRoomRequest : null,
             chatSendRequest : null,
             supervisorListRequest : null,
             chatRoomStateRequest : new ChatRoomStateRequest(),
 
+            // external chat requests/notifications
+            chatActiveNotification : new ChatActiveNotification(),
+            chatInactiveNotification : new ChatInactiveNotification(),
+            chatDispositionRequest : null,
+            chatMessageRequest : null,
+            chatPresentedNotification : new ChatPresentedNotification(),
+            chatPresentedRequest : null,
+            chatRequeueRequest : null,
+            chatTypingNotification : new ChatTypingNotification(),
+            chatTypingRequest : null,
+            newChatNotification : new NewChatNotification(),
 
             // request instances
             agentStateRequest : null,
@@ -4503,6 +5057,7 @@ var UIModel = (function() {
                 transferNumber : "",                // May be pre-populated by an external interface, if so, the transfer functionality uses it
                 updateDGFromAdminUI : false,        // if pending Dial Group change came from AdminUI, set to true (only used if request is pending)
                 updateLoginMode : false,            // gets set to true when doing an update login (for events control)
+                username : "",                      // Agent's username
                 wasMonitoring : false               // used to track if the last call was a monitoring call
             },
 
@@ -4566,7 +5121,7 @@ var UIModel = (function() {
             },
 
             scriptSettings : {
-                availableScripts : [],
+                availableScripts : [],              // array of all scripts associated with any campaigns or queues agent is logged into
                 loadedScripts: {}                   // stores script data by script id e.g. {1:{}, 32:{}}
             },
 
@@ -4587,6 +5142,10 @@ var UIModel = (function() {
                 instance = init();
             }
             return instance;
+        },
+
+        resetInstance: function () {
+            instance = null;
         }
     };
 
@@ -4615,13 +5174,20 @@ var utils = {
     },
 
     sendMessage: function(instance, msg) {
-        if (instance.socket.readyState === 1) {
+        var msgObj = JSON.parse(msg);
+
+        if (instance.socket &amp;&amp; instance.socket.readyState === 1) {
             // add message id to request map, then send message
-            var msgObj = JSON.parse(msg);
             var type = msgObj.ui_request['@type'];
             var destination = msgObj.ui_request['@destination'];
             var message = "Sending " + type + " request message to " + destination;
-            instance._requests[msgObj.ui_request['@message_id']] = { type: msgObj.ui_request['@type'], msg: msgObj.ui_request };
+            instance._requests.push({ id: msgObj.ui_request['@message_id'], type: msgObj.ui_request['@type'], msg: msgObj.ui_request });
+
+            // keep rolling window of latest 1000 requests
+            if(instance._requests.length > 1000){
+                instance._requests.pop();
+            }
+
             instance.socket.send(msg);
 
             if(type === 'STATS'){
@@ -4631,7 +5197,15 @@ var utils = {
             }
 
         } else {
-            console.warn("AgentLibrary: WebSocket is not connected, cannot send message.");
+            // add message to queue
+            instance._queuedMsgs.push({dts: new Date(), msg: msg});
+
+            if(UIModel.getInstance().agentSettings.isLoggedIn){
+                // try to reconnect
+                instance._isReconnect = true;
+                instance.openSocket();
+                console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
+            }
         }
     },
 
@@ -4659,10 +5233,11 @@ var utils = {
                 break;
             case MESSAGE_TYPES.BARGE_IN:
                 var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
-                var responseTo = data.ui_response['@response_to'];
-                if(instance._requests[responseTo]){
+                var responseTo = response.ui_response['@response_to'];
+                var request = utils.findRequestById(instance, responseTo);
+                if(request){
                     // found corresponding request, fire registered callback for type
-                    var audioState = instance._requests[responseTo].msg.audioState;
+                    var audioState = request.msg.audio_state['#text'];
                     if(audioState === "MUTE"){
                         utils.fireCallback(instance, CALLBACK_TYPES.SILENT_MONITOR, resp);
                     }else if(audioState === "COACHING"){
@@ -4722,7 +5297,8 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
                 break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
-                var initResponse = UIModel.getInstance().offhookInitRequest.processResponse(response);
+                var offhook = new OffhookInitRequest();
+                var initResponse =  offhook.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
             case MESSAGE_TYPES.PAUSE_RECORD:
@@ -4811,11 +5387,18 @@ var utils = {
                 var genericNotif = new GenericNotification();
                 var generic = genericNotif.processResponse(data);
                 var responseTo = data.ui_notification['@response_to'];
-                if(instance._requests[responseTo]){
+                var request = utils.findRequestById(instance, responseTo);
+                if(request){
                     // found corresponding request, fire registered callback for type
-                    var type = instance._requests[responseTo].type;
+                    var type = request.type;
                     var callbackFnName = utils.findCallbackBasedOnMessageType(type);
-                    utils.fireCallback(instance, callbackFnName, generic);
+
+                    if(callbackFnName){
+                        utils.fireCallback(instance, callbackFnName, generic);
+                    }else{
+                        // no registered callback, fallback to generic notification
+                        utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
+                    }
                 }else{
                     // no corresponding request, just fire generic notification callback
                     utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
@@ -4880,12 +5463,15 @@ var utils = {
                 }else{
                     utils.fireCallback(instance, CALLBACK_TYPES.PREVIEW_FETCH, dialResponse);
                 }
-
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_ID:
                 var tcpaRequest = new TcpaSafeRequest();
                 var tcpaResponse = tcpaRequest.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE, tcpaResponse);
+                if(tcpaResponse.action.toUpperCase() === "SEARCH"){
+                    utils.fireCallback(instance, CALLBACK_TYPES.SAFE_MODE_SEARCH, tcpaResponse);
+                }else{
+                    utils.fireCallback(instance, CALLBACK_TYPES.SAFE_MODE_FETCH, tcpaResponse);
+                }
                 break;
         }
 
@@ -4926,6 +5512,11 @@ var utils = {
             case MESSAGE_TYPES.STATS_AGENT_DAILY:
                 var agentDailyStats = UIModel.getInstance().agentDailyStatsPacket.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_AGENT_DAILY, agentDailyStats);
+
+                // start daily stats interval timer, request update every second
+                if(UIModel.getInstance().agentDailyIntervalId === null){
+                    UIModel.getInstance().agentDailyIntervalId = setInterval(utils.onAgentDailyStats, 1000);
+                }
                 break;
             case MESSAGE_TYPES.STATS_CAMPAIGN:
                 var campaignStats = UIModel.getInstance().campaignStatsPacket.processResponse(data);
@@ -5361,6 +5952,17 @@ var utils = {
         return arr;
     },
 
+    // Finds a request by responseTo id
+    findRequestById: function(instance, id){
+        var request = null;
+        for(var i = 0; i &lt; instance._requests.length; i++){
+            if(instance._requests[i].id === id){
+                request = instance._requests[i];
+                break;
+            }
+        }
+        return request;
+    },
 
     // called every 30 seconds letting intelliQueue know
     // not to archive the call so dispositions and other call
@@ -5368,7 +5970,14 @@ var utils = {
     sendPingCallMessage: function(){
         UIModel.getInstance().pingCallRequest = new PingCallRequest();
         var msg = UIModel.getInstance().pingCallRequest.formatJSON();
-        utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+        var msgObj = JSON.parse(msg);
+        var agentId = utils.getText(msgObj.ui_request,'agent_id');
+        var uii = utils.getText(msgObj.ui_request,'uii');
+        if(agentId === "" || uii === ""){
+            utils.logMessage(LOG_LEVELS.WARN, "PING-CALL message failed, agentId or UII is empty", msgObj);
+        }else{
+            utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+        }
     },
 
     // called every 5 seconds to request stats from IntelliServices
@@ -5376,7 +5985,34 @@ var utils = {
         UIModel.getInstance().statsRequest = new StatsRequest();
         var msg = UIModel.getInstance().statsRequest.formatJSON();
         utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
+    },
+
+    // called every second
+    // if we have received agent daily stats
+    // start incrementing various data points since not all
+    // data is incremented when we want on the IntelliServices side
+    onAgentDailyStats: function(){
+        if(Object.keys(UIModel.getInstance().agentDailyStats).length !== 0){
+            var model = UIModel.getInstance();
+
+            var curLoginTime = model.agentDailyStats.totalLoginTime;
+            model.agentDailyStats.totalLoginTime = curLoginTime+1;
+
+            if(model.agentSettings.isOffhook){
+                var curOffhookTime = model.agentDailyStats.totalOffhookTime;
+                model.agentDailyStats.totalOffhookTime = curOffhookTime+1;
+            }
+
+            if(model.agentSettings.currentState == 'ENGAGED'){
+                var curTalkTime = model.agentDailyStats.totalTalkTime;
+                model.agentDailyStats.totalTalkTime = curTalkTime+1;
+
+                var curCallTime = model.agentDailyStats.currCallTime;
+                model.agentDailyStats.currCallTime = curCallTime+1;
+            }
+        }
     }
+
 };
 
 
@@ -5392,55 +6028,7 @@ const LOG_LEVELS ={
     "ERROR":"error"
 };
 
-/**
- * @memberof AgentLibrary
- * Possible callback types:
- * &lt;li>"addSessionNotification"&lt;/li>
- * &lt;li>"agentStateResponse"&lt;/li>
- * &lt;li>"bargeInResponse"&lt;/li>
- * &lt;li>"closeResponse"&lt;/li>
- * &lt;li>"coachResponse"&lt;/li>
- * &lt;li>"configureResponse"&lt;/li>
- * &lt;li>"callNotesResponse"&lt;/li>
- * &lt;li>"callbacksPendingResponse"&lt;/li>
- * &lt;li>"callbackCancelResponse"&lt;/li>
- * &lt;li>"campaignDispositionsResponse"&lt;/li>
- * &lt;li>"chatResponse"&lt;/li>
- * &lt;li>"dialGroupChangeNotification"&lt;/li>
- * &lt;li>"dialGroupChangePendingNotification"&lt;/li>
- * &lt;li>"dropSessionNotification"&lt;/li>
- * &lt;li>"earlyUiiNotification"&lt;/li>
- * &lt;li>"endCallNotification"&lt;/li>
- * &lt;li>"gatesChangeNotification"&lt;/li>
- * &lt;li>"genericNotification"&lt;/li>
- * &lt;li>"genericResponse"&lt;/li>
- * &lt;li>"holdResponse"&lt;/li>
- * &lt;li>"leadSearchResponse"&lt;/li>
- * &lt;li>"loginResponse"&lt;/li>
- * &lt;li>"logoutResponse"&lt;/li>
- * &lt;li>"monitorResponse"&lt;/li>
- * &lt;li>"newCallNotification"&lt;/li>
- * &lt;li>"offhookInitResponse"&lt;/li>
- * &lt;li>"offhookTermNotification"&lt;/li>
- * &lt;li>"openResponse"&lt;/li>
- * &lt;li>"pauseRecordResponse"&lt;/li>
- * &lt;li>"pendingDispNotification"&lt;/li>
- * &lt;li>"previewFetchResponse"&lt;/li>
- * &lt;li>"previewLeadStateNotification"&lt;/li>
- * &lt;li>"recordResponse"&lt;/li>
- * &lt;li>"requeueResponse"&lt;/li>
- * &lt;li>"reverseMatchNotification"&lt;/li>
- * &lt;li>"agentStats"&lt;/li>
- * &lt;li>"agentDailyStats"&lt;/li>
- * &lt;li>"campaignStats"&lt;/li>
- * &lt;li>"queueStats"&lt;/li>
- * &lt;li>"scriptConfigResponse"&lt;/li>
- * &lt;li>"supervisorListResponse"&lt;/li>
- * &lt;li>"tcpaSafeResponse"&lt;/li>
- * &lt;li>"coldXferResponse"&lt;/li>
- * &lt;li>"warmXferResponse"&lt;/li>
- * @type {object}
- */
+// add all callback types to setCallback method description
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
     "AGENT_STATE":"agentStateResponse",
@@ -5453,6 +6041,7 @@ const CALLBACK_TYPES = {
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "CHAT":"chatResponse",
+    "CHAT_MESSAGE":"chatMessageResponse", // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -5481,6 +6070,8 @@ const CALLBACK_TYPES = {
     "RECORD":"recordResponse",
     "REQUEUE":"requeueResponse",
     "REVERSE_MATCH":"reverseMatchNotification",
+    "SAFE_MODE_FETCH":"safeModeFetchResponse",
+    "SAFE_MODE_SEARCH":"safeModeSearchResponse",
     "SCRIPT_CONFIG":"scriptConfigResponse",
     "SILENT_MONITOR":"monitorResponse",
     "STATS_AGENT":"agentStats",
@@ -5488,7 +6079,6 @@ const CALLBACK_TYPES = {
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
     "SUPERVISOR_LIST":"supervisorListResponse",
-    "TCPA_SAFE":"tcpaSafeResponse",
     "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse"
@@ -5502,10 +6092,15 @@ const MESSAGE_TYPES = {
     "CALLBACK_PENDING":"PENDING-CALLBACKS",
     "CALLBACK_CANCEL":"CANCEL-CALLBACK",
     "CAMPAIGN_DISPOSITIONS":"CAMPAIGN-DISPOSITIONS",
-    "CHAT_SEND":"CHAT",
-    "CHAT_ALIAS":"CHAT-ALIAS",
-    "CHAT_ROOM":"CHAT-ROOM",
-    "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",
+    "CHAT_SEND":"CHAT",                                     // internal chat
+    "CHAT_ALIAS":"CHAT-ALIAS",                              // internal chat
+    "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
+    "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
+    "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
+    "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat
+    "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
+    "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
+    "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -5571,8 +6166,9 @@ function initAgentLibraryCore (context) {
      * @namespace Core
      * @memberof AgentLibrary
      * @property {object} callbacks Internal map of registered callback functions
-     * @property {object} _requests Internal map of requests by message id, private property.
-     * @property {object} _db Internal IndexedDB used for logging
+     * @property {array} _requests Internal map of requests by message id, private property.
+     * @property {array} _queuedMsgs Array of pending messages to be sent when socket reconnected
+     * @property {boolean} _isReconnect Whether or not we are doing a reconnect for the socket
      * @example
      * var Lib = new AgentLibrary({
      *      socketDest:'ws://d01-test.cf.dev:8080',
@@ -5588,7 +6184,12 @@ function initAgentLibraryCore (context) {
 
         // define properties
         this.callbacks = {};
-        this._requests = {};
+        this._requests = [];
+        this._queuedMsgs = [];
+        this._isReconnect = false;
+
+        // start with new model instance
+        UIModel.resetInstance();
 
         // set instance on model object
         UIModel.getInstance().libraryInstance = this;
@@ -5618,7 +6219,56 @@ function initAgentLibraryCore (context) {
      * &lt;tt>callbackMap = {&lt;br />
      *      closeResponse: onCloseFunction,&lt;br />
      *      openResponse: onOpenFunction&lt;br />
-     * }&lt;/tt>
+     * }
+     * &lt;/tt>
+     *&lt;br />
+     * Possible callback types:
+     * &lt;li>"addSessionNotification"&lt;/li>
+     * &lt;li>"agentStateResponse"&lt;/li>
+     * &lt;li>"bargeInResponse"&lt;/li>
+     * &lt;li>"closeResponse"&lt;/li>
+     * &lt;li>"coachResponse"&lt;/li>
+     * &lt;li>"configureResponse"&lt;/li>
+     * &lt;li>"callNotesResponse"&lt;/li>
+     * &lt;li>"callbacksPendingResponse"&lt;/li>
+     * &lt;li>"callbackCancelResponse"&lt;/li>
+     * &lt;li>"campaignDispositionsResponse"&lt;/li>
+     * &lt;li>"chatResponse"&lt;/li>
+     * &lt;li>"dialGroupChangeNotification"&lt;/li>
+     * &lt;li>"dialGroupChangePendingNotification"&lt;/li>
+     * &lt;li>"dropSessionNotification"&lt;/li>
+     * &lt;li>"earlyUiiNotification"&lt;/li>
+     * &lt;li>"endCallNotification"&lt;/li>
+     * &lt;li>"gatesChangeNotification"&lt;/li>
+     * &lt;li>"genericNotification"&lt;/li>
+     * &lt;li>"genericResponse"&lt;/li>
+     * &lt;li>"holdResponse"&lt;/li>
+     * &lt;li>"leadSearchResponse"&lt;/li>
+     * &lt;li>"loginResponse"&lt;/li>
+     * &lt;li>"logoutResponse"&lt;/li>
+     * &lt;li>"monitorResponse"&lt;/li>
+     * &lt;li>"newCallNotification"&lt;/li>
+     * &lt;li>"offhookInitResponse"&lt;/li>
+     * &lt;li>"offhookTermNotification"&lt;/li>
+     * &lt;li>"openResponse"&lt;/li>
+     * &lt;li>"pauseRecordResponse"&lt;/li>
+     * &lt;li>"pendingDispNotification"&lt;/li>
+     * &lt;li>"previewFetchResponse"&lt;/li>
+     * &lt;li>"previewLeadStateNotification"&lt;/li>
+     * &lt;li>"recordResponse"&lt;/li>
+     * &lt;li>"requeueResponse"&lt;/li>
+     * &lt;li>"reverseMatchNotification"&lt;/li>
+     * &lt;li>"safeModeFetchResponse"&lt;/li>
+     * &lt;li>"safeModeSearchResponse"&lt;/li>
+     * &lt;li>"scriptConfigResponse"&lt;/li>
+     * &lt;li>"supervisorListResponse"&lt;/li>
+     * &lt;li>"coldXferResponse"&lt;/li>
+     * &lt;li>"warmXferResponse"&lt;/li>
+     * &lt;li>"agentStats"&lt;/li>
+     * &lt;li>"agentDailyStats"&lt;/li>
+     * &lt;li>"campaignStats"&lt;/li>
+     * &lt;li>"queueStats"&lt;/li>
+     * @type {object}
      */
     AgentLibrary.prototype.setCallbacks = function(callbackMap) {
         for(var property in callbackMap) {
@@ -5653,6 +6303,15 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getCallback = function(type){
         return this.callbacks[type];
+    };
+
+    /**
+     * Get the socket connection to IntelliSocket
+     * @memberof AgentLibrary.Core
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getSocket = function(type){
+        return this.socket;
     };
 
     /**
@@ -5864,6 +6523,46 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().recordRequest;
     };
     /**
+     * Get latest Chat Presented Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatPresentedRequest = function() {
+        return UIModel.getInstance().chatPresentedRequest;
+    };
+    /**
+     * Get latest Chat Disposition Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatDispositionRequest = function() {
+        return UIModel.getInstance().chatDispositionRequest;
+    };
+    /**
+     * Get latest Chat Message Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatMessageRequest = function() {
+        return UIModel.getInstance().chatMessageRequest;
+    };
+    /**
+     * Get latest Chat Requeue Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatRequeueRequest = function() {
+        return UIModel.getInstance().chatRequeueRequest;
+    };
+    /**
+     * Get latest Chat Typing Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatTypingRequest = function() {
+        return UIModel.getInstance().chatTypingRequest;
+    };
+    /**
      * Get latest Agent Stats object
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
@@ -6032,6 +6731,46 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getEarlyUiiNotification = function() {
         return UIModel.getInstance().earlyUiiNotification;
     };
+    /**
+     * Get Chat Active notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatActiveNotification = function() {
+        return UIModel.getInstance().chatActiveNotification;
+    };
+    /**
+     * Get Chat Inactive notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatInactiveNotification = function() {
+        return UIModel.getInstance().chatInactiveNotification;
+    };
+    /**
+     * Get Chat Presented notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatPresentedNotification = function() {
+        return UIModel.getInstance().chatPresentedNotification;
+    };
+    /**
+     * Get Chat Typing notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatTypingNotification = function() {
+        return UIModel.getInstance().chatTypingNotification;
+    };
+    /**
+     * Get New Chat notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getNewChatNotification = function() {
+        return UIModel.getInstance().newChatNotification;
+    };
 
     /**
      * @namespace Settings
@@ -6149,57 +6888,115 @@ function initAgentLibraryCore (context) {
 }
 
 function initAgentLibrarySocket (context) {
-
     'use strict';
-
     var AgentLibrary = context.AgentLibrary;
-
     AgentLibrary.prototype.openSocket = function(callback){
         var instance = this;
         utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
         if("WebSocket" in context){
-            var socketDest = UIModel.getInstance().applicationSettings.socketDest;
-            utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
-            instance.socket = new WebSocket(socketDest);
+            if(!instance.socket){
+                var socketDest = UIModel.getInstance().applicationSettings.socketDest;
+                utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
+                instance.socket = new WebSocket(socketDest);
+                instance.socket.onopen = function() {
+                    UIModel.getInstance().applicationSettings.socketConnected = true;
+                    utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, {reconnect:instance._isReconnect});
+                    instance.socketOpened();
+                };
+                
+                instance.socket.onmessage = function(evt){
+                    var data = JSON.parse(evt.data);
+                    if(data.ui_response){
+                        utils.processResponse(instance, data);
+                    }else if(data.ui_notification){
+                        utils.processNotification(instance, data);
+                    }else if(data.dialer_request){
+                        utils.processDialerResponse(instance, data);
+                    }else if(data.ui_stats){
+                        utils.processStats(instance, data);
+                    }else if(data.ui_request){
+                        utils.processRequest(instance, data);
+                    }
+                };
 
-            instance.socket.onopen = function() {
-                UIModel.getInstance().applicationSettings.socketConnected = true;
-                utils.fireCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, '');
-            };
+                instance.socket.onclose = function(){
+                    utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
+                    UIModel.getInstance().applicationSettings.socketConnected = false;
+                    instance.socket = null;
 
-            instance.socket.onmessage = function(evt){
-                var data = JSON.parse(evt.data);
-                if(data.ui_response){
-                    utils.processResponse(instance, data);
-                }else if(data.ui_notification){
-                    utils.processNotification(instance, data);
-                }else if(data.dialer_request){
-                    utils.processDialerResponse(instance, data);
-                }else if(data.ui_stats){
-                    utils.processStats(instance, data);
-                }else if(data.ui_request){
-                    utils.processRequest(instance, data);
-                }
-            };
+                    // cancel daily stats timer
+                    clearInterval(UIModel.getInstance().agentDailyIntervalId);
+                    UIModel.getInstance().agentDailyIntervalId = null;
 
-            instance.socket.onclose = function(){
-                utils.fireCallback(instance, CALLBACK_TYPES.CLOSE_SOCKET, '');
-                UIModel.getInstance().applicationSettings.socketConnected = false;
+                    // cancel stats timer
+                    clearInterval(UIModel.getInstance().statsIntervalId);
+                    UIModel.getInstance().statsIntervalId = null;
 
-                // cancel stats timer
-                clearInterval(UIModel.getInstance().statsIntervalId);
-                UIModel.getInstance().statsIntervalId = null;
-            };
+                    // if we are still logged in, try to reconnect
+                    if(UIModel.getInstance().agentSettings.isLoggedIn){
+                        setTimeout(function(){
+                            instance.openSocket();
+                        }, 5000);
+                    }
+                };
+            }
         }else{
             utils.logMessage(LOG_LEVELS.WARN, "WebSocket NOT supported by your Browser", "");
         }
     };
-
     AgentLibrary.prototype.closeSocket = function(){
         this.socket.close();
     };
-
+    // when socket is successfully opened, check to see if there are any queued messaged
+    // and if so, send them.
+    AgentLibrary.prototype.socketOpened = function(){
+        var instance = this;
+        var currDts = new Date();
+        var threeMins = 3 * 60 * 1000; // milliseconds
+        var queuedMsg;
+        // if this is a reconnect, we need to re-authenticate with IntelliServices &amp; IntelliQueue
+        if(instance._isReconnect){
+            instance._isReconnect = false;
+            // Add IntelliQueue reconnect
+            var configRequest = JSON.parse(UIModel.getInstance().configRequest.formatJSON());
+            var hashCode = UIModel.getInstance().connectionSettings.hashCode;
+            configRequest.ui_request.hash_code = {
+                "#text":hashCode
+            };
+            configRequest.ui_request.update_login = {
+                "#text": "FALSE"
+            };
+            configRequest.ui_request.reconnect = {
+                "#text": "TRUE"
+            };
+            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(configRequest)});
+            // Add IntelliServices reconnect
+            var loginRequest = JSON.parse(UIModel.getInstance().loginRequest.formatJSON());
+            var agentId = UIModel.getInstance().agentSettings.agentId;
+            loginRequest.ui_request.reconnect = {
+                "#text":"TRUE"
+            };
+            loginRequest.ui_request.agent_id = {
+                "#text": utils.toString(agentId)
+            };
+            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(loginRequest)});
+        }
+        for(var idx=0; idx &lt; instance._queuedMsgs.length; idx++){
+            queuedMsg = instance._queuedMsgs[idx];
+            if(currDts.getTime() - queuedMsg.dts.getTime() &lt; threeMins){
+                // message queued less than 3 mins ago, send
+                utils.logMessage(LOG_LEVELS.DEBUG, "Sending queued message to IntelliSocket.", queuedMsg.msg);
+                utils.sendMessage(instance,queuedMsg.msg);
+            }else{
+                // message expired, don't send
+                utils.logMessage(LOG_LEVELS.DEBUG, "Queued message expired, discarding.", queuedMsg.msg);
+            }
+        }
+        // reset queued messages
+        instance._queuedMsgs = [];
+    };
 }
+
 function initAgentLibraryAgent (context) {
     /**
      * @namespace Agent
@@ -6253,16 +7050,31 @@ function initAgentLibraryAgent (context) {
     AgentLibrary.prototype.logoutAgent = function(agentId, callback){
         UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
         utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
+        UIModel.getInstance().agentSettings.isLoggedIn = false;
+
+        // Agent requested logout, just close socket??
+        utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
+        this.closeSocket();
+
+    };
+
+    /**
+     * Sends agent logout for the given agent to logout message to IntelliQueue
+     * @memberof AgentLibrary.Agent
+     * @param {number} agentToLogout Id of the agent that will be logged out.
+     * @param {number} [requestMessage=""] Message to send for the logout request.
+     * @param {function} [callback=null] Callback function when logoutAgent response received.
+     */
+    AgentLibrary.prototype.requestLogoutAgent = function(agentToLogout, requestMessage, callback){
+        var isSupervisor = UIModel.getInstance().agentSettings.agentType === 'SUPERVISOR';
+        UIModel.getInstance().logoutRequest = new LogoutRequest(agentToLogout, requestMessage, isSupervisor);
+        utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
 
         if(UIModel.getInstance().logoutRequest.isSupervisor){
             //This is a supervisor request to log an agent out. Create the
             //logout packet and then send the packet to IntelliQueue.
             var msg = UIModel.getInstance().logoutRequest.formatJSON();
             utils.sendMessage(this, msg);
-        }else{
-            // Agent requested logout, just close socket??
-            utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
-            this.closeSocket();
         }
     };
 
@@ -6298,7 +7110,6 @@ function initAgentLibraryAgent (context) {
     /**
      * Terminates agent's offhook session
      * @memberof AgentLibrary.Agent
-     * @param {function} [callback=null] Callback function when offhookTerm response received
      */
     AgentLibrary.prototype.offhookTerm = function(){
         UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
@@ -6345,18 +7156,6 @@ function initAgentLibraryAgent (context) {
         UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
     };
 
-    /**
-     * Reconnect the agent session, similar to configureAgent, but doesn't reset set all
-     * configure values if not needed.
-     * @memberof AgentLibrary.Agent
-     */
-    AgentLibrary.prototype.reconnect = function(){
-        UIModel.getInstance().reconnectRequest = new ReconnectRequest();
-        var msg = UIModel.getInstance().reconnectRequest.formatJSON();
-
-        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
-    };
-
 }
 
 function initAgentLibraryCall (context) {
@@ -6372,10 +7171,13 @@ function initAgentLibraryCall (context) {
     /**
      * Barge in on a call, can hear all parties and be heard by all
      * @memberof AgentLibrary.Call
+     * @param {number} agentId Agent Id of the current logged in agent
+     * @param {string} uii UII of the active call you wish to monitor
+     * @param {number} monitorAgentId UII Agent Id of the agent you wish to monitor
      * @param {function} [callback=null] Callback function when barge in response received
      */
-    AgentLibrary.prototype.bargeIn = function(callback){
-        UIModel.getInstance().bargeInRequest = new BargeInRequest("FULL");
+    AgentLibrary.prototype.bargeIn = function(agentId, uii, monitorAgentId, callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("FULL", agentId, uii, monitorAgentId);
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.BARGE_IN, callback);
@@ -6385,10 +7187,13 @@ function initAgentLibraryCall (context) {
     /**
      * Add a coaching session to the call, can hear all parties but only able to speak on agent channel
      * @memberof AgentLibrary.Call
+     * @param {number} agentId Agent Id of the current logged in agent
+     * @param {string} uii UII of the active call you wish to monitor
+     * @param {number} monitorAgentId UII Agent Id of the agent you wish to monitor
      * @param {function} [callback=null] Callback function when coaching session response received
      */
-    AgentLibrary.prototype.coach = function(callback){
-        UIModel.getInstance().bargeInRequest = new BargeInRequest("COACHING");
+    AgentLibrary.prototype.coach = function(agentId, uii, monitorAgentId, callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("COACHING", agentId, uii, monitorAgentId);
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.COACH_CALL, callback);
@@ -6586,10 +7391,13 @@ function initAgentLibraryCall (context) {
     /**
      * Add a silent monitor session to a call, can hear all channels but can't be heard by any party
      * @memberof AgentLibrary.Call
+     * @param {number} agentId Agent Id of the current logged in agent
+     * @param {string} uii UII of the active call you wish to monitor
+     * @param {number} monitorAgentId UII Agent Id of the agent you wish to monitor
      * @param {function} [callback=null] Callback function when silent monitor response received
      */
-    AgentLibrary.prototype.monitor = function(callback){
-        UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE");
+    AgentLibrary.prototype.monitor = function(agentId, uii, monitorAgentId, callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE", agentId, uii, monitorAgentId);
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.SILENT_MONITOR, callback);
@@ -6627,16 +7435,43 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a TCPA Safe call request message
+     * Sends a TCPA Safe call request to call lead based on request id. Call safeModeFetch method first to get request id.
      * @memberof AgentLibrary.Call
-     * @param {string} [action=""] Action to take
-     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
-     * e.g. [ {key: "name", value: "Geoff"} ]
      * @param {number} [requestId=""] Number displayed to callee, DNIS
      */
-    AgentLibrary.prototype.tcpaSafeCall = function(action, searchFields, requestId){
-        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest(action, searchFields, requestId);
+    AgentLibrary.prototype.safeModeCall = function(requestId){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", [], requestId);
         var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends a message to fetch safe mode dialable leads
+     * @memberof AgentLibrary.Call
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {function} [callback=null] Callback function when safe mode fetch completed, returns matched leads
+     */
+    AgentLibrary.prototype.safeModeFetch = function(searchFields, callback){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", searchFields, "");
+        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.SAFE_MODE_FETCH, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Pull back Safe Mode leads that match search criteria
+     * @memberof AgentLibrary.Call
+     * @param {array} [searchFields=[]] Array of objects with key/value pairs for search parameters
+     * e.g. [ {key: "name", value: "Geoff"} ]
+     * @param {function} [callback=null] Callback function when safe mode fetch completed, returns matched leads
+     */
+    AgentLibrary.prototype.safeSearchLeads = function(searchFields, callback){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("search", searchFields, "");
+        var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.SAFE_MODE_SEARCH, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -6681,7 +7516,8 @@ function initAgentLibraryCall (context) {
 
         if(script &amp;&amp; script.version === version){
             // return from memory
-            return script;
+            var savedScript = UIModel.getInstance().scriptSettings.loadedScripts[scriptId];
+            callback(savedScript);
         }else{
             // load script
             model.scriptConfigRequest = new ScriptConfigRequest(scriptId);
@@ -6839,6 +7675,75 @@ function initAgentLibraryChat (context) {
         utils.sendMessage(this, msg);
     };
 
+    /**
+     * Send accept/decline response when a chat is presented to an agent
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} response ACCEPT|REJECT response
+     * @param {string} responseReason Agent reason for Reject
+     */
+    AgentLibrary.prototype.chatPresentedResponse = function(uii, response, responseReason){
+        UIModel.getInstance().chatPresentedRequest = new ChatPresentedResponseRequest(uii, response, responseReason);
+        var msg = UIModel.getInstance().chatPresentedRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send an external chat message
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId The agent associated with the chat
+     * @param {string} message The message sent by the agent
+     * @param {function} [callback=null] Callback function when chat message received
+     */
+    AgentLibrary.prototype.chatMessage = function(uii, agentId, message, callback){
+        UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message);
+        var msg = UIModel.getInstance().chatMessageRequest.formatJSON();
+        utils.setCallback(this, CALLBACK_TYPES.CHAT_MESSAGE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send a disposition to end a chat session
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {number} agentId The agent's id
+     * @param {number} dispositionId Id of the selected disposition
+     * @param {string} [notes=""] Agent notes
+     * @param {boolean} sendAcknowlegement Whether or not to fire callback
+     * @param {object} [script=null] Script data associated with the chat session
+     */
+    AgentLibrary.prototype.chatDisposition = function(uii, agentId, dispositionId, notes, sendAcknowlegement, script){
+        UIModel.getInstance().chatDispositionRequest = new ChatDispositionRequest(uii, agentId, dispositionId, notes, sendAcknowlegement, script);
+        var msg = UIModel.getInstance().chatDispositionRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send the chat to a different Chat Queue
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {number} agentId The agent's id
+     * @param {number} chatQueueId Id of the Chat Queue to requeue to
+     * @param {number} skillId Skill id associated with the Chat Queue
+     * @param {boolean} [maintainAgent=fakse] Whether or not to keep the current agent connected to the chat on requeue
+     */
+    AgentLibrary.prototype.chatRequeue = function(uii, agentId, chatQueueId, skillId, maintainAgent){
+        UIModel.getInstance().chatRequeueRequest = new ChatRequeueRequest(uii, agentId, chatQueueId, skillId, maintainAgent);
+        var msg = UIModel.getInstance().chatRequeueRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sent when agent starts/stops typing
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     */
+    AgentLibrary.prototype.chatTyping = function(uii){
+        UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii);
+        var msg = UIModel.getInstance().chatTypingRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
 }
 
 function initAgentLibraryLogger (context) {
@@ -6955,17 +7860,18 @@ function initAgentLibraryLogger (context) {
          };
     };
 
-    AgentLibrary.prototype.getLogRecords = function(logLevel, startDate, endDate, callback){
+    AgentLibrary.prototype.getLogRecords = function(logLevel, startDate, endDate, maxRows, callback){
         logLevel = logLevel || "";
         var instance = this;
         var transaction = instance._db.transaction(["logger"], "readonly");
         var objStore = transaction.objectStore("logger");
         var index = null,
             cursor = null,
-            range = null;
+            range = null,
+            limit = maxRows || 100;
         utils.setCallback(instance, CALLBACK_TYPES.LOG_RESULTS, callback);
 
-        if(logLevel.toUpperCase() !== "ALL") { // looking for specific log level type
+        if(logLevel !== "" &amp;&amp; logLevel.toUpperCase() !== "ALL" &amp;&amp; logLevel.toUpperCase() !== "NO-STATS") { // looking for specific log level type
             if(startDate &amp;&amp; endDate){
                 var lowerBound = [logLevel.toLowerCase(), startDate];
                 var upperBound = [logLevel.toLowerCase(), endDate];
@@ -6979,32 +7885,81 @@ function initAgentLibraryLogger (context) {
             if(range !== null){
                 // with the provided date range
                 var levelAndDateReturn = [];
+                var idxLevelAndDate = 0;
                 index = objStore.index("levelAndDate");
-                index.openCursor(range).onsuccess = function(event){
+                index.openCursor(range, "prev").onsuccess = function(event){
                     cursor = event.target.result;
-                    if(cursor){
+                    if(cursor &amp;&amp; idxLevelAndDate &lt; limit){
                         levelAndDateReturn.push(cursor.value);
+                        idxLevelAndDate = idxLevelAndDate + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, levelAndDateReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, levelAndDateReturn);
                 };
 
             }else{
                 // no date range specified, return all within log level
                 var logLevelReturn = [];
+                var idxLogLevel = 0;
                 index = objStore.index("logLevel");
-                index.openCursor(logLevel).onsuccess = function(event){
+                index.openCursor(logLevel, "prev").onsuccess = function(event){
                     cursor = event.target.result;
-                    if(cursor){
+                    if(cursor &amp;&amp; idxLogLevel &lt; limit){
                         logLevelReturn.push(cursor.value);
+                        idxLogLevel = idxLogLevel + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, logLevelReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, logLevelReturn);
                 };
 
             }
-        } else { // give us all log level types
+        } else if(logLevel.toUpperCase() === "NO-STATS"){ // give us all types except stats
+            if(startDate &amp;&amp; endDate){
+                range = IDBKeyRange.bound(startDate,endDate);
+            }else if(startDate){
+                range = IDBKeyRange.lowerBound(startDate);
+            }else if(endDate){
+                range = IDBKeyRange.upperBound(endDate);
+            }
 
+            if(range !== null){
+                // with the provided date range
+                var dtsNoStatsReturn = [];
+                var idxDTSNoStats = 0;
+                index = objStore.index("dts");
+
+                index.openCursor(range, "prev").onsuccess = function(event){
+                    cursor = event.target.result;
+                    if(cursor &amp;&amp; idxDTSNoStats &lt; limit){
+                        if(cursor.value.logLevel !== "stats"){
+                            dtsNoStatsReturn.push(cursor.value);
+                            idxDTSNoStats = idxDTSNoStats + 1;
+                        }
+                        cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsNoStatsReturn);
+                    }
+                };
+            }else{
+                // no date range specified, return all records
+                var noStatsReturn = [];
+                var idxNoStats = 0;
+                objStore.openCursor().onsuccess = function(event){
+                    cursor = event.target.result;
+                    if(cursor &amp;&amp; idxNoStats &lt; limit){
+                        if(cursor.value.logLevel !== "stats"){
+                            noStatsReturn.push(cursor.value);
+                            idxNoStats = idxNoStats + 1;
+                        }
+                        cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, noStatsReturn);
+                    }
+                };
+            }
+        } else { // give us all log level types
             if(startDate &amp;&amp; endDate){
                 range = IDBKeyRange.bound(startDate,endDate);
             }else if(startDate){
@@ -7016,29 +7971,34 @@ function initAgentLibraryLogger (context) {
             if(range !== null){
                 // with the provided date range
                 var dtsReturn = [];
+                var idxDTS = 0;
                 index = objStore.index("dts");
 
-                index.openCursor(range).onsuccess = function(event){
+                index.openCursor(range, "prev").onsuccess = function(event){
                     cursor = event.target.result;
-                    if(cursor){
+                    if(cursor &amp;&amp; idxDTS &lt; limit){
                         dtsReturn.push(cursor.value);
+                        idxDTS = idxDTS + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, dtsReturn);
                 };
             }else{
                 // no date range specified, return all records
                 var allValsReturn = [];
+                var idxAll = 0;
                 objStore.openCursor().onsuccess = function(event){
                     cursor = event.target.result;
-                    if(cursor){
+                    if(cursor &amp;&amp; idxAll &lt; limit){
                         allValsReturn.push(cursor.value);
+                        idxAll = idxAll + 1;
                         cursor.continue();
+                    }else{
+                        utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, allValsReturn);
                     }
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOG_RESULTS, allValsReturn);
                 };
             }
-
         }
 
         return null;
@@ -7095,7 +8055,7 @@ if (typeof define === 'function' &amp;&amp; define.amd) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon Jan 23 2017 11:26:03 GMT-0700 (MST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Tue May 30 2017 13:13:30 GMT-0600 (MDT)
 </footer>
 
 <script> prettyPrint(); </script>
