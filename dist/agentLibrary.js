@@ -3840,7 +3840,7 @@ ChatPresentedResponseRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request": {
             "@destination":"IQ",
-            "@type":MESSAGE_TYPES.CHAT_PRESENTED,
+            "@type":MESSAGE_TYPES.CHAT_PRESENTED_RESPONSE,
             "@message_id":utils.getMessageId(),
             "@response_to":"",
             "uii":{
@@ -4450,7 +4450,6 @@ NewChatNotification.prototype.processResponse = function(notification) {
         newChat.requeueShortcuts = newChat.requeueShortcuts.requeueShortcuts;
     }*/
 
-    console.log(newChat.transcript.messages);
     if(newChat.transcript && newChat.transcript.message){
         newChat.transcript = [newChat.transcript];
     }else{
@@ -5405,9 +5404,34 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.REVERSE_MATCH, reverseMatchResponse);
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_LEAD_STATE:
-                var leadStateNotif = new TcpaSafeLeadStateNotification();
-                var leadStateResponse = leadStateNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateResponse);
+                var leadStateTcpaNotif = new TcpaSafeLeadStateNotification();
+                var leadStateTcpaResponse = leadStateTcpaNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateTcpaResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_ACTIVE:
+                var activeNotif = new ChatActiveNotification();
+                var activeResponse = activeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ACTIVE, activeResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_INACTIVE:
+                var inactiveNotif = new ChatInactiveNotification();
+                var inactiveResponse = inactiveNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_PRESENTED:
+                var presentedNotif = new ChatPresentedNotification();
+                var presentedResponse = presentedNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_PRESENTED, presentedResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_TYPING:
+                var typingNotif = new ChatTypingNotification();
+                var typingResponse = typingNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_TYPING, typingResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_NEW:
+                var newChatNotif = new NewChatNotification();
+                var newChatResponse = newChatNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_NEW, newChatResponse);
                 break;
         }
     },
@@ -6013,7 +6037,12 @@ const CALLBACK_TYPES = {
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "CHAT":"chatResponse",
-    "CHAT_MESSAGE":"chatMessageResponse", // external chat
+    "CHAT_ACTIVE":"chatActiveNotification",         // external chat
+    "CHAT_INACTIVE":"chatInactiveNotification",     // external chat
+    "CHAT_PRESENTED":"chatPresentedNotification",   // external chat
+    "CHAT_TYPING":"chatTypingNotification",         // external chat
+    "CHAT_MESSAGE":"chatMessageResponse",           // external chat
+    "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -6070,7 +6099,7 @@ const MESSAGE_TYPES = {
     "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
     "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
     "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat
-    "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
+    "CHAT_PRESENTED_RESPONSE":"CHAT-PRESENTED",             // external chat
     "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
@@ -6111,7 +6140,7 @@ const MESSAGE_TYPES = {
     "STATS_AGENT_DAILY":"AGENTDAILY",
     "STATS_CAMPAIGN":"CAMPAIGN",
     "STATS_QUEUE":"GATE",
-    "SUPERVISOR_LIST":"SUPERVISOR-LIST",
+    "SUPERVISOR_LIST":"SUPERVISOR-LIST",                // internal chat
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
     "TCPA_SAFE_LEAD_STATE":"TCPA-SAFE-LEAD-STATE",

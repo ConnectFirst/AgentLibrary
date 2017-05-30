@@ -279,9 +279,34 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.REVERSE_MATCH, reverseMatchResponse);
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_LEAD_STATE:
-                var leadStateNotif = new TcpaSafeLeadStateNotification();
-                var leadStateResponse = leadStateNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateResponse);
+                var leadStateTcpaNotif = new TcpaSafeLeadStateNotification();
+                var leadStateTcpaResponse = leadStateTcpaNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateTcpaResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_ACTIVE:
+                var activeNotif = new ChatActiveNotification();
+                var activeResponse = activeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ACTIVE, activeResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_INACTIVE:
+                var inactiveNotif = new ChatInactiveNotification();
+                var inactiveResponse = inactiveNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_PRESENTED:
+                var presentedNotif = new ChatPresentedNotification();
+                var presentedResponse = presentedNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_PRESENTED, presentedResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_TYPING:
+                var typingNotif = new ChatTypingNotification();
+                var typingResponse = typingNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_TYPING, typingResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_NEW:
+                var newChatNotif = new NewChatNotification();
+                var newChatResponse = newChatNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_NEW, newChatResponse);
                 break;
         }
     },

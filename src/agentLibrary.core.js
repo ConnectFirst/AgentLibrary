@@ -24,7 +24,12 @@ const CALLBACK_TYPES = {
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "CHAT":"chatResponse",
-    "CHAT_MESSAGE":"chatMessageResponse", // external chat
+    "CHAT_ACTIVE":"chatActiveNotification",         // external chat
+    "CHAT_INACTIVE":"chatInactiveNotification",     // external chat
+    "CHAT_PRESENTED":"chatPresentedNotification",   // external chat
+    "CHAT_TYPING":"chatTypingNotification",         // external chat
+    "CHAT_MESSAGE":"chatMessageResponse",           // external chat
+    "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -81,7 +86,7 @@ const MESSAGE_TYPES = {
     "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
     "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
     "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat
-    "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
+    "CHAT_PRESENTED_RESPONSE":"CHAT-PRESENTED",             // external chat
     "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
@@ -122,7 +127,7 @@ const MESSAGE_TYPES = {
     "STATS_AGENT_DAILY":"AGENTDAILY",
     "STATS_CAMPAIGN":"CAMPAIGN",
     "STATS_QUEUE":"GATE",
-    "SUPERVISOR_LIST":"SUPERVISOR-LIST",
+    "SUPERVISOR_LIST":"SUPERVISOR-LIST",                // internal chat
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
     "TCPA_SAFE_LEAD_STATE":"TCPA-SAFE-LEAD-STATE",

@@ -25,7 +25,7 @@ ChatPresentedResponseRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request": {
             "@destination":"IQ",
-            "@type":MESSAGE_TYPES.CHAT_PRESENTED,
+            "@type":MESSAGE_TYPES.CHAT_PRESENTED_RESPONSE,
             "@message_id":utils.getMessageId(),
             "@response_to":"",
             "uii":{
