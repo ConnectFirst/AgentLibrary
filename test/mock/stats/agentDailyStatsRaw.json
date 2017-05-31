@@ -7,7 +7,7 @@
     "total_preview_dials":{"#text":"0"},
     "total_manual_dials":{"#text":"0"},
     "total_rna":{"#text":"0"},
-    "total_talk_time":{"#text":"0"},
+    "total_talk_time":{"#text":"15"},
     "total_offhook_time":{"#text":"0"},
     "total_login_time":{"#text":"7808"},
     "total_success_dispositions":{"#text":"0"}

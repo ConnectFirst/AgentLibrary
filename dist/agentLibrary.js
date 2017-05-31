@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-05-30 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-05-31 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4607,11 +4607,18 @@ AgentDailyStats.prototype.processResponse = function(stats) {
         totalPreviewDials: utils.getText(resp, "total_preview_dials"),
         totalManualDials: utils.getText(resp, "total_manual_dials"),
         totalRna: utils.getText(resp, "total_rna"),
-        totalTalkTime:  model.agentDailyStats.totalTalkTime,
-        totalOffhookTime: model.agentDailyStats.totalOffhookTime,
-        totalLoginTime: model.agentDailyStats.totalLoginTime,
         totalSuccessDispositions: utils.getText(resp, "total_success_dispositions"),
-        currCallTime: model.agentDailyStats.currCallTime
+
+        totalTalkTime: utils.getText(resp, "total_talk_time"),
+        totalOffhookTime: utils.getText(resp, "total_offhook_time"),
+        totalLoginTime: utils.getText(resp, "total_login_time"),
+
+        currCallTime: model.agentDailyStats.currCallTime,
+        agentSessionStats: {
+            totalTalkTime: model.agentDailyStats.totalTalkTime,
+            totalOffhookTime: model.agentDailyStats.totalOffhookTime,
+            totalLoginTime: model.agentDailyStats.totalLoginTime
+        }
     };
 
     UIModel.getInstance().agentDailyStats = agentDailyStats;
@@ -5507,6 +5514,7 @@ var utils = {
                 break;
             case MESSAGE_TYPES.STATS_AGENT_DAILY:
                 var agentDailyStats = UIModel.getInstance().agentDailyStatsPacket.processResponse(data);
+                console.log('agent daily', agentDailyStats);
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_AGENT_DAILY, agentDailyStats);
 
                 // start daily stats interval timer, request update every second

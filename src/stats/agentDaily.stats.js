@@ -33,11 +33,18 @@ AgentDailyStats.prototype.processResponse = function(stats) {
         totalPreviewDials: utils.getText(resp, "total_preview_dials"),
         totalManualDials: utils.getText(resp, "total_manual_dials"),
         totalRna: utils.getText(resp, "total_rna"),
-        totalTalkTime:  model.agentDailyStats.totalTalkTime,
-        totalOffhookTime: model.agentDailyStats.totalOffhookTime,
-        totalLoginTime: model.agentDailyStats.totalLoginTime,
         totalSuccessDispositions: utils.getText(resp, "total_success_dispositions"),
-        currCallTime: model.agentDailyStats.currCallTime
+
+        totalTalkTime: utils.getText(resp, "total_talk_time"),
+        totalOffhookTime: utils.getText(resp, "total_offhook_time"),
+        totalLoginTime: utils.getText(resp, "total_login_time"),
+
+        currCallTime: model.agentDailyStats.currCallTime,
+        agentSessionStats: {
+            totalTalkTime: model.agentDailyStats.totalTalkTime,
+            totalOffhookTime: model.agentDailyStats.totalOffhookTime,
+            totalLoginTime: model.agentDailyStats.totalLoginTime
+        }
     };
 
     UIModel.getInstance().agentDailyStats = agentDailyStats;
