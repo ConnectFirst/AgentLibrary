@@ -1,6 +1,7 @@
 
-var ChatPresentedResponseRequest = function(uii, response, responseReason) {
+var ChatPresentedResponseRequest = function(uii, messageId, response, responseReason) {
     this.uii = uii;
+    this.messageId = messageId;
     this.response = response;
     this.responseReason = responseReason || "";
 };
@@ -27,7 +28,7 @@ ChatPresentedResponseRequest.prototype.formatJSON = function() {
             "@destination":"IQ",
             "@type":MESSAGE_TYPES.CHAT_PRESENTED_RESPONSE,
             "@message_id":utils.getMessageId(),
-            "@response_to":"",
+            "@response_to":this.messageId,
             "uii":{
                 "#text":utils.toString(this.uii)
             },

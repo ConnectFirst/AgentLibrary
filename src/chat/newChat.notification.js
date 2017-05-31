@@ -80,7 +80,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
     newChat.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript', 'message')[0];
 
     if(newChat.chatDispositions && newChat.chatDispositions.disposition){
-        newChat.outdialDispositions.dispositions = [newChat.chatDispositions]
+        newChat.chatDispositions.dispositions = [newChat.chatDispositions]
     }else{
         newChat.chatDispositions = newChat.chatDispositions.dispositions;
     }
@@ -95,6 +95,15 @@ NewChatNotification.prototype.processResponse = function(notification) {
         newChat.transcript = [newChat.transcript];
     }else{
         newChat.transcript = newChat.transcript.messages;
+    }
+
+    // convert numbers to boolean
+    if(newChat.chatDispositions && newChat.chatDispositions.dispositions){
+        for(var d = 0; d < newCall.chatDispositions.dispositions.length; d++){
+            var disp = newChat.chatDispositions.dispositions[d];
+            disp.isComplete = disp.isComplete === "1";
+            disp.isSuccess = disp.isSuccess === "1";
+        }
     }
 
     return newChat;

@@ -83,8 +83,8 @@ function initAgentLibraryChat (context) {
      * @param {string} response ACCEPT|REJECT response
      * @param {string} responseReason Agent reason for Reject
      */
-    AgentLibrary.prototype.chatPresentedResponse = function(uii, response, responseReason){
-        UIModel.getInstance().chatPresentedRequest = new ChatPresentedResponseRequest(uii, response, responseReason);
+    AgentLibrary.prototype.chatPresentedResponse = function(uii, messageId, response, responseReason){
+        UIModel.getInstance().chatPresentedRequest = new ChatPresentedResponseRequest(uii, messageId, response, responseReason);
         var msg = UIModel.getInstance().chatPresentedRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -95,12 +95,10 @@ function initAgentLibraryChat (context) {
      * @param {string} uii Unique identifier for the chat session
      * @param {string} agentId The agent associated with the chat
      * @param {string} message The message sent by the agent
-     * @param {function} [callback=null] Callback function when chat message received
      */
-    AgentLibrary.prototype.chatMessage = function(uii, agentId, message, callback){
+    AgentLibrary.prototype.chatMessage = function(uii, agentId, message){
         UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message);
         var msg = UIModel.getInstance().chatMessageRequest.formatJSON();
-        utils.setCallback(this, CALLBACK_TYPES.CHAT_MESSAGE, callback);
         utils.sendMessage(this, msg);
     };
 

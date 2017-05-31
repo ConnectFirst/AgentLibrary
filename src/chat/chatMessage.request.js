@@ -45,7 +45,7 @@ ChatMessageRequest.prototype.formatJSON = function() {
  * This class is responsible for handling external CHAT-MESSAGE packets received from
  * IntelliQueue.
  *
- * {"ui_request":{
+ * {"ui_notification":{
  *      "@message_id":"",
  *      "@response_to":"",
  *      "@type":"CHAT-MESSAGE",
@@ -58,7 +58,7 @@ ChatMessageRequest.prototype.formatJSON = function() {
  */
 
 ChatMessageRequest.prototype.processResponse = function(response) {
-    var resp = response.ui_request;
+    var resp = response.ui_notification;
     var formattedResponse = {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),

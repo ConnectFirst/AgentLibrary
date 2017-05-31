@@ -308,6 +308,11 @@ var utils = {
                 var newChatResponse = newChatNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_NEW, newChatResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_MESSAGE:
+                var chatMessage = new ChatMessageRequest();
+                var chatMessageResponse = chatMessage.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_MESSAGE, chatMessageResponse);
+                break;
         }
     },
 

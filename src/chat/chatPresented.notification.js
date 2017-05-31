@@ -29,6 +29,7 @@ ChatPresentedNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-PRESENTED notification",
         status: "OK",
+        messageId: notif['@message_id'],
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
         channelType: utils.getText(notif, "channel_type"),

@@ -3787,7 +3787,7 @@ ChatMessageRequest.prototype.formatJSON = function() {
  * This class is responsible for handling external CHAT-MESSAGE packets received from
  * IntelliQueue.
  *
- * {"ui_request":{
+ * {"ui_notification":{
  *      "@message_id":"",
  *      "@response_to":"",
  *      "@type":"CHAT-MESSAGE",
@@ -3800,7 +3800,7 @@ ChatMessageRequest.prototype.formatJSON = function() {
  */
 
 ChatMessageRequest.prototype.processResponse = function(response) {
-    var resp = response.ui_request;
+    var resp = response.ui_notification;
     var formattedResponse = {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),
@@ -3814,8 +3814,9 @@ ChatMessageRequest.prototype.processResponse = function(response) {
 };
 
 
-var ChatPresentedResponseRequest = function(uii, response, responseReason) {
+var ChatPresentedResponseRequest = function(uii, messageId, response, responseReason) {
     this.uii = uii;
+    this.messageId = messageId;
     this.response = response;
     this.responseReason = responseReason || "";
 };
@@ -3842,7 +3843,7 @@ ChatPresentedResponseRequest.prototype.formatJSON = function() {
             "@destination":"IQ",
             "@type":MESSAGE_TYPES.CHAT_PRESENTED_RESPONSE,
             "@message_id":utils.getMessageId(),
-            "@response_to":"",
+            "@response_to":this.messageId,
             "uii":{
                 "#text":utils.toString(this.uii)
             },
@@ -4310,6 +4311,7 @@ ChatPresentedNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-PRESENTED notification",
         status: "OK",
+        messageId: notif['@message_id'],
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
         channelType: utils.getText(notif, "channel_type"),
@@ -4439,7 +4441,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
     newChat.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript', 'message')[0];
 
     if(newChat.chatDispositions && newChat.chatDispositions.disposition){
-        newChat.outdialDispositions.dispositions = [newChat.chatDispositions]
+        newChat.chatDispositions.dispositions = [newChat.chatDispositions]
     }else{
         newChat.chatDispositions = newChat.chatDispositions.dispositions;
     }
@@ -4454,6 +4456,15 @@ NewChatNotification.prototype.processResponse = function(notification) {
         newChat.transcript = [newChat.transcript];
     }else{
         newChat.transcript = newChat.transcript.messages;
+    }
+
+    // convert numbers to boolean
+    if(newChat.chatDispositions && newChat.chatDispositions.dispositions){
+        for(var d = 0; d < newCall.chatDispositions.dispositions.length; d++){
+            var disp = newChat.chatDispositions.dispositions[d];
+            disp.isComplete = disp.isComplete === "1";
+            disp.isSuccess = disp.isSuccess === "1";
+        }
     }
 
     return newChat;
@@ -5440,6 +5451,11 @@ var utils = {
                 var newChatResponse = newChatNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_NEW, newChatResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_MESSAGE:
+                var chatMessage = new ChatMessageRequest();
+                var chatMessageResponse = chatMessage.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_MESSAGE, chatMessageResponse);
+                break;
         }
     },
 
@@ -6044,12 +6060,12 @@ const CALLBACK_TYPES = {
     "CALLBACK_PENDING":"callbacksPendingResponse",
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
-    "CHAT":"chatResponse",
+    "CHAT":"chatResponse",                          // internal chat
     "CHAT_ACTIVE":"chatActiveNotification",         // external chat
     "CHAT_INACTIVE":"chatInactiveNotification",     // external chat
     "CHAT_PRESENTED":"chatPresentedNotification",   // external chat
     "CHAT_TYPING":"chatTypingNotification",         // external chat
-    "CHAT_MESSAGE":"chatMessageResponse",           // external chat
+    "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
@@ -6105,9 +6121,13 @@ const MESSAGE_TYPES = {
     "CHAT_ALIAS":"CHAT-ALIAS",                              // internal chat
     "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
     "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
+    "CHAT_ACTIVE":"CHAT-ACTIVE",                            // external chat
+    "CHAT_INACTIVE":"CHAT-INACTIVE",                        // external chat
     "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
     "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat
-    "CHAT_PRESENTED_RESPONSE":"CHAT-PRESENTED",             // external chat
+    "CHAT_NEW":"NEW-CHAT",                                  // external chat
+    "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
+    "CHAT_PRESENTED_RESPONSE":"CHAT-PRESENTED-RESPONSE",    // external chat
     "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
@@ -7691,8 +7711,8 @@ function initAgentLibraryChat (context) {
      * @param {string} response ACCEPT|REJECT response
      * @param {string} responseReason Agent reason for Reject
      */
-    AgentLibrary.prototype.chatPresentedResponse = function(uii, response, responseReason){
-        UIModel.getInstance().chatPresentedRequest = new ChatPresentedResponseRequest(uii, response, responseReason);
+    AgentLibrary.prototype.chatPresentedResponse = function(uii, messageId, response, responseReason){
+        UIModel.getInstance().chatPresentedRequest = new ChatPresentedResponseRequest(uii, messageId, response, responseReason);
         var msg = UIModel.getInstance().chatPresentedRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -7703,12 +7723,10 @@ function initAgentLibraryChat (context) {
      * @param {string} uii Unique identifier for the chat session
      * @param {string} agentId The agent associated with the chat
      * @param {string} message The message sent by the agent
-     * @param {function} [callback=null] Callback function when chat message received
      */
-    AgentLibrary.prototype.chatMessage = function(uii, agentId, message, callback){
+    AgentLibrary.prototype.chatMessage = function(uii, agentId, message){
         UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message);
         var msg = UIModel.getInstance().chatMessageRequest.formatJSON();
-        utils.setCallback(this, CALLBACK_TYPES.CHAT_MESSAGE, callback);
         utils.sendMessage(this, msg);
     };
 

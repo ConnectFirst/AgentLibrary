@@ -76,8 +76,9 @@ describe( 'Tests for Agent Library chat methods', function() {
 
         var response = "ACCEPT";
         var responseReason = "some reason";
+        var messageId = "123456789";
 
-        Lib.chatPresentedResponse(uii, response, responseReason);
+        Lib.chatPresentedResponse(uii, messageId, response, responseReason);
         var msg = Lib.getChatPresentedRequest().formatJSON();
         var msgObj = JSON.parse(msg);
 
@@ -203,6 +204,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         var expectedResponse =  {
             message: "Received CHAT-PRESENTED notification",
             status: "OK",
+            messageId:"IQ10012016081611595000289",
             accountId: "99999999",
             uii: "201608161200240139000000000120",
             channelType: "SMS",
