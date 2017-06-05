@@ -63,6 +63,7 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),
         from: utils.getText(resp, 'from'),
+        senderType: utils.getText(resp, 'sender_type'),
         message: utils.getText(resp, 'message')
     };
 

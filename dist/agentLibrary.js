@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-05-31 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-06-05 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3805,6 +3805,7 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),
         from: utils.getText(resp, 'from'),
+        senderType: utils.getText(resp, 'sender_type'),
         message: utils.getText(resp, 'message')
     };
 
@@ -4354,6 +4355,7 @@ ChatTypingNotification.prototype.processResponse = function(notification) {
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
         from: utils.getText(notif, "from"),
+        senderType: utils.getText(notif, "sender_type"),
         pendingMessage: utils.getText(notif, "message")
     };
 
@@ -5530,7 +5532,6 @@ var utils = {
                 break;
             case MESSAGE_TYPES.STATS_AGENT_DAILY:
                 var agentDailyStats = UIModel.getInstance().agentDailyStatsPacket.processResponse(data);
-                console.log('agent daily', agentDailyStats);
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_AGENT_DAILY, agentDailyStats);
 
                 // start daily stats interval timer, request update every second
