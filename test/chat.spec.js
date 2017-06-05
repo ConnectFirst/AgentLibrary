@@ -262,8 +262,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             scriptVersion: "1",
             preChatData: "json_string_form_data",
             chatDispositions: [
-                {dispositionId:"2", isComplete:true, isSuccess:true, emailTemplateId: "1", disposition:"Complete"},
-                {dispositionId:"3", isComplete:false, isSuccess:true, disposition:"Requeue"}
+                {dispositionId:"2", isSuccess:true, isComplete:true, emailTemplateId: "1", disposition:"Complete"},
+                {dispositionId:"3", isSuccess:true, isComplete:false, disposition:"Requeue"}
             ],
             transcript: [
                 {from:"system", type:"SYSTEM", message:"User1 connected"},

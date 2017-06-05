@@ -98,9 +98,9 @@ NewChatNotification.prototype.processResponse = function(notification) {
     }
 
     // convert numbers to boolean
-    if(newChat.chatDispositions && newChat.chatDispositions.dispositions){
-        for(var d = 0; d < newCall.chatDispositions.dispositions.length; d++){
-            var disp = newChat.chatDispositions.dispositions[d];
+    if(newChat.chatDispositions){
+        for(var d = 0; d < newChat.chatDispositions.length; d++){
+            var disp = newChat.chatDispositions[d];
             disp.isComplete = disp.isComplete === "1";
             disp.isSuccess = disp.isSuccess === "1";
         }

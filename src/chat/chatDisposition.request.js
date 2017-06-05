@@ -56,7 +56,7 @@ ChatDispositionRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.uii)
             },
             "agent_id":{
-                "#text":utils.toString(this.accountId)
+                "#text":utils.toString(this.agentId)
             },
             "disposition_id":{
                 "#text":utils.toString(this.dispositionId)
@@ -65,7 +65,7 @@ ChatDispositionRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.notes)
             },
             "do_ack":{
-                "#text":utils.toString(this.sendAcknowlegement)
+                "#text":this.sendAcknowlegement === true ? "TRUE" : "FALSE"
             }
         }
     };
