@@ -43,9 +43,9 @@ var NewChatNotification = function() {
  *          },
  *          "transcript":{
  *              "message":[
- *                  { "@from":"system", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
- *                  { "@from":"dlbooks", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
- *                  { "@from":"user1", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
+ *                  { "@from":"system", "@type":"SYSTEM", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
+ *                  { "@from":"dlbooks", "@type":"AGENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
+ *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
  *          "json_baggage":{"#text":"json_string_form_data"},

@@ -228,7 +228,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             accountId: "99999999",
             uii: "201608161200240139000000000120",
             from: "System",
-            senderType: "SYSTEM",
+            type: "SYSTEM",
             pendingMessage: "this is the message before actual send"
         };
 

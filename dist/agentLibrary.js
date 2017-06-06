@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-06-05 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-06-06 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3805,7 +3805,7 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),
         from: utils.getText(resp, 'from'),
-        senderType: utils.getText(resp, 'sender_type'),
+        type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message')
     };
 
@@ -4355,7 +4355,7 @@ ChatTypingNotification.prototype.processResponse = function(notification) {
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
         from: utils.getText(notif, "from"),
-        senderType: utils.getText(notif, "sender_type"),
+        type: utils.getText(notif, "type"),
         pendingMessage: utils.getText(notif, "message")
     };
 
@@ -4406,9 +4406,9 @@ var NewChatNotification = function() {
  *          },
  *          "transcript":{
  *              "message":[
- *                  { "@from":"system", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
- *                  { "@from":"dlbooks", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
- *                  { "@from":"user1", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
+ *                  { "@from":"system", "@type":"SYSTEM", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
+ *                  { "@from":"dlbooks", "@type":"AGENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
+ *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
  *          "json_baggage":{"#text":"json_string_form_data"},
