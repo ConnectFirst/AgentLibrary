@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-06-06 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-06-07 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -6017,19 +6017,19 @@ var utils = {
             var model = UIModel.getInstance();
 
             var curLoginTime = model.agentDailyStats.totalLoginTime;
-            model.agentDailyStats.totalLoginTime = curLoginTime+1;
+            model.agentDailyStats.totalLoginTime = Number(curLoginTime) + 1;
 
             if(model.agentSettings.isOffhook){
                 var curOffhookTime = model.agentDailyStats.totalOffhookTime;
-                model.agentDailyStats.totalOffhookTime = curOffhookTime+1;
+                model.agentDailyStats.totalOffhookTime = Number(curOffhookTime) + 1;
             }
 
             if(model.agentSettings.currentState == 'ENGAGED'){
                 var curTalkTime = model.agentDailyStats.totalTalkTime;
-                model.agentDailyStats.totalTalkTime = curTalkTime+1;
+                model.agentDailyStats.totalTalkTime = Number(curTalkTime) + 1;
 
                 var curCallTime = model.agentDailyStats.currCallTime;
-                model.agentDailyStats.currCallTime = curCallTime+1;
+                model.agentDailyStats.currCallTime = Number(curCallTime) + 1;
             }
         }
     }
