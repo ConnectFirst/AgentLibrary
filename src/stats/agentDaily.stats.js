@@ -26,6 +26,23 @@ var AgentDailyStats = function() {
 AgentDailyStats.prototype.processResponse = function(stats) {
     var model = UIModel.getInstance();
     var resp = stats.ui_stats;
+
+    if(!(model.agentDailyStats &&
+        model.agentDailyStats.totalTalkTime &&
+        model.agentDailyStats.currCallTime &&
+        model.agentDailyStats.totalOffhookTime &&
+        model.agentDailyStats.totalLoginTime)) {
+
+        // init daily stats to first stats packet if they don't exist
+        model.agentDailyStats = {
+            totalLoginTime: utils.getText(resp, "total_login_time"),
+            totalOffhookTime: utils.getText(resp, "total_offhook_time"),
+            totalTalkTime: utils.getText(resp, "total_talk_time"),
+            currCallTime: 0
+        }
+    }
+
+
     var agentDailyStats = {
         agentId: utils.getText(resp, "agent_id"),
         totalLoginSessions: utils.getText(resp, "total_login_sessions"),
@@ -35,16 +52,10 @@ AgentDailyStats.prototype.processResponse = function(stats) {
         totalRna: utils.getText(resp, "total_rna"),
         totalSuccessDispositions: utils.getText(resp, "total_success_dispositions"),
 
-        totalTalkTime: utils.getText(resp, "total_talk_time"),
-        totalOffhookTime: utils.getText(resp, "total_offhook_time"),
-        totalLoginTime: utils.getText(resp, "total_login_time"),
-
-        currCallTime: model.agentDailyStats.currCallTime,
-        agentSessionStats: {
-            totalTalkTime: model.agentDailyStats.totalTalkTime,
-            totalOffhookTime: model.agentDailyStats.totalOffhookTime,
-            totalLoginTime: model.agentDailyStats.totalLoginTime
-        }
+        totalTalkTime: model.agentDailyStats.totalTalkTime,
+        totalOffhookTime: model.agentDailyStats.totalOffhookTime,
+        totalLoginTime: model.agentDailyStats.totalLoginTime,
+        currCallTime: model.agentDailyStats.currCallTime
     };
 
     UIModel.getInstance().agentDailyStats = agentDailyStats;

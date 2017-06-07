@@ -9,11 +9,5 @@
   "totalTalkTime": "15",
   "totalOffhookTime": "0",
   "totalLoginTime": "7808",
-
-  "currCallTime": 0,
-  "agentSessionStats": {
-    "totalTalkTime": 0,
-    "totalOffhookTime": 0,
-    "totalLoginTime": 0
-  }
+  "currCallTime": 0
 }
