@@ -883,8 +883,8 @@ var utils = {
                 var curTalkTime = model.agentDailyStats.agentSessionStats.totalTalkTime;
                 model.agentDailyStats.agentSessionStats.totalTalkTime = Number(curTalkTime) + 1;
 
-                var curCallTime = model.agentDailyStats.agentSessionStats.currCallTime;
-                model.agentDailyStats.agentSessionStats.currCallTime = Number(curCallTime) + 1;
+                var curCallTime = model.agentDailyStats.currCallTime;
+                model.agentDailyStats.currCallTime = Number(curCallTime) + 1;
             }
         }
     }
