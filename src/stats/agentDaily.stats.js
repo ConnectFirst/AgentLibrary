@@ -27,12 +27,7 @@ AgentDailyStats.prototype.processResponse = function(stats) {
     var model = UIModel.getInstance();
     var resp = stats.ui_stats;
 
-    if(!(model.agentDailyStats &&
-        model.agentDailyStats.totalTalkTime &&
-        model.agentDailyStats.currCallTime &&
-        model.agentDailyStats.totalOffhookTime &&
-        model.agentDailyStats.totalLoginTime)) {
-
+    if(!(model.agentDailyStats && model.agentDailyStats.totalTalkTime)) {
         // init daily stats to first stats packet if they don't exist
         model.agentDailyStats = {
             totalLoginTime: utils.getText(resp, "total_login_time"),
