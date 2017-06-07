@@ -393,6 +393,7 @@ var utils = {
                 if(UIModel.getInstance().agentDailyIntervalId === null){
                     UIModel.getInstance().agentDailyIntervalId = setInterval(utils.onAgentDailyStats, 1000);
                 }
+
                 break;
             case MESSAGE_TYPES.STATS_CAMPAIGN:
                 var campaignStats = UIModel.getInstance().campaignStatsPacket.processResponse(data);
@@ -869,22 +870,23 @@ var utils = {
     // data is incremented when we want on the IntelliServices side
     onAgentDailyStats: function(){
         if(Object.keys(UIModel.getInstance().agentDailyStats).length !== 0){
-            var model = UIModel.getInstance();
+            var agentSettings = UIModel.getInstance().agentSettings,
+                stats = UIModel.getInstance().agentDailyStats;
 
-            var curLoginTime = model.agentDailyStats.totalLoginTime;
-            model.agentDailyStats.totalLoginTime = Number(curLoginTime) + 1;
+            var curLoginTime = stats.totalLoginTime;
+            stats.totalLoginTime = Number(curLoginTime) + 1;
 
-            if(model.agentSettings.isOffhook){
-                var curOffhookTime = model.agentDailyStats.totalOffhookTime;
-                model.agentDailyStats.totalOffhookTime = Number(curOffhookTime) + 1;
+            if(agentSettings.isOffhook){
+                var curOffhookTime = stats.totalOffhookTime;
+                stats.totalOffhookTime = Number(curOffhookTime) + 1;
             }
 
-            if(model.agentSettings.currentState == 'ENGAGED'){
-                var curTalkTime = model.agentDailyStats.totalTalkTime;
-                model.agentDailyStats.totalTalkTime = Number(curTalkTime) + 1;
+            if(agentSettings.currentState == 'ENGAGED'){
+                var curTalkTime = stats.totalTalkTime;
+                stats.totalTalkTime = Number(curTalkTime) + 1;
 
-                var curCallTime = model.agentDailyStats.currCallTime;
-                model.agentDailyStats.currCallTime = Number(curCallTime) + 1;
+                var curCallTime = stats.currCallTime;
+                stats.currCallTime = Number(curCallTime) + 1;
             }
         }
     }

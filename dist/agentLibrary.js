@@ -4611,38 +4611,26 @@ var AgentDailyStats = function() {
  * }
  */
 AgentDailyStats.prototype.processResponse = function(stats) {
-    var model = UIModel.getInstance();
+    var model = UIModel.getInstance().agentDailyStats;
     var resp = stats.ui_stats;
 
-    if(!(model.agentDailyStats && model.agentDailyStats.totalTalkTime)) {
+    if(!model.totalTalkTime) {
         // init daily stats to first stats packet if they don't exist
-        model.agentDailyStats = {
-            totalLoginTime: utils.getText(resp, "total_login_time"),
-            totalOffhookTime: utils.getText(resp, "total_offhook_time"),
-            totalTalkTime: utils.getText(resp, "total_talk_time"),
-            currCallTime: 0
-        }
+        model.totalLoginTime = utils.getText(resp, "total_login_time");
+        model.totalOffhookTime = utils.getText(resp, "total_offhook_time");
+        model.totalTalkTime = utils.getText(resp, "total_talk_time");
+        model.currCallTime = 0;
     }
 
+    model.agentId = utils.getText(resp, "agent_id");
+    model.totalLoginSessions = utils.getText(resp, "total_login_sessions");
+    model.totalCallsHandled = utils.getText(resp, "total_calls_handled");
+    model.totalPreviewDials = utils.getText(resp, "total_preview_dials");
+    model.totalManualDials = utils.getText(resp, "total_manual_dials");
+    model.totalRna = utils.getText(resp, "total_rna");
+    model.totalSuccessDispositions = utils.getText(resp, "total_success_dispositions");
 
-    var agentDailyStats = {
-        agentId: utils.getText(resp, "agent_id"),
-        totalLoginSessions: utils.getText(resp, "total_login_sessions"),
-        totalCallsHandled: utils.getText(resp, "total_calls_handled"),
-        totalPreviewDials: utils.getText(resp, "total_preview_dials"),
-        totalManualDials: utils.getText(resp, "total_manual_dials"),
-        totalRna: utils.getText(resp, "total_rna"),
-        totalSuccessDispositions: utils.getText(resp, "total_success_dispositions"),
-
-        totalTalkTime: model.agentDailyStats.totalTalkTime,
-        totalOffhookTime: model.agentDailyStats.totalOffhookTime,
-        totalLoginTime: model.agentDailyStats.totalLoginTime,
-        currCallTime: model.agentDailyStats.currCallTime
-    };
-
-    UIModel.getInstance().agentDailyStats = agentDailyStats;
-
-    return agentDailyStats;
+    return model;
 };
 
 
@@ -5539,6 +5527,7 @@ var utils = {
                 if(UIModel.getInstance().agentDailyIntervalId === null){
                     UIModel.getInstance().agentDailyIntervalId = setInterval(utils.onAgentDailyStats, 1000);
                 }
+
                 break;
             case MESSAGE_TYPES.STATS_CAMPAIGN:
                 var campaignStats = UIModel.getInstance().campaignStatsPacket.processResponse(data);
@@ -6015,22 +6004,23 @@ var utils = {
     // data is incremented when we want on the IntelliServices side
     onAgentDailyStats: function(){
         if(Object.keys(UIModel.getInstance().agentDailyStats).length !== 0){
-            var model = UIModel.getInstance();
+            var agentSettings = UIModel.getInstance().agentSettings,
+                stats = UIModel.getInstance().agentDailyStats;
 
-            var curLoginTime = model.agentDailyStats.totalLoginTime;
-            model.agentDailyStats.totalLoginTime = Number(curLoginTime) + 1;
+            var curLoginTime = stats.totalLoginTime;
+            stats.totalLoginTime = Number(curLoginTime) + 1;
 
-            if(model.agentSettings.isOffhook){
-                var curOffhookTime = model.agentDailyStats.totalOffhookTime;
-                model.agentDailyStats.totalOffhookTime = Number(curOffhookTime) + 1;
+            if(agentSettings.isOffhook){
+                var curOffhookTime = stats.totalOffhookTime;
+                stats.totalOffhookTime = Number(curOffhookTime) + 1;
             }
 
-            if(model.agentSettings.currentState == 'ENGAGED'){
-                var curTalkTime = model.agentDailyStats.totalTalkTime;
-                model.agentDailyStats.totalTalkTime = Number(curTalkTime) + 1;
+            if(agentSettings.currentState == 'ENGAGED'){
+                var curTalkTime = stats.totalTalkTime;
+                stats.totalTalkTime = Number(curTalkTime) + 1;
 
-                var curCallTime = model.agentDailyStats.currCallTime;
-                model.agentDailyStats.currCallTime = Number(curCallTime) + 1;
+                var curCallTime = stats.currCallTime;
+                stats.currCallTime = Number(curCallTime) + 1;
             }
         }
     }
