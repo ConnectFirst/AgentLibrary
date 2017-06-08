@@ -15,6 +15,7 @@ const LOG_LEVELS ={
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
     "AGENT_STATE":"agentStateResponse",
+    "ACK":"acknowledgeResponse",
     "BARGE_IN":"bargeInResponse",
     "CLOSE_SOCKET":"closeResponse",
     "COACH_CALL":"coachResponse",
@@ -73,6 +74,7 @@ const CALLBACK_TYPES = {
 };
 
 const MESSAGE_TYPES = {
+    "ACK":"ACK",
     "ADD_SESSION":"ADD-SESSION",
     "BARGE_IN":"BARGE-IN",
     "AGENT_STATE":"AGENT-STATE",
@@ -217,6 +219,7 @@ function initAgentLibraryCore (context) {
      * Possible callback types:
      * <li>"addSessionNotification"</li>
      * <li>"agentStateResponse"</li>
+     * <li>"acknowledgeResponse"</li>
      * <li>"bargeInResponse"</li>
      * <li>"closeResponse"</li>
      * <li>"coachResponse"</li>

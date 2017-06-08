@@ -44,6 +44,7 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            ackRequest : new AckRequest(),
             bargeInRequest : null,
             callNotesRequest : null,
             callbacksPendingRequest : null,

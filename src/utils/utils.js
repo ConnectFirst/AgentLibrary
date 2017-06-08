@@ -179,6 +179,13 @@ var utils = {
                 var warmXferCancel = UIModel.getInstance().warmXferCancelRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.XFER_WARM_CANCEL, warmXferCancel);
                 break;
+            case MESSAGE_TYPES.ACK:
+                var ack = UIModel.getInstance().ackRequest.processResponse(response);
+                var responseTo = response.ui_response['@response_to'];
+                var request = utils.findRequestById(instance, responseTo);
+                ack.uii = request.msg.uii["#text"];
+                utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
+                break;
 
         }
 

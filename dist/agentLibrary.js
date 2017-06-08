@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-06-07 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-06-08 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -862,6 +862,46 @@ TcpaSafeLeadStateNotification.prototype.processResponse = function(notification)
     };
 
     return response;
+};
+
+
+var AckRequest = function(audioType, agentId, uii, monitorAgentId) {
+    this.audioType = audioType || "FULL";
+    this.agentId = agentId;
+    this.uii = uii;
+    this.monitorAgentId = monitorAgentId;
+};
+
+
+/*
+ * This class processes ACK packets rec'd from IQ.
+ * This is a callback triggered by certain actions like
+ * sending dispositions or script results.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008090317393001252",
+ *      "@response_to":"1112222",
+ *      "@type":"ACK",
+ *      "type":{"#text":"CHAT-DISPOSITION|INBOUND-DISPOSITION|OUTDIAL-DISPOSITION|SCRIPT-RESULT"},
+ *      "status":{"#text":"OK|FAILURE"},
+ *      "message":{"#text":""},
+ *      "detail":{}
+ *    }
+ * }
+ */
+AckRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    formattedResponse.type = utils.getText(resp, 'type');
+
+    if(formattedResponse.status === "OK"){
+        utils.logMessage(LOG_LEVELS.DEBUG, formattedResponse.message, response);
+    }else{
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message + ': ' + formattedResponse.detail, response);
+    }
+
+    return formattedResponse;
 };
 
 
@@ -4927,6 +4967,7 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            ackRequest : new AckRequest(),
             bargeInRequest : null,
             callNotesRequest : null,
             callbacksPendingRequest : null,
@@ -5312,6 +5353,13 @@ var utils = {
             case MESSAGE_TYPES.XFER_WARM_CANCEL:
                 var warmXferCancel = UIModel.getInstance().warmXferCancelRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.XFER_WARM_CANCEL, warmXferCancel);
+                break;
+            case MESSAGE_TYPES.ACK:
+                var ack = UIModel.getInstance().ackRequest.processResponse(response);
+                var responseTo = response.ui_response['@response_to'];
+                var request = utils.findRequestById(instance, responseTo);
+                ack.uii = request.msg.uii["#text"];
+                utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
 
         }
@@ -6044,6 +6092,7 @@ const LOG_LEVELS ={
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
     "AGENT_STATE":"agentStateResponse",
+    "ACK":"acknowledgeResponse",
     "BARGE_IN":"bargeInResponse",
     "CLOSE_SOCKET":"closeResponse",
     "COACH_CALL":"coachResponse",
@@ -6102,6 +6151,7 @@ const CALLBACK_TYPES = {
 };
 
 const MESSAGE_TYPES = {
+    "ACK":"ACK",
     "ADD_SESSION":"ADD-SESSION",
     "BARGE_IN":"BARGE-IN",
     "AGENT_STATE":"AGENT-STATE",
@@ -6246,6 +6296,7 @@ function initAgentLibraryCore (context) {
      * Possible callback types:
      * <li>"addSessionNotification"</li>
      * <li>"agentStateResponse"</li>
+     * <li>"acknowledgeResponse"</li>
      * <li>"bargeInResponse"</li>
      * <li>"closeResponse"</li>
      * <li>"coachResponse"</li>
