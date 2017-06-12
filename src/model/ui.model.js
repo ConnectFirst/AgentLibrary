@@ -111,12 +111,7 @@ var UIModel = (function() {
 
             // stat objects
             agentStats:[],
-            agentDailyStats: {
-                totalLoginTime: 0,
-                totalOffhookTime: 0,
-                totalTalkTime: 0,
-                currCallTime: 0
-            },
+            agentDailyStats: {},
             campaignStats:{},
             queueStats:{},
 
