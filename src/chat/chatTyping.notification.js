@@ -31,6 +31,7 @@ ChatTypingNotification.prototype.processResponse = function(notification) {
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
         from: utils.getText(notif, "from"),
+        type: utils.getText(notif, "type"),
         pendingMessage: utils.getText(notif, "message")
     };
 

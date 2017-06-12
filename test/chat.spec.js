@@ -76,8 +76,9 @@ describe( 'Tests for Agent Library chat methods', function() {
 
         var response = "ACCEPT";
         var responseReason = "some reason";
+        var messageId = "123456789";
 
-        Lib.chatPresentedResponse(uii, response, responseReason);
+        Lib.chatPresentedResponse(uii, messageId, response, responseReason);
         var msg = Lib.getChatPresentedRequest().formatJSON();
         var msgObj = JSON.parse(msg);
 
@@ -203,6 +204,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         var expectedResponse =  {
             message: "Received CHAT-PRESENTED notification",
             status: "OK",
+            messageId:"IQ10012016081611595000289",
             accountId: "99999999",
             uii: "201608161200240139000000000120",
             channelType: "SMS",
@@ -226,6 +228,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             accountId: "99999999",
             uii: "201608161200240139000000000120",
             from: "System",
+            type: "SYSTEM",
             pendingMessage: "this is the message before actual send"
         };
 
@@ -259,8 +262,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             scriptVersion: "1",
             preChatData: "json_string_form_data",
             chatDispositions: [
-                {dispositionId:"2", isComplete:true, isSuccess:true, emailTemplateId: "1", disposition:"Complete"},
-                {dispositionId:"3", isComplete:false, isSuccess:true, disposition:"Requeue"}
+                {dispositionId:"2", isSuccess:true, isComplete:true, emailTemplateId: "1", disposition:"Complete"},
+                {dispositionId:"3", isSuccess:true, isComplete:false, disposition:"Requeue"}
             ],
             transcript: [
                 {from:"system", type:"SYSTEM", message:"User1 connected"},

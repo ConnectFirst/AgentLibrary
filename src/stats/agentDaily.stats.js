@@ -24,23 +24,24 @@ var AgentDailyStats = function() {
  * }
  */
 AgentDailyStats.prototype.processResponse = function(stats) {
-    var model = UIModel.getInstance();
+    var model = UIModel.getInstance().agentDailyStats;
     var resp = stats.ui_stats;
-    var agentDailyStats = {
-        agentId: utils.getText(resp, "agent_id"),
-        totalLoginSessions: utils.getText(resp, "total_login_sessions"),
-        totalCallsHandled: utils.getText(resp, "total_calls_handled"),
-        totalPreviewDials: utils.getText(resp, "total_preview_dials"),
-        totalManualDials: utils.getText(resp, "total_manual_dials"),
-        totalRna: utils.getText(resp, "total_rna"),
-        totalTalkTime:  model.agentDailyStats.totalTalkTime,
-        totalOffhookTime: model.agentDailyStats.totalOffhookTime,
-        totalLoginTime: model.agentDailyStats.totalLoginTime,
-        totalSuccessDispositions: utils.getText(resp, "total_success_dispositions"),
-        currCallTime: model.agentDailyStats.currCallTime
-    };
 
-    UIModel.getInstance().agentDailyStats = agentDailyStats;
+    if(!model.totalTalkTime) {
+        // init daily stats to first stats packet if they don't exist
+        model.totalLoginTime = utils.getText(resp, "total_login_time");
+        model.totalOffhookTime = utils.getText(resp, "total_offhook_time");
+        model.totalTalkTime = utils.getText(resp, "total_talk_time");
+        model.currCallTime = 0;
+    }
 
-    return agentDailyStats;
+    model.agentId = utils.getText(resp, "agent_id");
+    model.totalLoginSessions = utils.getText(resp, "total_login_sessions");
+    model.totalCallsHandled = utils.getText(resp, "total_calls_handled");
+    model.totalPreviewDials = utils.getText(resp, "total_preview_dials");
+    model.totalManualDials = utils.getText(resp, "total_manual_dials");
+    model.totalRna = utils.getText(resp, "total_rna");
+    model.totalSuccessDispositions = utils.getText(resp, "total_success_dispositions");
+
+    return model;
 };

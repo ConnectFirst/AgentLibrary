@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-05-30 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-06-08 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -862,6 +862,46 @@ TcpaSafeLeadStateNotification.prototype.processResponse = function(notification)
     };
 
     return response;
+};
+
+
+var AckRequest = function(audioType, agentId, uii, monitorAgentId) {
+    this.audioType = audioType || "FULL";
+    this.agentId = agentId;
+    this.uii = uii;
+    this.monitorAgentId = monitorAgentId;
+};
+
+
+/*
+ * This class processes ACK packets rec'd from IQ.
+ * This is a callback triggered by certain actions like
+ * sending dispositions or script results.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008090317393001252",
+ *      "@response_to":"1112222",
+ *      "@type":"ACK",
+ *      "type":{"#text":"CHAT-DISPOSITION|INBOUND-DISPOSITION|OUTDIAL-DISPOSITION|SCRIPT-RESULT"},
+ *      "status":{"#text":"OK|FAILURE"},
+ *      "message":{"#text":""},
+ *      "detail":{}
+ *    }
+ * }
+ */
+AckRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    formattedResponse.type = utils.getText(resp, 'type');
+
+    if(formattedResponse.status === "OK"){
+        utils.logMessage(LOG_LEVELS.DEBUG, formattedResponse.message, response);
+    }else{
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message + ': ' + formattedResponse.detail, response);
+    }
+
+    return formattedResponse;
 };
 
 
@@ -3700,7 +3740,7 @@ ChatDispositionRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.uii)
             },
             "agent_id":{
-                "#text":utils.toString(this.accountId)
+                "#text":utils.toString(this.agentId)
             },
             "disposition_id":{
                 "#text":utils.toString(this.dispositionId)
@@ -3709,7 +3749,7 @@ ChatDispositionRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.notes)
             },
             "do_ack":{
-                "#text":utils.toString(this.sendAcknowlegement)
+                "#text":this.sendAcknowlegement === true ? "TRUE" : "FALSE"
             }
         }
     };
@@ -3787,7 +3827,7 @@ ChatMessageRequest.prototype.formatJSON = function() {
  * This class is responsible for handling external CHAT-MESSAGE packets received from
  * IntelliQueue.
  *
- * {"ui_request":{
+ * {"ui_notification":{
  *      "@message_id":"",
  *      "@response_to":"",
  *      "@type":"CHAT-MESSAGE",
@@ -3800,11 +3840,12 @@ ChatMessageRequest.prototype.formatJSON = function() {
  */
 
 ChatMessageRequest.prototype.processResponse = function(response) {
-    var resp = response.ui_request;
+    var resp = response.ui_notification;
     var formattedResponse = {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),
         from: utils.getText(resp, 'from'),
+        type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message')
     };
 
@@ -3814,8 +3855,9 @@ ChatMessageRequest.prototype.processResponse = function(response) {
 };
 
 
-var ChatPresentedResponseRequest = function(uii, response, responseReason) {
+var ChatPresentedResponseRequest = function(uii, messageId, response, responseReason) {
     this.uii = uii;
+    this.messageId = messageId;
     this.response = response;
     this.responseReason = responseReason || "";
 };
@@ -3840,9 +3882,9 @@ ChatPresentedResponseRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request": {
             "@destination":"IQ",
-            "@type":MESSAGE_TYPES.CHAT_PRESENTED,
+            "@type":MESSAGE_TYPES.CHAT_PRESENTED_RESPONSE,
             "@message_id":utils.getMessageId(),
-            "@response_to":"",
+            "@response_to":this.messageId,
             "uii":{
                 "#text":utils.toString(this.uii)
             },
@@ -4310,6 +4352,7 @@ ChatPresentedNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-PRESENTED notification",
         status: "OK",
+        messageId: notif['@message_id'],
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
         channelType: utils.getText(notif, "channel_type"),
@@ -4352,6 +4395,7 @@ ChatTypingNotification.prototype.processResponse = function(notification) {
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
         from: utils.getText(notif, "from"),
+        type: utils.getText(notif, "type"),
         pendingMessage: utils.getText(notif, "message")
     };
 
@@ -4402,9 +4446,9 @@ var NewChatNotification = function() {
  *          },
  *          "transcript":{
  *              "message":[
- *                  { "@from":"system", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
- *                  { "@from":"dlbooks", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
- *                  { "@from":"user1", "@type":"", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
+ *                  { "@from":"system", "@type":"SYSTEM", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
+ *                  { "@from":"dlbooks", "@type":"AGENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
+ *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
  *          "json_baggage":{"#text":"json_string_form_data"},
@@ -4439,7 +4483,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
     newChat.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript', 'message')[0];
 
     if(newChat.chatDispositions && newChat.chatDispositions.disposition){
-        newChat.outdialDispositions.dispositions = [newChat.chatDispositions]
+        newChat.chatDispositions.dispositions = [newChat.chatDispositions]
     }else{
         newChat.chatDispositions = newChat.chatDispositions.dispositions;
     }
@@ -4450,11 +4494,19 @@ NewChatNotification.prototype.processResponse = function(notification) {
         newChat.requeueShortcuts = newChat.requeueShortcuts.requeueShortcuts;
     }*/
 
-    console.log(newChat.transcript.messages);
     if(newChat.transcript && newChat.transcript.message){
         newChat.transcript = [newChat.transcript];
     }else{
         newChat.transcript = newChat.transcript.messages;
+    }
+
+    // convert numbers to boolean
+    if(newChat.chatDispositions){
+        for(var d = 0; d < newChat.chatDispositions.length; d++){
+            var disp = newChat.chatDispositions[d];
+            disp.isComplete = disp.isComplete === "1";
+            disp.isSuccess = disp.isSuccess === "1";
+        }
     }
 
     return newChat;
@@ -4599,25 +4651,26 @@ var AgentDailyStats = function() {
  * }
  */
 AgentDailyStats.prototype.processResponse = function(stats) {
-    var model = UIModel.getInstance();
+    var model = UIModel.getInstance().agentDailyStats;
     var resp = stats.ui_stats;
-    var agentDailyStats = {
-        agentId: utils.getText(resp, "agent_id"),
-        totalLoginSessions: utils.getText(resp, "total_login_sessions"),
-        totalCallsHandled: utils.getText(resp, "total_calls_handled"),
-        totalPreviewDials: utils.getText(resp, "total_preview_dials"),
-        totalManualDials: utils.getText(resp, "total_manual_dials"),
-        totalRna: utils.getText(resp, "total_rna"),
-        totalTalkTime:  model.agentDailyStats.totalTalkTime,
-        totalOffhookTime: model.agentDailyStats.totalOffhookTime,
-        totalLoginTime: model.agentDailyStats.totalLoginTime,
-        totalSuccessDispositions: utils.getText(resp, "total_success_dispositions"),
-        currCallTime: model.agentDailyStats.currCallTime
-    };
 
-    UIModel.getInstance().agentDailyStats = agentDailyStats;
+    if(!model.totalTalkTime) {
+        // init daily stats to first stats packet if they don't exist
+        model.totalLoginTime = utils.getText(resp, "total_login_time");
+        model.totalOffhookTime = utils.getText(resp, "total_offhook_time");
+        model.totalTalkTime = utils.getText(resp, "total_talk_time");
+        model.currCallTime = 0;
+    }
 
-    return agentDailyStats;
+    model.agentId = utils.getText(resp, "agent_id");
+    model.totalLoginSessions = utils.getText(resp, "total_login_sessions");
+    model.totalCallsHandled = utils.getText(resp, "total_calls_handled");
+    model.totalPreviewDials = utils.getText(resp, "total_preview_dials");
+    model.totalManualDials = utils.getText(resp, "total_manual_dials");
+    model.totalRna = utils.getText(resp, "total_rna");
+    model.totalSuccessDispositions = utils.getText(resp, "total_success_dispositions");
+
+    return model;
 };
 
 
@@ -4914,6 +4967,7 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            ackRequest : new AckRequest(),
             bargeInRequest : null,
             callNotesRequest : null,
             callbacksPendingRequest : null,
@@ -4981,12 +5035,7 @@ var UIModel = (function() {
 
             // stat objects
             agentStats:[],
-            agentDailyStats: {
-                totalLoginTime: 0,
-                totalOffhookTime: 0,
-                totalTalkTime: 0,
-                currCallTime: 0
-            },
+            agentDailyStats: {},
             campaignStats:{},
             queueStats:{},
 
@@ -5305,6 +5354,13 @@ var utils = {
                 var warmXferCancel = UIModel.getInstance().warmXferCancelRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.XFER_WARM_CANCEL, warmXferCancel);
                 break;
+            case MESSAGE_TYPES.ACK:
+                var ack = UIModel.getInstance().ackRequest.processResponse(response);
+                var responseTo = response.ui_response['@response_to'];
+                var request = utils.findRequestById(instance, responseTo);
+                ack.uii = request.msg.uii["#text"];
+                utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
+                break;
 
         }
 
@@ -5405,9 +5461,39 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.REVERSE_MATCH, reverseMatchResponse);
                 break;
             case MESSAGE_TYPES.TCPA_SAFE_LEAD_STATE:
-                var leadStateNotif = new TcpaSafeLeadStateNotification();
-                var leadStateResponse = leadStateNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateResponse);
+                var leadStateTcpaNotif = new TcpaSafeLeadStateNotification();
+                var leadStateTcpaResponse = leadStateTcpaNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateTcpaResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_ACTIVE:
+                var activeNotif = new ChatActiveNotification();
+                var activeResponse = activeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ACTIVE, activeResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_INACTIVE:
+                var inactiveNotif = new ChatInactiveNotification();
+                var inactiveResponse = inactiveNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_PRESENTED:
+                var presentedNotif = new ChatPresentedNotification();
+                var presentedResponse = presentedNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_PRESENTED, presentedResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_TYPING:
+                var typingNotif = new ChatTypingNotification();
+                var typingResponse = typingNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_TYPING, typingResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_NEW:
+                var newChatNotif = new NewChatNotification();
+                var newChatResponse = newChatNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_NEW, newChatResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_MESSAGE:
+                var chatMessage = new ChatMessageRequest();
+                var chatMessageResponse = chatMessage.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_MESSAGE, chatMessageResponse);
                 break;
         }
     },
@@ -5489,6 +5575,7 @@ var utils = {
                 if(UIModel.getInstance().agentDailyIntervalId === null){
                     UIModel.getInstance().agentDailyIntervalId = setInterval(utils.onAgentDailyStats, 1000);
                 }
+
                 break;
             case MESSAGE_TYPES.STATS_CAMPAIGN:
                 var campaignStats = UIModel.getInstance().campaignStatsPacket.processResponse(data);
@@ -5965,22 +6052,23 @@ var utils = {
     // data is incremented when we want on the IntelliServices side
     onAgentDailyStats: function(){
         if(Object.keys(UIModel.getInstance().agentDailyStats).length !== 0){
-            var model = UIModel.getInstance();
+            var agentSettings = UIModel.getInstance().agentSettings,
+                stats = UIModel.getInstance().agentDailyStats;
 
-            var curLoginTime = model.agentDailyStats.totalLoginTime;
-            model.agentDailyStats.totalLoginTime = curLoginTime+1;
+            var curLoginTime = stats.totalLoginTime;
+            stats.totalLoginTime = Number(curLoginTime) + 1;
 
-            if(model.agentSettings.isOffhook){
-                var curOffhookTime = model.agentDailyStats.totalOffhookTime;
-                model.agentDailyStats.totalOffhookTime = curOffhookTime+1;
+            if(agentSettings.isOffhook){
+                var curOffhookTime = stats.totalOffhookTime;
+                stats.totalOffhookTime = Number(curOffhookTime) + 1;
             }
 
-            if(model.agentSettings.currentState == 'ENGAGED'){
-                var curTalkTime = model.agentDailyStats.totalTalkTime;
-                model.agentDailyStats.totalTalkTime = curTalkTime+1;
+            if(agentSettings.currentState == 'ENGAGED'){
+                var curTalkTime = stats.totalTalkTime;
+                stats.totalTalkTime = Number(curTalkTime) + 1;
 
-                var curCallTime = model.agentDailyStats.currCallTime;
-                model.agentDailyStats.currCallTime = curCallTime+1;
+                var curCallTime = stats.currCallTime;
+                stats.currCallTime = Number(curCallTime) + 1;
             }
         }
     }
@@ -6004,6 +6092,7 @@ const LOG_LEVELS ={
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
     "AGENT_STATE":"agentStateResponse",
+    "ACK":"acknowledgeResponse",
     "BARGE_IN":"bargeInResponse",
     "CLOSE_SOCKET":"closeResponse",
     "COACH_CALL":"coachResponse",
@@ -6012,8 +6101,13 @@ const CALLBACK_TYPES = {
     "CALLBACK_PENDING":"callbacksPendingResponse",
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
-    "CHAT":"chatResponse",
-    "CHAT_MESSAGE":"chatMessageResponse", // external chat
+    "CHAT":"chatResponse",                          // internal chat
+    "CHAT_ACTIVE":"chatActiveNotification",         // external chat
+    "CHAT_INACTIVE":"chatInactiveNotification",     // external chat
+    "CHAT_PRESENTED":"chatPresentedNotification",   // external chat
+    "CHAT_TYPING":"chatTypingNotification",         // external chat
+    "CHAT_MESSAGE":"chatMessageNotification",       // external chat
+    "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -6057,6 +6151,7 @@ const CALLBACK_TYPES = {
 };
 
 const MESSAGE_TYPES = {
+    "ACK":"ACK",
     "ADD_SESSION":"ADD-SESSION",
     "BARGE_IN":"BARGE-IN",
     "AGENT_STATE":"AGENT-STATE",
@@ -6068,9 +6163,13 @@ const MESSAGE_TYPES = {
     "CHAT_ALIAS":"CHAT-ALIAS",                              // internal chat
     "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
     "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
+    "CHAT_ACTIVE":"CHAT-ACTIVE",                            // external chat
+    "CHAT_INACTIVE":"CHAT-INACTIVE",                        // external chat
     "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
     "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat
+    "CHAT_NEW":"NEW-CHAT",                                  // external chat
     "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
+    "CHAT_PRESENTED_RESPONSE":"CHAT-PRESENTED-RESPONSE",    // external chat
     "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
@@ -6111,7 +6210,7 @@ const MESSAGE_TYPES = {
     "STATS_AGENT_DAILY":"AGENTDAILY",
     "STATS_CAMPAIGN":"CAMPAIGN",
     "STATS_QUEUE":"GATE",
-    "SUPERVISOR_LIST":"SUPERVISOR-LIST",
+    "SUPERVISOR_LIST":"SUPERVISOR-LIST",                // internal chat
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
     "TCPA_SAFE_LEAD_STATE":"TCPA-SAFE-LEAD-STATE",
@@ -6197,6 +6296,7 @@ function initAgentLibraryCore (context) {
      * Possible callback types:
      * <li>"addSessionNotification"</li>
      * <li>"agentStateResponse"</li>
+     * <li>"acknowledgeResponse"</li>
      * <li>"bargeInResponse"</li>
      * <li>"closeResponse"</li>
      * <li>"coachResponse"</li>
@@ -7654,8 +7754,8 @@ function initAgentLibraryChat (context) {
      * @param {string} response ACCEPT|REJECT response
      * @param {string} responseReason Agent reason for Reject
      */
-    AgentLibrary.prototype.chatPresentedResponse = function(uii, response, responseReason){
-        UIModel.getInstance().chatPresentedRequest = new ChatPresentedResponseRequest(uii, response, responseReason);
+    AgentLibrary.prototype.chatPresentedResponse = function(uii, messageId, response, responseReason){
+        UIModel.getInstance().chatPresentedRequest = new ChatPresentedResponseRequest(uii, messageId, response, responseReason);
         var msg = UIModel.getInstance().chatPresentedRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -7666,12 +7766,10 @@ function initAgentLibraryChat (context) {
      * @param {string} uii Unique identifier for the chat session
      * @param {string} agentId The agent associated with the chat
      * @param {string} message The message sent by the agent
-     * @param {function} [callback=null] Callback function when chat message received
      */
-    AgentLibrary.prototype.chatMessage = function(uii, agentId, message, callback){
+    AgentLibrary.prototype.chatMessage = function(uii, agentId, message){
         UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message);
         var msg = UIModel.getInstance().chatMessageRequest.formatJSON();
-        utils.setCallback(this, CALLBACK_TYPES.CHAT_MESSAGE, callback);
         utils.sendMessage(this, msg);
     };
 
