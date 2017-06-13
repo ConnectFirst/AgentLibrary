@@ -6,8 +6,8 @@
   "totalManualDials": "0",
   "totalRna": "0",
   "totalSuccessDispositions": "0",
-  "totalTalkTime": "15",
-  "totalOffhookTime": "0",
   "totalLoginTime": "7808",
-  "currCallTime": 0
+  "totalOffhookTime": "0",
+  "totalTalkTime": "0",
+  "currCallTime": "0"
 }

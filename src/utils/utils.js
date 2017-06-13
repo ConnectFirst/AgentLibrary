@@ -323,8 +323,7 @@ var utils = {
         }
     },
 
-    processDialerResponse: function(instance, response)
-    {
+    processDialerResponse: function(instance, response) {
         var type = response.dialer_request['@type'];
         var messageId = response.dialer_request['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
@@ -360,7 +359,7 @@ var utils = {
 
     },
 
-    processRequest: function(instance, message){
+    processRequest: function(instance, message) {
         var type = message.ui_request['@type'];
 
         // Fire callback function
@@ -378,8 +377,7 @@ var utils = {
         }
     },
 
-    processStats: function(instance, data)
-    {
+    processStats: function(instance, data) {
         var type = data.ui_stats['@type'];
         var message = "Received " + type.toUpperCase() + " response message from IS";
 
@@ -519,7 +517,7 @@ var utils = {
      *   }
      */
 
-    processResponseCollection: function(response, groupProp, itemProp, textName){
+    processResponseCollection: function(response, groupProp, itemProp, textName) {
         var items = [];
         var item = {};
         var itemsRaw = [];
@@ -695,7 +693,7 @@ var utils = {
     },
 
     // find an object by given id in an array of objects
-    findObjById: function(objArray, id, propName){
+    findObjById: function(objArray, id, propName) {
         for(var o = 0; o < objArray.length; o++){
             var obj = objArray[o];
             if(obj[propName] === id){
@@ -707,7 +705,7 @@ var utils = {
     },
 
     // check whether agent dialDest is either a 10-digit number or valid sip
-    validateDest: function(dialDest){
+    validateDest: function(dialDest) {
         var isValid = false;
         var isNum = /^\d+$/.test(dialDest);
         if(isNum && dialDest.length === 10){
@@ -723,9 +721,9 @@ var utils = {
 
     // pass in MESSAGE_TYPE string (e.g. "CANCEL-CALLBACK"),
     // return corresponding CALLBACK_TYPE function name string (e.g. "callbackCancelResponse")
-    findCallbackBasedOnMessageType: function(messageType){
+    findCallbackBasedOnMessageType: function(messageType) {
         var callbackFnName = "";
-        for(key in MESSAGE_TYPES){
+        for(var key in MESSAGE_TYPES){
             if(MESSAGE_TYPES[key] === messageType){
                 callbackFnName = CALLBACK_TYPES[key];
             }
@@ -735,7 +733,7 @@ var utils = {
 
     // add message, detail, and status values to the formattedResponse
     // returned from each request processResponse method
-    buildDefaultResponse: function(response){
+    buildDefaultResponse: function(response) {
         var message = "";
         var detail = "";
         var status = "";
@@ -771,7 +769,7 @@ var utils = {
         });
     },
 
-    toString: function(val){
+    toString: function(val) {
         if(val){
             return val.toString();
         }else{
@@ -782,7 +780,7 @@ var utils = {
     // safely check if property exists and return empty string
     // instead of undefined if it doesn't exist
     // convert "TRUE" | "FALSE" to boolean
-    getText: function(obj,prop){
+    getText: function(obj,prop) {
         var o = obj[prop];
         if(o && o['#text']){
             if(o['#text'].toUpperCase() === "TRUE"){
@@ -800,7 +798,7 @@ var utils = {
     // safely check if property exists and return empty string
     // instead of undefined if it doesn't exist
     // convert "TRUE" | "FALSE" to boolean
-    getAttribute: function(obj,prop){
+    getAttribute: function(obj,prop) {
         var o = obj[prop];
         if(o && o[prop]){
             if(o[prop].toUpperCase() === "TRUE"){
@@ -819,7 +817,7 @@ var utils = {
     // @param str The string of keyvalue pairs to parse
     // @param outerDelimiter The delimiter that separates each keyValue pair
     // @param innerDelimiter The delimiter that separates each key from its value
-    parseKeyValuePairsFromString: function(str, outerDelimiter, innerDelimiter){
+    parseKeyValuePairsFromString: function(str, outerDelimiter, innerDelimiter) {
         if (!str){
             return [];
         }
@@ -837,7 +835,7 @@ var utils = {
     },
 
     // Finds a request by responseTo id
-    findRequestById: function(instance, id){
+    findRequestById: function(instance, id) {
         var request = null;
         for(var i = 0; i < instance._requests.length; i++){
             if(instance._requests[i].id === id){
@@ -851,7 +849,7 @@ var utils = {
     // called every 30 seconds letting intelliQueue know
     // not to archive the call so dispositions and other call
     // clean up actions can happen
-    sendPingCallMessage: function(){
+    sendPingCallMessage: function() {
         UIModel.getInstance().pingCallRequest = new PingCallRequest();
         var msg = UIModel.getInstance().pingCallRequest.formatJSON();
         var msgObj = JSON.parse(msg);
@@ -865,7 +863,7 @@ var utils = {
     },
 
     // called every 5 seconds to request stats from IntelliServices
-    sendStatsRequestMessage: function(){
+    sendStatsRequestMessage: function() {
         UIModel.getInstance().statsRequest = new StatsRequest();
         var msg = UIModel.getInstance().statsRequest.formatJSON();
         utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
@@ -875,7 +873,7 @@ var utils = {
     // if we have received agent daily stats
     // start incrementing various data points since not all
     // data is incremented when we want on the IntelliServices side
-    onAgentDailyStats: function(){
+    onAgentDailyStats: function() {
         if(Object.keys(UIModel.getInstance().agentDailyStats).length !== 0){
             var agentSettings = UIModel.getInstance().agentSettings,
                 stats = UIModel.getInstance().agentDailyStats;
@@ -897,5 +895,4 @@ var utils = {
             }
         }
     }
-
 };
