@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-06-08 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-06-13 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4654,14 +4654,6 @@ AgentDailyStats.prototype.processResponse = function(stats) {
     var model = UIModel.getInstance().agentDailyStats;
     var resp = stats.ui_stats;
 
-    if(!model.totalTalkTime) {
-        // init daily stats to first stats packet if they don't exist
-        model.totalLoginTime = utils.getText(resp, "total_login_time");
-        model.totalOffhookTime = utils.getText(resp, "total_offhook_time");
-        model.totalTalkTime = utils.getText(resp, "total_talk_time");
-        model.currCallTime = 0;
-    }
-
     model.agentId = utils.getText(resp, "agent_id");
     model.totalLoginSessions = utils.getText(resp, "total_login_sessions");
     model.totalCallsHandled = utils.getText(resp, "total_calls_handled");
@@ -4669,6 +4661,14 @@ AgentDailyStats.prototype.processResponse = function(stats) {
     model.totalManualDials = utils.getText(resp, "total_manual_dials");
     model.totalRna = utils.getText(resp, "total_rna");
     model.totalSuccessDispositions = utils.getText(resp, "total_success_dispositions");
+
+    if(!model.totalTalkTime) {
+        // init daily stats to first stats packet if they don't exist
+        model.totalLoginTime = utils.getText(resp, "total_login_time");
+        model.totalOffhookTime = utils.getText(resp, "total_offhook_time");
+        model.totalTalkTime = utils.getText(resp, "total_talk_time");
+        model.currCallTime = "0";
+    }
 
     return model;
 };
@@ -5246,7 +5246,7 @@ var utils = {
         // Fire callback function
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.AGENT_STATE:
-                if(UIModel.getInstance().agentStateRequest === null){
+                if (UIModel.getInstance().agentStateRequest === null) {
                     UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
                 }
                 var stateChangeResponse = UIModel.getInstance().agentStateRequest.processResponse(response);
@@ -5256,17 +5256,17 @@ var utils = {
                 var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
                 var responseTo = response.ui_response['@response_to'];
                 var request = utils.findRequestById(instance, responseTo);
-                if(request){
+                if (request) {
                     // found corresponding request, fire registered callback for type
                     var audioState = request.msg.audio_state['#text'];
-                    if(audioState === "MUTE"){
+                    if (audioState === "MUTE") {
                         utils.fireCallback(instance, CALLBACK_TYPES.SILENT_MONITOR, resp);
-                    }else if(audioState === "COACHING"){
+                    } else if (audioState === "COACHING") {
                         utils.fireCallback(instance, CALLBACK_TYPES.COACH_CALL, resp);
-                    }else{
+                    } else {
                         utils.fireCallback(instance, CALLBACK_TYPES.BARGE_IN, resp);
                     }
-                }else{
+                } else {
                     // no corresponding request, just fire FULL audio type BARGE-IN callback
                     utils.fireCallback(instance, CALLBACK_TYPES.BARGE_IN, resp);
                 }
@@ -5307,7 +5307,7 @@ var utils = {
                     var configResponse = UIModel.getInstance().configRequest.processResponse(response);
                     utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
 
-                    if(configResponse.status === "SUCCESS"){
+                    if (configResponse.status === "SUCCESS") {
                         // start stats interval timer, request stats every 5 seconds
                         UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
                     }
@@ -5319,7 +5319,7 @@ var utils = {
                 break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var offhook = new OffhookInitRequest();
-                var initResponse =  offhook.processResponse(response);
+                var initResponse = offhook.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
             case MESSAGE_TYPES.PAUSE_RECORD:
@@ -5361,7 +5361,6 @@ var utils = {
                 ack.uii = request.msg.uii["#text"];
                 utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
-
         }
 
     },
@@ -5465,41 +5464,10 @@ var utils = {
                 var leadStateTcpaResponse = leadStateTcpaNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateTcpaResponse);
                 break;
-            case MESSAGE_TYPES.CHAT_ACTIVE:
-                var activeNotif = new ChatActiveNotification();
-                var activeResponse = activeNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ACTIVE, activeResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_INACTIVE:
-                var inactiveNotif = new ChatInactiveNotification();
-                var inactiveResponse = inactiveNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_PRESENTED:
-                var presentedNotif = new ChatPresentedNotification();
-                var presentedResponse = presentedNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_PRESENTED, presentedResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_TYPING:
-                var typingNotif = new ChatTypingNotification();
-                var typingResponse = typingNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_TYPING, typingResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_NEW:
-                var newChatNotif = new NewChatNotification();
-                var newChatResponse = newChatNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_NEW, newChatResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_MESSAGE:
-                var chatMessage = new ChatMessageRequest();
-                var chatMessageResponse = chatMessage.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_MESSAGE, chatMessageResponse);
-                break;
         }
     },
 
-    processDialerResponse: function(instance, response)
-    {
+    processDialerResponse: function(instance, response) {
         var type = response.dialer_request['@type'];
         var messageId = response.dialer_request['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
@@ -5535,7 +5503,7 @@ var utils = {
 
     },
 
-    processRequest: function(instance, message){
+    processRequest: function(instance, message) {
         var type = message.ui_request['@type'];
 
         // Fire callback function
@@ -5553,8 +5521,7 @@ var utils = {
         }
     },
 
-    processStats: function(instance, data)
-    {
+    processStats: function(instance, data) {
         var type = data.ui_stats['@type'];
         var message = "Received " + type.toUpperCase() + " response message from IS";
 
@@ -5694,7 +5661,7 @@ var utils = {
      *   }
      */
 
-    processResponseCollection: function(response, groupProp, itemProp, textName){
+    processResponseCollection: function(response, groupProp, itemProp, textName) {
         var items = [];
         var item = {};
         var itemsRaw = [];
@@ -5870,7 +5837,7 @@ var utils = {
     },
 
     // find an object by given id in an array of objects
-    findObjById: function(objArray, id, propName){
+    findObjById: function(objArray, id, propName) {
         for(var o = 0; o < objArray.length; o++){
             var obj = objArray[o];
             if(obj[propName] === id){
@@ -5882,7 +5849,7 @@ var utils = {
     },
 
     // check whether agent dialDest is either a 10-digit number or valid sip
-    validateDest: function(dialDest){
+    validateDest: function(dialDest) {
         var isValid = false;
         var isNum = /^\d+$/.test(dialDest);
         if(isNum && dialDest.length === 10){
@@ -5898,9 +5865,9 @@ var utils = {
 
     // pass in MESSAGE_TYPE string (e.g. "CANCEL-CALLBACK"),
     // return corresponding CALLBACK_TYPE function name string (e.g. "callbackCancelResponse")
-    findCallbackBasedOnMessageType: function(messageType){
+    findCallbackBasedOnMessageType: function(messageType) {
         var callbackFnName = "";
-        for(key in MESSAGE_TYPES){
+        for(var key in MESSAGE_TYPES){
             if(MESSAGE_TYPES[key] === messageType){
                 callbackFnName = CALLBACK_TYPES[key];
             }
@@ -5910,7 +5877,7 @@ var utils = {
 
     // add message, detail, and status values to the formattedResponse
     // returned from each request processResponse method
-    buildDefaultResponse: function(response){
+    buildDefaultResponse: function(response) {
         var message = "";
         var detail = "";
         var status = "";
@@ -5946,7 +5913,7 @@ var utils = {
         });
     },
 
-    toString: function(val){
+    toString: function(val) {
         if(val){
             return val.toString();
         }else{
@@ -5957,7 +5924,7 @@ var utils = {
     // safely check if property exists and return empty string
     // instead of undefined if it doesn't exist
     // convert "TRUE" | "FALSE" to boolean
-    getText: function(obj,prop){
+    getText: function(obj,prop) {
         var o = obj[prop];
         if(o && o['#text']){
             if(o['#text'].toUpperCase() === "TRUE"){
@@ -5975,7 +5942,7 @@ var utils = {
     // safely check if property exists and return empty string
     // instead of undefined if it doesn't exist
     // convert "TRUE" | "FALSE" to boolean
-    getAttribute: function(obj,prop){
+    getAttribute: function(obj,prop) {
         var o = obj[prop];
         if(o && o[prop]){
             if(o[prop].toUpperCase() === "TRUE"){
@@ -5994,7 +5961,7 @@ var utils = {
     // @param str The string of keyvalue pairs to parse
     // @param outerDelimiter The delimiter that separates each keyValue pair
     // @param innerDelimiter The delimiter that separates each key from its value
-    parseKeyValuePairsFromString: function(str, outerDelimiter, innerDelimiter){
+    parseKeyValuePairsFromString: function(str, outerDelimiter, innerDelimiter) {
         if (!str){
             return [];
         }
@@ -6012,7 +5979,7 @@ var utils = {
     },
 
     // Finds a request by responseTo id
-    findRequestById: function(instance, id){
+    findRequestById: function(instance, id) {
         var request = null;
         for(var i = 0; i < instance._requests.length; i++){
             if(instance._requests[i].id === id){
@@ -6026,7 +5993,7 @@ var utils = {
     // called every 30 seconds letting intelliQueue know
     // not to archive the call so dispositions and other call
     // clean up actions can happen
-    sendPingCallMessage: function(){
+    sendPingCallMessage: function() {
         UIModel.getInstance().pingCallRequest = new PingCallRequest();
         var msg = UIModel.getInstance().pingCallRequest.formatJSON();
         var msgObj = JSON.parse(msg);
@@ -6040,7 +6007,7 @@ var utils = {
     },
 
     // called every 5 seconds to request stats from IntelliServices
-    sendStatsRequestMessage: function(){
+    sendStatsRequestMessage: function() {
         UIModel.getInstance().statsRequest = new StatsRequest();
         var msg = UIModel.getInstance().statsRequest.formatJSON();
         utils.sendMessage(UIModel.getInstance().libraryInstance, msg);
@@ -6050,7 +6017,7 @@ var utils = {
     // if we have received agent daily stats
     // start incrementing various data points since not all
     // data is incremented when we want on the IntelliServices side
-    onAgentDailyStats: function(){
+    onAgentDailyStats: function() {
         if(Object.keys(UIModel.getInstance().agentDailyStats).length !== 0){
             var agentSettings = UIModel.getInstance().agentSettings,
                 stats = UIModel.getInstance().agentDailyStats;
@@ -6072,7 +6039,6 @@ var utils = {
             }
         }
     }
-
 };
 
 
