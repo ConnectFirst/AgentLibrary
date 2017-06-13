@@ -71,7 +71,7 @@ var utils = {
         // Fire callback function
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.AGENT_STATE:
-                if(UIModel.getInstance().agentStateRequest === null){
+                if (UIModel.getInstance().agentStateRequest === null) {
                     UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
                 }
                 var stateChangeResponse = UIModel.getInstance().agentStateRequest.processResponse(response);
@@ -81,17 +81,17 @@ var utils = {
                 var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
                 var responseTo = response.ui_response['@response_to'];
                 var request = utils.findRequestById(instance, responseTo);
-                if(request){
+                if (request) {
                     // found corresponding request, fire registered callback for type
                     var audioState = request.msg.audio_state['#text'];
-                    if(audioState === "MUTE"){
+                    if (audioState === "MUTE") {
                         utils.fireCallback(instance, CALLBACK_TYPES.SILENT_MONITOR, resp);
-                    }else if(audioState === "COACHING"){
+                    } else if (audioState === "COACHING") {
                         utils.fireCallback(instance, CALLBACK_TYPES.COACH_CALL, resp);
-                    }else{
+                    } else {
                         utils.fireCallback(instance, CALLBACK_TYPES.BARGE_IN, resp);
                     }
-                }else{
+                } else {
                     // no corresponding request, just fire FULL audio type BARGE-IN callback
                     utils.fireCallback(instance, CALLBACK_TYPES.BARGE_IN, resp);
                 }
@@ -132,7 +132,7 @@ var utils = {
                     var configResponse = UIModel.getInstance().configRequest.processResponse(response);
                     utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
 
-                    if(configResponse.status === "SUCCESS"){
+                    if (configResponse.status === "SUCCESS") {
                         // start stats interval timer, request stats every 5 seconds
                         UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
                     }
@@ -144,7 +144,7 @@ var utils = {
                 break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var offhook = new OffhookInitRequest();
-                var initResponse =  offhook.processResponse(response);
+                var initResponse = offhook.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
             case MESSAGE_TYPES.PAUSE_RECORD:
@@ -186,7 +186,6 @@ var utils = {
                 ack.uii = request.msg.uii["#text"];
                 utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
-
         }
 
     },
@@ -289,36 +288,6 @@ var utils = {
                 var leadStateTcpaNotif = new TcpaSafeLeadStateNotification();
                 var leadStateTcpaResponse = leadStateTcpaNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateTcpaResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_ACTIVE:
-                var activeNotif = new ChatActiveNotification();
-                var activeResponse = activeNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ACTIVE, activeResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_INACTIVE:
-                var inactiveNotif = new ChatInactiveNotification();
-                var inactiveResponse = inactiveNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_PRESENTED:
-                var presentedNotif = new ChatPresentedNotification();
-                var presentedResponse = presentedNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_PRESENTED, presentedResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_TYPING:
-                var typingNotif = new ChatTypingNotification();
-                var typingResponse = typingNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_TYPING, typingResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_NEW:
-                var newChatNotif = new NewChatNotification();
-                var newChatResponse = newChatNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_NEW, newChatResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_MESSAGE:
-                var chatMessage = new ChatMessageRequest();
-                var chatMessageResponse = chatMessage.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_MESSAGE, chatMessageResponse);
                 break;
         }
     },

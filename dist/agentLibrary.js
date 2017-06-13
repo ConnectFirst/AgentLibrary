@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/*! cf-agent-library - v1.0.4 - 2017-06-08 - Connect First */
-=======
-/*! cf-agent-library - v1.0.4 - 2017-06-12 - Connect First */
->>>>>>> develop
+/*! cf-agent-library - v1.0.4 - 2017-06-13 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4658,17 +4654,6 @@ AgentDailyStats.prototype.processResponse = function(stats) {
     var model = UIModel.getInstance().agentDailyStats;
     var resp = stats.ui_stats;
 
-<<<<<<< HEAD
-    if(!model.totalTalkTime) {
-        // init daily stats to first stats packet if they don't exist
-        model.totalLoginTime = utils.getText(resp, "total_login_time");
-        model.totalOffhookTime = utils.getText(resp, "total_offhook_time");
-        model.totalTalkTime = utils.getText(resp, "total_talk_time");
-        model.currCallTime = 0;
-    }
-
-=======
->>>>>>> develop
     model.agentId = utils.getText(resp, "agent_id");
     model.totalLoginSessions = utils.getText(resp, "total_login_sessions");
     model.totalCallsHandled = utils.getText(resp, "total_calls_handled");
@@ -4676,8 +4661,6 @@ AgentDailyStats.prototype.processResponse = function(stats) {
     model.totalManualDials = utils.getText(resp, "total_manual_dials");
     model.totalRna = utils.getText(resp, "total_rna");
     model.totalSuccessDispositions = utils.getText(resp, "total_success_dispositions");
-<<<<<<< HEAD
-=======
 
     if(!model.totalTalkTime) {
         // init daily stats to first stats packet if they don't exist
@@ -4686,7 +4669,6 @@ AgentDailyStats.prototype.processResponse = function(stats) {
         model.totalTalkTime = utils.getText(resp, "total_talk_time");
         model.currCallTime = "0";
     }
->>>>>>> develop
 
     return model;
 };
@@ -5264,7 +5246,7 @@ var utils = {
         // Fire callback function
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.AGENT_STATE:
-                if(UIModel.getInstance().agentStateRequest === null){
+                if (UIModel.getInstance().agentStateRequest === null) {
                     UIModel.getInstance().agentStateRequest = new AgentStateRequest(response.ui_response.current_state["#text"], response.ui_response.agent_aux_state['#text']);
                 }
                 var stateChangeResponse = UIModel.getInstance().agentStateRequest.processResponse(response);
@@ -5274,17 +5256,17 @@ var utils = {
                 var resp = UIModel.getInstance().bargeInRequest.processResponse(response);
                 var responseTo = response.ui_response['@response_to'];
                 var request = utils.findRequestById(instance, responseTo);
-                if(request){
+                if (request) {
                     // found corresponding request, fire registered callback for type
                     var audioState = request.msg.audio_state['#text'];
-                    if(audioState === "MUTE"){
+                    if (audioState === "MUTE") {
                         utils.fireCallback(instance, CALLBACK_TYPES.SILENT_MONITOR, resp);
-                    }else if(audioState === "COACHING"){
+                    } else if (audioState === "COACHING") {
                         utils.fireCallback(instance, CALLBACK_TYPES.COACH_CALL, resp);
-                    }else{
+                    } else {
                         utils.fireCallback(instance, CALLBACK_TYPES.BARGE_IN, resp);
                     }
-                }else{
+                } else {
                     // no corresponding request, just fire FULL audio type BARGE-IN callback
                     utils.fireCallback(instance, CALLBACK_TYPES.BARGE_IN, resp);
                 }
@@ -5325,7 +5307,7 @@ var utils = {
                     var configResponse = UIModel.getInstance().configRequest.processResponse(response);
                     utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
 
-                    if(configResponse.status === "SUCCESS"){
+                    if (configResponse.status === "SUCCESS") {
                         // start stats interval timer, request stats every 5 seconds
                         UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
                     }
@@ -5337,7 +5319,7 @@ var utils = {
                 break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var offhook = new OffhookInitRequest();
-                var initResponse =  offhook.processResponse(response);
+                var initResponse = offhook.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
             case MESSAGE_TYPES.PAUSE_RECORD:
@@ -5372,7 +5354,6 @@ var utils = {
                 var warmXferCancel = UIModel.getInstance().warmXferCancelRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.XFER_WARM_CANCEL, warmXferCancel);
                 break;
-<<<<<<< HEAD
             case MESSAGE_TYPES.ACK:
                 var ack = UIModel.getInstance().ackRequest.processResponse(response);
                 var responseTo = response.ui_response['@response_to'];
@@ -5380,9 +5361,6 @@ var utils = {
                 ack.uii = request.msg.uii["#text"];
                 utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
-
-=======
->>>>>>> develop
         }
 
     },
@@ -5485,39 +5463,6 @@ var utils = {
                 var leadStateTcpaNotif = new TcpaSafeLeadStateNotification();
                 var leadStateTcpaResponse = leadStateTcpaNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateTcpaResponse);
-<<<<<<< HEAD
-                break;
-            case MESSAGE_TYPES.CHAT_ACTIVE:
-                var activeNotif = new ChatActiveNotification();
-                var activeResponse = activeNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ACTIVE, activeResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_INACTIVE:
-                var inactiveNotif = new ChatInactiveNotification();
-                var inactiveResponse = inactiveNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_PRESENTED:
-                var presentedNotif = new ChatPresentedNotification();
-                var presentedResponse = presentedNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_PRESENTED, presentedResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_TYPING:
-                var typingNotif = new ChatTypingNotification();
-                var typingResponse = typingNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_TYPING, typingResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_NEW:
-                var newChatNotif = new NewChatNotification();
-                var newChatResponse = newChatNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_NEW, newChatResponse);
-                break;
-            case MESSAGE_TYPES.CHAT_MESSAGE:
-                var chatMessage = new ChatMessageRequest();
-                var chatMessageResponse = chatMessage.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_MESSAGE, chatMessageResponse);
-=======
->>>>>>> develop
                 break;
         }
     },
