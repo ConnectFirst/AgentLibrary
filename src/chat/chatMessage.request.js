@@ -1,7 +1,7 @@
 
-var ChatMessageRequest = function(uii, accountId, message) {
+var ChatMessageRequest = function(uii, agentId, message) {
     this.uii = uii;
-    this.accountId = accountId;
+    this.agentId = agentId;
     this.message = message;
 };
 
@@ -14,9 +14,7 @@ var ChatMessageRequest = function(uii, accountId, message) {
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},
- *      "account_id":{"#text":""},
- *      "from":{"#text":""}, <--- injected by IQ
- *      "type":{"#text":"SYSTEM | AGENT | CLIENT"},
+ *      "agent_id":{"#text":""},
  *      "message":{"#text":"hello"}
  *    }
  * }
@@ -31,14 +29,8 @@ ChatMessageRequest.prototype.formatJSON = function() {
             "uii":{
                 "#text":utils.toString(this.uii)
             },
-            "account_id":{
-                "#text":utils.toString(this.accountId)
-            },
-            "from":{
-                "#text":""
-            },
-            "type":{
-                "#text":"AGENT"
+            "agent_id":{
+                "#text":utils.toString(this.agentId)
             },
             "message":{
                 "#text":utils.toString(this.message)
@@ -53,21 +45,20 @@ ChatMessageRequest.prototype.formatJSON = function() {
  * This class is responsible for handling external CHAT-MESSAGE packets received from
  * IntelliQueue.
  *
- * {"ui_request":{
+ * {"ui_notification":{
  *      "@message_id":"",
  *      "@response_to":"",
  *      "@type":"CHAT-MESSAGE",
  *      "uii":{"#text":""},
  *      "account_id":{"#text":""},
  *      "from":{"#text":""},
- *      "type":{"#text":"SYSTEM | AGENT | CLIENT"},
  *      "message":{"#text":"hello"}
  *    }
  * }
  */
 
 ChatMessageRequest.prototype.processResponse = function(response) {
-    var resp = response.ui_request;
+    var resp = response.ui_notification;
     var formattedResponse = {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),

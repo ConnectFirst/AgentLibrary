@@ -69,15 +69,16 @@ describe( 'Tests for Agent Library chat methods', function() {
         fixture.cleanup()
     });
 
-    it( 'should build chatPresented message and send message over socket', function() {
+    it( 'should build chatPresentedResponse message and send message over socket', function() {
         var Lib = new AgentLibrary();
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
         var response = "ACCEPT";
         var responseReason = "some reason";
+        var messageId = "123456789";
 
-        Lib.chatPresentedResponse(uii, sessionId, response, responseReason);
+        Lib.chatPresentedResponse(uii, messageId, response, responseReason);
         var msg = Lib.getChatPresentedRequest().formatJSON();
         var msgObj = JSON.parse(msg);
 
@@ -95,9 +96,10 @@ describe( 'Tests for Agent Library chat methods', function() {
 
         var dispositionId = "1";
         var notes = "an agent note";
+        var sendAck = false;
         var script = null;
 
-        Lib.chatDisposition(uii, agentId, dispositionId, sessionId, notes, script);
+        Lib.chatDisposition(uii, agentId, dispositionId, notes, sendAck, script);
         var msg = Lib.getChatDispositionRequest().formatJSON();
         var msgObj = JSON.parse(msg);
 
@@ -115,7 +117,7 @@ describe( 'Tests for Agent Library chat methods', function() {
 
         var message = "hello";
 
-        Lib.chatMessage(uii, accountId, message);
+        Lib.chatMessage(uii, agentId, message);
         var msg = Lib.getChatMessageRequest().formatJSON();
         var msgObj = JSON.parse(msg);
 
@@ -151,9 +153,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        var isTyping = true;
-
-        Lib.chatTyping(uii, accountId, isTyping);
+        Lib.chatTyping(uii);
         var msg = Lib.getChatTypingRequest().formatJSON();
         var msgObj = JSON.parse(msg);
 
@@ -161,7 +161,6 @@ describe( 'Tests for Agent Library chat methods', function() {
 
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
-        expect(msgObj.ui_request.is_typing["#text"]).toEqual("true");
     });
 
     it( 'should process a chat-active notification message', function() {
@@ -173,7 +172,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         var expectedResponse =  {
             message: "Received CHAT-ACTIVE notification",
             status: "OK",
-            agentId: "1180958",
+            accountId: "99999999",
             uii: "201608161200240139000000000120"
         };
 
@@ -189,7 +188,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         var expectedResponse =  {
             message: "Received CHAT-INACTIVE notification",
             status: "OK",
-            agentId: "1180958",
+            accountId: "99999999",
             uii: "201608161200240139000000000120"
         };
 
@@ -205,9 +204,13 @@ describe( 'Tests for Agent Library chat methods', function() {
         var expectedResponse =  {
             message: "Received CHAT-PRESENTED notification",
             status: "OK",
-            agentId: "1180958",
-            sessionId: "2",
-            uii: "201608161200240139000000000120"
+            messageId:"IQ10012016081611595000289",
+            accountId: "99999999",
+            uii: "201608161200240139000000000120",
+            channelType: "SMS",
+            chatQueueId: "2",
+            chatQueueName: "Support Queue"
+
         };
 
         expect(response).toEqual(expectedResponse);
@@ -222,10 +225,10 @@ describe( 'Tests for Agent Library chat methods', function() {
         var expectedResponse =  {
             message: "Received CHAT-TYPING notification",
             status: "OK",
-            agentId: "1180958",
             accountId: "99999999",
             uii: "201608161200240139000000000120",
-            isTyping: true,
+            from: "System",
+            type: "SYSTEM",
             pendingMessage: "this is the message before actual send"
         };
 
@@ -243,31 +246,34 @@ describe( 'Tests for Agent Library chat methods', function() {
 
         var expectedResponse = {
             uii: "201608161200240139000000000120",
+            accountId: "99999999",
             sessionId: "2",
             agentId: "1180958",
-            queueTime: "-1",
             queueDts: "2017-04-26 11:25:00",
+            queueTime: "-1",
+            chatQueueId: "2",
             chatQueueName: "Test Chat Queue",
-            isSms: false,
             appUrl: "www.test.url",
-            scriptId:"1",
+            channelType: "SMS",
+            ani: "5551234567",
+            dnis: "5557654321",
             surveyPopType: "SUPPRESS",
+            scriptId:"1",
             scriptVersion: "1",
             preChatData: "json_string_form_data",
-            requeueShortcuts: [
-                { chatQueueId: "2", name:"test queue", skillId:"" }
-            ],
             chatDispositions: [
-                {dispositionId:"2", disposition:"Complete"},
-                {dispositionId:"3", disposition:"Requeue"}
+                {dispositionId:"2", isSuccess:true, isComplete:true, emailTemplateId: "1", disposition:"Complete"},
+                {dispositionId:"3", isSuccess:true, isComplete:false, disposition:"Requeue"}
             ],
-            history: [
+            transcript: [
                 {from:"system", type:"SYSTEM", message:"User1 connected"},
                 {from:"dlbooks", type:"AGENT", message:"Hello"},
                 {from:"user1", type:"CLIENT", message:"Hi"}
             ]
-
         };
+        /*requeueShortcuts: [
+            { chatQueueId: "2", name:"test queue", skillId:"" }
+        ],*/
 
         expect(response).toEqual(expectedResponse);
     });

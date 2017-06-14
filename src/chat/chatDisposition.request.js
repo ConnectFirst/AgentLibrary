@@ -1,13 +1,13 @@
 
-var ChatDispositionRequest = function(uii, agentId, dispositionId, sessionId, notes, script) {
+var ChatDispositionRequest = function(uii, agentId, dispositionId, notes, sendAcknowlegement, survey) {
     this.uii = uii;
     this.agentId = agentId;
     this.dispositionId = dispositionId;
-    this.sessionId = sessionId;
     this.notes = notes || "";
+    this.sendAcknowlegement = sendAcknowlegement || false;
 
     /*
-     * script = {
+     * survey = {
      *      first_name: {
      *          leadField: "first_name"
      *          value: "Geoff"
@@ -19,7 +19,7 @@ var ChatDispositionRequest = function(uii, agentId, dispositionId, sessionId, no
      *      ...
      * }
      */
-    this.script = script || null;
+    this.survey = survey || null;
 };
 
 /*
@@ -33,9 +33,9 @@ var ChatDispositionRequest = function(uii, agentId, dispositionId, sessionId, no
  *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
  *      "disposition_id":{"#text":""},
- *      "session_id":{"#text":""},
  *      "notes":{"#text":"hello"},
- *      "script":{
+ *      "do_ack":{"#text":"true"},
+ *      "survey":{
  *          "response":[
  *              {"@extern_id":"text_box","#text":"hello"},
  *              {"@extern_id":"check_box","#text":"20"},
@@ -56,40 +56,40 @@ ChatDispositionRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.uii)
             },
             "agent_id":{
-                "#text":utils.toString(this.accountId)
+                "#text":utils.toString(this.agentId)
             },
             "disposition_id":{
                 "#text":utils.toString(this.dispositionId)
             },
-            "session_id":{
-                "#text": utils.toString(this.sessionId)
-            },
             "notes":{
                 "#text":utils.toString(this.notes)
+            },
+            "do_ack":{
+                "#text":this.sendAcknowlegement === true ? "TRUE" : "FALSE"
             }
         }
     };
 
     /*
-     * converts script to this response
-     * script : {
+     * converts survey to this response
+     * survey : {
      *      response: [
      *          { "@extern_id":"", "@lead_update_column":"", "#text":"" }
      *      ]
      * }
      */
-    if(this.script !== null){
+    if(this.survey !== null){
         var response = [];
-        var keys = Object.keys(this.script);
+        var keys = Object.keys(this.survey);
         for(var i = 0; i < keys.length; i++){
             var key = keys[i];
             var obj = {
                 "@extern_id": key,
-                "#text": utils.toString(this.script[key].value)
+                "#text": utils.toString(this.survey[key].value)
             };
             response.push(obj);
         }
-        msg.ui_request.script = {"response":response};
+        msg.ui_request.survey = {"response":response};
     }
 
     return JSON.stringify(msg);

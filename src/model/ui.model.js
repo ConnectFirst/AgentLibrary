@@ -44,6 +44,7 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            ackRequest : new AckRequest(),
             bargeInRequest : null,
             callNotesRequest : null,
             callbacksPendingRequest : null,
@@ -111,12 +112,7 @@ var UIModel = (function() {
 
             // stat objects
             agentStats:[],
-            agentDailyStats: {
-                totalLoginTime: 0,
-                totalOffhookTime: 0,
-                totalTalkTime: 0,
-                currCallTime: 0
-            },
+            agentDailyStats: {},
             campaignStats:{},
             queueStats:{},
 

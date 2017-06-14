@@ -6,7 +6,7 @@ var ChatActiveNotification = function() {
 /*
  * External Chat:
  * This class is responsible for handling "CHAT-ACTIVE" packets from IntelliQueue.
- * This is sent in response to an agent's CHAT-PRESENTED accept request.
+ * This is sent in response to an agent's CHAT-PRESENTED-RESPONSE accept request.
  *
  *  {
  *      "ui_notification":{
@@ -14,7 +14,7 @@ var ChatActiveNotification = function() {
  *          "@type":"CHAT-ACTIVE",
  *          "@destination":"IQ",
  *          "@response_to":"",
- *          "agent_id":{"#text":"1180958"},
+ *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"}
  *      }
  *  }
@@ -25,7 +25,7 @@ ChatActiveNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-ACTIVE notification",
         status: "OK",
-        agentId: utils.getText(notif, "agent_id"),
+        accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii")
     };
 

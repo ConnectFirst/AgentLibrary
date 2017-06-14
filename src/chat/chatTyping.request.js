@@ -1,8 +1,6 @@
 
-var ChatTypingRequest = function(uii, accountId, isTyping) {
+var ChatTypingRequest = function(uii) {
     this.uii = uii;
-    this.accountId = accountId;
-    this.isTyping = isTyping;
 };
 
 /*
@@ -15,10 +13,7 @@ var ChatTypingRequest = function(uii, accountId, isTyping) {
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},
- *      "agent_id":{"#text":""},
- *      "account_id":{"#text":""},
- *      "isTyping":{"#text":"true|false"},
- *      "pendingMessage":{"#text":""}
+ *      "agent_id":{"#text":""}
  *    }
  * }
  */
@@ -34,15 +29,6 @@ ChatTypingRequest.prototype.formatJSON = function() {
             },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
-            },
-            "account_id":{
-                "#text":utils.toString(this.accountId)
-            },
-            "is_typing":{
-                "#text":utils.toString(this.isTyping)
-            },
-            "pending_message":{
-                "#text":""
             }
         }
     };

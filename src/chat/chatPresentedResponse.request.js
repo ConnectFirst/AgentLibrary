@@ -1,14 +1,14 @@
 
-var ChatPresentedRequest = function(uii, sessionId, response, responseReason) {
+var ChatPresentedResponseRequest = function(uii, messageId, response, responseReason) {
     this.uii = uii;
-    this.sessionId = sessionId;
+    this.messageId = messageId;
     this.response = response;
     this.responseReason = responseReason || "";
 };
 
 /*
  * External Chat:
- * When Agent receives a CHAT-PRESENTED notification, repond with
+ * When Agent receives a CHAT-PRESENTED notification, respond with
  * either ACCEPT or REJECT for presented chat.
  * {"ui_request":{
  *      "@destination":"IQ",
@@ -17,27 +17,23 @@ var ChatPresentedRequest = function(uii, sessionId, response, responseReason) {
  *      "@response_to":"",
  *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
- *      "session_id":{"#text":""},
  *      "response":{"#text":"ACCEPT|REJECT"},
  *      "response_reason":{"#text":""}
  *    }
  * }
  */
-ChatPresentedRequest.prototype.formatJSON = function() {
+ChatPresentedResponseRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request": {
             "@destination":"IQ",
-            "@type":MESSAGE_TYPES.CHAT_PRESENTED,
+            "@type":MESSAGE_TYPES.CHAT_PRESENTED_RESPONSE,
             "@message_id":utils.getMessageId(),
-            "@response_to":"",
+            "@response_to":this.messageId,
             "uii":{
                 "#text":utils.toString(this.uii)
             },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
-            },
-            "session_id":{
-                "#text":utils.toString(this.sessionId)
             },
             "response":{
                 "#text":utils.toString(this.response)

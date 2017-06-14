@@ -15,11 +15,10 @@ var ChatTypingNotification = function() {
  *          "@type":"CHAT-TYPING",
  *          "@destination":"IQ",
  *          "@response_to":"",
- *          "agent_id":{"#text":"1180958"},
- *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "is_typing":{"#text":"true"},
- *          "pending_message":{"#text":"this is the message before actual send"}
+ *          "account_id":{"#text":"99999999"},
+ *          "from":{"#text":""},
+ *          "message":{"#text":"this is the message before actual send"}
  *      }
  *  }
  */
@@ -29,11 +28,11 @@ ChatTypingNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-TYPING notification",
         status: "OK",
-        agentId: utils.getText(notif, "agent_id"),
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
-        isTyping: utils.getText(notif, "is_typing"),
-        pendingMessage: utils.getText(notif, "pending_message")
+        from: utils.getText(notif, "from"),
+        type: utils.getText(notif, "type"),
+        pendingMessage: utils.getText(notif, "message")
     };
 
 };

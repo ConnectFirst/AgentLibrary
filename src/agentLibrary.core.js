@@ -15,6 +15,7 @@ const LOG_LEVELS ={
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
     "AGENT_STATE":"agentStateResponse",
+    "ACK":"acknowledgeResponse",
     "BARGE_IN":"bargeInResponse",
     "CLOSE_SOCKET":"closeResponse",
     "COACH_CALL":"coachResponse",
@@ -23,8 +24,13 @@ const CALLBACK_TYPES = {
     "CALLBACK_PENDING":"callbacksPendingResponse",
     "CALLBACK_CANCEL":"callbackCancelResponse",
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
-    "CHAT":"chatResponse",
-    "CHAT_MESSAGE":"chatMessageResponse", // external chat
+    "CHAT":"chatResponse",                          // internal chat
+    "CHAT_ACTIVE":"chatActiveNotification",         // external chat
+    "CHAT_INACTIVE":"chatInactiveNotification",     // external chat
+    "CHAT_PRESENTED":"chatPresentedNotification",   // external chat
+    "CHAT_TYPING":"chatTypingNotification",         // external chat
+    "CHAT_MESSAGE":"chatMessageNotification",       // external chat
+    "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -68,6 +74,7 @@ const CALLBACK_TYPES = {
 };
 
 const MESSAGE_TYPES = {
+    "ACK":"ACK",
     "ADD_SESSION":"ADD-SESSION",
     "BARGE_IN":"BARGE-IN",
     "AGENT_STATE":"AGENT-STATE",
@@ -79,9 +86,13 @@ const MESSAGE_TYPES = {
     "CHAT_ALIAS":"CHAT-ALIAS",                              // internal chat
     "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
     "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
+    "CHAT_ACTIVE":"CHAT-ACTIVE",                            // external chat
+    "CHAT_INACTIVE":"CHAT-INACTIVE",                        // external chat
     "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
     "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat
+    "CHAT_NEW":"NEW-CHAT",                                  // external chat
     "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
+    "CHAT_PRESENTED_RESPONSE":"CHAT-PRESENTED-RESPONSE",    // external chat
     "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
@@ -122,7 +133,7 @@ const MESSAGE_TYPES = {
     "STATS_AGENT_DAILY":"AGENTDAILY",
     "STATS_CAMPAIGN":"CAMPAIGN",
     "STATS_QUEUE":"GATE",
-    "SUPERVISOR_LIST":"SUPERVISOR-LIST",
+    "SUPERVISOR_LIST":"SUPERVISOR-LIST",                // internal chat
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
     "TCPA_SAFE_LEAD_STATE":"TCPA-SAFE-LEAD-STATE",
@@ -208,6 +219,7 @@ function initAgentLibraryCore (context) {
      * Possible callback types:
      * <li>"addSessionNotification"</li>
      * <li>"agentStateResponse"</li>
+     * <li>"acknowledgeResponse"</li>
      * <li>"bargeInResponse"</li>
      * <li>"closeResponse"</li>
      * <li>"coachResponse"</li>
