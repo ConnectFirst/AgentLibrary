@@ -97,6 +97,10 @@ NewChatNotification.prototype.processResponse = function(notification) {
         newChat.transcript = newChat.transcript.messages;
     }
 
+    if(newChat.preChatData){
+        newChat.preChatData = JSON.parse(newChat.preChatData);
+    }
+
     // convert numbers to boolean
     if(newChat.chatDispositions){
         for(var d = 0; d < newChat.chatDispositions.length; d++){

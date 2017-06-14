@@ -6,7 +6,7 @@ var ChatTypingRequest = function(uii) {
 /*
  * External Chat:
  * Agent sends typing message to notify client widgets,
- * but the agent's pending message is not sent going this direction (just empty string).
+ * but the agent's pending message is not sent going this direction.
  * {"ui_request":{
  *      "@destination":"IQ",
  *      "@type":"CHAT-TYPING",

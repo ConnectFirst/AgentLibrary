@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-06-13 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-06-14 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4498,6 +4498,10 @@ NewChatNotification.prototype.processResponse = function(notification) {
         newChat.transcript = [newChat.transcript];
     }else{
         newChat.transcript = newChat.transcript.messages;
+    }
+
+    if(newChat.preChatData){
+        newChat.preChatData = JSON.parse(newChat.preChatData);
     }
 
     // convert numbers to boolean

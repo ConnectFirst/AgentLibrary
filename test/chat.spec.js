@@ -260,7 +260,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             surveyPopType: "SUPPRESS",
             scriptId:"1",
             scriptVersion: "1",
-            preChatData: "json_string_form_data",
+            preChatData: {name:'danielle', email:'dani.libros@gmail.com'},
             chatDispositions: [
                 {dispositionId:"2", isSuccess:true, isComplete:true, emailTemplateId: "1", disposition:"Complete"},
                 {dispositionId:"3", isSuccess:true, isComplete:false, disposition:"Requeue"}
