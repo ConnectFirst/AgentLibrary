@@ -319,6 +319,11 @@ var utils = {
                 var chatMessageResponse = chatMessage.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_MESSAGE, chatMessageResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_CANCELLED:
+                var chatCancelled = new ChatCancelledNotification();
+                var chatCancelledResponse = chatCancelled.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
+                break;
         }
     },
 

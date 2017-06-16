@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-06-14 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-06-16 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -877,6 +877,7 @@ var AckRequest = function(audioType, agentId, uii, monitorAgentId) {
  * This class processes ACK packets rec'd from IQ.
  * This is a callback triggered by certain actions like
  * sending dispositions or script results.
+ * NOTE: uii is added in utils message processing.
  *
  * {"ui_response":{
  *      "@message_id":"IQ982008090317393001252",
@@ -3834,7 +3835,8 @@ ChatMessageRequest.prototype.formatJSON = function() {
  *      "uii":{"#text":""},
  *      "account_id":{"#text":""},
  *      "from":{"#text":""},
- *      "message":{"#text":"hello"}
+ *      "message":{"#text":"hello"},
+ *      "dts":{"#text":"2017-05-10 12:40:28"}
  *    }
  * }
  */
@@ -3846,7 +3848,8 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         accountId: utils.getText(resp, 'account_id'),
         from: utils.getText(resp, 'from'),
         type: utils.getText(resp, 'type'),
-        message: utils.getText(resp, 'message')
+        message: utils.getText(resp, 'message'),
+        dts: utils.getText(resp, 'dts')
     };
 
     utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);
@@ -3980,7 +3983,7 @@ var ChatRoomRequest = function(action, roomType, roomId, agentOne, agentTwo) {
  *      "@type":"CHAT-ROOM",
  *      "@room_type":"PUBLIC",
  *      "room_id":{"#text":""},
- *      "action":{"#text":"EXIT"}
+ *      "action":{"#text":"EXIT|ENTER"}
  *    }
  * }
  * -OR-
@@ -3993,7 +3996,7 @@ var ChatRoomRequest = function(action, roomType, roomId, agentOne, agentTwo) {
  *      "@room_type":"PRIVATE",
  *      "agent_one":{"#text":""},
  *      "agent_two":{"#text":""},
- *      "action":{"#text":"ENTER"}
+ *      "action":{"#text":"ENTER|EXIT"}
  *    }
  * }
  *
@@ -4152,7 +4155,7 @@ var ChatTypingRequest = function(uii) {
 /*
  * External Chat:
  * Agent sends typing message to notify client widgets,
- * but the agent's pending message is not sent going this direction (just empty string).
+ * but the agent's pending message is not sent going this direction.
  * {"ui_request":{
  *      "@destination":"IQ",
  *      "@type":"CHAT-TYPING",
@@ -4282,6 +4285,41 @@ ChatActiveNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-ACTIVE notification",
         status: "OK",
+        accountId: utils.getText(notif, "account_id"),
+        uii: utils.getText(notif, "uii")
+    };
+
+};
+
+
+var ChatCancelledNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for processing "CHAT-CANCELLED" packets from IntelliQueue.
+ * If an agent is presented a chat and doesn't respond before the timeout, the CHAT-CANCELLED
+ * message is sent from IQ.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-CANCELLED",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "account_id":{"#text":"99999999"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+ChatCancelledNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-CANCELLED notification",
+        status: "OK",
+        messageId: notif['@message_id'],
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii")
     };
@@ -4961,7 +4999,7 @@ var UIModel = (function() {
             chatActiveNotification : new ChatActiveNotification(),
             chatInactiveNotification : new ChatInactiveNotification(),
             chatDispositionRequest : null,
-            chatMessageRequest : null,
+            chatMessageRequest : new ChatMessageRequest(),
             chatPresentedNotification : new ChatPresentedNotification(),
             chatPresentedRequest : null,
             chatRequeueRequest : null,
@@ -5497,6 +5535,11 @@ var utils = {
                 var chatMessage = new ChatMessageRequest();
                 var chatMessageResponse = chatMessage.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_MESSAGE, chatMessageResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_CANCELLED:
+                var chatCancelled = new ChatCancelledNotification();
+                var chatCancelledResponse = chatCancelled.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
                 break;
         }
     },
@@ -6103,6 +6146,7 @@ const CALLBACK_TYPES = {
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "CHAT":"chatResponse",                          // internal chat
     "CHAT_ACTIVE":"chatActiveNotification",         // external chat
+    "CHAT_CANCELLED":"chatInactiveNotification",    // external chat
     "CHAT_INACTIVE":"chatInactiveNotification",     // external chat
     "CHAT_PRESENTED":"chatPresentedNotification",   // external chat
     "CHAT_TYPING":"chatTypingNotification",         // external chat
@@ -6164,6 +6208,7 @@ const MESSAGE_TYPES = {
     "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
     "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
     "CHAT_ACTIVE":"CHAT-ACTIVE",                            // external chat
+    "CHAT_CANCELLED":"CHAT-CANCELLED",                      // external chat
     "CHAT_INACTIVE":"CHAT-INACTIVE",                        // external chat
     "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
     "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat

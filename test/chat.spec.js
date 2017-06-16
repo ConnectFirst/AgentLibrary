@@ -22,6 +22,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         this.chatPresentedNotificationRaw = fixture.load('chat/chatPresentedNotificationRaw.json');
         this.chatTypingNotificationRaw = fixture.load('chat/chatTypingNotificationRaw.json');
         this.newChatNotificationRaw = fixture.load('chat/newChatNotificationRaw.json');
+        this.chatMessageNotificationRaw = fixture.load('chat/chatMessageNotificationRaw.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -230,6 +231,24 @@ describe( 'Tests for Agent Library chat methods', function() {
             from: "System",
             type: "SYSTEM",
             pendingMessage: "this is the message before actual send"
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should process a chat-message notification message', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        var response = Lib.getChatMessageRequest().processResponse(this.chatMessageNotificationRaw);
+        var expectedResponse =  {
+            uii: "201608161200240139000000000120",
+            accountId: "99999999",
+            from: "",
+            type: "AGENT",
+            message: "Hello. How can I help you?",
+            dts: "2017-05-10 12:40:28"
         };
 
         expect(response).toEqual(expectedResponse);

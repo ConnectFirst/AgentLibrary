@@ -34,7 +34,7 @@ var UIModel = (function() {
             chatActiveNotification : new ChatActiveNotification(),
             chatInactiveNotification : new ChatInactiveNotification(),
             chatDispositionRequest : null,
-            chatMessageRequest : null,
+            chatMessageRequest : new ChatMessageRequest(),
             chatPresentedNotification : new ChatPresentedNotification(),
             chatPresentedRequest : null,
             chatRequeueRequest : null,

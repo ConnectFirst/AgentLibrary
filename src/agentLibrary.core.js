@@ -26,6 +26,7 @@ const CALLBACK_TYPES = {
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "CHAT":"chatResponse",                          // internal chat
     "CHAT_ACTIVE":"chatActiveNotification",         // external chat
+    "CHAT_CANCELLED":"chatInactiveNotification",    // external chat
     "CHAT_INACTIVE":"chatInactiveNotification",     // external chat
     "CHAT_PRESENTED":"chatPresentedNotification",   // external chat
     "CHAT_TYPING":"chatTypingNotification",         // external chat
@@ -87,6 +88,7 @@ const MESSAGE_TYPES = {
     "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
     "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
     "CHAT_ACTIVE":"CHAT-ACTIVE",                            // external chat
+    "CHAT_CANCELLED":"CHAT-CANCELLED",                      // external chat
     "CHAT_INACTIVE":"CHAT-INACTIVE",                        // external chat
     "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
     "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat
