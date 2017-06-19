@@ -60,13 +60,15 @@ ChatMessageRequest.prototype.formatJSON = function() {
 
 ChatMessageRequest.prototype.processResponse = function(response) {
     var resp = response.ui_notification;
+    var dts = utils.getText(resp, 'dts').trim();
+    var dtsDate = new Date(dts.replace(' ','T'));
     var formattedResponse = {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),
         from: utils.getText(resp, 'from'),
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
-        dts: utils.getText(resp, 'dts')
+        dts: dtsDate
     };
 
     utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);

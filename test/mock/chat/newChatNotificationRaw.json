@@ -33,9 +33,9 @@
         },
         "transcript":{
             "messages":[
-                { "@from":"system", "@type":"SYSTEM", "#text":"User1 connected"},
-                { "@from":"dlbooks", "@type":"AGENT", "#text":"Hello"},
-                { "@from":"user1", "@type":"CLIENT", "#text":"Hi"}
+                { "@from":"system", "@type":"SYSTEM", "@dts":"2017-06-07 16:05:23", "#text":"User1 connected"},
+                { "@from":"dlbooks", "@type":"AGENT", "@dts":"2017-06-07 16:05:23", "#text":"Hello"},
+                { "@from":"user1", "@type":"CLIENT", "@dts":"2017-06-07 16:05:23", "#text":"Hi"}
             ]
         }
     }

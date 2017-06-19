@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-06-16 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-06-19 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3843,13 +3843,15 @@ ChatMessageRequest.prototype.formatJSON = function() {
 
 ChatMessageRequest.prototype.processResponse = function(response) {
     var resp = response.ui_notification;
+    var dts = utils.getText(resp, 'dts').trim();
+    var dtsDate = new Date(dts.replace(' ','T'));
     var formattedResponse = {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),
         from: utils.getText(resp, 'from'),
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
-        dts: utils.getText(resp, 'dts')
+        dts: dtsDate
     };
 
     utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);
@@ -4548,6 +4550,16 @@ NewChatNotification.prototype.processResponse = function(notification) {
             var disp = newChat.chatDispositions[d];
             disp.isComplete = disp.isComplete === "1";
             disp.isSuccess = disp.isSuccess === "1";
+        }
+    }
+
+    // convert dates
+    if(newChat.transcript){
+        for(var t = 0; t < newChat.transcript.length; t++){
+            var msg = newChat.transcript[t];
+            if(msg.dts){
+                msg.dts = new Date(msg.dts.replace(' ','T'));
+            }
         }
     }
 
@@ -6146,7 +6158,7 @@ const CALLBACK_TYPES = {
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "CHAT":"chatResponse",                          // internal chat
     "CHAT_ACTIVE":"chatActiveNotification",         // external chat
-    "CHAT_CANCELLED":"chatInactiveNotification",    // external chat
+    "CHAT_CANCELLED":"chatCancelledNotification",   // external chat
     "CHAT_INACTIVE":"chatInactiveNotification",     // external chat
     "CHAT_PRESENTED":"chatPresentedNotification",   // external chat
     "CHAT_TYPING":"chatTypingNotification",         // external chat

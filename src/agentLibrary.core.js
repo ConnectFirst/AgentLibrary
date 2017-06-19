@@ -26,7 +26,7 @@ const CALLBACK_TYPES = {
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "CHAT":"chatResponse",                          // internal chat
     "CHAT_ACTIVE":"chatActiveNotification",         // external chat
-    "CHAT_CANCELLED":"chatInactiveNotification",    // external chat
+    "CHAT_CANCELLED":"chatCancelledNotification",   // external chat
     "CHAT_INACTIVE":"chatInactiveNotification",     // external chat
     "CHAT_PRESENTED":"chatPresentedNotification",   // external chat
     "CHAT_TYPING":"chatTypingNotification",         // external chat

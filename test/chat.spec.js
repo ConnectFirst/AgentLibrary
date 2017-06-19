@@ -248,7 +248,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             from: "",
             type: "AGENT",
             message: "Hello. How can I help you?",
-            dts: "2017-05-10 12:40:28"
+            dts: new Date("2017-05-10T12:40:28")
         };
 
         expect(response).toEqual(expectedResponse);
@@ -285,9 +285,9 @@ describe( 'Tests for Agent Library chat methods', function() {
                 {dispositionId:"3", isSuccess:true, isComplete:false, disposition:"Requeue"}
             ],
             transcript: [
-                {from:"system", type:"SYSTEM", message:"User1 connected"},
-                {from:"dlbooks", type:"AGENT", message:"Hello"},
-                {from:"user1", type:"CLIENT", message:"Hi"}
+                {from:"system", type:"SYSTEM", message:"User1 connected", dts:new Date("2017-06-07T16:05:23")},
+                {from:"dlbooks", type:"AGENT", message:"Hello", dts:new Date("2017-06-07T16:05:23")},
+                {from:"user1", type:"CLIENT", message:"Hi", dts:new Date("2017-06-07T16:05:23")}
             ]
         };
         /*requeueShortcuts: [

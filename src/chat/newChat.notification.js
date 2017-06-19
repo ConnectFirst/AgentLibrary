@@ -110,5 +110,15 @@ NewChatNotification.prototype.processResponse = function(notification) {
         }
     }
 
+    // convert dates
+    if(newChat.transcript){
+        for(var t = 0; t < newChat.transcript.length; t++){
+            var msg = newChat.transcript[t];
+            if(msg.dts){
+                msg.dts = new Date(msg.dts.replace(' ','T'));
+            }
+        }
+    }
+
     return newChat;
 };
