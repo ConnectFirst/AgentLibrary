@@ -55,13 +55,16 @@ var NewChatNotification = function() {
 NewChatNotification.prototype.processResponse = function(notification) {
     var notif = notification.ui_notification;
 
+    var dts = utils.getText(notif,'queue_dts');
+    dts = new Date(dts.replace(' ','T'));
+
     // set up new call obj
     var newChat = {
         uii: utils.getText(notif,'uii'),
         accountId: utils.getText(notif,'account_id'),
         sessionId: utils.getText(notif,'session_id'),
         agentId: utils.getText(notif,'agent_id'),
-        queueDts: utils.getText(notif,'queue_dts'),
+        queueDts: dts,
         queueTime: utils.getText(notif,'queue_time'),
         chatQueueId: utils.getText(notif,'chat_queue_id'),
         chatQueueName: utils.getText(notif,'chat_queue_name'),

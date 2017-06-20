@@ -268,7 +268,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             accountId: "99999999",
             sessionId: "2",
             agentId: "1180958",
-            queueDts: "2017-04-26 11:25:00",
+            queueDts: new Date("2017-04-26T11:25:00"),
             queueTime: "-1",
             chatQueueId: "2",
             chatQueueName: "Test Chat Queue",
