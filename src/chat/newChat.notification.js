@@ -101,7 +101,12 @@ NewChatNotification.prototype.processResponse = function(notification) {
     }
 
     if(newChat.preChatData){
-        newChat.preChatData = JSON.parse(newChat.preChatData);
+        try {
+            newChat.preChatData = JSON.parse(newChat.preChatData);
+        }catch(err){
+            utils.logMessage(LOG_LEVELS.ERROR, "Error parsing the pre-form chat data.", notif);
+        }
+
     }
 
     // convert numbers to boolean

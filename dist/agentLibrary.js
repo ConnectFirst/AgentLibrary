@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-06-19 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-06-22 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4544,7 +4544,12 @@ NewChatNotification.prototype.processResponse = function(notification) {
     }
 
     if(newChat.preChatData){
-        newChat.preChatData = JSON.parse(newChat.preChatData);
+        try {
+            newChat.preChatData = JSON.parse(newChat.preChatData);
+        }catch(err){
+            utils.logMessage(LOG_LEVELS.ERROR, "Error parsing the pre-form chat data.", notif);
+        }
+
     }
 
     // convert numbers to boolean
