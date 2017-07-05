@@ -68,6 +68,7 @@ const CALLBACK_TYPES = {
     "STATS_AGENT_DAILY":"agentDailyStats",
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
+    "STATS_CHAT_QUEUE":"chatQueueStats",
     "SUPERVISOR_LIST":"supervisorListResponse",
     "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
@@ -135,6 +136,7 @@ const MESSAGE_TYPES = {
     "STATS_AGENT_DAILY":"AGENTDAILY",
     "STATS_CAMPAIGN":"CAMPAIGN",
     "STATS_QUEUE":"GATE",
+    "STATS_CHAT":"CHAT",
     "SUPERVISOR_LIST":"SUPERVISOR-LIST",                // internal chat
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
@@ -265,6 +267,7 @@ function initAgentLibraryCore (context) {
      * <li>"agentDailyStats"</li>
      * <li>"campaignStats"</li>
      * <li>"queueStats"</li>
+     * <li>"chatQueueStats"</li>
      * @type {object}
      */
     AgentLibrary.prototype.setCallbacks = function(callbackMap) {
@@ -584,6 +587,14 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().queueStatsPacket;
     };
     /**
+     * Get latest Chat Queue Stats object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatQueueStatsPacket = function() {
+        return UIModel.getInstance().chatQueueStatsPacket;
+    };
+    /**
      * Get latest Campaign Stats object
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
@@ -872,6 +883,14 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getQueueStats = function() {
         return UIModel.getInstance().queueStats;
+    };
+    /**
+     * Get the Chat Queue stats object containing the current state of chat queue stats
+     * @memberof AgentLibrary.Core.Stats
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatQueueStats = function() {
+        return UIModel.getInstance().chatQueueStats;
     };
     /**
      * Get the Campaign stats object containing the current state of campaign stats

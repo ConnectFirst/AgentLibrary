@@ -100,6 +100,7 @@ var UIModel = (function() {
             agentDailyStatsPacket: new AgentDailyStats(),
             queueStatsPacket: new QueueStats(),
             campaignStatsPacket: new CampaignStats(),
+            chatQueueStatsPacket: new ChatQueueStats(),
 
             // application state
             applicationSettings : {
@@ -115,6 +116,7 @@ var UIModel = (function() {
             agentDailyStats: {},
             campaignStats:{},
             queueStats:{},
+            chatQueueStats:{},
 
             // current agent settings
             agentSettings : {

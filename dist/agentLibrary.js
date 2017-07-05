@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-06-22 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-07-05 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4853,6 +4853,93 @@ CampaignStats.prototype.processResponse = function(stats) {
 };
 
 
+var ChatQueueStats = function() {
+
+};
+
+
+/*
+ * This class is responsible for handling an Chat Stats packet rec'd from IntelliServices.
+ * It will save a copy of it in the UIModel.
+ *
+ *{
+ *  "ui_stats": {
+ *  "@type": "CHAT",
+ *  "chatQueue": [
+ *      {
+ *          "@active": "1",
+ *          "@available": "0",
+ *          "@avgAbandon": "00.0",
+ *          "@avgChatTime": "00.0",
+ *          "@avgQueueTime": "00.0",
+ *          "@chatQueueId": "1",
+ *          "@chatQueueName": "testing chat quuee",
+ *          "@deflected": "0",
+ *          "@inQueue": "0",
+ *          "@longestInQueue": "0",
+ *          "@presented": "0",
+ *          "@routing": "0",
+ *          "@staffed": "0",
+ *          "@totalAbandonTime": "0",
+ *          "@totalAnswerTime": "0",
+ *          "@totalChatTime": "0",
+ *          "@totalQueueTime": "0",
+ *          "@utilization": "00.0"
+ *      },
+ *      {
+ *          "@active": "0",
+ *          "@available": "0",
+ *          "@avgAbandon": "00.0",
+ *          "@avgChatTime": "00.0",
+ *          "@avgQueueTime": "00.0",
+ *          "@chatQueueId": "3",
+ *          "@chatQueueName": "testing test",
+ *          "@deflected": "0",
+ *          "@inQueue": "0",
+ *          "@longestInQueue": "0",
+ *          "@presented": "0",
+ *          "@routing": "0",
+ *          "@staffed": "0",
+ *          "@totalAbandonTime": "0",
+ *          "@totalAnswerTime": "0",
+ *          "@totalChatTime": "0",
+ *          "@totalQueueTime": "0",
+ *          "@utilization": "00.0"
+ *      }
+ *  ],
+ *  "totals": {
+ *      "routing": {"#text": "0"},
+ *      "ttotalAnswerTime": {"#text": "0"},
+ *      "inQueue": { "#text": "0"},
+ *      "ttotalChatTime": {"#text": "0"},
+ *      "ttotalAbandonTime": {"#text": "0"},
+ *      "presented": {"#text": "0},
+ *      "accepted": {"#text": "0"},
+ *      "deflected": {"#text": "0"},
+ *      "active": {"#text": "1"},
+ *      "abandoned": {"#text": "0"},
+ *      "ttotalQueueTime": {"#text": "0"}
+ *   }
+ *  }
+ *}
+ */
+ChatQueueStats.prototype.processResponse = function(stats) {
+    var resp = stats.ui_stats;
+    var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
+    var chatQueues = utils.processResponseCollection(stats,"ui_stats","chatQueue");
+
+    var chatQueueStats = {
+        type:resp["@type"],
+        chatQueues: chatQueues,
+        totals:totals
+    };
+
+    UIModel.getInstance().chatQueueStats = chatQueueStats;
+
+    return chatQueueStats;
+};
+
+
 var QueueStats = function() {
 
 };
@@ -5085,6 +5172,7 @@ var UIModel = (function() {
             agentDailyStatsPacket: new AgentDailyStats(),
             queueStatsPacket: new QueueStats(),
             campaignStatsPacket: new CampaignStats(),
+            chatQueueStatsPacket: new ChatQueueStats(),
 
             // application state
             applicationSettings : {
@@ -5100,6 +5188,7 @@ var UIModel = (function() {
             agentDailyStats: {},
             campaignStats:{},
             queueStats:{},
+            chatQueueStats:{},
 
             // current agent settings
             agentSettings : {
@@ -5648,6 +5737,10 @@ var utils = {
             case MESSAGE_TYPES.STATS_QUEUE:
                 var queueStats = UIModel.getInstance().queueStatsPacket.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_QUEUE, queueStats);
+                break;
+            case MESSAGE_TYPES.STATS_CHAT:
+                var chatStats = UIModel.getInstance().chatQueueStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_CHAT_QUEUE, chatStats);
                 break;
         }
 
@@ -6208,6 +6301,7 @@ const CALLBACK_TYPES = {
     "STATS_AGENT_DAILY":"agentDailyStats",
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
+    "STATS_CHAT_QUEUE":"chatQueueStats",
     "SUPERVISOR_LIST":"supervisorListResponse",
     "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
@@ -6275,6 +6369,7 @@ const MESSAGE_TYPES = {
     "STATS_AGENT_DAILY":"AGENTDAILY",
     "STATS_CAMPAIGN":"CAMPAIGN",
     "STATS_QUEUE":"GATE",
+    "STATS_CHAT":"CHAT",
     "SUPERVISOR_LIST":"SUPERVISOR-LIST",                // internal chat
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
@@ -6405,6 +6500,7 @@ function initAgentLibraryCore (context) {
      * <li>"agentDailyStats"</li>
      * <li>"campaignStats"</li>
      * <li>"queueStats"</li>
+     * <li>"chatQueueStats"</li>
      * @type {object}
      */
     AgentLibrary.prototype.setCallbacks = function(callbackMap) {
@@ -6724,6 +6820,14 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().queueStatsPacket;
     };
     /**
+     * Get latest Chat Queue Stats object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatQueueStatsPacket = function() {
+        return UIModel.getInstance().chatQueueStatsPacket;
+    };
+    /**
      * Get latest Campaign Stats object
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
@@ -7012,6 +7116,14 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getQueueStats = function() {
         return UIModel.getInstance().queueStats;
+    };
+    /**
+     * Get the Chat Queue stats object containing the current state of chat queue stats
+     * @memberof AgentLibrary.Core.Stats
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatQueueStats = function() {
+        return UIModel.getInstance().chatQueueStats;
     };
     /**
      * Get the Campaign stats object containing the current state of campaign stats

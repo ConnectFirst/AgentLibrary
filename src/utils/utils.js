@@ -412,6 +412,10 @@ var utils = {
                 var queueStats = UIModel.getInstance().queueStatsPacket.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_QUEUE, queueStats);
                 break;
+            case MESSAGE_TYPES.STATS_CHAT:
+                var chatStats = UIModel.getInstance().chatQueueStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_CHAT_QUEUE, chatStats);
+                break;
         }
 
     },
