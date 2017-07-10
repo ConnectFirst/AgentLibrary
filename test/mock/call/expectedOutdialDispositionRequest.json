@@ -27,6 +27,12 @@
     "contact_forwarding": {
       "#text": ""
     },
+    "outbound_externid": {
+      "#text": ""
+    },
+    "lead_id": {
+      "#text": ""
+    },
     "survey": {
       "response": [
         {
