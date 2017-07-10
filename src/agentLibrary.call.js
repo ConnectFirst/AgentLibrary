@@ -66,9 +66,11 @@ function initAgentLibraryCall (context) {
      * @param {string} [contactForwardNumber=null] Number for contact forwarding
      * @param {string} [survey=null] The survey response values for the call.
      * Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]
+     * @param {string} [externId=null] The external id associated with the lead for this call (only for Outbound Dispositions).
+     * @param {string} [leadId=null] The lead id associated with this call (only for Outbound Dispositions).
      */
-    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey){
-        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey);
+    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId){
+        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId);
         var msg = UIModel.getInstance().dispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
 
