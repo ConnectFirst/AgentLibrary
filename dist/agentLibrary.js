@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-07-05 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-07-20 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1707,13 +1707,15 @@ function setChatQueueSettings(response){
 }
 
 
-var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey) {
+var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId) {
     this.uii = uii;
     this.dispId = dispId;
     this.notes = notes;
     this.callback = callback;
     this.callbackDTS = callbackDTS || "";
     this.contactForwardNumber = contactForwardNumber || null;
+    this.externId = externId || null; // outbound-disposition only
+    this.leadId = leadId || null;     // outbound-disposition only
 
     /*
      * survey = {
@@ -1744,8 +1746,8 @@ var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, con
  *      "session_id":{"#text":"2"},  <-- ONLY WHEN AVAILABLE otherwise the node is left blank. this is the AGENT session_id
  *      "uii":{"#text":"201608171658440139000000000165"},
  *      "agent_id":{"#text":"1180958"},
- *      "lead_id":{"#text":"1800"},
- *      "outbound_externid":{"#text":"3038593775"},
+ *      "lead_id":{"#text":"1800"},                 <-- OUTDIAL-DISPOSITION ONLY
+ *      "outbound_externid":{"#text":"3038593775"}, <-- OUTDIAL-DISPOSITION ONLY
  *      "disposition_id":{"#text":"5950"},
  *      "notes":{"#text":"note here"},
  *      "call_back":{"#text":"FALSE"},
@@ -1792,6 +1794,12 @@ DispositionRequest.prototype.formatJSON = function() {
             },
             "contact_forwarding": {
                 "#text" : utils.toString(this.contactForwardNumber)
+            },
+            "outbound_externid": {
+                "#text" : utils.toString(this.externId)
+            },
+            "lead_id": {
+                "#text" : utils.toString(this.leadId)
             }
         }
     };
@@ -7359,10 +7367,13 @@ function initAgentLibraryAgent (context) {
     /**
      * Terminates agent's offhook session
      * @memberof AgentLibrary.Agent
+     * @param {function} [callback=null] Callback function when pending callbacks response received
      */
-    AgentLibrary.prototype.offhookTerm = function(){
+    AgentLibrary.prototype.offhookTerm = function(callback){
         UIModel.getInstance().offhookTermRequest = new OffhookTermRequest();
         var msg = UIModel.getInstance().offhookTermRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.OFFHOOK_TERM, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -7475,9 +7486,11 @@ function initAgentLibraryCall (context) {
      * @param {string} [contactForwardNumber=null] Number for contact forwarding
      * @param {string} [survey=null] The survey response values for the call.
      * Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]
+     * @param {string} [externId=null] The external id associated with the lead for this call (only for Outbound Dispositions).
+     * @param {string} [leadId=null] The lead id associated with this call (only for Outbound Dispositions).
      */
-    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey){
-        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey);
+    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId){
+        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId);
         var msg = UIModel.getInstance().dispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
 
