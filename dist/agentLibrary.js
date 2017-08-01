@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-07-17 - Connect First */
+/*! cf-agent-library - v1.0.4 - 2017-08-01 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -5292,7 +5292,13 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.CALLBACK_PENDING, pendingCallbacks);
                 break;
             case MESSAGE_TYPES.HOLD:
-                var hold = UIModel.getInstance().holdRequest.processResponse(response);
+                var holdRequest;
+                if(UIModel.getInstance().holdRequest === null){
+                    holdRequest = new HoldRequest();
+                }else{
+                    holdRequest = UIModel.getInstance().holdRequest;
+                }
+                var hold = holdRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.HOLD, hold);
                 break;
             case MESSAGE_TYPES.LEAD_HISTORY:
@@ -5331,7 +5337,13 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.OFFHOOK_INIT, initResponse);
                 break;
             case MESSAGE_TYPES.PAUSE_RECORD:
-                var pauseRec = UIModel.getInstance().pauseRecordRequest.processResponse(response);
+                var pauseRequest;
+                if(UIModel.getInstance().pauseRecordRequest === null){
+                    pauseRequest = new PauseRecordRequest();
+                }else{
+                    pauseRequest = UIModel.getInstance().pauseRecordRequest;
+                }
+                var pauseRec = pauseRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.PAUSE_RECORD, pauseRec);
                 break;
             case MESSAGE_TYPES.RECORD:
