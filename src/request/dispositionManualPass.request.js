@@ -1,11 +1,11 @@
 
-var DispositionManualPassRequest = function(dispId, notes, callback, callbackDTS, leadId, requestKey, externId) {
+var DispositionManualPassRequest = function(dispId, notes, callback, callbackDTS, leadId, requestId, externId) {
     this.dispId = dispId;
     this.notes = notes;
     this.callback = callback;
     this.callbackDTS = callbackDTS || "";
     this.leadId = leadId || null;
-    this.requestKey = requestKey || null;
+    this.requestId = requestId || null;
     this.externId = externId || null;
 };
 
@@ -47,7 +47,7 @@ DispositionManualPassRequest.prototype.formatJSON = function() {
                 "#text" : utils.toString(model.agentSettings.agentId)
             },
             "request_key": {
-                "#text": utils.toString(this.requestKey)
+                "#text": utils.toString(this.requestId)
             },
             "disposition_id": {
                 "#text" : utils.toString(this.dispId)

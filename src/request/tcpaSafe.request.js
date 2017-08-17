@@ -75,6 +75,14 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
     var notif = notification.dialer_request;
     var model = UIModel.getInstance();
     var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
+
+    // send over requestId instead of requestKey to match
+    // tcpaSafeLeadState.notification property
+    for(var l = 0; l < leads.length; l++){
+        leads[l].requestId = leads[l].requestKey;
+        delete leads[l].requestKey;
+    }
+
     var formattedResponse = {
         action: notif['@action'],
         callbacks: notif['@callbacks'] === "TRUE",
