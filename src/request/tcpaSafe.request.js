@@ -76,11 +76,10 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
     var model = UIModel.getInstance();
     var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
 
-    // send over requestId instead of requestKey to match
-    // tcpaSafeLeadState.notification property
+    // send over requestId (as well as requestKey for backwards compatibility)
+    // to match tcpaSafeLeadState.notification property
     for(var l = 0; l < leads.length; l++){
         leads[l].requestId = leads[l].requestKey;
-        delete leads[l].requestKey;
     }
 
     var formattedResponse = {
