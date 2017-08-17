@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.4 - 2017-08-01 - Connect First */
+/*! cf-agent-library - v1.0.8 - 2017-08-17 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1841,13 +1841,13 @@ DispositionRequest.prototype.formatJSON = function() {
 };
 
 
-var DispositionManualPassRequest = function(dispId, notes, callback, callbackDTS, leadId, requestKey, externId) {
+var DispositionManualPassRequest = function(dispId, notes, callback, callbackDTS, leadId, requestId, externId) {
     this.dispId = dispId;
     this.notes = notes;
     this.callback = callback;
     this.callbackDTS = callbackDTS || "";
     this.leadId = leadId || null;
-    this.requestKey = requestKey || null;
+    this.requestId = requestId || null;
     this.externId = externId || null;
 };
 
@@ -1889,7 +1889,7 @@ DispositionManualPassRequest.prototype.formatJSON = function() {
                 "#text" : utils.toString(model.agentSettings.agentId)
             },
             "request_key": {
-                "#text": utils.toString(this.requestKey)
+                "#text": utils.toString(this.requestId)
             },
             "disposition_id": {
                 "#text" : utils.toString(this.dispId)
@@ -3118,7 +3118,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
  * from the dialer. It will save a copy of it in the UIModel.
  *
  * {"dialer_request":{
- *      "@action":"",
+ *      "@action":"", // <-- empty for Preview fetch, otherwise "SEARCH"
  *      "@callbacks":"TRUE|FALSE"
  *      ,"@message_id":"ID2008091513163400220",
  *      "@response_to":"",
@@ -3147,6 +3147,14 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
     var notif = notification.dialer_request;
     var model = UIModel.getInstance();
     var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
+
+    // send over requestId instead of requestKey to match
+    // previewLeadState.notification property
+    for(var l = 0; l < leads.length; l++){
+        leads[l].requestId = leads[l].requestKey;
+        delete leads[l].requestKey;
+    }
+
     var formattedResponse = {
         action: notif['@action'],
         callbacks: notif['@callbacks'] === "TRUE",
@@ -3527,6 +3535,14 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
     var notif = notification.dialer_request;
     var model = UIModel.getInstance();
     var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
+
+    // send over requestId instead of requestKey to match
+    // tcpaSafeLeadState.notification property
+    for(var l = 0; l < leads.length; l++){
+        leads[l].requestId = leads[l].requestKey;
+        delete leads[l].requestKey;
+    }
+
     var formattedResponse = {
         action: notif['@action'],
         callbacks: notif['@callbacks'] === "TRUE",
@@ -7519,11 +7535,11 @@ function initAgentLibraryCall (context) {
      * @param {boolean} callback Boolean for whether or not this call is a callback
      * @param {string} [callbackDTS=""] date time stamp if callback
      * @param {string} [leadId=null] The lead id
-     * @param {string} [requestKey=null] The request key for the lead
+     * @param {string} [requestId=null] The request key for the lead
      * @param {string} [externId=null] The external id of the lead
      */
-    AgentLibrary.prototype.dispositionManualPass = function(dispId, notes, callback, callbackDTS, leadId, requestKey, externId){
-        UIModel.getInstance().dispositionManualPassRequest = new DispositionManualPassRequest(dispId, notes, callback, callbackDTS, leadId, requestKey, externId);
+    AgentLibrary.prototype.dispositionManualPass = function(dispId, notes, callback, callbackDTS, leadId, requestId, externId){
+        UIModel.getInstance().dispositionManualPassRequest = new DispositionManualPassRequest(dispId, notes, callback, callbackDTS, leadId, requestId, externId);
         var msg = UIModel.getInstance().dispositionManualPassRequest.formatJSON();
         utils.sendMessage(this, msg);
     };

@@ -45,7 +45,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
  * from the dialer. It will save a copy of it in the UIModel.
  *
  * {"dialer_request":{
- *      "@action":"",
+ *      "@action":"", // <-- empty for Preview fetch, otherwise "SEARCH"
  *      "@callbacks":"TRUE|FALSE"
  *      ,"@message_id":"ID2008091513163400220",
  *      "@response_to":"",
@@ -74,6 +74,14 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
     var notif = notification.dialer_request;
     var model = UIModel.getInstance();
     var leads = utils.processResponseCollection(notif, 'destinations', 'lead');
+
+    // send over requestId instead of requestKey to match
+    // previewLeadState.notification property
+    for(var l = 0; l < leads.length; l++){
+        leads[l].requestId = leads[l].requestKey;
+        delete leads[l].requestKey;
+    }
+
     var formattedResponse = {
         action: notif['@action'],
         callbacks: notif['@callbacks'] === "TRUE",

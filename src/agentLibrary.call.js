@@ -87,11 +87,11 @@ function initAgentLibraryCall (context) {
      * @param {boolean} callback Boolean for whether or not this call is a callback
      * @param {string} [callbackDTS=""] date time stamp if callback
      * @param {string} [leadId=null] The lead id
-     * @param {string} [requestKey=null] The request key for the lead
+     * @param {string} [requestId=null] The request key for the lead
      * @param {string} [externId=null] The external id of the lead
      */
-    AgentLibrary.prototype.dispositionManualPass = function(dispId, notes, callback, callbackDTS, leadId, requestKey, externId){
-        UIModel.getInstance().dispositionManualPassRequest = new DispositionManualPassRequest(dispId, notes, callback, callbackDTS, leadId, requestKey, externId);
+    AgentLibrary.prototype.dispositionManualPass = function(dispId, notes, callback, callbackDTS, leadId, requestId, externId){
+        UIModel.getInstance().dispositionManualPassRequest = new DispositionManualPassRequest(dispId, notes, callback, callbackDTS, leadId, requestId, externId);
         var msg = UIModel.getInstance().dispositionManualPassRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
