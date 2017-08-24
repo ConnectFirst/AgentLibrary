@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.8 - 2017-08-18 - Connect First */
+/*! cf-agent-library - v1.0.8 - 2017-08-24 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
