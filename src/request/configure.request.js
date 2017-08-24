@@ -277,7 +277,8 @@ function setChatQueueSettings(response){
     var chatQueues = model.chatSettings.availableChatQueues;
     var selectedChatQueueIds = [];
     var selectedChatQueues = [];
-    var chatQueueIds = response.ui_response.chat_queues.chat_queue_id;
+    var cQueues = response.ui_response.chat_queues || {};
+    var chatQueueIds = cQueues.chat_queue_id;
 
     if(chatQueueIds){
         if(Array.isArray(chatQueueIds)){ // multiple chatQueues assigned

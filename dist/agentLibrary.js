@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.8 - 2017-08-17 - Connect First */
+/*! cf-agent-library - v1.0.8 - 2017-08-18 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1681,7 +1681,8 @@ function setChatQueueSettings(response){
     var chatQueues = model.chatSettings.availableChatQueues;
     var selectedChatQueueIds = [];
     var selectedChatQueues = [];
-    var chatQueueIds = response.ui_response.chat_queues.chat_queue_id;
+    var cQueues = response.ui_response.chat_queues || {};
+    var chatQueueIds = cQueues.chat_queue_id;
 
     if(chatQueueIds){
         if(Array.isArray(chatQueueIds)){ // multiple chatQueues assigned
