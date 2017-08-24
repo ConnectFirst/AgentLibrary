@@ -3127,6 +3127,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
  *      "dial_group_id":{"#text":"200018"},
  *      "account_id":{"#text":"99999999"},
  *      "agent_id":{"#text":"1810"},
+ *      "is_insert":{"#text":"TRUE|FALSE"}, <--- TRUE if search triggered by insert
  *      "destinations":{
  *          "lead":[
  *              {
@@ -3161,6 +3162,7 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
         dialGroupId: utils.getText(notif,"dial_group_id"),
         accountId: utils.getText(notif,"account_id"),
         agentId: utils.getText(notif,"agent_id"),
+        isInsert: utils.getText(notif,"is_insert"),
         leads: leads
     };
 
@@ -3513,6 +3515,7 @@ TcpaSafeRequest.prototype.formatJSON = function() {
  *      "dial_group_id":{"#text":"200018"},
  *      "account_id":{"#text":"99999999"},
  *      "agent_id":{"#text":"1810"},
+ *      "is_insert":{"#text":"TRUE|FALSE"}, <--- TRUE if search triggered by insert
  *      "destinations":{
  *          "lead":[
  *              {
@@ -3548,6 +3551,7 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
         dialGroupId: utils.getText(notif,"dial_group_id"),
         accountId: utils.getText(notif,"account_id"),
         agentId: utils.getText(notif,"agent_id"),
+        isInsert: utils.getText(notif,"is_insert"),
         leads: leads
     };
 
