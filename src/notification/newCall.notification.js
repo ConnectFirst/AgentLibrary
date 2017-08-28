@@ -215,13 +215,11 @@ NewCallNotification.prototype.processResponse = function(notification) {
 function buildTokenMap(notif, newCall){
     var model = UIModel.getInstance();
     var tokens = {};
-    if(isCampaign(newCall.queue)){
+    if(notif.baggage && notif.baggage.generic_key_value_pairs){
         var keyValuePairs = [];
-        if (notif.generic_key_value_pairs){
-            var keyValuePairsStr = utils.getText(notif, 'generic_key_value_pairs');
-            if (keyValuePairsStr.length > 0){
-                keyValuePairs = util.parseKeyValuePairsFromString(keyValuePairsStr, "|", "::");
-            }
+        var keyValuePairsStr = utils.getText(notif.baggage, 'generic_key_value_pairs');
+        if (keyValuePairsStr.length > 0){
+            keyValuePairs = utils.parseKeyValuePairsFromString(keyValuePairsStr, "|", "::");
         }
 
         for(var keyValue in keyValuePairs){
@@ -306,7 +304,7 @@ function buildTokenMap(notif, newCall){
 
 function isCampaign(gate){
     if (gate && gate.isCampaign){
-        return gate.isCampaign === "1";
+        return gate.isCampaign === "1" || gate.isCampaign === true;
     }
     return false;
 }

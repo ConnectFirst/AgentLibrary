@@ -802,15 +802,12 @@ var utils = {
         if (!str){
             return [];
         }
-        var arr = [];
-        var keyValuesPairs = str.split(outerDelimiter);
-        for (var p = 0; p < keyValuesPairs.length; p++){
-            var keyValuePair = keyValuesPairs[p];
-            var pair = keyValuePair.split(innerDelimiter);
-            var keyValue = {};
-            keyValue[pair[0]] = pair[1];
-            arr.push(keyValue);
-        }
+
+        var arr = str.split(outerDelimiter).reduce(function(dict, pair){
+            var keyValue = pair.split(innerDelimiter);
+            dict[keyValue[0]] = keyValue[1];
+            return dict;
+        },{});
 
         return arr;
     },
