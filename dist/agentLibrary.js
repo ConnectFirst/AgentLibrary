@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.8 - 2017-08-28 - Connect First */
+/*! cf-agent-library - v1.0.8 - 2017-08-29 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -5382,7 +5382,7 @@ var utils = {
 
             // keep rolling window of latest 1000 requests
             if(instance._requests.length > 1000){
-                instance._requests.pop();
+                instance._requests.shift();
             }
 
             instance.socket.send(msg);
@@ -5609,6 +5609,9 @@ var utils = {
                     var callbackFnName = utils.findCallbackBasedOnMessageType(type);
 
                     if(callbackFnName){
+                        if(type === MESSAGE_TYPES.CALLBACK_CANCEL){
+                            generic.leadId = request.msg.lead_id["#text"];
+                        }
                         utils.fireCallback(instance, callbackFnName, generic);
                     }else{
                         // no registered callback, fallback to generic notification
