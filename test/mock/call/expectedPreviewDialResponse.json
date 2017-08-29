@@ -4,6 +4,7 @@
   "dialGroupId": "1",
   "accountId": "99999999",
   "agentId": "1",
+  "isInsert":false,
   "leads": [
     {
       "auxData1": "",

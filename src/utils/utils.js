@@ -31,7 +31,7 @@ var utils = {
 
             // keep rolling window of latest 1000 requests
             if(instance._requests.length > 1000){
-                instance._requests.pop();
+                instance._requests.shift();
             }
 
             instance.socket.send(msg);
@@ -258,6 +258,9 @@ var utils = {
                     var callbackFnName = utils.findCallbackBasedOnMessageType(type);
 
                     if(callbackFnName){
+                        if(type === MESSAGE_TYPES.CALLBACK_CANCEL){
+                            generic.leadId = request.msg.lead_id["#text"];
+                        }
                         utils.fireCallback(instance, callbackFnName, generic);
                     }else{
                         // no registered callback, fallback to generic notification
@@ -802,15 +805,12 @@ var utils = {
         if (!str){
             return [];
         }
-        var arr = [];
-        var keyValuesPairs = str.split(outerDelimiter);
-        for (var p = 0; p < keyValuesPairs.length; p++){
-            var keyValuePair = keyValuesPairs[p];
-            var pair = keyValuePair.split(innerDelimiter);
-            var keyValue = {};
-            keyValue[pair[0]] = pair[1];
-            arr.push(keyValue);
-        }
+
+        var arr = str.split(outerDelimiter).reduce(function(dict, pair){
+            var keyValue = pair.split(innerDelimiter);
+            dict[keyValue[0]] = keyValue[1];
+            return dict;
+        },{});
 
         return arr;
     },

@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.8 - 2017-08-24 - Connect First */
+/*! cf-agent-library - v1.0.8 - 2017-08-29 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -623,13 +623,11 @@ NewCallNotification.prototype.processResponse = function(notification) {
 function buildTokenMap(notif, newCall){
     var model = UIModel.getInstance();
     var tokens = {};
-    if(isCampaign(newCall.queue)){
+    if(notif.baggage && notif.baggage.generic_key_value_pairs){
         var keyValuePairs = [];
-        if (notif.generic_key_value_pairs){
-            var keyValuePairsStr = utils.getText(notif, 'generic_key_value_pairs');
-            if (keyValuePairsStr.length > 0){
-                keyValuePairs = util.parseKeyValuePairsFromString(keyValuePairsStr, "|", "::");
-            }
+        var keyValuePairsStr = utils.getText(notif.baggage, 'generic_key_value_pairs');
+        if (keyValuePairsStr.length > 0){
+            keyValuePairs = utils.parseKeyValuePairsFromString(keyValuePairsStr, "|", "::");
         }
 
         for(var keyValue in keyValuePairs){
@@ -714,7 +712,7 @@ function buildTokenMap(notif, newCall){
 
 function isCampaign(gate){
     if (gate && gate.isCampaign){
-        return gate.isCampaign === "1";
+        return gate.isCampaign === "1" || gate.isCampaign === true;
     }
     return false;
 }
@@ -3126,6 +3124,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
  *      "dial_group_id":{"#text":"200018"},
  *      "account_id":{"#text":"99999999"},
  *      "agent_id":{"#text":"1810"},
+ *      "is_insert":{"#text":"TRUE|FALSE"}, <--- TRUE if search triggered by insert
  *      "destinations":{
  *          "lead":[
  *              {
@@ -3160,6 +3159,7 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
         dialGroupId: utils.getText(notif,"dial_group_id"),
         accountId: utils.getText(notif,"account_id"),
         agentId: utils.getText(notif,"agent_id"),
+        isInsert: utils.getText(notif,"is_insert"),
         leads: leads
     };
 
@@ -3512,6 +3512,7 @@ TcpaSafeRequest.prototype.formatJSON = function() {
  *      "dial_group_id":{"#text":"200018"},
  *      "account_id":{"#text":"99999999"},
  *      "agent_id":{"#text":"1810"},
+ *      "is_insert":{"#text":"TRUE|FALSE"}, <--- TRUE if search triggered by insert
  *      "destinations":{
  *          "lead":[
  *              {
@@ -3547,6 +3548,7 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
         dialGroupId: utils.getText(notif,"dial_group_id"),
         accountId: utils.getText(notif,"account_id"),
         agentId: utils.getText(notif,"agent_id"),
+        isInsert: utils.getText(notif,"is_insert"),
         leads: leads
     };
 
@@ -5229,7 +5231,7 @@ var utils = {
 
             // keep rolling window of latest 1000 requests
             if(instance._requests.length > 1000){
-                instance._requests.pop();
+                instance._requests.shift();
             }
 
             instance.socket.send(msg);
@@ -5456,6 +5458,9 @@ var utils = {
                     var callbackFnName = utils.findCallbackBasedOnMessageType(type);
 
                     if(callbackFnName){
+                        if(type === MESSAGE_TYPES.CALLBACK_CANCEL){
+                            generic.leadId = request.msg.lead_id["#text"];
+                        }
                         utils.fireCallback(instance, callbackFnName, generic);
                     }else{
                         // no registered callback, fallback to generic notification
@@ -6000,15 +6005,12 @@ var utils = {
         if (!str){
             return [];
         }
-        var arr = [];
-        var keyValuesPairs = str.split(outerDelimiter);
-        for (var p = 0; p < keyValuesPairs.length; p++){
-            var keyValuePair = keyValuesPairs[p];
-            var pair = keyValuePair.split(innerDelimiter);
-            var keyValue = {};
-            keyValue[pair[0]] = pair[1];
-            arr.push(keyValue);
-        }
+
+        var arr = str.split(outerDelimiter).reduce(function(dict, pair){
+            var keyValue = pair.split(innerDelimiter);
+            dict[keyValue[0]] = keyValue[1];
+            return dict;
+        },{});
 
         return arr;
     },
