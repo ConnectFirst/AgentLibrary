@@ -48,7 +48,7 @@ var NewChatNotification = function() {
  *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
- *          "json_baggage":{"#text":"json_string_form_data"},
+ *          "json_baggage":{"#text":"json_string_form_data"}, <--- pre-form chat data
  *      }
  *  }
  */
@@ -128,5 +128,44 @@ NewChatNotification.prototype.processResponse = function(notification) {
         }
     }
 
+    // Build token map
+    newChat.baggage = buildChatTokenMap(notif, newChat);
+
     return newChat;
 };
+
+function buildChatTokenMap(notif, newChat){
+    var tokens = {};
+    var model = UIModel.getInstance();
+
+    if(newChat.preChatData){
+        for(var prop in newChat.preChatData){
+            if(newChat.preChatData.hasOwnProperty(prop)){
+                tokens[prop] = newChat.preChatData[prop];
+            }
+        }
+    }
+
+    try{
+        tokens["chatQueueId"] = newChat.chatQueueId;
+        tokens["chatQueueName"] = newChat.chatQueueName;
+        tokens["ani"] = newChat.ani;
+        tokens["dnis"] = newChat.dnis;
+        tokens["uii"] = newChat.uii;
+    }catch(any){
+        console.error("There was an error parsing chat tokens for basic chat info. ", any);
+    }
+
+    try{
+        tokens["agentFirstName"] = model.agentSettings.firstName;
+        tokens["agentLastName"] = model.agentSettings.lastName;
+        tokens["agentExternalId"] = model.agentSettings.externalAgentId;
+        tokens["agentType"] = model.agentSettings.agentType;
+        tokens["agentEmail"] = model.agentSettings.email;
+        tokens["agentUserName"] = model.agentSettings.username;
+    }catch(any){
+        console.error("There was an error parsing chat tokens for agent info. ", any);
+    }
+
+    return tokens;
+}

@@ -86,7 +86,20 @@
     "auxPhone": "",
     "customLabels": [
       { "aux_1Label" : "", "aux_2Label" : "", "aux_3Label" : "", "aux_4Label" : "", "aux_5Label" : "" }
-    ]
+    ],
+    "ani" : "5555555555",
+    "dnis" : "",
+    "uii" : "201002091133350139990000000010",
+    "sourceId" : "",
+    "sourceName" : "",
+    "sourceDesc" : "",
+    "sourceType" : "OUTBOUND",
+    "agentFirstName" : "Test First",
+    "agentLastName" : "Test Last",
+    "agentExternalId" : "",
+    "agentType" : "AGENT",
+    "agentEmail" : "test@connectfirst.com",
+    "agentUserName" : "testUser"
   },
   "surveyResponse": {
     "responseId": "24",

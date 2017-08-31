@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.8 - 2017-08-29 - Connect First */
+/*! cf-agent-library - v1.0.8 - 2017-08-30 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -589,7 +589,8 @@ NewCallNotification.prototype.processResponse = function(notification) {
     }
 
     // Build token map
-    model.callTokens = buildTokenMap(notif, newCall);
+    model.callTokens = buildCallTokenMap(notif, newCall);
+    newCall.baggage = model.callTokens; // add all tokens to baggage
 
     // Is Monitoring Call?
     if(newCall.isMonitoring){
@@ -620,9 +621,9 @@ NewCallNotification.prototype.processResponse = function(notification) {
 };
 
 
-function buildTokenMap(notif, newCall){
+function buildCallTokenMap(notif, newCall){
     var model = UIModel.getInstance();
-    var tokens = {};
+    var tokens = newCall.baggage || {}; // seed with baggage values
     if(notif.baggage && notif.baggage.generic_key_value_pairs){
         var keyValuePairs = [];
         var keyValuePairsStr = utils.getText(notif.baggage, 'generic_key_value_pairs');
@@ -669,42 +670,6 @@ function buildTokenMap(notif, newCall){
         tokens["agentUserName"] = model.agentSettings.username;
     }catch(any){
         console.error("There was an error parsing tokens for agent info. ", any);
-    }
-
-    if(notif.baggage){
-        // loop over all items in baggage and add to token map
-        // standard tokens:
-        // "leadId"
-        // "externId"
-        // "firstName"
-        // "midName"
-        // "lastName"
-        // "address1"
-        // "address2"
-        // "suffix"
-        // "title"
-        // "city"
-        // "state"
-        // "zip"
-        // "auxData1"
-        // "auxData2"
-        // "auxData3"
-        // "auxData4"
-        // "auxData5"
-        // "auxPhone"
-        // "email"
-        // "gateKeeper"
-        try{
-            var key;
-            for(var i = 0; i < Object.keys(newCall.baggage).length; i++){
-                key = Object.keys(newCall.baggage)[i];
-                if(key !== "customLabels"){ // ignore custom label array
-                    tokens[key] = newCall.baggage[key];
-                }
-            }
-        }catch(any){
-            console.error("There was an error parsing baggage tokens. ", any);
-        }
     }
 
     return tokens;
@@ -4516,7 +4481,7 @@ var NewChatNotification = function() {
  *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
- *          "json_baggage":{"#text":"json_string_form_data"},
+ *          "json_baggage":{"#text":"json_string_form_data"}, <--- pre-form chat data
  *      }
  *  }
  */
@@ -4596,8 +4561,47 @@ NewChatNotification.prototype.processResponse = function(notification) {
         }
     }
 
+    // Build token map
+    newChat.baggage = buildChatTokenMap(notif, newChat);
+
     return newChat;
 };
+
+function buildChatTokenMap(notif, newChat){
+    var tokens = {};
+    var model = UIModel.getInstance();
+
+    if(newChat.preChatData){
+        for(var prop in newChat.preChatData){
+            if(newChat.preChatData.hasOwnProperty(prop)){
+                tokens[prop] = newChat.preChatData[prop];
+            }
+        }
+    }
+
+    try{
+        tokens["chatQueueId"] = newChat.chatQueueId;
+        tokens["chatQueueName"] = newChat.chatQueueName;
+        tokens["ani"] = newChat.ani;
+        tokens["dnis"] = newChat.dnis;
+        tokens["uii"] = newChat.uii;
+    }catch(any){
+        console.error("There was an error parsing chat tokens for basic chat info. ", any);
+    }
+
+    try{
+        tokens["agentFirstName"] = model.agentSettings.firstName;
+        tokens["agentLastName"] = model.agentSettings.lastName;
+        tokens["agentExternalId"] = model.agentSettings.externalAgentId;
+        tokens["agentType"] = model.agentSettings.agentType;
+        tokens["agentEmail"] = model.agentSettings.email;
+        tokens["agentUserName"] = model.agentSettings.username;
+    }catch(any){
+        console.error("There was an error parsing chat tokens for agent info. ", any);
+    }
+
+    return tokens;
+}
 
 
 var AgentStats = function() {

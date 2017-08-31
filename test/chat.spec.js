@@ -285,10 +285,25 @@ describe( 'Tests for Agent Library chat methods', function() {
                 {dispositionId:"3", isSuccess:true, isComplete:false, disposition:"Requeue"}
             ],
             transcript: [
-                {from:"system", type:"SYSTEM", message:"User1 connected", dts:new Date("2017-06-07T16:05:23")},
-                {from:"dlbooks", type:"AGENT", message:"Hello", dts:new Date("2017-06-07T16:05:23")},
-                {from:"user1", type:"CLIENT", message:"Hi", dts:new Date("2017-06-07T16:05:23")}
-            ]
+                {from:"system", type:"SYSTEM", dts:new Date("2017-06-07T16:05:23"), message:"User1 connected"},
+                {from:"dlbooks", type:"AGENT", dts:new Date("2017-06-07T16:05:23"), message:"Hello"},
+                {from:"user1", type:"CLIENT", dts:new Date("2017-06-07T16:05:23"), message:"Hi"}
+            ],
+            baggage: {
+                name:'danielle',
+                email:'dani.libros@gmail.com',
+                chatQueueId: '2',
+                chatQueueName: 'Test Chat Queue',
+                ani : '5551234567',
+                dnis : '5557654321',
+                uii : '201608161200240139000000000120',
+                agentFirstName : '',
+                agentLastName : '',
+                agentExternalId : '',
+                agentType : 'AGENT',
+                agentEmail : '',
+                agentUserName : ''
+            }
         };
         /*requeueShortcuts: [
             { chatQueueId: "2", name:"test queue", skillId:"" }
