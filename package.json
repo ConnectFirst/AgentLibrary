@@ -5,7 +5,9 @@
   "description": "Connect First Agent UI Library",
   "main": "src/cfAgentLibrary.js",
   "scripts": {
-    "test": "./node_modules/.bin/karma start"
+    "build": "grunt build",
+    "compile": "grunt compile",
+    "test": "grunt test"
   },
   "repository": {
     "type": "git",

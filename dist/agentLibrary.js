@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.8 - 2017-08-30 - Connect First */
+/*! cf-agent-library - v1.0.8 - 2017-09-05 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1387,11 +1387,13 @@ var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGr
     // Set loginType value
     if(this.queueIds.length > 0 && this.dialGroupId !== ""){
         this.loginType = "BLENDED";
-    }else if(this.queueIds.length > 0){
+    } else if(this.queueIds.length > 0){
         this.loginType = "INBOUND";
-    }else if(this.dialGroupId !== ""){
+    } else if(this.dialGroupId !== ""){
         this.loginType = "OUTBOUND";
-    }else {
+    } else if(this.chatIds.length > 0){
+        this.loginType = "CHAT";
+    } else {
         this.loginType = "NO-SELECTION";
     }
 
