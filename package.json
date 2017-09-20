@@ -1,11 +1,13 @@
 {
   "name": "cf-agent-library",
-  "version": "1.0.8",
+  "version": "2.0.0",
   "author": "Connect First",
   "description": "Connect First Agent UI Library",
   "main": "src/cfAgentLibrary.js",
   "scripts": {
-    "test": "./node_modules/.bin/karma start"
+    "build": "grunt build",
+    "compile": "grunt compile",
+    "test": "grunt test"
   },
   "repository": {
     "type": "git",

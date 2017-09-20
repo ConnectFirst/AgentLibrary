@@ -52,19 +52,23 @@ ChatMessageRequest.prototype.formatJSON = function() {
  *      "uii":{"#text":""},
  *      "account_id":{"#text":""},
  *      "from":{"#text":""},
- *      "message":{"#text":"hello"}
+ *      "message":{"#text":"hello"},
+ *      "dts":{"#text":"2017-05-10 12:40:28"}
  *    }
  * }
  */
 
 ChatMessageRequest.prototype.processResponse = function(response) {
     var resp = response.ui_notification;
+    var dts = utils.getText(resp, 'dts').trim();
+    var dtsDate = new Date(dts.replace(' ','T'));
     var formattedResponse = {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),
         from: utils.getText(resp, 'from'),
         type: utils.getText(resp, 'type'),
-        message: utils.getText(resp, 'message')
+        message: utils.getText(resp, 'message'),
+        dts: dtsDate
     };
 
     utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);

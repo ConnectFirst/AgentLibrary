@@ -1,4 +1,4 @@
-/*! cf-agent-library - v1.0.8 - 2017-08-29 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2017-09-20 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -589,7 +589,8 @@ NewCallNotification.prototype.processResponse = function(notification) {
     }
 
     // Build token map
-    model.callTokens = buildTokenMap(notif, newCall);
+    model.callTokens = buildCallTokenMap(notif, newCall);
+    newCall.baggage = model.callTokens; // add all tokens to baggage
 
     // Is Monitoring Call?
     if(newCall.isMonitoring){
@@ -620,9 +621,9 @@ NewCallNotification.prototype.processResponse = function(notification) {
 };
 
 
-function buildTokenMap(notif, newCall){
+function buildCallTokenMap(notif, newCall){
     var model = UIModel.getInstance();
-    var tokens = {};
+    var tokens = newCall.baggage || {}; // seed with baggage values
     if(notif.baggage && notif.baggage.generic_key_value_pairs){
         var keyValuePairs = [];
         var keyValuePairsStr = utils.getText(notif.baggage, 'generic_key_value_pairs');
@@ -669,42 +670,6 @@ function buildTokenMap(notif, newCall){
         tokens["agentUserName"] = model.agentSettings.username;
     }catch(any){
         console.error("There was an error parsing tokens for agent info. ", any);
-    }
-
-    if(notif.baggage){
-        // loop over all items in baggage and add to token map
-        // standard tokens:
-        // "leadId"
-        // "externId"
-        // "firstName"
-        // "midName"
-        // "lastName"
-        // "address1"
-        // "address2"
-        // "suffix"
-        // "title"
-        // "city"
-        // "state"
-        // "zip"
-        // "auxData1"
-        // "auxData2"
-        // "auxData3"
-        // "auxData4"
-        // "auxData5"
-        // "auxPhone"
-        // "email"
-        // "gateKeeper"
-        try{
-            var key;
-            for(var i = 0; i < Object.keys(newCall.baggage).length; i++){
-                key = Object.keys(newCall.baggage)[i];
-                if(key !== "customLabels"){ // ignore custom label array
-                    tokens[key] = newCall.baggage[key];
-                }
-            }
-        }catch(any){
-            console.error("There was an error parsing baggage tokens. ", any);
-        }
     }
 
     return tokens;
@@ -875,6 +840,7 @@ var AckRequest = function(audioType, agentId, uii, monitorAgentId) {
  * This class processes ACK packets rec'd from IQ.
  * This is a callback triggered by certain actions like
  * sending dispositions or script results.
+ * NOTE: uii is added in utils message processing.
  *
  * {"ui_response":{
  *      "@message_id":"IQ982008090317393001252",
@@ -1421,11 +1387,13 @@ var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGr
     // Set loginType value
     if(this.queueIds.length > 0 && this.dialGroupId !== ""){
         this.loginType = "BLENDED";
-    }else if(this.queueIds.length > 0){
+    } else if(this.queueIds.length > 0){
         this.loginType = "INBOUND";
-    }else if(this.dialGroupId !== ""){
+    } else if(this.dialGroupId !== ""){
         this.loginType = "OUTBOUND";
-    }else {
+    } else if(this.chatIds.length > 0){
+        this.loginType = "CHAT";
+    } else {
         this.loginType = "NO-SELECTION";
     }
 
@@ -3859,19 +3827,23 @@ ChatMessageRequest.prototype.formatJSON = function() {
  *      "uii":{"#text":""},
  *      "account_id":{"#text":""},
  *      "from":{"#text":""},
- *      "message":{"#text":"hello"}
+ *      "message":{"#text":"hello"},
+ *      "dts":{"#text":"2017-05-10 12:40:28"}
  *    }
  * }
  */
 
 ChatMessageRequest.prototype.processResponse = function(response) {
     var resp = response.ui_notification;
+    var dts = utils.getText(resp, 'dts').trim();
+    var dtsDate = new Date(dts.replace(' ','T'));
     var formattedResponse = {
         uii: utils.getText(resp, 'uii'),
         accountId: utils.getText(resp, 'account_id'),
         from: utils.getText(resp, 'from'),
         type: utils.getText(resp, 'type'),
-        message: utils.getText(resp, 'message')
+        message: utils.getText(resp, 'message'),
+        dts: dtsDate
     };
 
     utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);
@@ -4005,7 +3977,7 @@ var ChatRoomRequest = function(action, roomType, roomId, agentOne, agentTwo) {
  *      "@type":"CHAT-ROOM",
  *      "@room_type":"PUBLIC",
  *      "room_id":{"#text":""},
- *      "action":{"#text":"EXIT"}
+ *      "action":{"#text":"EXIT|ENTER"}
  *    }
  * }
  * -OR-
@@ -4018,7 +3990,7 @@ var ChatRoomRequest = function(action, roomType, roomId, agentOne, agentTwo) {
  *      "@room_type":"PRIVATE",
  *      "agent_one":{"#text":""},
  *      "agent_two":{"#text":""},
- *      "action":{"#text":"ENTER"}
+ *      "action":{"#text":"ENTER|EXIT"}
  *    }
  * }
  *
@@ -4177,7 +4149,7 @@ var ChatTypingRequest = function(uii) {
 /*
  * External Chat:
  * Agent sends typing message to notify client widgets,
- * but the agent's pending message is not sent going this direction (just empty string).
+ * but the agent's pending message is not sent going this direction.
  * {"ui_request":{
  *      "@destination":"IQ",
  *      "@type":"CHAT-TYPING",
@@ -4307,6 +4279,41 @@ ChatActiveNotification.prototype.processResponse = function(notification) {
     return {
         message: "Received CHAT-ACTIVE notification",
         status: "OK",
+        accountId: utils.getText(notif, "account_id"),
+        uii: utils.getText(notif, "uii")
+    };
+
+};
+
+
+var ChatCancelledNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for processing "CHAT-CANCELLED" packets from IntelliQueue.
+ * If an agent is presented a chat and doesn't respond before the timeout, the CHAT-CANCELLED
+ * message is sent from IQ.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-CANCELLED",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "account_id":{"#text":"99999999"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+ChatCancelledNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+
+    return {
+        message: "Received CHAT-CANCELLED notification",
+        status: "OK",
+        messageId: notif['@message_id'],
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii")
     };
@@ -4476,12 +4483,15 @@ var NewChatNotification = function() {
  *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
- *          "json_baggage":{"#text":"json_string_form_data"},
+ *          "json_baggage":{"#text":"json_string_form_data"}, <--- pre-form chat data
  *      }
  *  }
  */
 NewChatNotification.prototype.processResponse = function(notification) {
     var notif = notification.ui_notification;
+
+    var dts = utils.getText(notif,'queue_dts');
+    dts = new Date(dts.replace(' ','T'));
 
     // set up new call obj
     var newChat = {
@@ -4489,7 +4499,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
         accountId: utils.getText(notif,'account_id'),
         sessionId: utils.getText(notif,'session_id'),
         agentId: utils.getText(notif,'agent_id'),
-        queueDts: utils.getText(notif,'queue_dts'),
+        queueDts: dts,
         queueTime: utils.getText(notif,'queue_time'),
         chatQueueId: utils.getText(notif,'chat_queue_id'),
         chatQueueName: utils.getText(notif,'chat_queue_name'),
@@ -4525,6 +4535,15 @@ NewChatNotification.prototype.processResponse = function(notification) {
         newChat.transcript = newChat.transcript.messages;
     }
 
+    if(newChat.preChatData){
+        try {
+            newChat.preChatData = JSON.parse(newChat.preChatData);
+        }catch(err){
+            utils.logMessage(LOG_LEVELS.ERROR, "Error parsing the pre-form chat data.", notif);
+        }
+
+    }
+
     // convert numbers to boolean
     if(newChat.chatDispositions){
         for(var d = 0; d < newChat.chatDispositions.length; d++){
@@ -4534,8 +4553,57 @@ NewChatNotification.prototype.processResponse = function(notification) {
         }
     }
 
+    // convert dates
+    if(newChat.transcript){
+        for(var t = 0; t < newChat.transcript.length; t++){
+            var msg = newChat.transcript[t];
+            if(msg.dts){
+                msg.dts = new Date(msg.dts.replace(' ','T'));
+            }
+        }
+    }
+
+    // Build token map
+    newChat.baggage = buildChatTokenMap(notif, newChat);
+
     return newChat;
 };
+
+function buildChatTokenMap(notif, newChat){
+    var tokens = {};
+    var model = UIModel.getInstance();
+
+    if(newChat.preChatData){
+        for(var prop in newChat.preChatData){
+            if(newChat.preChatData.hasOwnProperty(prop)){
+                tokens[prop] = newChat.preChatData[prop];
+            }
+        }
+    }
+
+    try{
+        tokens["chatQueueId"] = newChat.chatQueueId;
+        tokens["chatQueueName"] = newChat.chatQueueName;
+        tokens["ani"] = newChat.ani;
+        tokens["dnis"] = newChat.dnis;
+        tokens["uii"] = newChat.uii;
+    }catch(any){
+        console.error("There was an error parsing chat tokens for basic chat info. ", any);
+    }
+
+    try{
+        tokens["agentFirstName"] = model.agentSettings.firstName;
+        tokens["agentLastName"] = model.agentSettings.lastName;
+        tokens["agentExternalId"] = model.agentSettings.externalAgentId;
+        tokens["agentType"] = model.agentSettings.agentType;
+        tokens["agentEmail"] = model.agentSettings.email;
+        tokens["agentUserName"] = model.agentSettings.username;
+    }catch(any){
+        console.error("There was an error parsing chat tokens for agent info. ", any);
+    }
+
+    return tokens;
+}
 
 
 var AgentStats = function() {
@@ -4816,6 +4884,93 @@ CampaignStats.prototype.processResponse = function(stats) {
 };
 
 
+var ChatQueueStats = function() {
+
+};
+
+
+/*
+ * This class is responsible for handling an Chat Stats packet rec'd from IntelliServices.
+ * It will save a copy of it in the UIModel.
+ *
+ *{
+ *  "ui_stats": {
+ *  "@type": "CHAT",
+ *  "chatQueue": [
+ *      {
+ *          "@active": "1",
+ *          "@available": "0",
+ *          "@avgAbandon": "00.0",
+ *          "@avgChatTime": "00.0",
+ *          "@avgQueueTime": "00.0",
+ *          "@chatQueueId": "1",
+ *          "@chatQueueName": "testing chat quuee",
+ *          "@deflected": "0",
+ *          "@inQueue": "0",
+ *          "@longestInQueue": "0",
+ *          "@presented": "0",
+ *          "@routing": "0",
+ *          "@staffed": "0",
+ *          "@totalAbandonTime": "0",
+ *          "@totalAnswerTime": "0",
+ *          "@totalChatTime": "0",
+ *          "@totalQueueTime": "0",
+ *          "@utilization": "00.0"
+ *      },
+ *      {
+ *          "@active": "0",
+ *          "@available": "0",
+ *          "@avgAbandon": "00.0",
+ *          "@avgChatTime": "00.0",
+ *          "@avgQueueTime": "00.0",
+ *          "@chatQueueId": "3",
+ *          "@chatQueueName": "testing test",
+ *          "@deflected": "0",
+ *          "@inQueue": "0",
+ *          "@longestInQueue": "0",
+ *          "@presented": "0",
+ *          "@routing": "0",
+ *          "@staffed": "0",
+ *          "@totalAbandonTime": "0",
+ *          "@totalAnswerTime": "0",
+ *          "@totalChatTime": "0",
+ *          "@totalQueueTime": "0",
+ *          "@utilization": "00.0"
+ *      }
+ *  ],
+ *  "totals": {
+ *      "routing": {"#text": "0"},
+ *      "ttotalAnswerTime": {"#text": "0"},
+ *      "inQueue": { "#text": "0"},
+ *      "ttotalChatTime": {"#text": "0"},
+ *      "ttotalAbandonTime": {"#text": "0"},
+ *      "presented": {"#text": "0},
+ *      "accepted": {"#text": "0"},
+ *      "deflected": {"#text": "0"},
+ *      "active": {"#text": "1"},
+ *      "abandoned": {"#text": "0"},
+ *      "ttotalQueueTime": {"#text": "0"}
+ *   }
+ *  }
+ *}
+ */
+ChatQueueStats.prototype.processResponse = function(stats) {
+    var resp = stats.ui_stats;
+    var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
+    var chatQueues = utils.processResponseCollection(stats,"ui_stats","chatQueue");
+
+    var chatQueueStats = {
+        type:resp["@type"],
+        chatQueues: chatQueues,
+        totals:totals
+    };
+
+    UIModel.getInstance().chatQueueStats = chatQueueStats;
+
+    return chatQueueStats;
+};
+
+
 var QueueStats = function() {
 
 };
@@ -4982,7 +5137,7 @@ var UIModel = (function() {
             chatActiveNotification : new ChatActiveNotification(),
             chatInactiveNotification : new ChatInactiveNotification(),
             chatDispositionRequest : null,
-            chatMessageRequest : null,
+            chatMessageRequest : new ChatMessageRequest(),
             chatPresentedNotification : new ChatPresentedNotification(),
             chatPresentedRequest : null,
             chatRequeueRequest : null,
@@ -5048,6 +5203,7 @@ var UIModel = (function() {
             agentDailyStatsPacket: new AgentDailyStats(),
             queueStatsPacket: new QueueStats(),
             campaignStatsPacket: new CampaignStats(),
+            chatQueueStatsPacket: new ChatQueueStats(),
 
             // application state
             applicationSettings : {
@@ -5063,6 +5219,7 @@ var UIModel = (function() {
             agentDailyStats: {},
             campaignStats:{},
             queueStats:{},
+            chatQueueStats:{},
 
             // current agent settings
             agentSettings : {
@@ -5504,6 +5661,41 @@ var utils = {
                 var leadStateTcpaResponse = leadStateTcpaNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateTcpaResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_ACTIVE:
+                var activeNotif = new ChatActiveNotification();
+                var activeResponse = activeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ACTIVE, activeResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_INACTIVE:
+                var inactiveNotif = new ChatInactiveNotification();
+                var inactiveResponse = inactiveNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_PRESENTED:
+                var presentedNotif = new ChatPresentedNotification();
+                var presentedResponse = presentedNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_PRESENTED, presentedResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_TYPING:
+                var typingNotif = new ChatTypingNotification();
+                var typingResponse = typingNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_TYPING, typingResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_NEW:
+                var newChatNotif = new NewChatNotification();
+                var newChatResponse = newChatNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_NEW, newChatResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_MESSAGE:
+                var chatMessage = new ChatMessageRequest();
+                var chatMessageResponse = chatMessage.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_MESSAGE, chatMessageResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_CANCELLED:
+                var chatCancelled = new ChatCancelledNotification();
+                var chatCancelledResponse = chatCancelled.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
+                break;
         }
     },
 
@@ -5591,6 +5783,10 @@ var utils = {
             case MESSAGE_TYPES.STATS_QUEUE:
                 var queueStats = UIModel.getInstance().queueStatsPacket.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_QUEUE, queueStats);
+                break;
+            case MESSAGE_TYPES.STATS_CHAT:
+                var chatStats = UIModel.getInstance().chatQueueStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_CHAT_QUEUE, chatStats);
                 break;
         }
 
@@ -6106,6 +6302,7 @@ const CALLBACK_TYPES = {
     "CAMPAIGN_DISPOSITIONS":"campaignDispositionsResponse",
     "CHAT":"chatResponse",                          // internal chat
     "CHAT_ACTIVE":"chatActiveNotification",         // external chat
+    "CHAT_CANCELLED":"chatCancelledNotification",   // external chat
     "CHAT_INACTIVE":"chatInactiveNotification",     // external chat
     "CHAT_PRESENTED":"chatPresentedNotification",   // external chat
     "CHAT_TYPING":"chatTypingNotification",         // external chat
@@ -6147,6 +6344,7 @@ const CALLBACK_TYPES = {
     "STATS_AGENT_DAILY":"agentDailyStats",
     "STATS_CAMPAIGN":"campaignStats",
     "STATS_QUEUE":"queueStats",
+    "STATS_CHAT_QUEUE":"chatQueueStats",
     "SUPERVISOR_LIST":"supervisorListResponse",
     "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
@@ -6167,6 +6365,7 @@ const MESSAGE_TYPES = {
     "CHAT_ROOM":"CHAT-ROOM",                                // internal chat
     "CHAT_ROOM_STATE":"CHAT-ROOM-STATE",                    // internal chat
     "CHAT_ACTIVE":"CHAT-ACTIVE",                            // external chat
+    "CHAT_CANCELLED":"CHAT-CANCELLED",                      // external chat
     "CHAT_INACTIVE":"CHAT-INACTIVE",                        // external chat
     "CHAT_DISPOSITION":"CHAT-DISPOSITION",                  // external chat
     "CHAT_MESSAGE":"CHAT-MESSAGE",                          // external chat
@@ -6213,6 +6412,7 @@ const MESSAGE_TYPES = {
     "STATS_AGENT_DAILY":"AGENTDAILY",
     "STATS_CAMPAIGN":"CAMPAIGN",
     "STATS_QUEUE":"GATE",
+    "STATS_CHAT":"CHAT",
     "SUPERVISOR_LIST":"SUPERVISOR-LIST",                // internal chat
     "TCPA_SAFE":"TCPA-SAFE",
     "TCPA_SAFE_ID":"TCPA_SAFE",
@@ -6343,6 +6543,7 @@ function initAgentLibraryCore (context) {
      * <li>"agentDailyStats"</li>
      * <li>"campaignStats"</li>
      * <li>"queueStats"</li>
+     * <li>"chatQueueStats"</li>
      * @type {object}
      */
     AgentLibrary.prototype.setCallbacks = function(callbackMap) {
@@ -6662,6 +6863,14 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().queueStatsPacket;
     };
     /**
+     * Get latest Chat Queue Stats object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatQueueStatsPacket = function() {
+        return UIModel.getInstance().chatQueueStatsPacket;
+    };
+    /**
      * Get latest Campaign Stats object
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
@@ -6950,6 +7159,14 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getQueueStats = function() {
         return UIModel.getInstance().queueStats;
+    };
+    /**
+     * Get the Chat Queue stats object containing the current state of chat queue stats
+     * @memberof AgentLibrary.Core.Stats
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatQueueStats = function() {
+        return UIModel.getInstance().chatQueueStats;
     };
     /**
      * Get the Campaign stats object containing the current state of campaign stats

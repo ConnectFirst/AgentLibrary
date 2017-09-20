@@ -20,7 +20,7 @@ var ChatRoomRequest = function(action, roomType, roomId, agentOne, agentTwo) {
  *      "@type":"CHAT-ROOM",
  *      "@room_type":"PUBLIC",
  *      "room_id":{"#text":""},
- *      "action":{"#text":"EXIT"}
+ *      "action":{"#text":"EXIT|ENTER"}
  *    }
  * }
  * -OR-
@@ -33,7 +33,7 @@ var ChatRoomRequest = function(action, roomType, roomId, agentOne, agentTwo) {
  *      "@room_type":"PRIVATE",
  *      "agent_one":{"#text":""},
  *      "agent_two":{"#text":""},
- *      "action":{"#text":"ENTER"}
+ *      "action":{"#text":"ENTER|EXIT"}
  *    }
  * }
  *
