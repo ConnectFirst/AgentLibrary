@@ -22,6 +22,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         this.chatPresentedNotificationRaw = fixture.load('chat/chatPresentedNotificationRaw.json');
         this.chatTypingNotificationRaw = fixture.load('chat/chatTypingNotificationRaw.json');
         this.newChatNotificationRaw = fixture.load('chat/newChatNotificationRaw.json');
+        this.chatMessageNotificationRaw = fixture.load('chat/chatMessageNotificationRaw.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -235,6 +236,24 @@ describe( 'Tests for Agent Library chat methods', function() {
         expect(response).toEqual(expectedResponse);
     });
 
+    it( 'should process a chat-message notification message', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        var response = Lib.getChatMessageRequest().processResponse(this.chatMessageNotificationRaw);
+        var expectedResponse =  {
+            uii: "201608161200240139000000000120",
+            accountId: "99999999",
+            from: "",
+            type: "AGENT",
+            message: "Hello. How can I help you?",
+            dts: new Date("2017-05-10T12:40:28")
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
     it( 'should process a new-chat notification message', function() {
         var Lib = new AgentLibrary();
         Lib.socket = windowMock.WebSocket(address);
@@ -249,7 +268,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             accountId: "99999999",
             sessionId: "2",
             agentId: "1180958",
-            queueDts: "2017-04-26 11:25:00",
+            queueDts: new Date("2017-04-26T11:25:00"),
             queueTime: "-1",
             chatQueueId: "2",
             chatQueueName: "Test Chat Queue",
@@ -260,16 +279,31 @@ describe( 'Tests for Agent Library chat methods', function() {
             surveyPopType: "SUPPRESS",
             scriptId:"1",
             scriptVersion: "1",
-            preChatData: "json_string_form_data",
+            preChatData: {name:'danielle', email:'dani.libros@gmail.com'},
             chatDispositions: [
                 {dispositionId:"2", isSuccess:true, isComplete:true, emailTemplateId: "1", disposition:"Complete"},
                 {dispositionId:"3", isSuccess:true, isComplete:false, disposition:"Requeue"}
             ],
             transcript: [
-                {from:"system", type:"SYSTEM", message:"User1 connected"},
-                {from:"dlbooks", type:"AGENT", message:"Hello"},
-                {from:"user1", type:"CLIENT", message:"Hi"}
-            ]
+                {from:"system", type:"SYSTEM", dts:new Date("2017-06-07T16:05:23"), message:"User1 connected"},
+                {from:"dlbooks", type:"AGENT", dts:new Date("2017-06-07T16:05:23"), message:"Hello"},
+                {from:"user1", type:"CLIENT", dts:new Date("2017-06-07T16:05:23"), message:"Hi"}
+            ],
+            baggage: {
+                name:'danielle',
+                email:'dani.libros@gmail.com',
+                chatQueueId: '2',
+                chatQueueName: 'Test Chat Queue',
+                ani : '5551234567',
+                dnis : '5557654321',
+                uii : '201608161200240139000000000120',
+                agentFirstName : '',
+                agentLastName : '',
+                agentExternalId : '',
+                agentType : 'AGENT',
+                agentEmail : '',
+                agentUserName : ''
+            }
         };
         /*requeueShortcuts: [
             { chatQueueId: "2", name:"test queue", skillId:"" }

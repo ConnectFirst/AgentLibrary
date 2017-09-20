@@ -11,6 +11,7 @@ var AckRequest = function(audioType, agentId, uii, monitorAgentId) {
  * This class processes ACK packets rec'd from IQ.
  * This is a callback triggered by certain actions like
  * sending dispositions or script results.
+ * NOTE: uii is added in utils message processing.
  *
  * {"ui_response":{
  *      "@message_id":"IQ982008090317393001252",

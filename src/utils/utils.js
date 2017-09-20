@@ -304,6 +304,41 @@ var utils = {
                 var leadStateTcpaResponse = leadStateTcpaNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.TCPA_SAFE_LEAD_STATE, leadStateTcpaResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_ACTIVE:
+                var activeNotif = new ChatActiveNotification();
+                var activeResponse = activeNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ACTIVE, activeResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_INACTIVE:
+                var inactiveNotif = new ChatInactiveNotification();
+                var inactiveResponse = inactiveNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_PRESENTED:
+                var presentedNotif = new ChatPresentedNotification();
+                var presentedResponse = presentedNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_PRESENTED, presentedResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_TYPING:
+                var typingNotif = new ChatTypingNotification();
+                var typingResponse = typingNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_TYPING, typingResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_NEW:
+                var newChatNotif = new NewChatNotification();
+                var newChatResponse = newChatNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_NEW, newChatResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_MESSAGE:
+                var chatMessage = new ChatMessageRequest();
+                var chatMessageResponse = chatMessage.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_MESSAGE, chatMessageResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_CANCELLED:
+                var chatCancelled = new ChatCancelledNotification();
+                var chatCancelledResponse = chatCancelled.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
+                break;
         }
     },
 
@@ -391,6 +426,10 @@ var utils = {
             case MESSAGE_TYPES.STATS_QUEUE:
                 var queueStats = UIModel.getInstance().queueStatsPacket.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_QUEUE, queueStats);
+                break;
+            case MESSAGE_TYPES.STATS_CHAT:
+                var chatStats = UIModel.getInstance().chatQueueStatsPacket.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.STATS_CHAT_QUEUE, chatStats);
                 break;
         }
 

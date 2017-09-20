@@ -1,0 +1,15 @@
+{
+    "ui_notification":{
+        "@message_id":"IQ10012016081611595000289",
+        "@type":"CHAT-MESSAGE",
+        "@destination":"IQ",
+        "@response_to":"",
+        "account_id":{"#text":"99999999"},
+        "uii":{"#text":"201608161200240139000000000120"},
+        "from":{"#text":""},
+        "type":{"#text":"AGENT"},
+        "message":{"#text":"Hello. How can I help you?"},
+        "dts":{"#text":"2017-05-10 12:40:28"}
+    }
+}
+

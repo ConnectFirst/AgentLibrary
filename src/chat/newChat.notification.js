@@ -48,12 +48,15 @@ var NewChatNotification = function() {
  *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
- *          "json_baggage":{"#text":"json_string_form_data"},
+ *          "json_baggage":{"#text":"json_string_form_data"}, <--- pre-form chat data
  *      }
  *  }
  */
 NewChatNotification.prototype.processResponse = function(notification) {
     var notif = notification.ui_notification;
+
+    var dts = utils.getText(notif,'queue_dts');
+    dts = new Date(dts.replace(' ','T'));
 
     // set up new call obj
     var newChat = {
@@ -61,7 +64,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
         accountId: utils.getText(notif,'account_id'),
         sessionId: utils.getText(notif,'session_id'),
         agentId: utils.getText(notif,'agent_id'),
-        queueDts: utils.getText(notif,'queue_dts'),
+        queueDts: dts,
         queueTime: utils.getText(notif,'queue_time'),
         chatQueueId: utils.getText(notif,'chat_queue_id'),
         chatQueueName: utils.getText(notif,'chat_queue_name'),
@@ -97,6 +100,15 @@ NewChatNotification.prototype.processResponse = function(notification) {
         newChat.transcript = newChat.transcript.messages;
     }
 
+    if(newChat.preChatData){
+        try {
+            newChat.preChatData = JSON.parse(newChat.preChatData);
+        }catch(err){
+            utils.logMessage(LOG_LEVELS.ERROR, "Error parsing the pre-form chat data.", notif);
+        }
+
+    }
+
     // convert numbers to boolean
     if(newChat.chatDispositions){
         for(var d = 0; d < newChat.chatDispositions.length; d++){
@@ -106,5 +118,54 @@ NewChatNotification.prototype.processResponse = function(notification) {
         }
     }
 
+    // convert dates
+    if(newChat.transcript){
+        for(var t = 0; t < newChat.transcript.length; t++){
+            var msg = newChat.transcript[t];
+            if(msg.dts){
+                msg.dts = new Date(msg.dts.replace(' ','T'));
+            }
+        }
+    }
+
+    // Build token map
+    newChat.baggage = buildChatTokenMap(notif, newChat);
+
     return newChat;
 };
+
+function buildChatTokenMap(notif, newChat){
+    var tokens = {};
+    var model = UIModel.getInstance();
+
+    if(newChat.preChatData){
+        for(var prop in newChat.preChatData){
+            if(newChat.preChatData.hasOwnProperty(prop)){
+                tokens[prop] = newChat.preChatData[prop];
+            }
+        }
+    }
+
+    try{
+        tokens["chatQueueId"] = newChat.chatQueueId;
+        tokens["chatQueueName"] = newChat.chatQueueName;
+        tokens["ani"] = newChat.ani;
+        tokens["dnis"] = newChat.dnis;
+        tokens["uii"] = newChat.uii;
+    }catch(any){
+        console.error("There was an error parsing chat tokens for basic chat info. ", any);
+    }
+
+    try{
+        tokens["agentFirstName"] = model.agentSettings.firstName;
+        tokens["agentLastName"] = model.agentSettings.lastName;
+        tokens["agentExternalId"] = model.agentSettings.externalAgentId;
+        tokens["agentType"] = model.agentSettings.agentType;
+        tokens["agentEmail"] = model.agentSettings.email;
+        tokens["agentUserName"] = model.agentSettings.username;
+    }catch(any){
+        console.error("There was an error parsing chat tokens for agent info. ", any);
+    }
+
+    return tokens;
+}
