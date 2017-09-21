@@ -88,6 +88,9 @@
     "allow_lead_inserts":{
       "#text":"1"
     },
+    "allow_auto_answer":{
+      "#text":"0"
+    },
     "show_lead_history":{
       "#text":"1"
     },
