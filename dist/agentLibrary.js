@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2017-09-21 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2017-09-25 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4750,6 +4750,7 @@ AgentDailyStats.prototype.processResponse = function(stats) {
 
     model.agentId = utils.getText(resp, "agent_id");
     model.totalLoginSessions = utils.getText(resp, "total_login_sessions");
+    model.totalChatsHandled = utils.getText(resp, "total_chats_handled");
     model.totalCallsHandled = utils.getText(resp, "total_calls_handled");
     model.totalPreviewDials = utils.getText(resp, "total_preview_dials");
     model.totalManualDials = utils.getText(resp, "total_manual_dials");
