@@ -23,5 +23,6 @@
   "disableSupervisorMonitoring": false,
   "progressiveEnabled": false,
   "requireFetchedLeadsCalled": false,
-  "showLeadHistory": true
+  "showLeadHistory": true,
+  "allowAutoAnswer": false
 }
