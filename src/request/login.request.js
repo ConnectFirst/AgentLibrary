@@ -195,6 +195,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.allowLoginControl = utils.getText(resp, 'allow_login_control') === "1";
             model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
             model.agentPermissions.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring') === "1";
+            model.agentPermissions.allowAutoAnswer = utils.getText(resp, 'allow_auto_answer') === "1";
 
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 

@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2017-09-20 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2017-09-25 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2575,6 +2575,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.allowLoginControl = utils.getText(resp, 'allow_login_control') === "1";
             model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
             model.agentPermissions.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring') === "1";
+            model.agentPermissions.allowAutoAnswer = utils.getText(resp, 'allow_auto_answer') === "1";
 
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
@@ -4749,6 +4750,7 @@ AgentDailyStats.prototype.processResponse = function(stats) {
 
     model.agentId = utils.getText(resp, "agent_id");
     model.totalLoginSessions = utils.getText(resp, "total_login_sessions");
+    model.totalChatsHandled = utils.getText(resp, "total_chats_handled");
     model.totalCallsHandled = utils.getText(resp, "total_calls_handled");
     model.totalPreviewDials = utils.getText(resp, "total_preview_dials");
     model.totalManualDials = utils.getText(resp, "total_manual_dials");

@@ -29,6 +29,7 @@ AgentDailyStats.prototype.processResponse = function(stats) {
 
     model.agentId = utils.getText(resp, "agent_id");
     model.totalLoginSessions = utils.getText(resp, "total_login_sessions");
+    model.totalChatsHandled = utils.getText(resp, "total_chats_handled");
     model.totalCallsHandled = utils.getText(resp, "total_calls_handled");
     model.totalPreviewDials = utils.getText(resp, "total_preview_dials");
     model.totalManualDials = utils.getText(resp, "total_manual_dials");

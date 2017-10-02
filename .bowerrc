@@ -1,4 +1,5 @@
 {
     "registry":"http://build.connectfirst.com:5678",
-    "timeout": 300000
+    "timeout": 300000,
+    "allow-root": true
 }
