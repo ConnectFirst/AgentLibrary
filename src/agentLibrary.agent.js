@@ -24,6 +24,22 @@ function initAgentLibraryAgent (context) {
     };
 
     /**
+     * Sends agent login message to IntelliServices, with flag to tell IntelliServices
+     * that agent password is to be treated as case sensitive
+     * @memberof AgentLibrary.Agent
+     * @param {string} username Agent's username
+     * @param {string} password Agent's password
+     * @param {function} [callback=null] Callback function when loginAgent response received
+     */
+    AgentLibrary.prototype.loginAgentCaseSensitive = function(username, password, callback){
+        UIModel.getInstance().loginRequest = new LoginRequest(username, password, true);
+        var msg = UIModel.getInstance().loginRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * Sends agent configure message (2nd layer login) to IntelliQueue
      * @memberof AgentLibrary.Agent
      * @param {string} dialDest The agent's number, sip | DID.

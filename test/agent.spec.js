@@ -90,6 +90,20 @@ describe( 'Tests for Agent Library agent methods', function() {
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
 
+    it( 'should build loginAgent with case sensitive flag and send message over socket', function() {
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        Lib.loginAgentCaseSensitive(username, password);
+        var msg = Lib.getLoginRequest().formatJSON();
+
+        Lib.socket._message(msg);
+
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
     it( 'should process loginAgent response message', function() {
         var Lib = new AgentLibrary();
         Lib.socket = windowMock.WebSocket(address);

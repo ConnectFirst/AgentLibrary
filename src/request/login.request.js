@@ -1,7 +1,8 @@
 
-var LoginRequest = function(username, password) {
+var LoginRequest = function(username, password, isCaseSensitive) {
     this.username = username;
     this.password = password;
+    this.isCaseSensitive = isCaseSensitive || false;
 };
 
 LoginRequest.prototype.formatJSON = function() {
@@ -16,6 +17,9 @@ LoginRequest.prototype.formatJSON = function() {
             },
             "password":{
                 "#text":this.password
+            },
+            "is_case_sensitive":{
+                "#text":utils.toString(this.isCaseSensitive === true ? "TRUE" : "FALSE")
             }
         }
     };

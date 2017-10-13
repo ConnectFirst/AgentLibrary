@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2017-10-02 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2017-10-13 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2379,9 +2379,10 @@ _formatBaggage = function(baggage){
 };
 
 
-var LoginRequest = function(username, password) {
+var LoginRequest = function(username, password, isCaseSensitive) {
     this.username = username;
     this.password = password;
+    this.isCaseSensitive = isCaseSensitive || false;
 };
 
 LoginRequest.prototype.formatJSON = function() {
@@ -2396,6 +2397,9 @@ LoginRequest.prototype.formatJSON = function() {
             },
             "password":{
                 "#text":this.password
+            },
+            "is_case_sensitive":{
+                "#text":utils.toString(this.isCaseSensitive === true ? "TRUE" : "FALSE")
             }
         }
     };
@@ -7310,6 +7314,22 @@ function initAgentLibraryAgent (context) {
      */
     AgentLibrary.prototype.loginAgent = function(username, password, callback){
         UIModel.getInstance().loginRequest = new LoginRequest(username, password);
+        var msg = UIModel.getInstance().loginRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends agent login message to IntelliServices, with flag to tell IntelliServices
+     * that agent password is to be treated as case sensitive
+     * @memberof AgentLibrary.Agent
+     * @param {string} username Agent's username
+     * @param {string} password Agent's password
+     * @param {function} [callback=null] Callback function when loginAgent response received
+     */
+    AgentLibrary.prototype.loginAgentCaseSensitive = function(username, password, callback){
+        UIModel.getInstance().loginRequest = new LoginRequest(username, password, true);
         var msg = UIModel.getInstance().loginRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
