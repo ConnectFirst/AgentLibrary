@@ -41,6 +41,11 @@ var NewChatNotification = function() {
  *                  { "@disposition_id":"3", "@is_success":"true", "@is_complete":"false", "#text":"Requeue"}
  *              ]
  *          },
+ *          "chat_requeue_shortcuts" :{
+ *              shortcut : [
+ *                {@chat_requeue_shortcut_id:"3", @name:"test", @rank:"1",@requeue_chat_queue_id:"74",@skill_id:""}
+ *              ]
+ *          }
  *          "transcript":{
  *              "message":[
  *                  { "@from":"system", "@type":"SYSTEM", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
@@ -78,7 +83,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
         preChatData: utils.getText(notif,'json_baggage')
     };
 
-    //newChat.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
+    newChat.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'chat_requeue_shortcuts', 'shortcut')[0];
     newChat.chatDispositions = utils.processResponseCollection(notification, 'ui_notification', 'chat_dispositions', 'disposition')[0];
     newChat.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript', 'message')[0];
 
@@ -87,12 +92,6 @@ NewChatNotification.prototype.processResponse = function(notification) {
     }else{
         newChat.chatDispositions = newChat.chatDispositions.dispositions;
     }
-
-    /*if(newChat.requeueShortcuts && newChat.requeueShortcuts.name){
-        newChat.requeueShortcuts = [newChat.requeueShortcuts];
-    }else{
-        newChat.requeueShortcuts = newChat.requeueShortcuts.requeueShortcuts;
-    }*/
 
     if(newChat.transcript && newChat.transcript.message){
         newChat.transcript = [newChat.transcript];
