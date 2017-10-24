@@ -97,7 +97,20 @@ function initAgentLibraryChat (context) {
      * @param {string} message The message sent by the agent
      */
     AgentLibrary.prototype.chatMessage = function(uii, agentId, message){
-        UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message);
+        UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message, false);
+        var msg = UIModel.getInstance().chatMessageRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send an whisper type chat message
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId The agent associated with the chat
+     * @param {string} message The message sent by the agent
+     */
+    AgentLibrary.prototype.chatWhisper = function(uii, agentId, message){
+        UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message, true);
         var msg = UIModel.getInstance().chatMessageRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -141,6 +154,32 @@ function initAgentLibraryChat (context) {
     AgentLibrary.prototype.chatTyping = function(uii){
         UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii);
         var msg = UIModel.getInstance().chatTypingRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to add a session on an existing chat
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId Current logged in agent id
+     * @param {string} monitorAgentId Agent id handling this chat
+     */
+    AgentLibrary.prototype.monitorChat = function(uii, agentId, monitorAgentId){
+        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, monitorAgentId);
+        var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to terminate an active chat session
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId Current logged in agent id
+     * @param {string} sessionId Chat session id
+     */
+    AgentLibrary.prototype.leaveChat = function(uii, agentId, sessionId){
+        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, sessionId);
+        var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 }
