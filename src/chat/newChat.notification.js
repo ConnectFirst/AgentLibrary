@@ -21,6 +21,7 @@ var NewChatNotification = function() {
  *          "queue_time":{"#text":""},
  *          "chat_queue_id":{"#text":""},
  *          "chat_queue_name":{"#text":""},
+ *          "chat_requeue_type" : {"#text":""}
  *          "app_url":{"#text":""},
  *          "channel_type":{"#text":""},
  *          "ani":{"#text":""},
@@ -73,6 +74,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
         queueTime: utils.getText(notif,'queue_time'),
         chatQueueId: utils.getText(notif,'chat_queue_id'),
         chatQueueName: utils.getText(notif,'chat_queue_name'),
+        chatRequeueType : utils.getText(notif, 'chat_requeue_type'),
         appUrl: utils.getText(notif,'app_url'),
         channelType: utils.getText(notif,'channel_type'),
         ani: utils.getText(notif,'ani'),

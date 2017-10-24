@@ -272,6 +272,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             queueTime: "-1",
             chatQueueId: "2",
             chatQueueName: "Test Chat Queue",
+            chatRequeueType : "SHORTCUT",
             appUrl: "www.test.url",
             channelType: "SMS",
             ani: "5551234567",
@@ -305,9 +306,6 @@ describe( 'Tests for Agent Library chat methods', function() {
                 agentUserName : ''
             }
         };
-        /*requeueShortcuts: [
-            { chatQueueId: "2", name:"test queue", skillId:"" }
-        ],*/
 
         expect(response).toEqual(expectedResponse);
     });
