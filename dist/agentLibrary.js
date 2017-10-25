@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2017-10-24 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2017-10-25 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4206,7 +4206,7 @@ var LeaveChatRequest = function(uii, agentId, sessionId) {
  *
  * {"ui_request":{
  *      "@destination":"IQ",
- *      "@type":"ADD-CHAT-SESSION",
+ *      "@type":"LEAVE-CHAT-SESSION",
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},
@@ -4219,7 +4219,7 @@ LeaveChatRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request": {
             "@destination":"IQ",
-            "@type":MESSAGE_TYPES.MONITOR_CHAT,
+            "@type":MESSAGE_TYPES.LEAVE_CHAT,
             "@message_id":utils.getMessageId(),
             "@response_to":"",
             "uii":{
@@ -6480,7 +6480,8 @@ const MESSAGE_TYPES = {
     "CHAT_PRESENTED_RESPONSE":"CHAT-PRESENTED-RESPONSE",    // external chat
     "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
-    "MONITOR_CHAT":"ADD-CHAT-SESSION",                      // external chat
+    "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
+    "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
