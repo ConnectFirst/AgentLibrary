@@ -3793,7 +3793,7 @@ var ChatListRequest = function(uii, agentId, monitorAgentId) {
  *
  * {"ui_request":{
  *      "@destination":"IQ",
- *      "@type":"ADD-CHAT-SESSION",
+ *      "@type":"CHAT-LIST",
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},
@@ -4328,7 +4328,6 @@ MonitorChatRequest.prototype.formatJSON = function() {
 
     return JSON.stringify(msg);
 };
-
 
 
 var SupervisorListRequest = function() {
@@ -5847,6 +5846,18 @@ var utils = {
                 var chatCancelled = new ChatCancelledNotification();
                 var chatCancelledResponse = chatCancelled.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
+                break;
+            case MESSAGE_TYPES.MONITOR_CHAT:
+                //TODO: do this
+
+                break;
+            case MESSAGE_TYPES.LEAVE_CHAT:
+                //TODO: do this
+
+                break;
+            case MESSAGE_TYPES.CHAT_LIST:
+                //TODO: do this
+
                 break;
         }
     },

@@ -12,7 +12,7 @@ var ChatListRequest = function(uii, agentId, monitorAgentId) {
  *
  * {"ui_request":{
  *      "@destination":"IQ",
- *      "@type":"ADD-CHAT-SESSION",
+ *      "@type":"CHAT-LIST",
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},

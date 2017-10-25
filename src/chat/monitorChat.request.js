@@ -42,4 +42,3 @@ MonitorChatRequest.prototype.formatJSON = function() {
 
     return JSON.stringify(msg);
 };
-
