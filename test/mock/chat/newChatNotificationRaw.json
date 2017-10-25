@@ -12,6 +12,7 @@
         "queue_dts":{"#text":"2017-04-26 11:25:00"},
         "chat_queue_id":{"#text":"2"},
         "chat_queue_name":{"#text":"Test Chat Queue"},
+        "chat_requeue_type" : {"#text" : "SHORTCUT"},
         "channel_type":{"#text":"SMS"},
         "ani":{"#text":"5551234567"},
         "dnis":{"#text":"5557654321"},
