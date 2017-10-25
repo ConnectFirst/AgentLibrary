@@ -74,6 +74,7 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         from: utils.getText(resp, 'from'),
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
+        whisper: utils.getText(resp, 'whisper'),
         dts: dtsDate
     };
 

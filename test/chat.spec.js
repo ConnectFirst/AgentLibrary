@@ -248,6 +248,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             from: "",
             type: "AGENT",
             message: "Hello. How can I help you?",
+            whisper: true,
             dts: new Date("2017-05-10T12:40:28")
         };
 

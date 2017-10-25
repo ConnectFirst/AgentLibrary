@@ -3896,6 +3896,7 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         from: utils.getText(resp, 'from'),
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
+        whisper: utils.getText(resp, 'whisper'),
         dts: dtsDate
     };
 
@@ -4247,7 +4248,7 @@ var LeaveChatRequest = function(uii, agentId, sessionId) {
  *
  * {"ui_request":{
  *      "@destination":"IQ",
- *      "@type":"LEAVE-CHAT-SESSION",
+ *      "@type":"CHAT-DROP-SESSION",
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},
