@@ -3781,22 +3781,20 @@ ChatDispositionRequest.prototype.formatJSON = function() {
 
 
 
-var ChatListRequest = function(uii, agentId, monitorAgentId) {
-    this.uii = uii;
+var ChatListRequest = function(agentId, monitorAgentId) {
     this.agentId = agentId;
     this.monitorAgentId = monitorAgentId;
 };
 
 /*
  * External Chat:
- * Requests a new session on an existing chat uii
+ * Requests a list of all chats by monitor agent id
  *
  * {"ui_request":{
  *      "@destination":"IQ",
  *      "@type":"CHAT-LIST",
  *      "@message_id":"",
  *      "@response_to":"",
- *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
  *      "monitor_agent_id":{"#text":""}
  *    }
@@ -3809,9 +3807,6 @@ ChatListRequest.prototype.formatJSON = function() {
             "@type":MESSAGE_TYPES.CHAT_LIST,
             "@message_id":utils.getMessageId(),
             "@response_to":"",
-            "uii":{
-                "#text":utils.toString(this.uii)
-            },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
             },
@@ -8268,8 +8263,8 @@ function initAgentLibraryChat (context) {
      * @param {string} agentId Current logged in agent id
      * @param {string} monitorAgentId Agent id handling chats
      */
-    AgentLibrary.prototype.chatList = function(uii, agentId, monitorAgentId){
-        UIModel.getInstance().chatList = new ChatList(uii, agentId, monitorAgentId);
+    AgentLibrary.prototype.chatList = function(agentId, monitorAgentId){
+        UIModel.getInstance().chatList = new ChatListRequest(agentId, monitorAgentId);
         var msg = UIModel.getInstance().chatList.formatJSON();
         utils.sendMessage(this, msg);
     };

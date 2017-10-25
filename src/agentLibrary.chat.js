@@ -190,8 +190,8 @@ function initAgentLibraryChat (context) {
      * @param {string} agentId Current logged in agent id
      * @param {string} monitorAgentId Agent id handling chats
      */
-    AgentLibrary.prototype.chatList = function(uii, agentId, monitorAgentId){
-        UIModel.getInstance().chatList = new ChatList(uii, agentId, monitorAgentId);
+    AgentLibrary.prototype.chatList = function(agentId, monitorAgentId){
+        UIModel.getInstance().chatList = new ChatListRequest(agentId, monitorAgentId);
         var msg = UIModel.getInstance().chatList.formatJSON();
         utils.sendMessage(this, msg);
     };
