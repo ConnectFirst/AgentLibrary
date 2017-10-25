@@ -182,4 +182,17 @@ function initAgentLibraryChat (context) {
         var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
+
+    /**
+     * Request a list of active chats by agent id
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId Current logged in agent id
+     * @param {string} monitorAgentId Agent id handling chats
+     */
+    AgentLibrary.prototype.chatList = function(uii, agentId, monitorAgentId){
+        UIModel.getInstance().chatList = new ChatList(uii, agentId, monitorAgentId);
+        var msg = UIModel.getInstance().chatList.formatJSON();
+        utils.sendMessage(this, msg);
+    };
 }

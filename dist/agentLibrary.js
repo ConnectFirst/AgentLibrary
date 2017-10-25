@@ -3780,6 +3780,52 @@ ChatDispositionRequest.prototype.formatJSON = function() {
 
 
 
+
+var ChatListRequest = function(uii, agentId, monitorAgentId) {
+    this.uii = uii;
+    this.agentId = agentId;
+    this.monitorAgentId = monitorAgentId;
+};
+
+/*
+ * External Chat:
+ * Requests a new session on an existing chat uii
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"ADD-CHAT-SESSION",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "monitor_agent_id":{"#text":""}
+ *    }
+ * }
+ */
+ChatListRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_LIST,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "monitor_agent_id":{
+                "#text":utils.toString(this.monitorAgentId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
 var ChatMessageRequest = function(uii, agentId, message, whisper) {
     this.uii = uii;
     this.agentId = agentId;
@@ -6482,6 +6528,7 @@ const MESSAGE_TYPES = {
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
+    "CHAT_LIST":"CHAT-LIST",                                // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -8200,6 +8247,19 @@ function initAgentLibraryChat (context) {
     AgentLibrary.prototype.leaveChat = function(uii, agentId, sessionId){
         UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, sessionId);
         var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request a list of active chats by agent id
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId Current logged in agent id
+     * @param {string} monitorAgentId Agent id handling chats
+     */
+    AgentLibrary.prototype.chatList = function(uii, agentId, monitorAgentId){
+        UIModel.getInstance().chatList = new ChatList(uii, agentId, monitorAgentId);
+        var msg = UIModel.getInstance().chatList.formatJSON();
         utils.sendMessage(this, msg);
     };
 }
