@@ -4294,7 +4294,7 @@ var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
  *
  * {"ui_request":{
  *      "@destination":"IQ",
- *      "@type":"ADD-CHAT-SESSION",
+ *      "@type":"CHAT-MONITOR",
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},
