@@ -21,10 +21,10 @@
         "survey_pop_type":{"#text":"SUPPRESS"},
         "script_version":{"#text":"1"},
         "json_baggage":{"#text":'{"name":"danielle","email":"dani.libros@gmail.com"}'},
-        "requeue_shortcuts":{
-            "requeue_shortcuts":{
-                "@chat_queue_id":"2", "@name":"test queue", "@skill_id":""
-            }
+        "chat_requeue_shortcuts":{
+            "shortcut":[
+                {"@chat_queue_id":"2", "@name":"test queue", "@skill_id":""}
+            ]
         },
         "chat_dispositions":{
             "dispositions":[
