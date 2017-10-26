@@ -1,13 +1,15 @@
 
-var ChatMessageRequest = function(uii, agentId, message) {
+var ChatMessageRequest = function(uii, agentId, message, whisper) {
     this.uii = uii;
     this.agentId = agentId;
     this.message = message;
+    this.whisper = whisper;
 };
 
 /*
  * External Chat:
  * When agent submits a chat message, send "CHAT-MESSAGE" request to IntelliQueue
+ *
  * {"ui_request":{
  *      "@destination":"IQ",
  *      "@type":"CHAT-MESSAGE",
@@ -15,7 +17,8 @@ var ChatMessageRequest = function(uii, agentId, message) {
  *      "@response_to":"",
  *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
- *      "message":{"#text":"hello"}
+ *      "message":{"#text":"hello"},
+ *      "whisper":{"#text":"true|false"}
  *    }
  * }
  */
@@ -34,6 +37,9 @@ ChatMessageRequest.prototype.formatJSON = function() {
             },
             "message":{
                 "#text":utils.toString(this.message)
+            },
+            "whisper":{
+                "#text":utils.toString(this.whisper)
             }
         }
     };
@@ -68,6 +74,7 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         from: utils.getText(resp, 'from'),
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
+        whisper: utils.getText(resp, 'whisper'),
         dts: dtsDate
     };
 

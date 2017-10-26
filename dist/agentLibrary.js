@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*! cf-agent-library - v2.0.0 - 2017-10-26 - Connect First */
+=======
+/*! cf-agent-library - v2.0.0 - 2017-10-25 - Connect First */
+>>>>>>> sprint63
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3780,15 +3784,58 @@ ChatDispositionRequest.prototype.formatJSON = function() {
 
 
 
-var ChatMessageRequest = function(uii, agentId, message) {
+
+var ChatListRequest = function(agentId, monitorAgentId) {
+    this.agentId = agentId;
+    this.monitorAgentId = monitorAgentId;
+};
+
+/*
+ * External Chat:
+ * Requests a list of all chats by monitor agent id
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-LIST",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "agent_id":{"#text":""},
+ *      "monitor_agent_id":{"#text":""}
+ *    }
+ * }
+ */
+ChatListRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_LIST,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "monitor_agent_id":{
+                "#text":utils.toString(this.monitorAgentId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
+var ChatMessageRequest = function(uii, agentId, message, whisper) {
     this.uii = uii;
     this.agentId = agentId;
     this.message = message;
+    this.whisper = whisper;
 };
 
 /*
  * External Chat:
  * When agent submits a chat message, send "CHAT-MESSAGE" request to IntelliQueue
+ *
  * {"ui_request":{
  *      "@destination":"IQ",
  *      "@type":"CHAT-MESSAGE",
@@ -3796,7 +3843,8 @@ var ChatMessageRequest = function(uii, agentId, message) {
  *      "@response_to":"",
  *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
- *      "message":{"#text":"hello"}
+ *      "message":{"#text":"hello"},
+ *      "whisper":{"#text":"true|false"}
  *    }
  * }
  */
@@ -3815,6 +3863,9 @@ ChatMessageRequest.prototype.formatJSON = function() {
             },
             "message":{
                 "#text":utils.toString(this.message)
+            },
+            "whisper":{
+                "#text":utils.toString(this.whisper)
             }
         }
     };
@@ -3849,6 +3900,7 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         from: utils.getText(resp, 'from'),
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
+        whisper: utils.getText(resp, 'whisper'),
         dts: dtsDate
     };
 
@@ -4185,6 +4237,97 @@ ChatTypingRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+
+
+
+var LeaveChatRequest = function(uii, agentId, sessionId) {
+    this.uii = uii;
+    this.agentId = agentId;
+    this.sessionId = sessionId;
+};
+
+/*
+ * External Chat:
+ * Requests to terminate a chat session on an existing chat uii
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-DROP-SESSION",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "session_id":{"#text":""}
+ *    }
+ * }
+ */
+LeaveChatRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.LEAVE_CHAT,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "session_id":{
+                "#text":utils.toString(this.sessionId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
+
+var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
+    this.uii = uii;
+    this.agentId = agentId;
+    this.monitorAgentId = monitorAgentId;
+};
+
+/*
+ * External Chat:
+ * Requests a new session on an existing chat uii
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-MONITOR",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "uii":{"#text":""},
+ *      "agent_id":{"#text":""},
+ *      "monitor_agent_id":{"#text":""}
+ *    }
+ * }
+ */
+MonitorChatRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.MONITOR_CHAT,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "monitor_agent_id":{
+                "#text":utils.toString(this.monitorAgentId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
 
 
 var SupervisorListRequest = function() {
@@ -5704,6 +5847,18 @@ var utils = {
                 var chatCancelledResponse = chatCancelled.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
                 break;
+            case MESSAGE_TYPES.MONITOR_CHAT:
+                //TODO: do this
+
+                break;
+            case MESSAGE_TYPES.LEAVE_CHAT:
+                //TODO: do this
+
+                break;
+            case MESSAGE_TYPES.CHAT_LIST:
+                //TODO: do this
+
+                break;
         }
     },
 
@@ -6382,6 +6537,9 @@ const MESSAGE_TYPES = {
     "CHAT_PRESENTED_RESPONSE":"CHAT-PRESENTED-RESPONSE",    // external chat
     "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
+    "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
+    "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
+    "CHAT_LIST":"CHAT-LIST",                                // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -8017,7 +8175,20 @@ function initAgentLibraryChat (context) {
      * @param {string} message The message sent by the agent
      */
     AgentLibrary.prototype.chatMessage = function(uii, agentId, message){
-        UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message);
+        UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message, false);
+        var msg = UIModel.getInstance().chatMessageRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Send an whisper type chat message
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId The agent associated with the chat
+     * @param {string} message The message sent by the agent
+     */
+    AgentLibrary.prototype.chatWhisper = function(uii, agentId, message){
+        UIModel.getInstance().chatMessageRequest = new ChatMessageRequest(uii, agentId, message, true);
         var msg = UIModel.getInstance().chatMessageRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -8061,6 +8232,45 @@ function initAgentLibraryChat (context) {
     AgentLibrary.prototype.chatTyping = function(uii){
         UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii);
         var msg = UIModel.getInstance().chatTypingRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to add a session on an existing chat
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId Current logged in agent id
+     * @param {string} monitorAgentId Agent id handling this chat
+     */
+    AgentLibrary.prototype.monitorChat = function(uii, agentId, monitorAgentId){
+        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, monitorAgentId);
+        var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to terminate an active chat session
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId Current logged in agent id
+     * @param {string} sessionId Chat session id
+     */
+    AgentLibrary.prototype.leaveChat = function(uii, agentId, sessionId){
+        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, sessionId);
+        var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request a list of active chats by agent id
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId Current logged in agent id
+     * @param {string} monitorAgentId Agent id handling chats
+     */
+    AgentLibrary.prototype.chatList = function(agentId, monitorAgentId){
+        UIModel.getInstance().chatList = new ChatListRequest(agentId, monitorAgentId);
+        var msg = UIModel.getInstance().chatList.formatJSON();
         utils.sendMessage(this, msg);
     };
 }
