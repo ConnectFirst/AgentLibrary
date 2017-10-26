@@ -282,6 +282,9 @@ describe( 'Tests for Agent Library chat methods', function() {
             scriptId:"1",
             scriptVersion: "1",
             preChatData: {name:'danielle', email:'dani.libros@gmail.com'},
+            requeueShortcuts : { shortcuts : [
+                { chatQueueId : '2', name : 'test queue', skillId : '' }
+            ]},
             chatDispositions: [
                 {dispositionId:"2", isSuccess:true, isComplete:true, emailTemplateId: "1", disposition:"Complete"},
                 {dispositionId:"3", isSuccess:true, isComplete:false, disposition:"Requeue"}
