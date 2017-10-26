@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2017-10-25 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2017-10-26 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -8252,8 +8252,8 @@ function initAgentLibraryChat (context) {
      * @param {string} sessionId Chat session id
      */
     AgentLibrary.prototype.leaveChat = function(uii, agentId, sessionId){
-        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, sessionId);
-        var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        UIModel.getInstance().leaveChatRequest = new LeaveChatRequest(uii, agentId, sessionId);
+        var msg = UIModel.getInstance().leaveChatRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 

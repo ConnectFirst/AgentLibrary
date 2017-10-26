@@ -178,8 +178,8 @@ function initAgentLibraryChat (context) {
      * @param {string} sessionId Chat session id
      */
     AgentLibrary.prototype.leaveChat = function(uii, agentId, sessionId){
-        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, sessionId);
-        var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        UIModel.getInstance().leaveChatRequest = new LeaveChatRequest(uii, agentId, sessionId);
+        var msg = UIModel.getInstance().leaveChatRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 
