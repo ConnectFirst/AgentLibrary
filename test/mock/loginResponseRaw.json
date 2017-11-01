@@ -127,6 +127,9 @@
     "allow_manual_pass":{
       "#text":"1"
     },
+    "pci_enabled":{
+      "#text":"1"
+    },
     "login_gates":{
       "gate":[
         {
