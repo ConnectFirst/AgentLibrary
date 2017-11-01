@@ -13,6 +13,8 @@
       "roomName": "Test Chat Room"
     }
   ],
+  "availableChatRequeueQueues" : [],
   "chatQueues" : [],
   "alias" : "Test First Test Last"
+
 }
