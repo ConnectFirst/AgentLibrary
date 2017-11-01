@@ -71,6 +71,7 @@ LoginRequest.prototype.formatJSON = function() {
  *      "max_lunch_time":{"#text":"-1"},
  *      "allow_lead_search":{"#text":"YES_ALL"},
  *      "tcpa_safe_mode":{"#text":"1|0"},
+ *      "pci_enabled":{"#text":"1|0"},
  *      "login_gates":{
  *          "gate":[
  *              {"@default_dest_override":"","@gate_desc":"","@gate_id":"37","@gate_name":"test"},
@@ -163,6 +164,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.loginPacket = response;
             model.applicationSettings.isLoggedInIS = true;
             model.applicationSettings.isTcpaSafeMode = utils.getText(resp, 'tcpa_safe_mode') === "1";
+            model.applicationSettings.pciEnabled = utils.getText(resp, 'pci_enabled') === "1";
             model.chatSettings.alias = utils.getText(resp, 'first_name') + " " + utils.getText(resp, 'last_name');
 
             model.agentSettings.loginDTS = new Date();
