@@ -339,6 +339,18 @@ var utils = {
                 var chatCancelledResponse = chatCancelled.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
                 break;
+            case MESSAGE_TYPES.MONITOR_CHAT:
+                //TODO: do this
+
+                break;
+            case MESSAGE_TYPES.LEAVE_CHAT:
+                //TODO: do this
+
+                break;
+            case MESSAGE_TYPES.CHAT_LIST:
+                //TODO: do this
+
+                break;
         }
     },
 

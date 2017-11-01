@@ -9,6 +9,7 @@
         "from":{"#text":""},
         "type":{"#text":"AGENT"},
         "message":{"#text":"Hello. How can I help you?"},
+        "whisper":{"#text":"TRUE"},
         "dts":{"#text":"2017-05-10 12:40:28"}
     }
 }

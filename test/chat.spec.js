@@ -248,6 +248,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             from: "",
             type: "AGENT",
             message: "Hello. How can I help you?",
+            whisper: true,
             dts: new Date("2017-05-10T12:40:28")
         };
 
@@ -272,6 +273,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             queueTime: "-1",
             chatQueueId: "2",
             chatQueueName: "Test Chat Queue",
+            chatRequeueType : "SHORTCUT",
             appUrl: "www.test.url",
             channelType: "SMS",
             ani: "5551234567",
@@ -280,6 +282,9 @@ describe( 'Tests for Agent Library chat methods', function() {
             scriptId:"1",
             scriptVersion: "1",
             preChatData: {name:'danielle', email:'dani.libros@gmail.com'},
+            requeueShortcuts : { shortcuts : [
+                { chatQueueId : '2', name : 'test queue', skillId : '' }
+            ]},
             chatDispositions: [
                 {dispositionId:"2", isSuccess:true, isComplete:true, emailTemplateId: "1", disposition:"Complete"},
                 {dispositionId:"3", isSuccess:true, isComplete:false, disposition:"Requeue"}
@@ -305,9 +310,6 @@ describe( 'Tests for Agent Library chat methods', function() {
                 agentUserName : ''
             }
         };
-        /*requeueShortcuts: [
-            { chatQueueId: "2", name:"test queue", skillId:"" }
-        ],*/
 
         expect(response).toEqual(expectedResponse);
     });
