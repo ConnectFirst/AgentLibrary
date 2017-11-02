@@ -1,10 +1,11 @@
 
-var ChatDispositionRequest = function(uii, agentId, dispositionId, notes, sendAcknowlegement, survey) {
+var ChatDispositionRequest = function(uii, agentId, dispositionId, notes, sendAcknowlegement, survey, sessionId) {
     this.uii = uii;
     this.agentId = agentId;
     this.dispositionId = dispositionId;
     this.notes = notes || "";
     this.sendAcknowlegement = sendAcknowlegement || false;
+    this.sessionId = sessionId;
 
     /*
      * survey = {
@@ -32,6 +33,7 @@ var ChatDispositionRequest = function(uii, agentId, dispositionId, notes, sendAc
  *      "@response_to":"",
  *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
+ *      "session_id" : {"#text" : ""},
  *      "disposition_id":{"#text":""},
  *      "notes":{"#text":"hello"},
  *      "do_ack":{"#text":"true"},
@@ -57,6 +59,9 @@ ChatDispositionRequest.prototype.formatJSON = function() {
             },
             "agent_id":{
                 "#text":utils.toString(this.agentId)
+            },
+            "session_id" : {
+              "#text" : utils.toString(this.sessionId)
             },
             "disposition_id":{
                 "#text":utils.toString(this.dispositionId)

@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2017-10-26 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2017-11-02 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3682,12 +3682,13 @@ ChatAliasRequest.prototype.formatJSON = function() {
 };
 
 
-var ChatDispositionRequest = function(uii, agentId, dispositionId, notes, sendAcknowlegement, survey) {
+var ChatDispositionRequest = function(uii, agentId, dispositionId, notes, sendAcknowlegement, survey, sessionId) {
     this.uii = uii;
     this.agentId = agentId;
     this.dispositionId = dispositionId;
     this.notes = notes || "";
     this.sendAcknowlegement = sendAcknowlegement || false;
+    this.sessionId = sessionId;
 
     /*
      * survey = {
@@ -3715,6 +3716,7 @@ var ChatDispositionRequest = function(uii, agentId, dispositionId, notes, sendAc
  *      "@response_to":"",
  *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
+ *      "session_id" : {"#text" : ""},
  *      "disposition_id":{"#text":""},
  *      "notes":{"#text":"hello"},
  *      "do_ack":{"#text":"true"},
@@ -3740,6 +3742,9 @@ ChatDispositionRequest.prototype.formatJSON = function() {
             },
             "agent_id":{
                 "#text":utils.toString(this.agentId)
+            },
+            "session_id" : {
+              "#text" : utils.toString(this.sessionId)
             },
             "disposition_id":{
                 "#text":utils.toString(this.dispositionId)
@@ -8199,8 +8204,8 @@ function initAgentLibraryChat (context) {
      * @param {boolean} sendAcknowlegement Whether or not to fire callback
      * @param {object} [script=null] Script data associated with the chat session
      */
-    AgentLibrary.prototype.chatDisposition = function(uii, agentId, dispositionId, notes, sendAcknowlegement, script){
-        UIModel.getInstance().chatDispositionRequest = new ChatDispositionRequest(uii, agentId, dispositionId, notes, sendAcknowlegement, script);
+    AgentLibrary.prototype.chatDisposition = function(uii, agentId, dispositionId, notes, sendAcknowlegement, script, sessionId){
+        UIModel.getInstance().chatDispositionRequest = new ChatDispositionRequest(uii, agentId, dispositionId, notes, sendAcknowlegement, script, sessionId);
         var msg = UIModel.getInstance().chatDispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
