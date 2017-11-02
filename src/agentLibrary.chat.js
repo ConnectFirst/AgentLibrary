@@ -125,8 +125,8 @@ function initAgentLibraryChat (context) {
      * @param {boolean} sendAcknowlegement Whether or not to fire callback
      * @param {object} [script=null] Script data associated with the chat session
      */
-    AgentLibrary.prototype.chatDisposition = function(uii, agentId, dispositionId, notes, sendAcknowlegement, script){
-        UIModel.getInstance().chatDispositionRequest = new ChatDispositionRequest(uii, agentId, dispositionId, notes, sendAcknowlegement, script);
+    AgentLibrary.prototype.chatDisposition = function(uii, agentId, dispositionId, notes, sendAcknowlegement, script, sessionId){
+        UIModel.getInstance().chatDispositionRequest = new ChatDispositionRequest(uii, agentId, dispositionId, notes, sendAcknowlegement, script, sessionId);
         var msg = UIModel.getInstance().chatDispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
