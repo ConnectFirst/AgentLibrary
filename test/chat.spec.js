@@ -99,8 +99,9 @@ describe( 'Tests for Agent Library chat methods', function() {
         var notes = "an agent note";
         var sendAck = false;
         var script = null;
+        var sessionId = 3;
 
-        Lib.chatDisposition(uii, agentId, dispositionId, notes, sendAck, script);
+        Lib.chatDisposition(uii, agentId, dispositionId, notes, sendAck, script, sessionId);
         var msg = Lib.getChatDispositionRequest().formatJSON();
         var msgObj = JSON.parse(msg);
 
@@ -109,6 +110,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
         expect(msgObj.ui_request.notes["#text"]).toEqual(notes);
+        expect(msgObj.ui_request.session_id["#text"]).toEqual('3');
     });
 
     it( 'should build chatMessage message and send message over socket', function() {
