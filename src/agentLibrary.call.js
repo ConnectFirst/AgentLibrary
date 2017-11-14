@@ -47,8 +47,8 @@ function initAgentLibraryCall (context) {
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when cold transfer response received
      */
-    AgentLibrary.prototype.coldXfer = function(dialDest, callerId, callback){
-        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId);
+    AgentLibrary.prototype.coldXfer = function(dialDest, callerId, sipHeaders, callback){
+        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId, sipHeaders);
         var msg = UIModel.getInstance().coldXferRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
@@ -324,8 +324,9 @@ function initAgentLibraryCall (context) {
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when warm transfer response received
      */
-    AgentLibrary.prototype.warmXfer = function(dialDest, callerId, callback){
-        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId);
+    AgentLibrary.prototype.warmXfer = function(dialDest, callerId, sipHeaders, callback){
+
+        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId, sipHeaders);
         var msg = UIModel.getInstance().warmXferRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.XFER_WARM, callback);

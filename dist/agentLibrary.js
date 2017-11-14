@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2017-11-06 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2017-11-14 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1299,12 +1299,20 @@ CampaignDispositionsRequest.prototype.processResponse = function(response) {
 };
 
 
-var XferColdRequest = function(dialDest, callerId) {
+var XferColdRequest = function(dialDest, callerId, sipHeaders) {
     this.dialDest = dialDest;
     this.callerId = callerId || "";
+    this.sipHeaders = sipHeaders || null;
+
 };
 
 XferColdRequest.prototype.formatJSON = function() {
+    var fields = [];
+    for(var i =0; i < this.sipHeaders.length; i++){
+        var fieldObj = this.sipHeaders[i];
+        fields.push({ '@name' : utils.toString(fieldObj.name), '@value' : utils.toString(fieldObj.value)});
+    }
+
     var msg = {
         "ui_request": {
             "@destination":"IQ",
@@ -1322,7 +1330,8 @@ XferColdRequest.prototype.formatJSON = function() {
             },
             "caller_id":{
                 "#text":utils.toString(this.callerId)
-            }
+            },
+            "xfer_header": fields
         }
     };
 
@@ -3543,12 +3552,19 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
 };
 
 
-var XferWarmRequest = function(dialDest, callerId) {
+var XferWarmRequest = function(dialDest, callerId, sipHeaders) {
     this.dialDest = dialDest;
     this.callerId = callerId || "";
+    this.sipHeaders = sipHeaders || null;
 };
 
 XferWarmRequest.prototype.formatJSON = function() {
+    var fields = [];
+    for(var i =0; i < this.sipHeaders.length; i++){
+        var fieldObj = this.sipHeaders[i];
+        fields.push({ '@name' : utils.toString(fieldObj.name), '@value' : utils.toString(fieldObj.value)});
+    }
+
     var msg = {
         "ui_request": {
             "@destination":"IQ",
@@ -3566,7 +3582,8 @@ XferWarmRequest.prototype.formatJSON = function() {
             },
             "caller_id":{
                 "#text":utils.toString(this.callerId)
-            }
+            },
+            "xfer_header": fields
         }
     };
 
@@ -7685,8 +7702,8 @@ function initAgentLibraryCall (context) {
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when cold transfer response received
      */
-    AgentLibrary.prototype.coldXfer = function(dialDest, callerId, callback){
-        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId);
+    AgentLibrary.prototype.coldXfer = function(dialDest, callerId, sipHeaders, callback){
+        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId, sipHeaders);
         var msg = UIModel.getInstance().coldXferRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
@@ -7962,8 +7979,9 @@ function initAgentLibraryCall (context) {
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when warm transfer response received
      */
-    AgentLibrary.prototype.warmXfer = function(dialDest, callerId, callback){
-        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId);
+    AgentLibrary.prototype.warmXfer = function(dialDest, callerId, sipHeaders, callback){
+
+        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId, sipHeaders);
         var msg = UIModel.getInstance().warmXferRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.XFER_WARM, callback);

@@ -1,10 +1,18 @@
 
-var XferWarmRequest = function(dialDest, callerId) {
+var XferWarmRequest = function(dialDest, callerId, sipHeaders) {
     this.dialDest = dialDest;
     this.callerId = callerId || "";
+    this.sipHeaders = sipHeaders || [];
 };
 
 XferWarmRequest.prototype.formatJSON = function() {
+    var fields = [];
+    console.log(this.sipHeaders);
+    for(var i =0; i < this.sipHeaders.length; i++){
+        var fieldObj = this.sipHeaders[i];
+        fields.push({ '@name' : utils.toString(fieldObj.name), '@value' : utils.toString(fieldObj.value)});
+    }
+
     var msg = {
         "ui_request": {
             "@destination":"IQ",
@@ -22,7 +30,8 @@ XferWarmRequest.prototype.formatJSON = function() {
             },
             "caller_id":{
                 "#text":utils.toString(this.callerId)
-            }
+            },
+            "xfer_header": fields
         }
     };
 
