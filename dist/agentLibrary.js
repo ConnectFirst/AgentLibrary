@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2017-11-14 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2017-11-16 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1302,7 +1302,7 @@ CampaignDispositionsRequest.prototype.processResponse = function(response) {
 var XferColdRequest = function(dialDest, callerId, sipHeaders) {
     this.dialDest = dialDest;
     this.callerId = callerId || "";
-    this.sipHeaders = sipHeaders || null;
+    this.sipHeaders = sipHeaders || [];
 
 };
 
@@ -3555,7 +3555,7 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
 var XferWarmRequest = function(dialDest, callerId, sipHeaders) {
     this.dialDest = dialDest;
     this.callerId = callerId || "";
-    this.sipHeaders = sipHeaders || null;
+    this.sipHeaders = sipHeaders || [];
 };
 
 XferWarmRequest.prototype.formatJSON = function() {
