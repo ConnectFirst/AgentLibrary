@@ -209,6 +209,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         var Lib = new AgentLibrary();
         var dest = "5555555555";
         var callerId = "5555555551";
+        var xferHeaders = [{name:"Test", value:"Test"}];
 
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
@@ -218,7 +219,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
-        Lib.coldXfer(dest, callerId);
+        Lib.coldXfer(dest, callerId, xferHeaders);
         var msg = Lib.getColdTransferRequest().formatJSON();
         var requestMsg = JSON.parse(msg);
         delete requestMsg.ui_request['@message_id']; // won't match
@@ -671,6 +672,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         var Lib = new AgentLibrary();
         var dest = "5555555555";
         var callerId = "5555555551";
+        var xferHeaders = [{name:"Test", value:"Test"}];
 
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
@@ -681,7 +683,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
-        Lib.warmXfer(dest, callerId);
+        Lib.warmXfer(dest, callerId, xferHeaders);
         var msg = Lib.getWarmTransferRequest().formatJSON();
         var requestMsg = JSON.parse(msg);
         delete requestMsg.ui_request['@message_id']; // won't match
