@@ -101,6 +101,7 @@ const MESSAGE_TYPES = {
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
+    "CHAT_AGENT_END" : "CHAT-AGENT-END",                    // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",

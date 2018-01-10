@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2017-12-05 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-01-09 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3667,6 +3667,49 @@ XferWarmCancelRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+var ChatAgentEndRequest = function(agentId, uii){
+    this.uii = uii;
+    this.agentId = agentId;
+};
+
+/*
+
+External Chat :
+when agent submits a chat end request, send "CHAT-AGENT-END" request to IntelliQueue
+
+{
+    "ui_request" : {
+        "@destination" : "IQ",
+        "@type" : MESSAGE_TYPES.CHAT_AGENT_END,
+        "uii":{
+            "#text":utils.toString(this.uii)
+        },
+        "agent_id":{
+            "#text":utils.toString(this.agentId)
+        }
+    }
+}
+
+*/
+
+
+ChatAgentEndRequest.prototype.formatJSON = function(){
+    var msg = {
+        "ui_request" : {
+            "@destination" : "IQ",
+            "@type" : MESSAGE_TYPES.CHAT_AGENT_END,
+            "uii":{
+                "#text":utils.toString(this.uii)
+            },
+            "agent_id":{
+                "#text":utils.toString(this.agentId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+
+};
 
 var ChatAliasRequest = function(alias) {
     this.alias = alias;
@@ -6560,6 +6603,7 @@ const MESSAGE_TYPES = {
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
+    "CHAT_AGENT_END" : "CHAT-AGENT-END",                    // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -8292,6 +8336,12 @@ function initAgentLibraryChat (context) {
     AgentLibrary.prototype.chatList = function(agentId, monitorAgentId){
         UIModel.getInstance().chatList = new ChatListRequest(agentId, monitorAgentId);
         var msg = UIModel.getInstance().chatList.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    AgentLibrary.prototype.chatAgentEnd = function(agentId, uii){
+        UIModel.getInstance().chatAgentEnd = new ChatAgentEndRequest(agentId, uii);
+        var msg = UIModel.getInstance().chatAgentEnd.formatJSON();
         utils.sendMessage(this, msg);
     };
 }
