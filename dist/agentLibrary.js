@@ -2793,7 +2793,7 @@ OffhookInitRequest.prototype.processResponse = function(response) {
     var formattedResponse = utils.buildDefaultResponse(response);
 
     if(status === 'OK') {
-        var isMonitoring = utils.getText(response.ui_response, "monitoring") === 'TRUE';
+        var isMonitoring = utils.getText(response.ui_response, "monitoring");
         UIModel.getInstance().offhookInitPacket = response;
         UIModel.getInstance().agentSettings.isOffhook = true;
         UIModel.getInstance().agentSettings.isMonitoring = isMonitoring;
