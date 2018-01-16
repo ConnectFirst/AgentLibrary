@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-01-10 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-01-16 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2782,6 +2782,7 @@ OffhookInitRequest.prototype.formatJSON = function() {
  *      "@response_to":"",
  *      "@type":"OFF-HOOK-INIT",
  *      "status":{"#text":"OK|FAILURE"},
+ *      "monitoring":{"#text:"TRUE|FALSE"},
  *      "message":{},
  *      "detail":{}
  *    }
@@ -2791,11 +2792,14 @@ OffhookInitRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
     var formattedResponse = utils.buildDefaultResponse(response);
 
-    if(status === 'OK'){
+    if(status === 'OK') {
+        var isMonitoring = utils.getText(response.ui_response, "monitoring") === 'TRUE';
         UIModel.getInstance().offhookInitPacket = response;
         UIModel.getInstance().agentSettings.isOffhook = true;
-    }else{
-        if(formattedResponse.message === ""){
+        UIModel.getInstance().agentSettings.isMonitoring = isMonitoring;
+        formattedResponse.monitoring = isMonitoring;
+    } else {
+        if(formattedResponse.message === "") {
             formattedResponse.message = "Unable to process offhook request";
         }
         utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message + ' ' + formattedResponse.detail, response);
@@ -2849,6 +2853,7 @@ OffhookTermRequest.prototype.processResponse = function(data) {
     model.agentSettings.wasMonitoring = monitoring;
     model.offhookTermPacket = data;
     model.agentSettings.isOffhook = false;
+    model.agentSettings.isMonitoring = false;
 
     var formattedResponse = {
         status: "OK",
@@ -5454,6 +5459,7 @@ var UIModel = (function() {
                 guid: "",                           // unique key generated on login, used for accessing spring endpoints
                 isLoggedIn : false,                 // agent is logged in to the platform
                 isOffhook : false,                  // track whether or not the agent has an active offhook session
+                isMonitoring : false,               // track whether or not the offhook session is for monitoring
                 initLoginState : "AVAILABLE",       // state agent is placed in on successful login
                 initLoginStateLabel : "Available",  // state label for agent on successful login
                 isOutboundPrepay : false,           // determines if agent is a prepay agent

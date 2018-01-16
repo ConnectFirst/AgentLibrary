@@ -33,6 +33,7 @@ OffhookInitRequest.prototype.formatJSON = function() {
  *      "@response_to":"",
  *      "@type":"OFF-HOOK-INIT",
  *      "status":{"#text":"OK|FAILURE"},
+ *      "monitoring":{"#text:"TRUE|FALSE"},
  *      "message":{},
  *      "detail":{}
  *    }
@@ -42,11 +43,14 @@ OffhookInitRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
     var formattedResponse = utils.buildDefaultResponse(response);
 
-    if(status === 'OK'){
+    if(status === 'OK') {
+        var isMonitoring = utils.getText(response.ui_response, "monitoring") === 'TRUE';
         UIModel.getInstance().offhookInitPacket = response;
         UIModel.getInstance().agentSettings.isOffhook = true;
-    }else{
-        if(formattedResponse.message === ""){
+        UIModel.getInstance().agentSettings.isMonitoring = isMonitoring;
+        formattedResponse.monitoring = isMonitoring;
+    } else {
+        if(formattedResponse.message === "") {
             formattedResponse.message = "Unable to process offhook request";
         }
         utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message + ' ' + formattedResponse.detail, response);
