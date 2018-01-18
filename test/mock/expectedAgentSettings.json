@@ -56,6 +56,7 @@
   "guid":"",
   "isLoggedIn": false,
   "isOffhook": false,
+  "isMonitoring": false,
   "initLoginState": "AVAILABLE",
   "initLoginStateLabel": "Available",
   "isOutboundPrepay": false,
