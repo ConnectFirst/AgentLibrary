@@ -147,6 +147,25 @@ describe( 'Tests for Agent Library chat methods', function() {
         expect(msgObj.ui_request.message["#text"]).toEqual(message);
     });
 
+    it('should build a chatAgentEnd message and send message over socket', function(){
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        var uii = "8675309";
+        var agentId = 4;
+
+        Lib.chatAgentEnd(agentId, uii);
+        var msg = Lib.getChatAgentEnd().formatJSON();
+        var msgObj = JSON.parse(msg);
+
+        Lib.socket._message(msg);
+
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+        expect(msgObj.ui_request.uii["#text"]).toEqual(uii);
+    });
+
     it( 'should build chatRequeue message and send message over socket', function() {
         var Lib = new AgentLibrary();
         Lib.socket = windowMock.WebSocket(address);

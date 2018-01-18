@@ -197,5 +197,19 @@ function initAgentLibraryChat (context) {
         utils.setCallback(this, CALLBACK_TYPES.CHAT_LIST, callback);
         utils.sendMessage(this, msg);
     };
+
+
+    /**
+     * set chat in state of agent-chat-end
+     * @memberof AgentLibrary.Chat
+     * @param {string} uii Unique identifier for the chat session
+     * @param {string} agentId Current logged in agent id
+     */
+
+    AgentLibrary.prototype.chatAgentEnd = function(agentId, uii){
+        UIModel.getInstance().chatAgentEnd = new ChatAgentEndRequest(agentId, uii);
+        var msg = UIModel.getInstance().chatAgentEnd.formatJSON();
+        utils.sendMessage(this, msg);
+    };
 }
 
