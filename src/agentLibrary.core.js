@@ -32,6 +32,7 @@ const CALLBACK_TYPES = {
     "CHAT_TYPING":"chatTypingNotification",         // external chat
     "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
+    "CHAT_LIST":"chatListResponse",                 // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -652,6 +653,11 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getOffhookTermPacket = function() {
         return UIModel.getInstance().offhookTermPacket;
+    };
+
+
+    AgentLibrary.prototype.getChatListRequest = function(){
+        return UIModel.getInstance().chatListRequest;
     };
 
 

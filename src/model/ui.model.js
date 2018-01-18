@@ -74,6 +74,8 @@ var UIModel = (function() {
             tcpaSafeRequest : null,
             warmXferRequest : null,
             warmXferCancelRequest : null,
+            chatListRequest: null,
+
 
             // response packets
             agentStatePacket : null,
@@ -83,6 +85,7 @@ var UIModel = (function() {
             offhookInitPacket : null,
             offhookTermPacket : null,
             transferSessions: {},
+            chatListResponse : null,
 
             // notification packets
             addSessionNotification: new AddSessionNotification(),

@@ -198,8 +198,12 @@ var utils = {
                 ack.uii = request.msg.uii["#text"];
                 utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
+            case MESSAGE_TYPES.CHAT_LIST:
+                var chatList = new ChatListRequest();
+                var chatListResponse = chatList.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_LIST, chatListResponse);
+                break;
         }
-
     },
 
     processNotification: function(instance, data){
@@ -347,10 +351,6 @@ var utils = {
                 //TODO: do this
 
                 break;
-            case MESSAGE_TYPES.CHAT_LIST:
-                //TODO: do this
-
-                break;
         }
     },
 
@@ -444,7 +444,6 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_CHAT_QUEUE, chatStats);
                 break;
         }
-
     },
 
     /*

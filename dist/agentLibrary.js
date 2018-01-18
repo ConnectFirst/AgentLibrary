@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2017-12-05 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-01-18 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3803,8 +3803,6 @@ ChatDispositionRequest.prototype.formatJSON = function() {
 };
 
 
-
-
 var ChatListRequest = function(agentId, monitorAgentId) {
     this.agentId = agentId;
     this.monitorAgentId = monitorAgentId;
@@ -3824,6 +3822,8 @@ var ChatListRequest = function(agentId, monitorAgentId) {
  *    }
  * }
  */
+
+
 ChatListRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request": {
@@ -3832,7 +3832,7 @@ ChatListRequest.prototype.formatJSON = function() {
             "@message_id":utils.getMessageId(),
             "@response_to":"",
             "agent_id":{
-                "#text":UIModel.getInstance().agentSettings.agentId
+                "#text":utils.toString(this.agentId)
             },
             "monitor_agent_id":{
                 "#text":utils.toString(this.monitorAgentId)
@@ -3842,6 +3842,38 @@ ChatListRequest.prototype.formatJSON = function() {
 
     return JSON.stringify(msg);
 };
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-LIST" packets from IntelliQueue.
+ *
+ *  {
+ *      "ui_response":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-LIST",
+ *          "@response_to":"",
+ *          "agent_id":{"#text":"17"},
+ *          "monitor_agent_id":{"#text":"18"},
+ *          "chat_list": {}
+ *      }
+ *  }
+ */
+
+ChatListRequest.prototype.processResponse = function(response) {
+    var notif = response.ui_response;
+    var model = UIModel.getInstance();
+    model.chatListResponse = response;
+
+    return {
+        message: "Received CHAT-LIST notification",
+        status: "OK",
+        messageId: notif['@message_id'],
+        agentId: utils.getText(notif, "agent_id"),
+        monitorAgentId: utils.getText(notif, "monitor_agent_id"),
+        chatList: utils.processResponseCollection( notif, "chat_list", "active_chat")
+    };
+};
+
 
 
 
@@ -5348,6 +5380,8 @@ var UIModel = (function() {
             tcpaSafeRequest : null,
             warmXferRequest : null,
             warmXferCancelRequest : null,
+            chatListRequest: null,
+
 
             // response packets
             agentStatePacket : null,
@@ -5357,6 +5391,7 @@ var UIModel = (function() {
             offhookInitPacket : null,
             offhookTermPacket : null,
             transferSessions: {},
+            chatListResponse : null,
 
             // notification packets
             addSessionNotification: new AddSessionNotification(),
@@ -5726,8 +5761,12 @@ var utils = {
                 ack.uii = request.msg.uii["#text"];
                 utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
+            case MESSAGE_TYPES.CHAT_LIST:
+                var chatList = new ChatListRequest();
+                var chatListResponse = chatList.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_LIST, chatListResponse);
+                break;
         }
-
     },
 
     processNotification: function(instance, data){
@@ -5875,10 +5914,6 @@ var utils = {
                 //TODO: do this
 
                 break;
-            case MESSAGE_TYPES.CHAT_LIST:
-                //TODO: do this
-
-                break;
         }
     },
 
@@ -5972,7 +6007,6 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_CHAT_QUEUE, chatStats);
                 break;
         }
-
     },
 
     /*
@@ -6491,6 +6525,7 @@ const CALLBACK_TYPES = {
     "CHAT_TYPING":"chatTypingNotification",         // external chat
     "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
+    "CHAT_LIST":"chatListResponse",                 // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -7111,6 +7146,11 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getOffhookTermPacket = function() {
         return UIModel.getInstance().offhookTermPacket;
+    };
+
+
+    AgentLibrary.prototype.getChatListRequest = function(){
+        return UIModel.getInstance().chatListRequest;
     };
 
 
@@ -8285,16 +8325,19 @@ function initAgentLibraryChat (context) {
     /**
      * Request a list of active chats by agent id
      * @memberof AgentLibrary.Chat
-     * @param {string} uii Unique identifier for the chat session
      * @param {string} agentId Current logged in agent id
      * @param {string} monitorAgentId Agent id handling chats
+     * @param {function} [callback=null] Callback function when chat-list request received
      */
-    AgentLibrary.prototype.chatList = function(agentId, monitorAgentId){
-        UIModel.getInstance().chatList = new ChatListRequest(agentId, monitorAgentId);
-        var msg = UIModel.getInstance().chatList.formatJSON();
+    AgentLibrary.prototype.chatList = function(agentId, monitorAgentId, callback){
+        UIModel.getInstance().chatListRequest = new ChatListRequest(agentId, monitorAgentId);
+        var msg = UIModel.getInstance().chatListRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CHAT_LIST, callback);
         utils.sendMessage(this, msg);
     };
 }
+
 
 function initAgentLibraryLogger (context) {
 

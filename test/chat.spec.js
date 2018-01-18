@@ -23,6 +23,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         this.chatTypingNotificationRaw = fixture.load('chat/chatTypingNotificationRaw.json');
         this.newChatNotificationRaw = fixture.load('chat/newChatNotificationRaw.json');
         this.chatMessageNotificationRaw = fixture.load('chat/chatMessageNotificationRaw.json');
+        this.chatListResponseRaw = fixture.load('chat/chatListResponseRaw.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -111,6 +112,21 @@ describe( 'Tests for Agent Library chat methods', function() {
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
         expect(msgObj.ui_request.notes["#text"]).toEqual(notes);
         expect(msgObj.ui_request.session_id["#text"]).toEqual('3');
+    });
+
+
+    it('should process a chat list request', function(){
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+        Lib.chatList(17,18);
+
+        var msg = Lib.getChatListRequest().formatJSON();
+        var msgObj = JSON.parse(msg);
+
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(msgObj.ui_request.agent_id["#text"]).toBe('17');
+        expect(msgObj.ui_request.monitor_agent_id["#text"]).toBe('18');
     });
 
     it( 'should build chatMessage message and send message over socket', function() {
@@ -236,6 +252,18 @@ describe( 'Tests for Agent Library chat methods', function() {
         };
 
         expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should process a chatlist response', function(){
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+        Lib.chatList(17,18);
+
+        var msg = Lib.getChatListRequest().processResponse(this.chatListResponseRaw);
+        
+        expect(Number(msg.agentId)).toBe(17);
+        expect(msg.chatList[0].uii).toBe("333");
     });
 
     it( 'should process a chat-message notification message', function() {
