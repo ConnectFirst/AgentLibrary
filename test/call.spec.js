@@ -511,6 +511,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         var Lib = new AgentLibrary();
         var action = "";
         var requestId = "";
+        var leadPhone = "5551234321";
         var searchFields = [
             {"key":"name", "value":"Danielle"},
             {"key":"number", "value":"5555555555"}
@@ -519,7 +520,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        Lib.previewDial(action, searchFields, requestId);
+        Lib.previewDial(action, searchFields, requestId, leadPhone);
         var msg = Lib.getPreviewDialRequest().formatJSON();
 
         Lib.socket._message(msg);

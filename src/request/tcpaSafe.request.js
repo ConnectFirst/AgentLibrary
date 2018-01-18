@@ -1,9 +1,10 @@
 
-var TcpaSafeRequest = function(action, searchFields, requestId) {
+var TcpaSafeRequest = function(action, searchFields, requestId, leadPhone) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
     this.searchFields = searchFields || [];
     this.requestId = requestId || "";
     this.action = action || "";
+    this.leadPhone = leadPhone || "";   // pipe leads only
 };
 
 /*
@@ -31,6 +32,9 @@ TcpaSafeRequest.prototype.formatJSON = function() {
             },
             "pending_request_id":{
                 "#text":utils.toString(this.requestId)
+            },
+            "lead_phone":{
+                "#text":utils.toString(this.leadPhone)
             },
             "search_fields": fields
                 // { "name": {"#text": "Danielle"} }
