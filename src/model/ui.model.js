@@ -74,6 +74,8 @@ var UIModel = (function() {
             tcpaSafeRequest : null,
             warmXferRequest : null,
             warmXferCancelRequest : null,
+            chatListRequest: null,
+
 
             // response packets
             agentStatePacket : null,
@@ -83,6 +85,7 @@ var UIModel = (function() {
             offhookInitPacket : null,
             offhookTermPacket : null,
             transferSessions: {},
+            chatListResponse : null,
 
             // notification packets
             addSessionNotification: new AddSessionNotification(),
@@ -137,6 +140,7 @@ var UIModel = (function() {
                 guid: "",                           // unique key generated on login, used for accessing spring endpoints
                 isLoggedIn : false,                 // agent is logged in to the platform
                 isOffhook : false,                  // track whether or not the agent has an active offhook session
+                isMonitoring : false,               // track whether or not the offhook session is for monitoring
                 initLoginState : "AVAILABLE",       // state agent is placed in on successful login
                 initLoginStateLabel : "Available",  // state label for agent on successful login
                 isOutboundPrepay : false,           // determines if agent is a prepay agent
