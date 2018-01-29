@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-01-19 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-01-29 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -437,6 +437,7 @@ var NewCallNotification = function() {
  *      "survey_pop_type":{"#text":"SUPPRESS"},
  *      "message":{},
  *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
+ *      "hangup_on_disposition":{"#text":"FALSE"},
  *      "gate":{
  *          "@number":"17038",
  *          "name":{"#text":"AM Campaign"},
@@ -535,7 +536,8 @@ NewCallNotification.prototype.processResponse = function(notification) {
         scriptVersion: utils.getText(notif,'script_version'),
         surveyId: utils.getText(notif,'survey_id'),
         surveyPopType: utils.getText(notif,'survey_pop_type'),
-        requeueType: utils.getText(notif,'requeue_type')
+        requeueType: utils.getText(notif,'requeue_type'),
+        hangupOnDisposition: utils.getText(notif,'hangup_on_disposition')
     };
 
     // set collection values
