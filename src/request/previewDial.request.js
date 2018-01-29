@@ -68,7 +68,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
  *                  "@valid_until":"2008-09-15 17:24:11","extern_id":{"#text":"9548298548"},
  *                  "first_name":{"#text":"Amanda"},"mid_name":{"#text":"Amanda"},"last_name":{"#text":"Machutta2"},
  *                  "address1":{},"address2":{},"city":{},"state":{},"zip":{},"aux_greeting":{},
- *                  "aux_external_url":{}
+ *                  "aux_external_url":{},"app_url"
  *              },
  *          ]
  *      }

@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-01-18 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-01-29 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -542,7 +542,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
     newCall.agentRecording = utils.processResponseCollection(notification, 'ui_notification', 'agent_recording', 'agentRecording')[0];
     newCall.outdialDispositions = utils.processResponseCollection(notification, 'ui_notification', 'outdial_dispositions', 'disposition')[0];
-    newCall.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
+    newCall.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0] || [];
     newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.scriptResponse = {};
@@ -642,14 +642,14 @@ function buildCallTokenMap(notif, newCall){
 
     try{
         if(newCall.queue.number){
-            tokens["sourceId"] = newCall.number || "";
-            tokens["sourceName"] = newCall.name || "";
-            tokens["sourceDesc"] = newCall.description || "";
+            tokens["sourceId"] = newCall.queue.number || "";
+            tokens["sourceName"] = newCall.queue.name || "";
+            tokens["sourceDesc"] = newCall.queue.description || "";
 
-            if(newCall.queue.isCampaign === "0"){
-                tokens["sourceType"] = "INBOUND";
-            }else{
+            if(newCall.queue.isCampaign === "1" || newCall.queue.isCampaign === true){
                 tokens["sourceType"] = "OUTBOUND";
+            }else{
+                tokens["sourceType"] = "INBOUND";
             }
         }else{
             tokens["sourceId"] = "0";
@@ -3129,7 +3129,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
  *                  "@valid_until":"2008-09-15 17:24:11","extern_id":{"#text":"9548298548"},
  *                  "first_name":{"#text":"Amanda"},"mid_name":{"#text":"Amanda"},"last_name":{"#text":"Machutta2"},
  *                  "address1":{},"address2":{},"city":{},"state":{},"zip":{},"aux_greeting":{},
- *                  "aux_external_url":{}
+ *                  "aux_external_url":{},"app_url"
  *              },
  *          ]
  *      }
