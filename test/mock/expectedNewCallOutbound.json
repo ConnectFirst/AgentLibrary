@@ -20,9 +20,9 @@
   "requeueType": "",
   "queue": {
     "number": "1",
+    "isCampaign": true,
     "name": "AM Campaign",
-    "description": "",
-    "isCampaign": false
+    "description": ""
   },
   "agentRecording": {
     "default": "ON",
@@ -61,6 +61,7 @@
       }
     ]
   },
+  "requeueShortcuts": [],
   "baggage": {
     "allowUpdates": true,
     "showLeadPasses": true,
@@ -90,8 +91,8 @@
     "ani" : "5555555555",
     "dnis" : "",
     "uii" : "201002091133350139990000000010",
-    "sourceId" : "",
-    "sourceName" : "",
+    "sourceId" : "1",
+    "sourceName" : "AM Campaign",
     "sourceDesc" : "",
     "sourceType" : "OUTBOUND",
     "agentFirstName" : "Test First",

@@ -68,9 +68,10 @@ function initAgentLibraryCall (context) {
      * Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]
      * @param {string} [externId=null] The external id associated with the lead for this call (only for Outbound Dispositions).
      * @param {string} [leadId=null] The lead id associated with this call (only for Outbound Dispositions).
+     * @param {string} [requestId=null] The request id associated with a preview fetched lead (only for Outbound Dispositions).
      */
-    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId){
-        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId);
+    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId){
+        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId);
         var msg = UIModel.getInstance().dispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
 
@@ -176,12 +177,14 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a preview dial request to call lead based on request id. Call previewFetch method first to get request id.
+     * Sends a preview dial request to call lead based on request id and (optional) lead phone.
+     * Call previewFetch method first to get request id.
      * @memberof AgentLibrary.Call
      * @param {number} requestId Pending request id sent back with lead, required to dial lead.
+     * @param {number} [leadPhone=""] Lead phone number. Only needed if there are multiple numbers loaded for given lead.
      */
-    AgentLibrary.prototype.previewDial = function(requestId){
-        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("", [], requestId);
+    AgentLibrary.prototype.previewDial = function(requestId, leadPhone){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("", [], requestId, leadPhone);
         var msg = UIModel.getInstance().previewDialRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -277,12 +280,14 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a TCPA Safe call request to call lead based on request id. Call safeModeFetch method first to get request id.
+     * Sends a TCPA Safe call request to call lead based on request id and (optional) lead phone.
+     * Call safeModeFetch method first to get request id.
      * @memberof AgentLibrary.Call
-     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     * @param {number} requestId Pending request id sent back with lead, required to dial lead.
+     * @param {number} [leadPhone=""] Lead phone number. Only needed if there are multiple numbers loaded for given lead.
      */
-    AgentLibrary.prototype.safeModeCall = function(requestId){
-        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", [], requestId);
+    AgentLibrary.prototype.safeModeCall = function(requestId, leadPhone){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", [], requestId, leadPhone);
         var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
         utils.sendMessage(this, msg);
     };

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*! cf-agent-library - v2.0.0 - 2018-01-19 - Connect First */
+=======
+/*! cf-agent-library - v2.0.0 - 2018-01-29 - Connect First */
+>>>>>>> CCI-5560-pipeLeads
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -542,7 +546,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
     newCall.agentRecording = utils.processResponseCollection(notification, 'ui_notification', 'agent_recording', 'agentRecording')[0];
     newCall.outdialDispositions = utils.processResponseCollection(notification, 'ui_notification', 'outdial_dispositions', 'disposition')[0];
-    newCall.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
+    newCall.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0] || [];
     newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.scriptResponse = {};
@@ -642,14 +646,14 @@ function buildCallTokenMap(notif, newCall){
 
     try{
         if(newCall.queue.number){
-            tokens["sourceId"] = newCall.number || "";
-            tokens["sourceName"] = newCall.name || "";
-            tokens["sourceDesc"] = newCall.description || "";
+            tokens["sourceId"] = newCall.queue.number || "";
+            tokens["sourceName"] = newCall.queue.name || "";
+            tokens["sourceDesc"] = newCall.queue.description || "";
 
-            if(newCall.queue.isCampaign === "0"){
-                tokens["sourceType"] = "INBOUND";
-            }else{
+            if(newCall.queue.isCampaign === "1" || newCall.queue.isCampaign === true){
                 tokens["sourceType"] = "OUTBOUND";
+            }else{
+                tokens["sourceType"] = "INBOUND";
             }
         }else{
             tokens["sourceId"] = "0";
@@ -1682,15 +1686,16 @@ function setChatQueueSettings(response){
 }
 
 
-var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId) {
+var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId) {
     this.uii = uii;
     this.dispId = dispId;
     this.notes = notes;
     this.callback = callback;
     this.callbackDTS = callbackDTS || "";
     this.contactForwardNumber = contactForwardNumber || null;
-    this.externId = externId || null; // outbound-disposition only
-    this.leadId = leadId || null;     // outbound-disposition only
+    this.externId = externId || null;   // outbound-disposition only
+    this.leadId = leadId || null;       // outbound-disposition only
+    this.requestId = requestId || null; // outbound-disposition only (pipe leads)
 
     /*
      * survey = {
@@ -1723,6 +1728,7 @@ var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, con
  *      "agent_id":{"#text":"1180958"},
  *      "lead_id":{"#text":"1800"},                 <-- OUTDIAL-DISPOSITION ONLY
  *      "outbound_externid":{"#text":"3038593775"}, <-- OUTDIAL-DISPOSITION ONLY
+ *      "pending_request_id":{"#text":""},          <-- OUTDIAL-DISPOSITION ONLY
  *      "disposition_id":{"#text":"5950"},
  *      "notes":{"#text":"note here"},
  *      "call_back":{"#text":"FALSE"},
@@ -1775,6 +1781,9 @@ DispositionRequest.prototype.formatJSON = function() {
             },
             "lead_id": {
                 "#text" : utils.toString(this.leadId)
+            },
+            "pending_request_id": {
+                "#text" : utils.toString(this.requestId)
             }
         }
     };
@@ -3060,11 +3069,12 @@ PingCallRequest.prototype.formatJSON = function() {
 };
 
 
-var PreviewDialRequest = function(action, searchFields, requestId) {
+var PreviewDialRequest = function(action, searchFields, requestId, leadPhone) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
     this.searchFields = searchFields || [];
     this.requestId = requestId || "";
     this.action = action || "";
+    this.leadPhone = leadPhone || "";   // pipe leads only
 };
 
 /*
@@ -3092,6 +3102,9 @@ PreviewDialRequest.prototype.formatJSON = function() {
             },
             "pending_request_id":{
                 "#text":utils.toString(this.requestId)
+            },
+            "lead_phone":{
+                "#text":utils.toString(this.leadPhone)
             },
             "search_fields": fields
                 // { "name": {"#text": "Danielle" } }
@@ -3125,7 +3138,11 @@ PreviewDialRequest.prototype.formatJSON = function() {
  *                  "@valid_until":"2008-09-15 17:24:11","extern_id":{"#text":"9548298548"},
  *                  "first_name":{"#text":"Amanda"},"mid_name":{"#text":"Amanda"},"last_name":{"#text":"Machutta2"},
  *                  "address1":{},"address2":{},"city":{},"state":{},"zip":{},"aux_greeting":{},
+<<<<<<< HEAD
  *                  "aux_external_url":{}, "app_url":{}
+=======
+ *                  "aux_external_url":{},"app_url"
+>>>>>>> CCI-5560-pipeLeads
  *              },
  *          ]
  *      }
@@ -3449,11 +3466,12 @@ StatsRequest.prototype.formatJSON = function() {
 };
 
 
-var TcpaSafeRequest = function(action, searchFields, requestId) {
+var TcpaSafeRequest = function(action, searchFields, requestId, leadPhone) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
     this.searchFields = searchFields || [];
     this.requestId = requestId || "";
     this.action = action || "";
+    this.leadPhone = leadPhone || "";   // pipe leads only
 };
 
 /*
@@ -3481,6 +3499,9 @@ TcpaSafeRequest.prototype.formatJSON = function() {
             },
             "pending_request_id":{
                 "#text":utils.toString(this.requestId)
+            },
+            "lead_phone":{
+                "#text":utils.toString(this.leadPhone)
             },
             "search_fields": fields
                 // { "name": {"#text": "Danielle"} }
@@ -7827,9 +7848,10 @@ function initAgentLibraryCall (context) {
      * Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]
      * @param {string} [externId=null] The external id associated with the lead for this call (only for Outbound Dispositions).
      * @param {string} [leadId=null] The lead id associated with this call (only for Outbound Dispositions).
+     * @param {string} [requestId=null] The request id associated with a preview fetched lead (only for Outbound Dispositions).
      */
-    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId){
-        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId);
+    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId){
+        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId);
         var msg = UIModel.getInstance().dispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
 
@@ -7935,12 +7957,14 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a preview dial request to call lead based on request id. Call previewFetch method first to get request id.
+     * Sends a preview dial request to call lead based on request id and (optional) lead phone.
+     * Call previewFetch method first to get request id.
      * @memberof AgentLibrary.Call
      * @param {number} requestId Pending request id sent back with lead, required to dial lead.
+     * @param {number} [leadPhone=""] Lead phone number. Only needed if there are multiple numbers loaded for given lead.
      */
-    AgentLibrary.prototype.previewDial = function(requestId){
-        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("", [], requestId);
+    AgentLibrary.prototype.previewDial = function(requestId, leadPhone){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("", [], requestId, leadPhone);
         var msg = UIModel.getInstance().previewDialRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -8036,12 +8060,14 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a TCPA Safe call request to call lead based on request id. Call safeModeFetch method first to get request id.
+     * Sends a TCPA Safe call request to call lead based on request id and (optional) lead phone.
+     * Call safeModeFetch method first to get request id.
      * @memberof AgentLibrary.Call
-     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     * @param {number} requestId Pending request id sent back with lead, required to dial lead.
+     * @param {number} [leadPhone=""] Lead phone number. Only needed if there are multiple numbers loaded for given lead.
      */
-    AgentLibrary.prototype.safeModeCall = function(requestId){
-        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", [], requestId);
+    AgentLibrary.prototype.safeModeCall = function(requestId, leadPhone){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", [], requestId, leadPhone);
         var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
