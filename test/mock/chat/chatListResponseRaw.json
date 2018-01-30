@@ -1,0 +1,14 @@
+{
+  "ui_response" : {
+    "@message_id":"IQ10012016081611595000289",
+    "@type":"CHAT-LIST",
+    "@destination":"",
+    "@response_to":"",
+    "agent_id":{"#text":"17"},
+    "monitor_agent_id":{"#text":"18"},
+    "chat_list" : { "active_chat" : [
+      {"@uii" : "333", "baggage": {"#text": "{Name:asdf}"}},
+      {"@uii" : "333", "baggage": {"#text": "{Name:asdf}"}}
+    ]}
+  }
+}

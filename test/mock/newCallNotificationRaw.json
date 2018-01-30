@@ -28,6 +28,7 @@
     },
     "gate": {
       "@number": "1",
+      "@is_campaign": "1",
       "name": {
         "#text": "AM Campaign"
       },

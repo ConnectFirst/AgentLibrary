@@ -1,9 +1,10 @@
 
-var PreviewDialRequest = function(action, searchFields, requestId) {
+var PreviewDialRequest = function(action, searchFields, requestId, leadPhone) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
     this.searchFields = searchFields || [];
     this.requestId = requestId || "";
     this.action = action || "";
+    this.leadPhone = leadPhone || "";   // pipe leads only
 };
 
 /*
@@ -31,6 +32,9 @@ PreviewDialRequest.prototype.formatJSON = function() {
             },
             "pending_request_id":{
                 "#text":utils.toString(this.requestId)
+            },
+            "lead_phone":{
+                "#text":utils.toString(this.leadPhone)
             },
             "search_fields": fields
                 // { "name": {"#text": "Danielle" } }
@@ -64,7 +68,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
  *                  "@valid_until":"2008-09-15 17:24:11","extern_id":{"#text":"9548298548"},
  *                  "first_name":{"#text":"Amanda"},"mid_name":{"#text":"Amanda"},"last_name":{"#text":"Machutta2"},
  *                  "address1":{},"address2":{},"city":{},"state":{},"zip":{},"aux_greeting":{},
- *                  "aux_external_url":{}
+ *                  "aux_external_url":{}, "app_url":{}
  *              },
  *          ]
  *      }
@@ -80,6 +84,7 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
     // to match previewLeadState.notification property
     for(var l = 0; l < leads.length; l++){
         leads[l].requestId = leads[l].requestKey;
+        leads[l].ani = leads[l].destination; // add ani prop since used in new call packet & update lead
     }
 
     var formattedResponse = {

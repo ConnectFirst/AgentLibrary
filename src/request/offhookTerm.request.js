@@ -42,6 +42,7 @@ OffhookTermRequest.prototype.processResponse = function(data) {
     model.agentSettings.wasMonitoring = monitoring;
     model.offhookTermPacket = data;
     model.agentSettings.isOffhook = false;
+    model.agentSettings.isMonitoring = false;
 
     var formattedResponse = {
         status: "OK",

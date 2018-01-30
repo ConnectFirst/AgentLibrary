@@ -71,7 +71,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8155">line 8155</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8221">line 8221</a>
     </li></ul></dd>
     
 
@@ -93,9 +93,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -109,9 +107,7 @@
 
     
 
-    
     <h4 class="name" id="chatAgentEnd"><span class="type-signature">(static) </span>AgentLibrary#chatAgentEnd<span class="signature">(uii, agentId)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -234,7 +230,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8360">line 8360</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8428">line 8428</a>
     </li></ul></dd>
     
 
@@ -260,16 +256,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="chatDisposition"><span class="type-signature">(static) </span>AgentLibrary#chatDisposition<span class="signature">(uii, agentId, dispositionId, notes<span class="signature-attributes">opt</span>, sendAcknowlegement, script<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -568,7 +560,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8281">line 8281</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8347">line 8347</a>
     </li></ul></dd>
     
 
@@ -594,16 +586,12 @@
 
 
 
-
-
         
             
 
     
 
-    
-    <h4 class="name" id="chatList"><span class="type-signature">(static) </span>AgentLibrary#chatList<span class="signature">(uii, agentId, monitorAgentId)</span><span class="type-signature"></span></h4>
-    
+    <h4 class="name" id="chatList"><span class="type-signature">(static) </span>AgentLibrary#chatList<span class="signature">(agentId, monitorAgentId, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -634,7 +622,11 @@
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
+        
+        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -642,29 +634,6 @@
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>uii</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Unique identifier for the chat session</td>
-        </tr>
-
     
 
         <tr>
@@ -682,7 +651,19 @@
             </td>
 
             
+                <td class="attributes">
+                
 
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last">Current logged in agent id</td>
@@ -705,10 +686,61 @@
             </td>
 
             
+                <td class="attributes">
+                
 
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last">Agent id handling chats</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
+            
+
+            <td class="description last">Callback function when chat-list request received</td>
         </tr>
 
     
@@ -749,7 +781,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8346">line 8346</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8412">line 8412</a>
     </li></ul></dd>
     
 
@@ -775,16 +807,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="chatMessage"><span class="type-signature">(static) </span>AgentLibrary#chatMessage<span class="signature">(uii, agentId, message)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -930,7 +958,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8252">line 8252</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8318">line 8318</a>
     </li></ul></dd>
     
 
@@ -956,16 +984,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="chatPresentedResponse"><span class="type-signature">(static) </span>AgentLibrary#chatPresentedResponse<span class="signature">(uii, response, responseReason)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -1111,7 +1135,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8239">line 8239</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8305">line 8305</a>
     </li></ul></dd>
     
 
@@ -1137,16 +1161,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="chatRequeue"><span class="type-signature">(static) </span>AgentLibrary#chatRequeue<span class="signature">(uii, agentId, chatQueueId, skillId, maintainAgent<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -1406,7 +1426,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8296">line 8296</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8362">line 8362</a>
     </li></ul></dd>
     
 
@@ -1432,16 +1452,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="chatTyping"><span class="type-signature">(static) </span>AgentLibrary#chatTyping<span class="signature">(uii)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -1541,7 +1557,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8307">line 8307</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8373">line 8373</a>
     </li></ul></dd>
     
 
@@ -1567,16 +1583,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="chatWhisper"><span class="type-signature">(static) </span>AgentLibrary#chatWhisper<span class="signature">(uii, agentId, message)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -1722,7 +1734,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8265">line 8265</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8331">line 8331</a>
     </li></ul></dd>
     
 
@@ -1748,16 +1760,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="getSupervisors"><span class="type-signature">(static) </span>AgentLibrary#getSupervisors<span class="signature">(callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -1877,7 +1885,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8224">line 8224</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8290">line 8290</a>
     </li></ul></dd>
     
 
@@ -1903,16 +1911,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="leaveChat"><span class="type-signature">(static) </span>AgentLibrary#leaveChat<span class="signature">(uii, agentId, sessionId)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -2058,7 +2062,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8333">line 8333</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8399">line 8399</a>
     </li></ul></dd>
     
 
@@ -2084,16 +2088,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="monitorChat"><span class="type-signature">(static) </span>AgentLibrary#monitorChat<span class="signature">(uii, agentId, monitorAgentId)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -2239,7 +2239,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8320">line 8320</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8386">line 8386</a>
     </li></ul></dd>
     
 
@@ -2265,16 +2265,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="privateChatRoom"><span class="type-signature">(static) </span>AgentLibrary#privateChatRoom<span class="signature">(action, roomId, agentOne, agentTwo)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -2443,7 +2439,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8197">line 8197</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8263">line 8263</a>
     </li></ul></dd>
     
 
@@ -2469,16 +2465,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="publicChatRoom"><span class="type-signature">(static) </span>AgentLibrary#publicChatRoom<span class="signature">(action, roomId)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -2601,7 +2593,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8182">line 8182</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8248">line 8248</a>
     </li></ul></dd>
     
 
@@ -2627,16 +2619,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="sendChat"><span class="type-signature">(static) </span>AgentLibrary#sendChat<span class="signature">(roomId, message, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -2826,7 +2814,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8211">line 8211</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8277">line 8277</a>
     </li></ul></dd>
     
 
@@ -2852,16 +2840,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="setChatAlias"><span class="type-signature">(static) </span>AgentLibrary#setChatAlias<span class="signature">(alias)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -2961,7 +2945,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8169">line 8169</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8235">line 8235</a>
     </li></ul></dd>
     
 
@@ -2971,8 +2955,6 @@
 
     
 </dl>
-
-
 
 
 
@@ -3011,7 +2993,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Jan 10 2018 11:45:39 GMT-0700 (MST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon Jan 29 2018 22:25:21 GMT-0700 (MST)
 </footer>
 
 <script> prettyPrint(); </script>

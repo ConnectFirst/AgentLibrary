@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-01-10 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-01-29 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -542,7 +542,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
     newCall.agentRecording = utils.processResponseCollection(notification, 'ui_notification', 'agent_recording', 'agentRecording')[0];
     newCall.outdialDispositions = utils.processResponseCollection(notification, 'ui_notification', 'outdial_dispositions', 'disposition')[0];
-    newCall.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0];
+    newCall.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'requeue_shortcuts', 'requeueShortcut')[0] || [];
     newCall.baggage = utils.processResponseCollection(notification, 'ui_notification', 'baggage')[0];
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.scriptResponse = {};
@@ -642,14 +642,14 @@ function buildCallTokenMap(notif, newCall){
 
     try{
         if(newCall.queue.number){
-            tokens["sourceId"] = newCall.number || "";
-            tokens["sourceName"] = newCall.name || "";
-            tokens["sourceDesc"] = newCall.description || "";
+            tokens["sourceId"] = newCall.queue.number || "";
+            tokens["sourceName"] = newCall.queue.name || "";
+            tokens["sourceDesc"] = newCall.queue.description || "";
 
-            if(newCall.queue.isCampaign === "0"){
-                tokens["sourceType"] = "INBOUND";
-            }else{
+            if(newCall.queue.isCampaign === "1" || newCall.queue.isCampaign === true){
                 tokens["sourceType"] = "OUTBOUND";
+            }else{
+                tokens["sourceType"] = "INBOUND";
             }
         }else{
             tokens["sourceId"] = "0";
@@ -1682,15 +1682,16 @@ function setChatQueueSettings(response){
 }
 
 
-var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId) {
+var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId) {
     this.uii = uii;
     this.dispId = dispId;
     this.notes = notes;
     this.callback = callback;
     this.callbackDTS = callbackDTS || "";
     this.contactForwardNumber = contactForwardNumber || null;
-    this.externId = externId || null; // outbound-disposition only
-    this.leadId = leadId || null;     // outbound-disposition only
+    this.externId = externId || null;   // outbound-disposition only
+    this.leadId = leadId || null;       // outbound-disposition only
+    this.requestId = requestId || null; // outbound-disposition only (pipe leads)
 
     /*
      * survey = {
@@ -1723,6 +1724,7 @@ var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, con
  *      "agent_id":{"#text":"1180958"},
  *      "lead_id":{"#text":"1800"},                 <-- OUTDIAL-DISPOSITION ONLY
  *      "outbound_externid":{"#text":"3038593775"}, <-- OUTDIAL-DISPOSITION ONLY
+ *      "pending_request_id":{"#text":""},          <-- OUTDIAL-DISPOSITION ONLY
  *      "disposition_id":{"#text":"5950"},
  *      "notes":{"#text":"note here"},
  *      "call_back":{"#text":"FALSE"},
@@ -1775,6 +1777,9 @@ DispositionRequest.prototype.formatJSON = function() {
             },
             "lead_id": {
                 "#text" : utils.toString(this.leadId)
+            },
+            "pending_request_id": {
+                "#text" : utils.toString(this.requestId)
             }
         }
     };
@@ -2782,6 +2787,7 @@ OffhookInitRequest.prototype.formatJSON = function() {
  *      "@response_to":"",
  *      "@type":"OFF-HOOK-INIT",
  *      "status":{"#text":"OK|FAILURE"},
+ *      "monitoring":{"#text:"TRUE|FALSE"},
  *      "message":{},
  *      "detail":{}
  *    }
@@ -2791,11 +2797,14 @@ OffhookInitRequest.prototype.processResponse = function(response) {
     var status = response.ui_response.status['#text'];
     var formattedResponse = utils.buildDefaultResponse(response);
 
-    if(status === 'OK'){
+    if(status === 'OK') {
+        var isMonitoring = utils.getText(response.ui_response, "monitoring");
         UIModel.getInstance().offhookInitPacket = response;
         UIModel.getInstance().agentSettings.isOffhook = true;
-    }else{
-        if(formattedResponse.message === ""){
+        UIModel.getInstance().agentSettings.isMonitoring = isMonitoring;
+        formattedResponse.monitoring = isMonitoring;
+    } else {
+        if(formattedResponse.message === "") {
             formattedResponse.message = "Unable to process offhook request";
         }
         utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message + ' ' + formattedResponse.detail, response);
@@ -2849,6 +2858,7 @@ OffhookTermRequest.prototype.processResponse = function(data) {
     model.agentSettings.wasMonitoring = monitoring;
     model.offhookTermPacket = data;
     model.agentSettings.isOffhook = false;
+    model.agentSettings.isMonitoring = false;
 
     var formattedResponse = {
         status: "OK",
@@ -3055,11 +3065,12 @@ PingCallRequest.prototype.formatJSON = function() {
 };
 
 
-var PreviewDialRequest = function(action, searchFields, requestId) {
+var PreviewDialRequest = function(action, searchFields, requestId, leadPhone) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
     this.searchFields = searchFields || [];
     this.requestId = requestId || "";
     this.action = action || "";
+    this.leadPhone = leadPhone || "";   // pipe leads only
 };
 
 /*
@@ -3087,6 +3098,9 @@ PreviewDialRequest.prototype.formatJSON = function() {
             },
             "pending_request_id":{
                 "#text":utils.toString(this.requestId)
+            },
+            "lead_phone":{
+                "#text":utils.toString(this.leadPhone)
             },
             "search_fields": fields
                 // { "name": {"#text": "Danielle" } }
@@ -3120,7 +3134,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
  *                  "@valid_until":"2008-09-15 17:24:11","extern_id":{"#text":"9548298548"},
  *                  "first_name":{"#text":"Amanda"},"mid_name":{"#text":"Amanda"},"last_name":{"#text":"Machutta2"},
  *                  "address1":{},"address2":{},"city":{},"state":{},"zip":{},"aux_greeting":{},
- *                  "aux_external_url":{}
+ *                  "aux_external_url":{}, "app_url":{}
  *              },
  *          ]
  *      }
@@ -3136,6 +3150,7 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
     // to match previewLeadState.notification property
     for(var l = 0; l < leads.length; l++){
         leads[l].requestId = leads[l].requestKey;
+        leads[l].ani = leads[l].destination; // add ani prop since used in new call packet & update lead
     }
 
     var formattedResponse = {
@@ -3443,11 +3458,12 @@ StatsRequest.prototype.formatJSON = function() {
 };
 
 
-var TcpaSafeRequest = function(action, searchFields, requestId) {
+var TcpaSafeRequest = function(action, searchFields, requestId, leadPhone) {
     this.agentId = UIModel.getInstance().agentSettings.agentId;
     this.searchFields = searchFields || [];
     this.requestId = requestId || "";
     this.action = action || "";
+    this.leadPhone = leadPhone || "";   // pipe leads only
 };
 
 /*
@@ -3475,6 +3491,9 @@ TcpaSafeRequest.prototype.formatJSON = function() {
             },
             "pending_request_id":{
                 "#text":utils.toString(this.requestId)
+            },
+            "lead_phone":{
+                "#text":utils.toString(this.leadPhone)
             },
             "search_fields": fields
                 // { "name": {"#text": "Danielle"} }
@@ -3508,7 +3527,7 @@ TcpaSafeRequest.prototype.formatJSON = function() {
  *                  "@valid_until":"2008-09-15 17:24:11","extern_id":{"#text":"9548298548"},
  *                  "first_name":{"#text":"Amanda"},"mid_name":{"#text":"Amanda"},"last_name":{"#text":"Machutta2"},
  *                  "address1":{},"address2":{},"city":{},"state":{},"zip":{},"aux_greeting":{},
- *                  "aux_external_url":{}
+ *                  "aux_external_url":{}, "app_url":{}
  *              },
  *          ]
  *      }
@@ -3525,6 +3544,7 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
     // to match tcpaSafeLeadState.notification property
     for(var l = 0; l < leads.length; l++){
         leads[l].requestId = leads[l].requestKey;
+        leads[l].ani = leads[l].destination; // add ani prop since used in new call packet & update lead
     }
 
     var formattedResponse = {
@@ -3846,8 +3866,6 @@ ChatDispositionRequest.prototype.formatJSON = function() {
 };
 
 
-
-
 var ChatListRequest = function(agentId, monitorAgentId) {
     this.agentId = agentId;
     this.monitorAgentId = monitorAgentId;
@@ -3867,6 +3885,8 @@ var ChatListRequest = function(agentId, monitorAgentId) {
  *    }
  * }
  */
+
+
 ChatListRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request": {
@@ -3875,7 +3895,7 @@ ChatListRequest.prototype.formatJSON = function() {
             "@message_id":utils.getMessageId(),
             "@response_to":"",
             "agent_id":{
-                "#text":UIModel.getInstance().agentSettings.agentId
+                "#text":utils.toString(this.agentId)
             },
             "monitor_agent_id":{
                 "#text":utils.toString(this.monitorAgentId)
@@ -3885,6 +3905,38 @@ ChatListRequest.prototype.formatJSON = function() {
 
     return JSON.stringify(msg);
 };
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-LIST" packets from IntelliQueue.
+ *
+ *  {
+ *      "ui_response":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-LIST",
+ *          "@response_to":"",
+ *          "agent_id":{"#text":"17"},
+ *          "monitor_agent_id":{"#text":"18"},
+ *          "chat_list": {}
+ *      }
+ *  }
+ */
+
+ChatListRequest.prototype.processResponse = function(response) {
+    var notif = response.ui_response;
+    var model = UIModel.getInstance();
+    model.chatListResponse = response;
+
+    return {
+        message: "Received CHAT-LIST notification",
+        status: "OK",
+        messageId: notif['@message_id'],
+        agentId: utils.getText(notif, "agent_id"),
+        monitorAgentId: utils.getText(notif, "monitor_agent_id"),
+        chatList: utils.processResponseCollection( notif, "chat_list", "active_chat")
+    };
+};
+
 
 
 
@@ -5391,6 +5443,8 @@ var UIModel = (function() {
             tcpaSafeRequest : null,
             warmXferRequest : null,
             warmXferCancelRequest : null,
+            chatListRequest: null,
+
 
             // response packets
             agentStatePacket : null,
@@ -5400,6 +5454,7 @@ var UIModel = (function() {
             offhookInitPacket : null,
             offhookTermPacket : null,
             transferSessions: {},
+            chatListResponse : null,
 
             // notification packets
             addSessionNotification: new AddSessionNotification(),
@@ -5454,6 +5509,7 @@ var UIModel = (function() {
                 guid: "",                           // unique key generated on login, used for accessing spring endpoints
                 isLoggedIn : false,                 // agent is logged in to the platform
                 isOffhook : false,                  // track whether or not the agent has an active offhook session
+                isMonitoring : false,               // track whether or not the offhook session is for monitoring
                 initLoginState : "AVAILABLE",       // state agent is placed in on successful login
                 initLoginStateLabel : "Available",  // state label for agent on successful login
                 isOutboundPrepay : false,           // determines if agent is a prepay agent
@@ -5769,8 +5825,12 @@ var utils = {
                 ack.uii = request.msg.uii["#text"];
                 utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
+            case MESSAGE_TYPES.CHAT_LIST:
+                var chatList = new ChatListRequest();
+                var chatListResponse = chatList.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_LIST, chatListResponse);
+                break;
         }
-
     },
 
     processNotification: function(instance, data){
@@ -5918,10 +5978,6 @@ var utils = {
                 //TODO: do this
 
                 break;
-            case MESSAGE_TYPES.CHAT_LIST:
-                //TODO: do this
-
-                break;
         }
     },
 
@@ -6015,7 +6071,6 @@ var utils = {
                 utils.fireCallback(instance, CALLBACK_TYPES.STATS_CHAT_QUEUE, chatStats);
                 break;
         }
-
     },
 
     /*
@@ -6534,6 +6589,7 @@ const CALLBACK_TYPES = {
     "CHAT_TYPING":"chatTypingNotification",         // external chat
     "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
+    "CHAT_LIST":"chatListResponse",                 // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -7168,6 +7224,11 @@ function initAgentLibraryCore (context) {
     };
 
 
+    AgentLibrary.prototype.getChatListRequest = function(){
+        return UIModel.getInstance().chatListRequest;
+    };
+
+
     /**
      * @namespace Notifications
      * @memberof AgentLibrary.Core
@@ -7779,9 +7840,10 @@ function initAgentLibraryCall (context) {
      * Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]
      * @param {string} [externId=null] The external id associated with the lead for this call (only for Outbound Dispositions).
      * @param {string} [leadId=null] The lead id associated with this call (only for Outbound Dispositions).
+     * @param {string} [requestId=null] The request id associated with a preview fetched lead (only for Outbound Dispositions).
      */
-    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId){
-        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId);
+    AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId){
+        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId);
         var msg = UIModel.getInstance().dispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
 
@@ -7887,12 +7949,14 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a preview dial request to call lead based on request id. Call previewFetch method first to get request id.
+     * Sends a preview dial request to call lead based on request id and (optional) lead phone.
+     * Call previewFetch method first to get request id.
      * @memberof AgentLibrary.Call
      * @param {number} requestId Pending request id sent back with lead, required to dial lead.
+     * @param {number} [leadPhone=""] Lead phone number. Only needed if there are multiple numbers loaded for given lead.
      */
-    AgentLibrary.prototype.previewDial = function(requestId){
-        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("", [], requestId);
+    AgentLibrary.prototype.previewDial = function(requestId, leadPhone){
+        UIModel.getInstance().previewDialRequest = new PreviewDialRequest("", [], requestId, leadPhone);
         var msg = UIModel.getInstance().previewDialRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -7988,12 +8052,14 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Sends a TCPA Safe call request to call lead based on request id. Call safeModeFetch method first to get request id.
+     * Sends a TCPA Safe call request to call lead based on request id and (optional) lead phone.
+     * Call safeModeFetch method first to get request id.
      * @memberof AgentLibrary.Call
-     * @param {number} [requestId=""] Number displayed to callee, DNIS
+     * @param {number} requestId Pending request id sent back with lead, required to dial lead.
+     * @param {number} [leadPhone=""] Lead phone number. Only needed if there are multiple numbers loaded for given lead.
      */
-    AgentLibrary.prototype.safeModeCall = function(requestId){
-        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", [], requestId);
+    AgentLibrary.prototype.safeModeCall = function(requestId, leadPhone){
+        UIModel.getInstance().tcpaSafeRequest = new TcpaSafeRequest("", [], requestId, leadPhone);
         var msg = UIModel.getInstance().tcpaSafeRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -8339,13 +8405,15 @@ function initAgentLibraryChat (context) {
     /**
      * Request a list of active chats by agent id
      * @memberof AgentLibrary.Chat
-     * @param {string} uii Unique identifier for the chat session
      * @param {string} agentId Current logged in agent id
      * @param {string} monitorAgentId Agent id handling chats
+     * @param {function} [callback=null] Callback function when chat-list request received
      */
-    AgentLibrary.prototype.chatList = function(agentId, monitorAgentId){
-        UIModel.getInstance().chatList = new ChatListRequest(agentId, monitorAgentId);
-        var msg = UIModel.getInstance().chatList.formatJSON();
+    AgentLibrary.prototype.chatList = function(agentId, monitorAgentId, callback){
+        UIModel.getInstance().chatListRequest = new ChatListRequest(agentId, monitorAgentId);
+        var msg = UIModel.getInstance().chatListRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CHAT_LIST, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -8363,6 +8431,7 @@ function initAgentLibraryChat (context) {
         utils.sendMessage(this, msg);
     };
 }
+
 
 function initAgentLibraryLogger (context) {
 

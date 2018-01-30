@@ -1,13 +1,14 @@
 
-var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId) {
+var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId) {
     this.uii = uii;
     this.dispId = dispId;
     this.notes = notes;
     this.callback = callback;
     this.callbackDTS = callbackDTS || "";
     this.contactForwardNumber = contactForwardNumber || null;
-    this.externId = externId || null; // outbound-disposition only
-    this.leadId = leadId || null;     // outbound-disposition only
+    this.externId = externId || null;   // outbound-disposition only
+    this.leadId = leadId || null;       // outbound-disposition only
+    this.requestId = requestId || null; // outbound-disposition only (pipe leads)
 
     /*
      * survey = {
@@ -40,6 +41,7 @@ var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, con
  *      "agent_id":{"#text":"1180958"},
  *      "lead_id":{"#text":"1800"},                 <-- OUTDIAL-DISPOSITION ONLY
  *      "outbound_externid":{"#text":"3038593775"}, <-- OUTDIAL-DISPOSITION ONLY
+ *      "pending_request_id":{"#text":""},          <-- OUTDIAL-DISPOSITION ONLY
  *      "disposition_id":{"#text":"5950"},
  *      "notes":{"#text":"note here"},
  *      "call_back":{"#text":"FALSE"},
@@ -92,6 +94,9 @@ DispositionRequest.prototype.formatJSON = function() {
             },
             "lead_id": {
                 "#text" : utils.toString(this.leadId)
+            },
+            "pending_request_id": {
+                "#text" : utils.toString(this.requestId)
             }
         }
     };
