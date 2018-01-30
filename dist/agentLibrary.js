@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/*! cf-agent-library - v2.0.0 - 2018-01-19 - Connect First */
-=======
 /*! cf-agent-library - v2.0.0 - 2018-01-29 - Connect First */
->>>>>>> CCI-5560-pipeLeads
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -3138,11 +3134,7 @@ PreviewDialRequest.prototype.formatJSON = function() {
  *                  "@valid_until":"2008-09-15 17:24:11","extern_id":{"#text":"9548298548"},
  *                  "first_name":{"#text":"Amanda"},"mid_name":{"#text":"Amanda"},"last_name":{"#text":"Machutta2"},
  *                  "address1":{},"address2":{},"city":{},"state":{},"zip":{},"aux_greeting":{},
-<<<<<<< HEAD
  *                  "aux_external_url":{}, "app_url":{}
-=======
- *                  "aux_external_url":{},"app_url"
->>>>>>> CCI-5560-pipeLeads
  *              },
  *          ]
  *      }
