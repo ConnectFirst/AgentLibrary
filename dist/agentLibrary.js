@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/*! cf-agent-library - v2.0.0 - 2018-01-29 - Connect First */
-=======
-/*! cf-agent-library - v2.0.0 - 2018-01-25 - Connect First */
->>>>>>> CCI-5797-callDurationStats
+/*! cf-agent-library - v2.0.0 - 2018-02-02 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
