@@ -34,7 +34,8 @@ var AgentStats = function() {
            "@ttt":"0",
            "@u":"jdoe",
            "@uii":"",
-           "@util":"0.00"
+           "@util":"0.00",
+           "@call_duration:0"
        }
      }
   }
@@ -68,7 +69,8 @@ AgentStats.prototype.processResponse = function(stats) {
                 totalTalkTime: resp[i]["@ttt"],
                 username: resp[i]["@u"],
                 uii: resp[i]["@uii"],
-                utilization: resp[i]["@util"]
+                utilization: resp[i]["@util"],
+                callDuration: resp[i]["@call_duration"]
             };
             agentStats.push(a);
         }
@@ -98,7 +100,8 @@ AgentStats.prototype.processResponse = function(stats) {
                 totalTalkTime: resp["@ttt"],
                 username: resp["@u"],
                 uii: resp["@uii"],
-                utilization: resp["@util"]
+                utilization: resp["@util"],
+                callDuration: resp["@call_duration"]
             };
             agentStats.push(agent);
         }catch(e){
