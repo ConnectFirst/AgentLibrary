@@ -44,6 +44,7 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            chatStateRequest : null,
             ackRequest : new AckRequest(),
             bargeInRequest : null,
             callNotesRequest : null,
@@ -79,6 +80,7 @@ var UIModel = (function() {
 
             // response packets
             agentStatePacket : null,
+            chatStatePacket : null,
             configPacket : null,
             currentCallPacket : null,
             loginPacket : null,
