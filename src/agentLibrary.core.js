@@ -783,7 +783,7 @@ function initAgentLibraryCore (context) {
      * @returns {object}
      */
     AgentLibrary.prototype.getChatClientReconnectNotification = function(){
-        return UIModel.getInstance().ChatClientReconnectNotification;
+        return UIModel.getInstance().chatClientReconnectNotification;
 
     };
     /**
