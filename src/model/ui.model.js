@@ -41,6 +41,7 @@ var UIModel = (function() {
             chatTypingNotification : new ChatTypingNotification(),
             chatTypingRequest : null,
             newChatNotification : new NewChatNotification(),
+            chatClientReconnectNotification : new ChatClientReconnectNotification(),
 
             // request instances
             agentStateRequest : null,

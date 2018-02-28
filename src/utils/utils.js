@@ -318,6 +318,11 @@ var utils = {
                 var inactiveResponse = inactiveNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_CLIENT_RECONNECT :
+                var reconnectNotif = new ChatClientReconnectNotification();
+                var reconnectResponse = reconnectNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CLIENT_RECONNECT, reconnectResponse);
+                break;
             case MESSAGE_TYPES.CHAT_PRESENTED:
                 var presentedNotif = new ChatPresentedNotification();
                 var presentedResponse = presentedNotif.processResponse(data);
