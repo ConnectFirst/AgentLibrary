@@ -6271,20 +6271,10 @@ var utils = {
                             item[formattedKey] = "";
                         }else {
                             // make recursive call
-                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1){
-                                var newIt = [];
-                                newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
-                                if(formattedKey.substr(formattedKey.length - 1) !== 's') {
-                                    item[formattedKey + 's'] = newIt;
-                                }else{
-                                    item[formattedKey] = newIt;
-                                }
-                            }else{
-                                var newItemProp = Object.keys(itemsRaw[i][key])[0];
-                                var newItems = [];
-                                newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
-                                item[formattedKey] = newItems;
-                            }
+                            var newItemProp = Object.keys(itemsRaw[i][key])[0];
+                            var newItems = [];
+                            newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
+                            item[formattedKey] = newItems;
                         }
                     }else{
                         // can't convert 0 | 1 to boolean since some are counters
