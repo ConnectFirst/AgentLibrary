@@ -34,7 +34,7 @@ ChatManualSmsRequest.prototype.formatJSON = function() {
             "agent_id":{
                 "#text":utils.toString(this.agentId)
             },
-            "chatQueueId":{
+            "chat_queue_id":{
                 "#text":utils.toString(this.chatQueueId)
             },
             "ani":{
