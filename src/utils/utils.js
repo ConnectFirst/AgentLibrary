@@ -555,7 +555,7 @@ var utils = {
         var items = [];
         var item = {};
         var itemsRaw = [];
-        var textName = textName || "#text";
+        var textName = textName || "text";
 
         if(response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined'){
             itemsRaw = response[groupProp][itemProp];
@@ -586,7 +586,7 @@ var utils = {
                             // make recursive call
                             if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1){
                                 var newIt = [];
-                                newIt = utils.processResponseCollection(itemsRaw[i][key], itemProp, key, textName);
+                                newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
                                 if(formattedKey.substr(formattedKey.length - 1) !== 's') {
                                     item[formattedKey + 's'] = newIt;
                                 }else{
