@@ -4402,6 +4402,60 @@ LeaveChatRequest.prototype.formatJSON = function() {
 
 
 
+var ChatManualSmsRequest = function(agentId, chatQueueId, ani, dnis, message) {
+    this.agentId = agentId;
+    this.chatQueueId = chatQueueId;
+    this.ani = ani;
+    this.dnis = dnis;
+    this.message = message;
+};
+
+/*
+ * External Chat:
+ * When agent submits a manual sms message, send "MANUAL-SMS" request to IntelliQueue
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"MANUAL-SMS",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "agent_id":{"#text":"1995"},
+ *      "chatQueueId":{"#text":"44"},
+ *      "ani":{"#text":"1231231234"},
+ *      "dnis":{"#text":"5435435432"},
+ *      "message":{"#text":"hello"}
+ *    }
+ * }
+ */
+ChatManualSmsRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_MANUAL_SMS,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(this.agentId)
+            },
+            "chatQueueId":{
+                "#text":utils.toString(this.chatQueueId)
+            },
+            "ani":{
+                "#text":utils.toString(this.ani)
+            },
+            "dnis":{
+                "#text":utils.toString(this.dnis)
+            },
+            "message":{
+                "#text":utils.toString(this.message)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
 
 var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
     this.uii = uii;
@@ -4655,7 +4709,8 @@ ChatPresentedNotification.prototype.processResponse = function(notification) {
         uii: utils.getText(notif, "uii"),
         channelType: utils.getText(notif, "channel_type"),
         chatQueueId: utils.getText(notif, "chat_queue_id"),
-        chatQueueName: utils.getText(notif, "chat_queue_name")
+        chatQueueName: utils.getText(notif, "chat_queue_name"),
+        allowAccept: utils.getText(notif, "allow_accept")
     };
 
 };
@@ -6665,6 +6720,7 @@ const MESSAGE_TYPES = {
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat
+    "CHAT_MANUAL_SMS": "MANUAL-SMS",                        // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -8433,6 +8489,22 @@ function initAgentLibraryChat (context) {
     AgentLibrary.prototype.chatAgentEnd = function(agentId, uii){
         UIModel.getInstance().chatAgentEnd = new ChatAgentEndRequest(agentId, uii);
         var msg = UIModel.getInstance().chatAgentEnd.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * initialize a chat session by sending a manual outbound sms
+     * @memberof AgentLibrary.Chat
+     * @param {string} agentId Current logged in agent id
+     * @param {number} chatQueueId Id of the Chat Queue to send this sms through
+     * @param {number} ani to be used as the caller id
+     * @param {number} [callerId=""] Caller Id for sender (DNIS)
+     * @param {string} message content
+     */
+
+    AgentLibrary.prototype.sendManualOutboundSms = function(agentId, chatQueueId, ani, dnis, message){
+        UIModel.getInstance().chatManualSms = new ChatManualSmsRequest(agentId, chatQueueId, ani, dnis, message);
+        var msg = UIModel.getInstance().chatManualSms.formatJSON();
         utils.sendMessage(this, msg);
     };
 }

@@ -34,7 +34,8 @@ ChatPresentedNotification.prototype.processResponse = function(notification) {
         uii: utils.getText(notif, "uii"),
         channelType: utils.getText(notif, "channel_type"),
         chatQueueId: utils.getText(notif, "chat_queue_id"),
-        chatQueueName: utils.getText(notif, "chat_queue_name")
+        chatQueueName: utils.getText(notif, "chat_queue_name"),
+        allowAccept: utils.getText(notif, "allow_accept")
     };
 
 };
