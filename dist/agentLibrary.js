@@ -2760,15 +2760,12 @@ function processChatQueueDnis(chatSettings, response) {
     var queues = chatSettings.availableChatQueues;
     var rawQueues = response.ui_response.login_chat_queues.chat_queue;
 
-    var rawDnisArray = [];
-
-    queues.forEach(function(queue, index) {
+    queues.forEach(function(queue) {
         var rawQueue = rawQueues.find(function(rq) {
             return rq['@chat_queue_id'] === queue.chatQueueId;
         });
 
-        rawDnisArray = rawQueues[index].dnis;
-        if(rawDnisArray) {
+        if(rawQueue.dnis) {
             // update the dnis array to just be a list
             queue.dnis = rawQueue.dnis.map(function(d) {
                 return d['#text'];
