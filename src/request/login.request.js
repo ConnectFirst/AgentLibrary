@@ -212,7 +212,7 @@ LoginRequest.prototype.processResponse = function(response) {
             // Set collection values
             processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
-            processChatQueueDnis(model.chatSettings, response);
+            //processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
             model.inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
