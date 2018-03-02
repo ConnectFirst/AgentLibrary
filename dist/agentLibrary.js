@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-03-01 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-03-02 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2608,6 +2608,7 @@ LoginRequest.prototype.processResponse = function(response) {
             // Set collection values
             processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
+            processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
             model.inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
@@ -2651,7 +2652,7 @@ LoginRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-processCampaigns = function(response){
+function processCampaigns(response){
     var campaigns = [];
     var campaign = {};
     var campaignsRaw = [];
@@ -2727,8 +2728,55 @@ processCampaigns = function(response){
     }
 
     UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
-};
+}
 
+/**
+ * example packet
+ *  {
+ *      "chat_queue":[
+ *          {
+ *              "@chat_queue_desc":"",
+ *              "@chat_queue_id":"74",
+ *              "@chat_queue_name":"Please don't delete"
+ *          },
+ *          {
+ *              "@chat_queue_desc":"blah",
+ *              "@chat_queue_id":"131",
+ *              "@chat_queue_name":"cris chat queue",
+ *              "dnis":[
+ *                  {"#text":"5555551215"},
+ *                  {"#text":"5555554444"},
+ *                  {"#text":"8885551212"},
+ *                  {"#text":"97687"}
+ *              ]
+ *          }
+ *      ]
+ *   }
+ *
+ *
+ *      This function will format the dnis list and put them back on chatSettings.availableChatQueues
+ **/
+function processChatQueueDnis(chatSettings, response) {
+    var queues = chatSettings.availableChatQueues;
+    var rawQueues = response.ui_response.login_chat_queues.chat_queue;
+
+    var rawDnisArray = [];
+
+    queues.forEach(function(queue, index) {
+        var rawQueue = rawQueues.find(function(rq) {
+            return rq['@chat_queue_id'] === queue.chatQueueId;
+        });
+
+        rawDnisArray = rawQueues[index].dnis;
+        if(rawDnisArray) {
+            // update the dnis array to just be a list
+            queue.dnis = rawQueue.dnis.map(function(d) {
+                return d['#text'];
+            });
+        }
+    });
+
+}
 
 var LogoutRequest = function(agentId, message, isSupervisor) {
     this.agentId = agentId;
@@ -6270,6 +6318,22 @@ var utils = {
                             // dealing with empty property
                             item[formattedKey] = "";
                         }else {
+                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1){
+                                console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
+                                var newIt = [];
+                                newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
+                                if(formattedKey.substr(formattedKey.length - 1) !== 's') {
+                                    item[formattedKey + 's'] = newIt;
+                                }else{
+                                    item[formattedKey] = newIt;
+                                }
+                            }else{
+                                var newItemProp = Object.keys(itemsRaw[i][key])[0];
+                                var newItems = [];
+                                newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
+                                item[formattedKey] = newItems;
+                            }
+
                             // make recursive call
                             var newItemProp = Object.keys(itemsRaw[i][key])[0];
                             var newItems = [];
