@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-03-02 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-03-05 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -6315,27 +6315,21 @@ var utils = {
                             // dealing with empty property
                             item[formattedKey] = "";
                         }else {
-                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1){
+                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1) {
                                 console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
                                 var newIt = [];
                                 newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
                                 if(formattedKey.substr(formattedKey.length - 1) !== 's') {
                                     item[formattedKey + 's'] = newIt;
-                                }else{
+                                } else {
                                     item[formattedKey] = newIt;
                                 }
-                            }else{
+                            } else {
                                 var newItemProp = Object.keys(itemsRaw[i][key])[0];
                                 var newItems = [];
                                 newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
                                 item[formattedKey] = newItems;
                             }
-
-                            // make recursive call
-                            var newItemProp = Object.keys(itemsRaw[i][key])[0];
-                            var newItems = [];
-                            newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
-                            item[formattedKey] = newItems;
                         }
                     }else{
                         // can't convert 0 | 1 to boolean since some are counters
