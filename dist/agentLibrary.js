@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-03-05 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-03-07 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2766,6 +2766,10 @@ function processChatQueueDnis(chatSettings, response) {
         });
 
         if(rawQueue.dnis) {
+            if(Array.isArray(rawQueue.dnis)) {
+                rawQueue.dnis = [rawQueue.dnis];
+            }
+
             // update the dnis array to just be a list
             queue.dnis = rawQueue.dnis.map(function(d) {
                 return d['#text'];

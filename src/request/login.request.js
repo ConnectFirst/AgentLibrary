@@ -370,6 +370,10 @@ function processChatQueueDnis(chatSettings, response) {
         });
 
         if(rawQueue.dnis) {
+            if(Array.isArray(rawQueue.dnis)) {
+                rawQueue.dnis = [rawQueue.dnis];
+            }
+
             // update the dnis array to just be a list
             queue.dnis = rawQueue.dnis.map(function(d) {
                 return d['#text'];
