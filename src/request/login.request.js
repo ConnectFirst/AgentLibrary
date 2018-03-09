@@ -370,7 +370,7 @@ function processChatQueueDnis(chatSettings, response) {
         });
 
         if(rawQueue.dnis) {
-            if(Array.isArray(rawQueue.dnis)) {
+            if(!Array.isArray(rawQueue.dnis)) {
                 rawQueue.dnis = [rawQueue.dnis];
             }
 
