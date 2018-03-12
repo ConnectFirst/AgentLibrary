@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-02-28 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-03-09 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4018,7 +4018,8 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
         whisper: utils.getText(resp, 'whisper'),
-        dts: dtsDate
+        dts: dtsDate,
+        mediaLinks :  utils.processResponseCollection(resp, "media_links", "link")
     };
 
     utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);
