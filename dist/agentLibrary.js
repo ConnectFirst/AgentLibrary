@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-03-09 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-03-12 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4823,6 +4823,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
     newChat.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'chat_requeue_shortcuts', 'shortcut')[0];
     newChat.chatDispositions = utils.processResponseCollection(notification, 'ui_notification', 'chat_dispositions', 'disposition')[0];
     newChat.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript', 'message')[0];
+    newChat.baggage = utils.processResponseCollection(notification, 'ui_notification', 'json_baggage')[0];
 
     if(newChat.chatDispositions && newChat.chatDispositions.disposition){
         newChat.chatDispositions.dispositions = [newChat.chatDispositions]
