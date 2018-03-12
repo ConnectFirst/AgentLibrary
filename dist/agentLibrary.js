@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/*! cf-agent-library - v2.0.0 - 2018-02-27 - Connect First */
-=======
-/*! cf-agent-library - v2.0.0 - 2018-03-09 - Connect First */
->>>>>>> develop
+/*! cf-agent-library - v2.0.0 - 2018-03-12 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1306,7 +1302,7 @@ CampaignDispositionsRequest.prototype.processResponse = function(response) {
 
 
 var ChatStateRequest = function(chatState) {
-    this.chatState = chatState.toUpperCase() || "";
+    this.chatState = (chatState && chatState.toUpperCase()) || "";
 };
 
 ChatStateRequest.prototype.formatJSON = function() {
@@ -5949,6 +5945,11 @@ var utils = {
                 var chatListResponse = chatList.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_LIST, chatListResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_STATE:
+                var chatState = new ChatStateRequest();
+                var chatStateResponse = chatState.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STATE, chatStateResponse);
+                break;
         }
     },
 
@@ -6714,11 +6715,8 @@ const CALLBACK_TYPES = {
     "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_LIST":"chatListResponse",                 // external chat
-<<<<<<< HEAD
-    "CHAT_STATE":"chatStateResponse",               // external chat
-=======
     "CHAT_CLIENT_RECONNECT" : "chatClientReconnectNotification",
->>>>>>> develop
+    "CHAT_STATE":"chatStateResponse",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
