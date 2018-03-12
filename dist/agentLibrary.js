@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*! cf-agent-library - v2.0.0 - 2018-02-27 - Connect First */
+=======
+/*! cf-agent-library - v2.0.0 - 2018-03-09 - Connect First */
+>>>>>>> develop
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -437,6 +441,7 @@ var NewCallNotification = function() {
  *      "survey_pop_type":{"#text":"SUPPRESS"},
  *      "message":{},
  *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
+ *      "hangup_on_disposition":{"#text":"FALSE"},
  *      "gate":{
  *          "@number":"17038",
  *          "name":{"#text":"AM Campaign"},
@@ -535,7 +540,8 @@ NewCallNotification.prototype.processResponse = function(notification) {
         scriptVersion: utils.getText(notif,'script_version'),
         surveyId: utils.getText(notif,'survey_id'),
         surveyPopType: utils.getText(notif,'survey_pop_type'),
-        requeueType: utils.getText(notif,'requeue_type')
+        requeueType: utils.getText(notif,'requeue_type'),
+        hangupOnDisposition: utils.getText(notif,'hangup_on_disposition')
     };
 
     // set collection values
@@ -4089,7 +4095,8 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
         whisper: utils.getText(resp, 'whisper'),
-        dts: dtsDate
+        dts: dtsDate,
+        mediaLinks :  utils.processResponseCollection(resp, "media_links", "link")
     };
 
     utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);
@@ -4588,6 +4595,39 @@ SupervisorListRequest.prototype.processResponse = function(response) {
     model.supervisors = supervisors;
 
     return model.supervisors;
+};
+
+var ChatClientReconnectNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-CLIENT-RECONNECT" packets from IntelliQueue.
+ * This is sent when a chat connect message is sent to a non-archieved chat.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-CLIENT-RECONNECT",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "account_id":{"#text":"99999999"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+
+ChatClientReconnectNotification.prototype.processResponse = function(notification){
+    var notif = notification.ui_notification;
+
+    return {
+        message : "Received CHAT-CLIENT-RECONNECT notification",
+        status : "OK",
+        accountId : utils.getText(notif, "account_id"),
+        uii : utils.getText(notif, "uii")
+    };
+
 };
 
 var ChatActiveNotification = function() {
@@ -5486,6 +5526,7 @@ var UIModel = (function() {
             chatTypingNotification : new ChatTypingNotification(),
             chatTypingRequest : null,
             newChatNotification : new NewChatNotification(),
+            chatClientReconnectNotification : new ChatClientReconnectNotification(),
 
             // request instances
             agentStateRequest : null,
@@ -6022,6 +6063,11 @@ var utils = {
                 var inactiveNotif = new ChatInactiveNotification();
                 var inactiveResponse = inactiveNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_CLIENT_RECONNECT :
+                var reconnectNotif = new ChatClientReconnectNotification();
+                var reconnectResponse = reconnectNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CLIENT_RECONNECT, reconnectResponse);
                 break;
             case MESSAGE_TYPES.CHAT_PRESENTED:
                 var presentedNotif = new ChatPresentedNotification();
@@ -6668,7 +6714,11 @@ const CALLBACK_TYPES = {
     "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_LIST":"chatListResponse",                 // external chat
+<<<<<<< HEAD
     "CHAT_STATE":"chatStateResponse",               // external chat
+=======
+    "CHAT_CLIENT_RECONNECT" : "chatClientReconnectNotification",
+>>>>>>> develop
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -6740,6 +6790,7 @@ const MESSAGE_TYPES = {
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat
+    "CHAT_CLIENT_RECONNECT" : "CHAT-CLIENT-RECONNECT",      // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -7411,6 +7462,15 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getChatInactiveNotification = function() {
         return UIModel.getInstance().chatInactiveNotification;
+    };
+    /**
+     * Get Chat Inactive notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatClientReconnectNotification = function(){
+        return UIModel.getInstance().chatClientReconnectNotification;
+
     };
     /**
      * Get Chat Presented notification class

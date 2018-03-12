@@ -78,6 +78,10 @@ article dl {
     margin-bottom: 40px;
 }
 
+article img {
+  max-width: 100%;
+}
+
 section
 {
     display: block;
@@ -185,8 +189,39 @@ h6
     font-style: italic;
 }
 
+<<<<<<< HEAD
 .ancestors { color: #999; }
 .ancestors a
+=======
+table
+{
+    border-spacing: 0;
+    border: 0;
+    border-collapse: collapse;
+}
+
+td, th
+{
+    border: 1px solid #ddd;
+    margin: 0px;
+    text-align: left;
+    vertical-align: top;
+    padding: 4px 6px;
+    display: table-cell;
+}
+
+thead tr
+{
+    background-color: #ddd;
+    font-weight: bold;
+}
+
+th { border-right: 1px solid #aaa; }
+tr > th:last-child { border-right: 1px solid #ddd; }
+
+.ancestors, .attribs { color: #999; }
+.ancestors a, .attribs a
+>>>>>>> develop
 {
     color: #999 !important;
     text-decoration: none;

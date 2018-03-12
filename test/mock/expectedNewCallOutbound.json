@@ -17,6 +17,7 @@
   "scriptVersion": "",
   "surveyId": "",
   "surveyPopType": "SUPPRESS",
+  "hangupOnDisposition": "",
   "requeueType": "",
   "queue": {
     "number": "1",
