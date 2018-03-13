@@ -1301,6 +1301,79 @@ CampaignDispositionsRequest.prototype.processResponse = function(response) {
 };
 
 
+var ChatStateRequest = function(chatState) {
+    this.chatState = (chatState && chatState.toUpperCase()) || "";
+};
+
+ChatStateRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_STATE,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "state":{
+                "#text":this.chatState
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes CHAT-STATE packets rec'd from IQ. It will check the state of the
+ * packet and then set the state on the model.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082817165103294",
+ *      "@type":"AGENT-STATE",
+ *      "status":{"#text":"OK"},
+ *      "message":{},
+ *      "detail":{},
+ *      "agent_id":{"#text":"1856"},
+ *      "prev_state":{"#text":"CHAT-PRESENTED"},
+ *      "current_state":{"#text":"CHAT-ENGAGED"}
+ *   }
+ * }
+ */
+ChatStateRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var status = utils.getText(resp, "status");
+    var prevState = utils.getText(resp, "prev_state");
+    var currState = utils.getText(resp, "current_state");
+    var model = UIModel.getInstance();
+
+    // add message and detail if present
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    formattedResponse.agentId = response.ui_response.agent_id['#text'] || "";
+    formattedResponse.previousState = prevState;
+    formattedResponse.currentState = currState;
+
+    if(status=="OK"){
+        // Update the state in the UIModel
+        model.agentSettings.currentChatState = currState;
+        model.chatStatePacket = response;
+    }else{
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Unable to change chat state";
+        }
+
+        // log message response
+        var message = "Unable to change chat state. " + formattedResponse.detail;
+        utils.logMessage(LOG_LEVELS.WARN, message, response);
+    }
+
+    return formattedResponse;
+};
+
+
+
+
 var XferColdRequest = function(dialDest, callerId, sipHeaders) {
     this.dialDest = dialDest;
     this.callerId = callerId || "";
@@ -5454,6 +5527,7 @@ var UIModel = (function() {
 
             // request instances
             agentStateRequest : null,
+            chatStateRequest : null,
             ackRequest : new AckRequest(),
             bargeInRequest : null,
             callNotesRequest : null,
@@ -5489,6 +5563,7 @@ var UIModel = (function() {
 
             // response packets
             agentStatePacket : null,
+            chatStatePacket : null,
             configPacket : null,
             currentCallPacket : null,
             loginPacket : null,
@@ -5870,6 +5945,11 @@ var utils = {
                 var chatList = new ChatListRequest();
                 var chatListResponse = chatList.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_LIST, chatListResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_STATE:
+                var chatState = new ChatStateRequest();
+                var chatStateResponse = chatState.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STATE, chatStateResponse);
                 break;
         }
     },
@@ -6637,6 +6717,7 @@ const CALLBACK_TYPES = {
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_LIST":"chatListResponse",                 // external chat
     "CHAT_CLIENT_RECONNECT" : "chatClientReconnectNotification",
+    "CHAT_STATE":"chatStateResponse",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -6702,6 +6783,7 @@ const MESSAGE_TYPES = {
     "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
     "CHAT_PRESENTED_RESPONSE":"CHAT-PRESENTED-RESPONSE",    // external chat
     "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
+    "CHAT_STATE":"CHAT-STATE",                              // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
@@ -7757,6 +7839,21 @@ function initAgentLibraryAgent (context) {
         var msg = UIModel.getInstance().agentStateRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.AGENT_STATE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends chat state change message to IntelliQueue
+     * @memberof AgentLibrary.Agent
+     * @param {string} chatState The base chat state <br />
+     * CHAT-AVAILABLE | CHAT-PRESENTED | CHAT-ENGAGED | CHAT-RNA
+     * @param {function} [callback=null] Callback function when chatState response received
+     */
+    AgentLibrary.prototype.setChatState = function(chatState, callback){
+        UIModel.getInstance().chatStateRequest = new ChatStateRequest(chatState);
+        var msg = UIModel.getInstance().chatStateRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CHAT_STATE, callback);
         utils.sendMessage(this, msg);
     };
 
