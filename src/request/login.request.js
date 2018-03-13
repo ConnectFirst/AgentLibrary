@@ -369,7 +369,6 @@ function processChatQueueDnis(chatSettings, response) {
     }
 
     queues.forEach(function(queue) {
-        console.log(rawQueues, rawQueues.find);
         var rawQueue = {};
         for (var rq in rawQueues) {
             if(rq['@chat_queue_id'] === queue.chatQueueId) {
