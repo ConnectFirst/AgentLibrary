@@ -368,9 +368,12 @@ function processChatQueueDnis(chatSettings, response) {
         rawQueues = [rawQueues];
     }
 
-    queues.forEach(function(queue) {
+    for(var i = 0; i < queues.length; i++) {
+        var queue = queues[i];
+
         var rawQueue = {};
-        for (var rq in rawQueues) {
+        for (var j = 0; j < rawQueues.length; j++) {
+            var rq = rawQueues[j];
             if(rq['@chat_queue_id'] === queue.chatQueueId) {
                 rawQueue = rq;
                 break;
@@ -387,6 +390,6 @@ function processChatQueueDnis(chatSettings, response) {
                 return d['#text'];
             });
         }
-    });
+    }
 
 }

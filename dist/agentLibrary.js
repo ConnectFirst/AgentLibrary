@@ -2837,9 +2837,12 @@ function processChatQueueDnis(chatSettings, response) {
         rawQueues = [rawQueues];
     }
 
-    queues.forEach(function(queue) {
+    for(var i = 0; i < queues.length; i++) {
+        var queue = queues[i];
+
         var rawQueue = {};
-        for (var rq in rawQueues) {
+        for (var j = 0; j < rawQueues.length; j++) {
+            var rq = rawQueues[j];
             if(rq['@chat_queue_id'] === queue.chatQueueId) {
                 rawQueue = rq;
                 break;
@@ -2856,7 +2859,7 @@ function processChatQueueDnis(chatSettings, response) {
                 return d['#text'];
             });
         }
-    });
+    }
 
 }
 
@@ -7958,21 +7961,6 @@ function initAgentLibraryAgent (context) {
     };
 
     /**
-     * Sends chat state change message to IntelliQueue
-     * @memberof AgentLibrary.Agent
-     * @param {string} chatState The base chat state <br />
-     * CHAT-AVAILABLE | CHAT-PRESENTED | CHAT-ENGAGED | CHAT-RNA
-     * @param {function} [callback=null] Callback function when chatState response received
-     */
-    AgentLibrary.prototype.setChatState = function(chatState, callback){
-        UIModel.getInstance().chatStateRequest = new ChatStateRequest(chatState);
-        var msg = UIModel.getInstance().chatStateRequest.formatJSON();
-
-        utils.setCallback(this, CALLBACK_TYPES.CHAT_STATE, callback);
-        utils.sendMessage(this, msg);
-    };
-
-    /**
      * Initiates an agent offhook session
      * @memberof AgentLibrary.Agent
      * @param {function} [callback=null] Callback function when offhookInit response received
@@ -8697,6 +8685,21 @@ function initAgentLibraryChat (context) {
     AgentLibrary.prototype.chatAgentEnd = function(agentId, uii){
         UIModel.getInstance().chatAgentEnd = new ChatAgentEndRequest(agentId, uii);
         var msg = UIModel.getInstance().chatAgentEnd.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends chat state change message to IntelliQueue
+     * @memberof AgentLibrary.Agent
+     * @param {string} chatState The base chat state <br />
+     * CHAT-AVAILABLE | CHAT-PRESENTED | CHAT-ENGAGED | CHAT-RNA
+     * @param {function} [callback=null] Callback function when chatState response received
+     */
+    AgentLibrary.prototype.setChatState = function(chatState, callback){
+        UIModel.getInstance().chatStateRequest = new ChatStateRequest(chatState);
+        var msg = UIModel.getInstance().chatStateRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CHAT_STATE, callback);
         utils.sendMessage(this, msg);
     };
 
