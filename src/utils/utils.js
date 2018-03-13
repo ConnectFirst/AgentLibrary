@@ -203,6 +203,11 @@ var utils = {
                 var chatListResponse = chatList.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_LIST, chatListResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_STATE:
+                var chatState = new ChatStateRequest();
+                var chatStateResponse = chatState.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STATE, chatStateResponse);
+                break;
         }
     },
 

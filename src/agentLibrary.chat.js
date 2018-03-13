@@ -213,6 +213,21 @@ function initAgentLibraryChat (context) {
     };
 
     /**
+     * Sends chat state change message to IntelliQueue
+     * @memberof AgentLibrary.Agent
+     * @param {string} chatState The base chat state <br />
+     * CHAT-AVAILABLE | CHAT-PRESENTED | CHAT-ENGAGED | CHAT-RNA
+     * @param {function} [callback=null] Callback function when chatState response received
+     */
+    AgentLibrary.prototype.setChatState = function(chatState, callback){
+        UIModel.getInstance().chatStateRequest = new ChatStateRequest(chatState);
+        var msg = UIModel.getInstance().chatStateRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CHAT_STATE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * initialize a chat session by sending a manual outbound sms
      * @memberof AgentLibrary.Chat
      * @param {string} agentId Current logged in agent id
