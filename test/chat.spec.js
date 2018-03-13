@@ -248,7 +248,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             uii: "201608161200240139000000000120",
             channelType: "SMS",
             chatQueueId: "2",
-            chatQueueName: "Support Queue"
+            chatQueueName: "Support Queue",
+            allowAccept: true
 
         };
 
@@ -281,7 +282,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         Lib.chatList(17,18);
 
         var msg = Lib.getChatListRequest().processResponse(this.chatListResponseRaw);
-        
+
         expect(Number(msg.agentId)).toBe(17);
         expect(msg.chatList[0].uii).toBe("333");
     });

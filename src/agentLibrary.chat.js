@@ -226,5 +226,21 @@ function initAgentLibraryChat (context) {
         utils.setCallback(this, CALLBACK_TYPES.CHAT_STATE, callback);
         utils.sendMessage(this, msg);
     };
+
+    /**
+     * initialize a chat session by sending a manual outbound sms
+     * @memberof AgentLibrary.Chat
+     * @param {string} agentId Current logged in agent id
+     * @param {number} chatQueueId Id of the Chat Queue to send this sms through
+     * @param {number} ani to receive the sms
+     * @param {number} dnis to be used for the sms
+     * @param {string} message content
+     */
+
+    AgentLibrary.prototype.sendManualOutboundSms = function(agentId, chatQueueId, ani, dnis, message){
+        UIModel.getInstance().chatManualSms = new ChatManualSmsRequest(agentId, chatQueueId, ani, dnis, message);
+        var msg = UIModel.getInstance().chatManualSms.formatJSON();
+        utils.sendMessage(this, msg);
+    };
 }
 

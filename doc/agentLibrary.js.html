@@ -26,7 +26,7 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v2.0.0 - 2018-03-12 - Connect First */
+            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v2.0.0 - 2018-03-13 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author &lt;a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books &lt;/a>
@@ -2709,6 +2709,7 @@ LoginRequest.prototype.processResponse = function(response) {
             // Set collection values
             processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
+            processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
             model.inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
@@ -2752,7 +2753,7 @@ LoginRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-processCampaigns = function(response){
+function processCampaigns(response){
     var campaigns = [];
     var campaign = {};
     var campaignsRaw = [];
@@ -2828,7 +2829,67 @@ processCampaigns = function(response){
     }
 
     UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
-};
+}
+
+/**
+ * example packet
+ *  {
+ *      "chat_queue":[
+ *          {
+ *              "@chat_queue_desc":"",
+ *              "@chat_queue_id":"74",
+ *              "@chat_queue_name":"Please don't delete"
+ *          },
+ *          {
+ *              "@chat_queue_desc":"blah",
+ *              "@chat_queue_id":"131",
+ *              "@chat_queue_name":"cris chat queue",
+ *              "dnis":[
+ *                  {"#text":"5555551215"},
+ *                  {"#text":"5555554444"},
+ *                  {"#text":"8885551212"},
+ *                  {"#text":"97687"}
+ *              ]
+ *          }
+ *      ]
+ *   }
+ *
+ *
+ *      This function will format the dnis list and put them back on chatSettings.availableChatQueues
+ **/
+function processChatQueueDnis(chatSettings, response) {
+    var queues = chatSettings.availableChatQueues;
+    var rawQueues = response.ui_response.login_chat_queues.chat_queue;
+
+    if(!Array.isArray(rawQueues)) {
+        rawQueues = [rawQueues];
+    }
+
+    for(var i = 0; i &lt; queues.length; i++) {
+        var queue = queues[i];
+
+        var rawQueue = {};
+        for (var j = 0; j &lt; rawQueues.length; j++) {
+            var rq = rawQueues[j];
+            if(rq['@chat_queue_id'] === queue.chatQueueId) {
+                rawQueue = rq;
+                break;
+            }
+        }
+
+        if(rawQueue.dnis) {
+            if(!Array.isArray(rawQueue.dnis)) {
+                rawQueue.dnis = [rawQueue.dnis];
+            }
+
+            // update the dnis array to just be a list
+            queue.dnis = rawQueue.dnis.map(function(d) {
+                return d['#text'];
+            });
+        }
+    }
+
+}
 
 
 var LogoutRequest = function(agentId, message, isSupervisor) {
@@ -4504,6 +4565,60 @@ LeaveChatRequest.prototype.formatJSON = function() {
 
 
 
+var ChatManualSmsRequest = function(agentId, chatQueueId, ani, dnis, message) {
+    this.agentId = agentId;
+    this.chatQueueId = chatQueueId;
+    this.ani = ani;
+    this.dnis = dnis;
+    this.message = message;
+};
+
+/*
+ * External Chat:
+ * When agent submits a manual sms message, send "MANUAL-SMS" request to IntelliQueue
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"MANUAL-SMS",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "agent_id":{"#text":"1995"},
+ *      "chatQueueId":{"#text":"44"},
+ *      "ani":{"#text":"1231231234"},
+ *      "dnis":{"#text":"5435435432"},
+ *      "message":{"#text":"hello"}
+ *    }
+ * }
+ */
+ChatManualSmsRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_MANUAL_SMS,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(this.agentId)
+            },
+            "chat_queue_id":{
+                "#text":utils.toString(this.chatQueueId)
+            },
+            "ani":{
+                "#text":utils.toString(this.ani)
+            },
+            "dnis":{
+                "#text":utils.toString(this.dnis)
+            },
+            "message":{
+                "#text":utils.toString(this.message)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
 
 var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
     this.uii = uii;
@@ -4775,7 +4890,8 @@ var ChatPresentedNotification = function() {
  *          "chat_queue_name":{"#text":"Support Chat"},
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "channel_type":{"#text":""}
+ *          "channel_type":{"#text":""},
+ *          "allow_accept":{"#text":"TRUE|FALSE"}
  *      }
  *  }
  */
@@ -4790,7 +4906,8 @@ ChatPresentedNotification.prototype.processResponse = function(notification) {
         uii: utils.getText(notif, "uii"),
         channelType: utils.getText(notif, "channel_type"),
         chatQueueId: utils.getText(notif, "chat_queue_id"),
-        chatQueueName: utils.getText(notif, "chat_queue_name")
+        chatQueueName: utils.getText(notif, "chat_queue_name"),
+        allowAccept: utils.getText(notif, "allow_accept")
     };
 
 };
@@ -6364,16 +6481,16 @@ var utils = {
                             // dealing with empty property
                             item[formattedKey] = "";
                         }else {
-                            // make recursive call
-                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1){
+                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1) {
+                                //console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
                                 var newIt = [];
                                 newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
                                 if(formattedKey.substr(formattedKey.length - 1) !== 's') {
                                     item[formattedKey + 's'] = newIt;
-                                }else{
+                                } else {
                                     item[formattedKey] = newIt;
                                 }
-                            }else{
+                            } else {
                                 var newItemProp = Object.keys(itemsRaw[i][key])[0];
                                 var newItems = [];
                                 newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
@@ -6818,6 +6935,7 @@ const MESSAGE_TYPES = {
     "CHAT_LIST":"CHAT-LIST",                                // external chat
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat
     "CHAT_CLIENT_RECONNECT" : "CHAT-CLIENT-RECONNECT",      // external chat
+    "CHAT_MANUAL_SMS": "MANUAL-SMS",                        // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -7871,21 +7989,6 @@ function initAgentLibraryAgent (context) {
     };
 
     /**
-     * Sends chat state change message to IntelliQueue
-     * @memberof AgentLibrary.Agent
-     * @param {string} chatState The base chat state &lt;br />
-     * CHAT-AVAILABLE | CHAT-PRESENTED | CHAT-ENGAGED | CHAT-RNA
-     * @param {function} [callback=null] Callback function when chatState response received
-     */
-    AgentLibrary.prototype.setChatState = function(chatState, callback){
-        UIModel.getInstance().chatStateRequest = new ChatStateRequest(chatState);
-        var msg = UIModel.getInstance().chatStateRequest.formatJSON();
-
-        utils.setCallback(this, CALLBACK_TYPES.CHAT_STATE, callback);
-        utils.sendMessage(this, msg);
-    };
-
-    /**
      * Initiates an agent offhook session
      * @memberof AgentLibrary.Agent
      * @param {function} [callback=null] Callback function when offhookInit response received
@@ -8612,6 +8715,37 @@ function initAgentLibraryChat (context) {
         var msg = UIModel.getInstance().chatAgentEnd.formatJSON();
         utils.sendMessage(this, msg);
     };
+
+    /**
+     * Sends chat state change message to IntelliQueue
+     * @memberof AgentLibrary.Agent
+     * @param {string} chatState The base chat state &lt;br />
+     * CHAT-AVAILABLE | CHAT-PRESENTED | CHAT-ENGAGED | CHAT-RNA
+     * @param {function} [callback=null] Callback function when chatState response received
+     */
+    AgentLibrary.prototype.setChatState = function(chatState, callback){
+        UIModel.getInstance().chatStateRequest = new ChatStateRequest(chatState);
+        var msg = UIModel.getInstance().chatStateRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CHAT_STATE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * initialize a chat session by sending a manual outbound sms
+     * @memberof AgentLibrary.Chat
+     * @param {string} agentId Current logged in agent id
+     * @param {number} chatQueueId Id of the Chat Queue to send this sms through
+     * @param {number} ani to receive the sms
+     * @param {number} dnis to be used for the sms
+     * @param {string} message content
+     */
+
+    AgentLibrary.prototype.sendManualOutboundSms = function(agentId, chatQueueId, ani, dnis, message){
+        UIModel.getInstance().chatManualSms = new ChatManualSmsRequest(agentId, chatQueueId, ani, dnis, message);
+        var msg = UIModel.getInstance().chatManualSms.formatJSON();
+        utils.sendMessage(this, msg);
+    };
 }
 
 
@@ -8924,7 +9058,7 @@ if (typeof define === 'function' &amp;&amp; define.amd) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Mar 12 2018 15:56:13 GMT-0600 (MDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Tue Mar 13 2018 16:35:53 GMT-0600 (MDT)
 </footer>
 
 <script> prettyPrint(); </script>
