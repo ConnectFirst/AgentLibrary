@@ -1,6 +1,6 @@
 
 var ChatStateRequest = function(chatState) {
-    this.chatState = chatState.toUpperCase() || "";
+    this.chatState = (chatState && chatState.toUpperCase()) || "";
 };
 
 ChatStateRequest.prototype.formatJSON = function() {
