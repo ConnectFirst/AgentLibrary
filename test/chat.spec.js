@@ -24,6 +24,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         this.newChatNotificationRaw = fixture.load('chat/newChatNotificationRaw.json');
         this.chatMessageNotificationRaw = fixture.load('chat/chatMessageNotificationRaw.json');
         this.chatListResponseRaw = fixture.load('chat/chatListResponseRaw.json');
+        this.chatClientReconnectNotificationRaw = fixture.load('chat/chatClientReconnectNotificationRaw.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -299,7 +300,28 @@ describe( 'Tests for Agent Library chat methods', function() {
             type: "AGENT",
             message: "Hello. How can I help you?",
             whisper: true,
-            dts: new Date("2017-05-10T12:40:28")
+            dts: new Date("2017-05-10T12:40:28"),
+            mediaLinks : [ { text : 'https://d01-mms-files.s3.amazonaws.com/99999999/088f5c25-055a-4eb4-b25c-75f03ec59f8d.jpg' } ]
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
+    it('should process a client-chat-reconnect notification message', function(){
+        var Lib = new AgentLibrary();
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // process chat client reconnect
+        var chatClientReconnectNotificationRaw = JSON.parse(JSON.stringify(this.chatClientReconnectNotificationRaw));
+        var response = Lib.getChatClientReconnectNotification().processResponse(chatClientReconnectNotificationRaw);
+
+
+        var expectedResponse = {
+            message : 'Received CHAT-CLIENT-RECONNECT notification',
+            status : 'OK',
+            uii: "201608161200240139000000000120",
+            accountId: "99999999"
         };
 
         expect(response).toEqual(expectedResponse);
