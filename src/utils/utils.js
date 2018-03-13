@@ -584,7 +584,7 @@ var utils = {
                             item[formattedKey] = "";
                         }else {
                             if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1) {
-                                console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
+                                //console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
                                 var newIt = [];
                                 newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
                                 if(formattedKey.substr(formattedKey.length - 1) !== 's') {

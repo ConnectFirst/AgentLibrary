@@ -19,7 +19,8 @@ var ChatPresentedNotification = function() {
  *          "chat_queue_name":{"#text":"Support Chat"},
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "channel_type":{"#text":""}
+ *          "channel_type":{"#text":""},
+ *          "allow_accept":{"#text":"TRUE|FALSE"}
  *      }
  *  }
  */

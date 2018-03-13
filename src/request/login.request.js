@@ -364,10 +364,19 @@ function processChatQueueDnis(chatSettings, response) {
     var queues = chatSettings.availableChatQueues;
     var rawQueues = response.ui_response.login_chat_queues.chat_queue;
 
+    if(!Array.isArray(rawQueues)) {
+        rawQueues = [rawQueues];
+    }
+
     queues.forEach(function(queue) {
-        var rawQueue = rawQueues.find(function(rq) {
-            return rq['@chat_queue_id'] === queue.chatQueueId;
-        });
+        console.log(rawQueues, rawQueues.find);
+        var rawQueue = {};
+        for (var rq in rawQueues) {
+            if(rq['@chat_queue_id'] === queue.chatQueueId) {
+                rawQueue = rq;
+                break;
+            }
+        }
 
         if(rawQueue.dnis) {
             if(!Array.isArray(rawQueue.dnis)) {

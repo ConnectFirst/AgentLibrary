@@ -217,8 +217,8 @@ function initAgentLibraryChat (context) {
      * @memberof AgentLibrary.Chat
      * @param {string} agentId Current logged in agent id
      * @param {number} chatQueueId Id of the Chat Queue to send this sms through
-     * @param {number} ani to be used as the caller id
-     * @param {number} [callerId=""] Caller Id for sender (DNIS)
+     * @param {number} ani to receive the sms
+     * @param {number} dnis to be used for the sms
      * @param {string} message content
      */
 

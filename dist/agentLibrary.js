@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-03-09 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-03-13 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -2760,10 +2760,19 @@ function processChatQueueDnis(chatSettings, response) {
     var queues = chatSettings.availableChatQueues;
     var rawQueues = response.ui_response.login_chat_queues.chat_queue;
 
+    if(!Array.isArray(rawQueues)) {
+        rawQueues = [rawQueues];
+    }
+
     queues.forEach(function(queue) {
-        var rawQueue = rawQueues.find(function(rq) {
-            return rq['@chat_queue_id'] === queue.chatQueueId;
-        });
+        console.log(rawQueues, rawQueues.find);
+        var rawQueue = {};
+        for (var rq in rawQueues) {
+            if(rq['@chat_queue_id'] === queue.chatQueueId) {
+                rawQueue = rq;
+                break;
+            }
+        }
 
         if(rawQueue.dnis) {
             if(!Array.isArray(rawQueue.dnis)) {
@@ -4744,7 +4753,8 @@ var ChatPresentedNotification = function() {
  *          "chat_queue_name":{"#text":"Support Chat"},
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "channel_type":{"#text":""}
+ *          "channel_type":{"#text":""},
+ *          "allow_accept":{"#text":"TRUE|FALSE"}
  *      }
  *  }
  */
@@ -6321,7 +6331,7 @@ var utils = {
                             item[formattedKey] = "";
                         }else {
                             if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1) {
-                                console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
+                                //console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
                                 var newIt = [];
                                 newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
                                 if(formattedKey.substr(formattedKey.length - 1) !== 's') {
@@ -8547,8 +8557,8 @@ function initAgentLibraryChat (context) {
      * @memberof AgentLibrary.Chat
      * @param {string} agentId Current logged in agent id
      * @param {number} chatQueueId Id of the Chat Queue to send this sms through
-     * @param {number} ani to be used as the caller id
-     * @param {number} [callerId=""] Caller Id for sender (DNIS)
+     * @param {number} ani to receive the sms
+     * @param {number} dnis to be used for the sms
      * @param {string} message content
      */
 
