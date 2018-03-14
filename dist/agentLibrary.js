@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-03-13 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-03-14 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -6055,7 +6055,7 @@ var utils = {
                 var ack = UIModel.getInstance().ackRequest.processResponse(response);
                 var responseTo = response.ui_response['@response_to'];
                 var request = utils.findRequestById(instance, responseTo);
-                ack.uii = request.msg.uii["#text"];
+                ack.uii = request.msg.uii && request.msg.uii["#text"];
                 utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
             case MESSAGE_TYPES.CHAT_LIST:
