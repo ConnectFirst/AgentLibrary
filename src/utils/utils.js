@@ -195,7 +195,7 @@ var utils = {
                 var ack = UIModel.getInstance().ackRequest.processResponse(response);
                 var responseTo = response.ui_response['@response_to'];
                 var request = utils.findRequestById(instance, responseTo);
-                ack.uii = request.msg.uii["#text"];
+                ack.uii = request.msg.uii && request.msg.uii["#text"];
                 utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
             case MESSAGE_TYPES.CHAT_LIST:
