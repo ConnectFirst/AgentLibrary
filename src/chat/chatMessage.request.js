@@ -75,7 +75,8 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
         whisper: utils.getText(resp, 'whisper'),
-        dts: dtsDate
+        dts: dtsDate,
+        mediaLinks :  utils.processResponseCollection(resp, "media_links", "link")
     };
 
     utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);

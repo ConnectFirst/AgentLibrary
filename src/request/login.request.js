@@ -212,6 +212,7 @@ LoginRequest.prototype.processResponse = function(response) {
             // Set collection values
             processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
+            processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
             model.inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
@@ -255,7 +256,7 @@ LoginRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-processCampaigns = function(response){
+function processCampaigns(response){
     var campaigns = [];
     var campaign = {};
     var campaignsRaw = [];
@@ -331,4 +332,64 @@ processCampaigns = function(response){
     }
 
     UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
-};
+}
+
+/**
+ * example packet
+ *  {
+ *      "chat_queue":[
+ *          {
+ *              "@chat_queue_desc":"",
+ *              "@chat_queue_id":"74",
+ *              "@chat_queue_name":"Please don't delete"
+ *          },
+ *          {
+ *              "@chat_queue_desc":"blah",
+ *              "@chat_queue_id":"131",
+ *              "@chat_queue_name":"cris chat queue",
+ *              "dnis":[
+ *                  {"#text":"5555551215"},
+ *                  {"#text":"5555554444"},
+ *                  {"#text":"8885551212"},
+ *                  {"#text":"97687"}
+ *              ]
+ *          }
+ *      ]
+ *   }
+ *
+ *
+ *      This function will format the dnis list and put them back on chatSettings.availableChatQueues
+ **/
+function processChatQueueDnis(chatSettings, response) {
+    var queues = chatSettings.availableChatQueues;
+    var rawQueues = response.ui_response.login_chat_queues.chat_queue;
+
+    if(!Array.isArray(rawQueues)) {
+        rawQueues = [rawQueues];
+    }
+
+    for(var i = 0; i < queues.length; i++) {
+        var queue = queues[i];
+
+        var rawQueue = {};
+        for (var j = 0; j < rawQueues.length; j++) {
+            var rq = rawQueues[j];
+            if(rq['@chat_queue_id'] === queue.chatQueueId) {
+                rawQueue = rq;
+                break;
+            }
+        }
+
+        if(rawQueue.dnis) {
+            if(!Array.isArray(rawQueue.dnis)) {
+                rawQueue.dnis = [rawQueue.dnis];
+            }
+
+            // update the dnis array to just be a list
+            queue.dnis = rawQueue.dnis.map(function(d) {
+                return d['#text'];
+            });
+        }
+    }
+
+}

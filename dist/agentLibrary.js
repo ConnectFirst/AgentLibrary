@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*! cf-agent-library - v2.0.0 - 2018-02-07 - Connect First */
+=======
+/*! cf-agent-library - v2.0.0 - 2018-03-14 - Connect First */
+>>>>>>> develop
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -437,6 +441,7 @@ var NewCallNotification = function() {
  *      "survey_pop_type":{"#text":"SUPPRESS"},
  *      "message":{},
  *      "agent_recording":{"@default":"ON","@pause":"10","#text":"TRUE"},
+ *      "hangup_on_disposition":{"#text":"FALSE"},
  *      "gate":{
  *          "@number":"17038",
  *          "name":{"#text":"AM Campaign"},
@@ -535,7 +540,8 @@ NewCallNotification.prototype.processResponse = function(notification) {
         scriptVersion: utils.getText(notif,'script_version'),
         surveyId: utils.getText(notif,'survey_id'),
         surveyPopType: utils.getText(notif,'survey_pop_type'),
-        requeueType: utils.getText(notif,'requeue_type')
+        requeueType: utils.getText(notif,'requeue_type'),
+        hangupOnDisposition: utils.getText(notif,'hangup_on_disposition')
     };
 
     // set collection values
@@ -1297,6 +1303,79 @@ CampaignDispositionsRequest.prototype.processResponse = function(response) {
     model.outboundSettings.campaignDispositions = dispositions;
     return dispositions;
 };
+
+
+var ChatStateRequest = function(chatState) {
+    this.chatState = (chatState && chatState.toUpperCase()) || "";
+};
+
+ChatStateRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_STATE,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "state":{
+                "#text":this.chatState
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes CHAT-STATE packets rec'd from IQ. It will check the state of the
+ * packet and then set the state on the model.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ982008082817165103294",
+ *      "@type":"AGENT-STATE",
+ *      "status":{"#text":"OK"},
+ *      "message":{},
+ *      "detail":{},
+ *      "agent_id":{"#text":"1856"},
+ *      "prev_state":{"#text":"CHAT-PRESENTED"},
+ *      "current_state":{"#text":"CHAT-ENGAGED"}
+ *   }
+ * }
+ */
+ChatStateRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var status = utils.getText(resp, "status");
+    var prevState = utils.getText(resp, "prev_state");
+    var currState = utils.getText(resp, "current_state");
+    var model = UIModel.getInstance();
+
+    // add message and detail if present
+    var formattedResponse = utils.buildDefaultResponse(response);
+
+    formattedResponse.agentId = response.ui_response.agent_id['#text'] || "";
+    formattedResponse.previousState = prevState;
+    formattedResponse.currentState = currState;
+
+    if(status=="OK"){
+        // Update the state in the UIModel
+        model.agentSettings.currentChatState = currState;
+        model.chatStatePacket = response;
+    }else{
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Unable to change chat state";
+        }
+
+        // log message response
+        var message = "Unable to change chat state. " + formattedResponse.detail;
+        utils.logMessage(LOG_LEVELS.WARN, message, response);
+    }
+
+    return formattedResponse;
+};
+
+
 
 
 var XferColdRequest = function(dialDest, callerId, sipHeaders) {
@@ -2606,6 +2685,7 @@ LoginRequest.prototype.processResponse = function(response) {
             // Set collection values
             processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
+            processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
             model.inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
@@ -2649,7 +2729,7 @@ LoginRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-processCampaigns = function(response){
+function processCampaigns(response){
     var campaigns = [];
     var campaign = {};
     var campaignsRaw = [];
@@ -2725,7 +2805,67 @@ processCampaigns = function(response){
     }
 
     UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
-};
+}
+
+/**
+ * example packet
+ *  {
+ *      "chat_queue":[
+ *          {
+ *              "@chat_queue_desc":"",
+ *              "@chat_queue_id":"74",
+ *              "@chat_queue_name":"Please don't delete"
+ *          },
+ *          {
+ *              "@chat_queue_desc":"blah",
+ *              "@chat_queue_id":"131",
+ *              "@chat_queue_name":"cris chat queue",
+ *              "dnis":[
+ *                  {"#text":"5555551215"},
+ *                  {"#text":"5555554444"},
+ *                  {"#text":"8885551212"},
+ *                  {"#text":"97687"}
+ *              ]
+ *          }
+ *      ]
+ *   }
+ *
+ *
+ *      This function will format the dnis list and put them back on chatSettings.availableChatQueues
+ **/
+function processChatQueueDnis(chatSettings, response) {
+    var queues = chatSettings.availableChatQueues;
+    var rawQueues = response.ui_response.login_chat_queues.chat_queue;
+
+    if(!Array.isArray(rawQueues)) {
+        rawQueues = [rawQueues];
+    }
+
+    for(var i = 0; i < queues.length; i++) {
+        var queue = queues[i];
+
+        var rawQueue = {};
+        for (var j = 0; j < rawQueues.length; j++) {
+            var rq = rawQueues[j];
+            if(rq['@chat_queue_id'] === queue.chatQueueId) {
+                rawQueue = rq;
+                break;
+            }
+        }
+
+        if(rawQueue.dnis) {
+            if(!Array.isArray(rawQueue.dnis)) {
+                rawQueue.dnis = [rawQueue.dnis];
+            }
+
+            // update the dnis array to just be a list
+            queue.dnis = rawQueue.dnis.map(function(d) {
+                return d['#text'];
+            });
+        }
+    }
+
+}
 
 
 var LogoutRequest = function(agentId, message, isSupervisor) {
@@ -4016,7 +4156,8 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
         whisper: utils.getText(resp, 'whisper'),
-        dts: dtsDate
+        dts: dtsDate,
+        mediaLinks :  utils.processResponseCollection(resp, "media_links", "link")
     };
 
     utils.logMessage(LOG_LEVELS.DEBUG, "New CHAT-MESSAGE packet received from IntelliQueue", response);
@@ -4400,6 +4541,60 @@ LeaveChatRequest.prototype.formatJSON = function() {
 
 
 
+var ChatManualSmsRequest = function(agentId, chatQueueId, ani, dnis, message) {
+    this.agentId = agentId;
+    this.chatQueueId = chatQueueId;
+    this.ani = ani;
+    this.dnis = dnis;
+    this.message = message;
+};
+
+/*
+ * External Chat:
+ * When agent submits a manual sms message, send "MANUAL-SMS" request to IntelliQueue
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"MANUAL-SMS",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "agent_id":{"#text":"1995"},
+ *      "chatQueueId":{"#text":"44"},
+ *      "ani":{"#text":"1231231234"},
+ *      "dnis":{"#text":"5435435432"},
+ *      "message":{"#text":"hello"}
+ *    }
+ * }
+ */
+ChatManualSmsRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.CHAT_MANUAL_SMS,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(this.agentId)
+            },
+            "chat_queue_id":{
+                "#text":utils.toString(this.chatQueueId)
+            },
+            "ani":{
+                "#text":utils.toString(this.ani)
+            },
+            "dnis":{
+                "#text":utils.toString(this.dnis)
+            },
+            "message":{
+                "#text":utils.toString(this.message)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
 
 var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
     this.uii = uii;
@@ -4515,6 +4710,39 @@ SupervisorListRequest.prototype.processResponse = function(response) {
     model.supervisors = supervisors;
 
     return model.supervisors;
+};
+
+var ChatClientReconnectNotification = function() {
+
+};
+
+/*
+ * External Chat:
+ * This class is responsible for handling "CHAT-CLIENT-RECONNECT" packets from IntelliQueue.
+ * This is sent when a chat connect message is sent to a non-archieved chat.
+ *
+ *  {
+ *      "ui_notification":{
+ *          "@message_id":"IQ10012016081611595000289",
+ *          "@type":"CHAT-CLIENT-RECONNECT",
+ *          "@destination":"IQ",
+ *          "@response_to":"",
+ *          "account_id":{"#text":"99999999"},
+ *          "uii":{"#text":"201608161200240139000000000120"}
+ *      }
+ *  }
+ */
+
+ChatClientReconnectNotification.prototype.processResponse = function(notification){
+    var notif = notification.ui_notification;
+
+    return {
+        message : "Received CHAT-CLIENT-RECONNECT notification",
+        status : "OK",
+        accountId : utils.getText(notif, "account_id"),
+        uii : utils.getText(notif, "uii")
+    };
+
 };
 
 var ChatActiveNotification = function() {
@@ -4638,7 +4866,8 @@ var ChatPresentedNotification = function() {
  *          "chat_queue_name":{"#text":"Support Chat"},
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "channel_type":{"#text":""}
+ *          "channel_type":{"#text":""},
+ *          "allow_accept":{"#text":"TRUE|FALSE"}
  *      }
  *  }
  */
@@ -4653,7 +4882,8 @@ ChatPresentedNotification.prototype.processResponse = function(notification) {
         uii: utils.getText(notif, "uii"),
         channelType: utils.getText(notif, "channel_type"),
         chatQueueId: utils.getText(notif, "chat_queue_id"),
-        chatQueueName: utils.getText(notif, "chat_queue_name")
+        chatQueueName: utils.getText(notif, "chat_queue_name"),
+        allowAccept: utils.getText(notif, "allow_accept")
     };
 
 };
@@ -4787,6 +5017,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
     newChat.requeueShortcuts = utils.processResponseCollection(notification, 'ui_notification', 'chat_requeue_shortcuts', 'shortcut')[0];
     newChat.chatDispositions = utils.processResponseCollection(notification, 'ui_notification', 'chat_dispositions', 'disposition')[0];
     newChat.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript', 'message')[0];
+    newChat.baggage = utils.processResponseCollection(notification, 'ui_notification', 'json_baggage')[0];
 
     if(newChat.chatDispositions && newChat.chatDispositions.disposition){
         newChat.chatDispositions.dispositions = [newChat.chatDispositions]
@@ -5413,9 +5644,11 @@ var UIModel = (function() {
             chatTypingNotification : new ChatTypingNotification(),
             chatTypingRequest : null,
             newChatNotification : new NewChatNotification(),
+            chatClientReconnectNotification : new ChatClientReconnectNotification(),
 
             // request instances
             agentStateRequest : null,
+            chatStateRequest : null,
             ackRequest : new AckRequest(),
             bargeInRequest : null,
             callNotesRequest : null,
@@ -5451,6 +5684,7 @@ var UIModel = (function() {
 
             // response packets
             agentStatePacket : null,
+            chatStatePacket : null,
             configPacket : null,
             currentCallPacket : null,
             loginPacket : null,
@@ -5825,13 +6059,18 @@ var utils = {
                 var ack = UIModel.getInstance().ackRequest.processResponse(response);
                 var responseTo = response.ui_response['@response_to'];
                 var request = utils.findRequestById(instance, responseTo);
-                ack.uii = request.msg.uii["#text"];
+                ack.uii = request.msg.uii && request.msg.uii["#text"];
                 utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
             case MESSAGE_TYPES.CHAT_LIST:
                 var chatList = new ChatListRequest();
                 var chatListResponse = chatList.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_LIST, chatListResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_STATE:
+                var chatState = new ChatStateRequest();
+                var chatStateResponse = chatState.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STATE, chatStateResponse);
                 break;
         }
     },
@@ -5947,6 +6186,11 @@ var utils = {
                 var inactiveNotif = new ChatInactiveNotification();
                 var inactiveResponse = inactiveNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_CLIENT_RECONNECT :
+                var reconnectNotif = new ChatClientReconnectNotification();
+                var reconnectResponse = reconnectNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CLIENT_RECONNECT, reconnectResponse);
                 break;
             case MESSAGE_TYPES.CHAT_PRESENTED:
                 var presentedNotif = new ChatPresentedNotification();
@@ -6213,16 +6457,16 @@ var utils = {
                             // dealing with empty property
                             item[formattedKey] = "";
                         }else {
-                            // make recursive call
-                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1){
+                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1) {
+                                //console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
                                 var newIt = [];
                                 newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
                                 if(formattedKey.substr(formattedKey.length - 1) !== 's') {
                                     item[formattedKey + 's'] = newIt;
-                                }else{
+                                } else {
                                     item[formattedKey] = newIt;
                                 }
-                            }else{
+                            } else {
                                 var newItemProp = Object.keys(itemsRaw[i][key])[0];
                                 var newItems = [];
                                 newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
@@ -6593,6 +6837,8 @@ const CALLBACK_TYPES = {
     "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_LIST":"chatListResponse",                 // external chat
+    "CHAT_CLIENT_RECONNECT" : "chatClientReconnectNotification",
+    "CHAT_STATE":"chatStateResponse",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
     "DIAL_GROUP_CHANGE":"dialGroupChangeNotification",
     "DIAL_GROUP_CHANGE_PENDING":"dialGroupChangePendingNotification",
@@ -6658,11 +6904,14 @@ const MESSAGE_TYPES = {
     "CHAT_PRESENTED":"CHAT-PRESENTED",                      // external chat
     "CHAT_PRESENTED_RESPONSE":"CHAT-PRESENTED-RESPONSE",    // external chat
     "CHAT_REQUEUE":"CHAT-REQUEUE",                          // external chat
+    "CHAT_STATE":"CHAT-STATE",                              // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat
+    "CHAT_CLIENT_RECONNECT" : "CHAT-CLIENT-RECONNECT",      // external chat
+    "CHAT_MANUAL_SMS": "MANUAL-SMS",                        // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
@@ -7334,6 +7583,15 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getChatInactiveNotification = function() {
         return UIModel.getInstance().chatInactiveNotification;
+    };
+    /**
+     * Get Chat Inactive notification class
+     * @memberof AgentLibrary.Core.Notifications
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getChatClientReconnectNotification = function(){
+        return UIModel.getInstance().chatClientReconnectNotification;
+
     };
     /**
      * Get Chat Presented notification class
@@ -8431,6 +8689,37 @@ function initAgentLibraryChat (context) {
     AgentLibrary.prototype.chatAgentEnd = function(agentId, uii){
         UIModel.getInstance().chatAgentEnd = new ChatAgentEndRequest(agentId, uii);
         var msg = UIModel.getInstance().chatAgentEnd.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Sends chat state change message to IntelliQueue
+     * @memberof AgentLibrary.Agent
+     * @param {string} chatState The base chat state <br />
+     * CHAT-AVAILABLE | CHAT-PRESENTED | CHAT-ENGAGED | CHAT-RNA
+     * @param {function} [callback=null] Callback function when chatState response received
+     */
+    AgentLibrary.prototype.setChatState = function(chatState, callback){
+        UIModel.getInstance().chatStateRequest = new ChatStateRequest(chatState);
+        var msg = UIModel.getInstance().chatStateRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.CHAT_STATE, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * initialize a chat session by sending a manual outbound sms
+     * @memberof AgentLibrary.Chat
+     * @param {string} agentId Current logged in agent id
+     * @param {number} chatQueueId Id of the Chat Queue to send this sms through
+     * @param {number} ani to receive the sms
+     * @param {number} dnis to be used for the sms
+     * @param {string} message content
+     */
+
+    AgentLibrary.prototype.sendManualOutboundSms = function(agentId, chatQueueId, ani, dnis, message){
+        UIModel.getInstance().chatManualSms = new ChatManualSmsRequest(agentId, chatQueueId, ani, dnis, message);
+        var msg = UIModel.getInstance().chatManualSms.formatJSON();
         utils.sendMessage(this, msg);
     };
 }

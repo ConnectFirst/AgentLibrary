@@ -41,9 +41,11 @@ var UIModel = (function() {
             chatTypingNotification : new ChatTypingNotification(),
             chatTypingRequest : null,
             newChatNotification : new NewChatNotification(),
+            chatClientReconnectNotification : new ChatClientReconnectNotification(),
 
             // request instances
             agentStateRequest : null,
+            chatStateRequest : null,
             ackRequest : new AckRequest(),
             bargeInRequest : null,
             callNotesRequest : null,
@@ -79,6 +81,7 @@ var UIModel = (function() {
 
             // response packets
             agentStatePacket : null,
+            chatStatePacket : null,
             configPacket : null,
             currentCallPacket : null,
             loginPacket : null,

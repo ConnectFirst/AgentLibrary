@@ -195,13 +195,18 @@ var utils = {
                 var ack = UIModel.getInstance().ackRequest.processResponse(response);
                 var responseTo = response.ui_response['@response_to'];
                 var request = utils.findRequestById(instance, responseTo);
-                ack.uii = request.msg.uii["#text"];
+                ack.uii = request.msg.uii && request.msg.uii["#text"];
                 utils.fireCallback(instance, CALLBACK_TYPES.ACK, ack);
                 break;
             case MESSAGE_TYPES.CHAT_LIST:
                 var chatList = new ChatListRequest();
                 var chatListResponse = chatList.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_LIST, chatListResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_STATE:
+                var chatState = new ChatStateRequest();
+                var chatStateResponse = chatState.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STATE, chatStateResponse);
                 break;
         }
     },
@@ -317,6 +322,11 @@ var utils = {
                 var inactiveNotif = new ChatInactiveNotification();
                 var inactiveResponse = inactiveNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_INACTIVE, inactiveResponse);
+                break;
+            case MESSAGE_TYPES.CHAT_CLIENT_RECONNECT :
+                var reconnectNotif = new ChatClientReconnectNotification();
+                var reconnectResponse = reconnectNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CLIENT_RECONNECT, reconnectResponse);
                 break;
             case MESSAGE_TYPES.CHAT_PRESENTED:
                 var presentedNotif = new ChatPresentedNotification();
@@ -583,16 +593,16 @@ var utils = {
                             // dealing with empty property
                             item[formattedKey] = "";
                         }else {
-                            // make recursive call
-                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1){
+                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1) {
+                                //console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
                                 var newIt = [];
                                 newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
                                 if(formattedKey.substr(formattedKey.length - 1) !== 's') {
                                     item[formattedKey + 's'] = newIt;
-                                }else{
+                                } else {
                                     item[formattedKey] = newIt;
                                 }
-                            }else{
+                            } else {
                                 var newItemProp = Object.keys(itemsRaw[i][key])[0];
                                 var newItems = [];
                                 newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
