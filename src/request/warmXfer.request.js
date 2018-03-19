@@ -1,8 +1,9 @@
 
-var XferWarmRequest = function(dialDest, callerId, sipHeaders) {
+var XferWarmRequest = function(dialDest, callerId, sipHeaders, countryId) {
     this.dialDest = dialDest;
     this.callerId = callerId || "";
     this.sipHeaders = sipHeaders || [];
+    this.countryId = countryId;
 };
 
 XferWarmRequest.prototype.formatJSON = function() {
@@ -29,6 +30,9 @@ XferWarmRequest.prototype.formatJSON = function() {
             },
             "caller_id":{
                 "#text":utils.toString(this.callerId)
+            },
+            "country_id": {
+                "#text":utils.toString(this.countryId)
             },
             "xfer_header": fields
         }
