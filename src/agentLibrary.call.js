@@ -329,9 +329,9 @@ function initAgentLibraryCall (context) {
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when warm transfer response received
      */
-    AgentLibrary.prototype.warmXfer = function(dialDest, callerId, sipHeaders, callback){
+    AgentLibrary.prototype.warmXfer = function(dialDest, callerId, sipHeaders, countryId, callback){
 
-        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId, sipHeaders);
+        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId, sipHeaders, countryId);
         var msg = UIModel.getInstance().warmXferRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.XFER_WARM, callback);

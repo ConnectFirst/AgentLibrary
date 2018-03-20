@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-03-19 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-03-20 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -8362,9 +8362,9 @@ function initAgentLibraryCall (context) {
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when warm transfer response received
      */
-    AgentLibrary.prototype.warmXfer = function(dialDest, callerId, sipHeaders, callback){
+    AgentLibrary.prototype.warmXfer = function(dialDest, callerId, sipHeaders, countryId, callback){
 
-        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId, sipHeaders);
+        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId, sipHeaders, countryId);
         var msg = UIModel.getInstance().warmXferRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.XFER_WARM, callback);
