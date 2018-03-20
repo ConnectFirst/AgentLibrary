@@ -28,8 +28,8 @@
         },
         "chat_dispositions":{
             "dispositions":[
-                { "@disposition_id":"2", "@is_success":"1", "@is_complete":"1", "@email_template_id":"1", "#text":"Complete"},
-                { "@disposition_id":"3", "@is_success":"1", "@is_complete":"0", "#text":"Requeue"}
+                { "@disposition_id":"2", "@is_success":"1", "@is_complete":"1", "@is_default":"0", "@email_template_id":"1", "#text":"Complete"},
+                { "@disposition_id":"3", "@is_success":"1", "@is_complete":"0", "@is_default":"1", "#text":"Requeue"}
             ]
         },
         "transcript":{

@@ -50,16 +50,19 @@
         {
           "@contact_forwarding": "FALSE",
           "@disposition_id": "1",
+          "@is_default":"1",
           "#text": "Not Available"
         },
         {
           "@contact_forwarding": "FALSE",
           "@disposition_id": "2",
+          "@is_default":"0",
           "#text": "Transfer Not Available"
         },
         {
           "@contact_forwarding": "FALSE",
           "@disposition_id": "3",
+          "@is_default":"0",
           "#text": "Transfer Not Available - Ringing (no answer)"
         }
       ]

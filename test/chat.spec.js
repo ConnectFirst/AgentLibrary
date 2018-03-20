@@ -358,8 +358,8 @@ describe( 'Tests for Agent Library chat methods', function() {
                 { chatQueueId : '2', name : 'test queue', skillId : '' }
             ]},
             chatDispositions: [
-                {dispositionId:"2", isSuccess:true, isComplete:true, emailTemplateId: "1", disposition:"Complete"},
-                {dispositionId:"3", isSuccess:true, isComplete:false, disposition:"Requeue"}
+                {dispositionId:"2", isSuccess:true, isComplete:true, isDefault:false, emailTemplateId: "1", disposition:"Complete"},
+                {dispositionId:"3", isSuccess:true, isComplete:false, isDefault:true, disposition:"Requeue"}
             ],
             transcript: [
                 {from:"system", type:"SYSTEM", dts:new Date("2017-06-07T16:05:23"), message:"User1 connected"},

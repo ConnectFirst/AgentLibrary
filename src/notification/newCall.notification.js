@@ -38,8 +38,8 @@ var NewCallNotification = function() {
  *      "outdial_dispositions":{
  *          "@type":"CAMPAIGN|GATE",
  *          "disposition":[
- *              { "@contact_forwarding":"FALSE", "@disposition_id":"20556", "#text":"Not Available"},
- *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "#text":"Transfer Not Available"}
+ *              { "@contact_forwarding":"FALSE", "@disposition_id":"20556", "@is_complete":"1", "@is_default"="0", "@require_note"="0", "@save_survey"="1", "@xfer"="0", "#text":"Not Available"},
+ *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "@is_complete":"1", "@is_default"="1", "@require_note"="1", "@save_survey"="1", "@xfer"="0", #text":"Transfer Not Available"}
  *          ]
  *      },
  *      "requeue_shortcuts":{
@@ -179,6 +179,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
             disp.requireNote = disp.requireNote === "1";
             disp.saveSurvey = disp.saveSurvey === "1";
             disp.xfer = disp.xfer === "1";
+            disp.isDefault = disp.isDefault === "1";
         }
     }
 
