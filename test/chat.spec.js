@@ -228,7 +228,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             message: "Received CHAT-INACTIVE notification",
             status: "OK",
             accountId: "99999999",
-            uii: "201608161200240139000000000120"
+            uii: "201608161200240139000000000120",
+            dispositionTimeout: "30"
         };
 
         expect(response).toEqual(expectedResponse);
