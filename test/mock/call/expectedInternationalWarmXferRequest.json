@@ -14,7 +14,7 @@
       "#text":"5555555551"
     },
     "country_id": {
-      "#text":""
+      "#text":"USA"
     },
     "xfer_header":[{"@name":"Test", "@value":"Test"}]
   }

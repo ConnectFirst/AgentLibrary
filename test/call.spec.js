@@ -12,7 +12,7 @@ var chatIds = ["1"];
 var skillProfileId = "1";
 var dialDest = "sip:99@boulder-voip.connectfirst.com";
 
-describe( 'Tests for Agent Library agent methods', function() {
+describe( 'Tests for Agent Library call methods', function() {
     beforeEach(function() {
         dialGroupId = "1";
         gateIds = ["1","2"];
@@ -29,6 +29,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         this.expectedOutdialDispositionRequest = fixture.load('call/expectedOutdialDispositionRequest.json');
         this.expectedDispositionManualPassRequest = fixture.load('call/expectedDispositionManualPassRequest.json');
         this.expectedWarmXferRequest = fixture.load('call/expectedWarmXferRequest.json');
+        this.expectedInternationalWarmXferRequest = fixture.load('call/expectedInternationalWarmXferRequest.json');
         this.expectedColdXferRequest = fixture.load('call/expectedColdXferRequest.json');
         this.expectedWarmXferCancelRequest = fixture.load('call/expectedWarmXferCancelRequest.json');
         this.warmXferResponseRaw = fixture.load('call/warmXferResponseRaw.json');
@@ -674,6 +675,33 @@ describe( 'Tests for Agent Library agent methods', function() {
         var dest = "5555555555";
         var callerId = "5555555551";
         var xferHeaders = [{name:"Test", value:"Test"}];
+
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+
+        Lib.warmXfer(dest, callerId, xferHeaders);
+        var msg = Lib.getWarmTransferRequest().formatJSON();
+        var requestMsg = JSON.parse(msg);
+        delete requestMsg.ui_request['@message_id']; // won't match
+
+        Lib.socket._message(msg);
+
+        expect(requestMsg).toEqual(this.expectedWarmXferRequest);
+        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
+        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
+    });
+
+    it( 'should build a international warm-xfer message and send message over socket', function() {
+        var Lib = new AgentLibrary();
+        var dest = "5555555555";
+        var callerId = "5555555551";
+        var xferHeaders = [{name:"Test", value:"Test"}];
         var countryId = "USA";
 
         Lib.socket = windowMock.WebSocket(address);
@@ -685,14 +713,14 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
 
-        Lib.warmXfer(dest, callerId, xferHeaders, countryId);
+        Lib.internationalWarmXfer(dest, callerId, xferHeaders, countryId);
         var msg = Lib.getWarmTransferRequest().formatJSON();
         var requestMsg = JSON.parse(msg);
         delete requestMsg.ui_request['@message_id']; // won't match
 
         Lib.socket._message(msg);
 
-        expect(requestMsg).toEqual(this.expectedWarmXferRequest);
+        expect(requestMsg).toEqual(this.expectedInternationalWarmXferRequest);
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
@@ -709,7 +737,36 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.getLoginRequest().processResponse(this.loginResponseRaw);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
         Lib.getConfigRequest().processResponse(this.configResponseRaw);
-        Lib.warmXfer(dest, callerId, [], "USA");
+        Lib.warmXfer(dest, callerId, []);
+
+        // process warm-xfer response
+        var response = Lib.getWarmTransferRequest().processResponse(this.warmXferResponseRaw);
+        var expectedResponse = {
+            "message":"OK",
+            "detail":"",
+            "status":"OK",
+            "agentId": "1",
+            "uii":"1111",
+            "sessionId":"3",
+            "dialDest":"5555555555"
+        };
+
+        expect(response).toEqual(expectedResponse);
+    });
+
+    it( 'should process a international warm-xfer response message', function() {
+        var Lib = new AgentLibrary();
+        var dest = "5555555555";
+        var callerId = "5555555551";
+        Lib.socket = windowMock.WebSocket(address);
+        Lib.socket._open();
+
+        // set login and config values
+        Lib.loginAgent(username, password);
+        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
+        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.internationalWarmXfer(dest, callerId, [], "USA");
 
         // process warm-xfer response
         var response = Lib.getWarmTransferRequest().processResponse(this.warmXferResponseRaw);
