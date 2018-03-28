@@ -15,7 +15,8 @@ var ChatInactiveNotification = function() {
  *          "@destination":"IQ",
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
- *          "uii":{"#text":"201608161200240139000000000120"}
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "disposition_timeout":{"#text":"30"}
  *      }
  *  }
  */
@@ -26,7 +27,8 @@ ChatInactiveNotification.prototype.processResponse = function(notification) {
         message: "Received CHAT-INACTIVE notification",
         status: "OK",
         accountId: utils.getText(notif, "account_id"),
-        uii: utils.getText(notif, "uii")
+        uii: utils.getText(notif, "uii"),
+        dispositionTimeout: utils.getText(notif, "disposition_timeout")
     };
 
 };

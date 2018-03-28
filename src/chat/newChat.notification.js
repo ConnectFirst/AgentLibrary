@@ -38,8 +38,8 @@ var NewChatNotification = function() {
  *          },
  *          "chat_dispositions":{
  *              "disposition":[
- *                  { "@disposition_id":"2", "@is_success":"true", "@is_complete":"false", "@email_template_id":"1", "#text":"Complete"},
- *                  { "@disposition_id":"3", "@is_success":"true", "@is_complete":"false", "#text":"Requeue"}
+ *                  { "@disposition_id":"2", "@is_success":"true", "@is_complete":"false", "@is_default"="0", "@email_template_id":"1", "#text":"Complete"},
+ *                  { "@disposition_id":"3", "@is_success":"true", "@is_complete":"false", "@is_default"="0", "#text":"Requeue"}
  *              ]
  *          },
  *          "chat_requeue_shortcuts" :{
@@ -117,6 +117,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
             var disp = newChat.chatDispositions[d];
             disp.isComplete = disp.isComplete === "1";
             disp.isSuccess = disp.isSuccess === "1";
+            disp.isDefault = disp.isDefault === "1";
         }
     }
 
