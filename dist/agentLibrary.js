@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-03-26 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-03-28 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -4826,7 +4826,8 @@ var ChatInactiveNotification = function() {
  *          "@destination":"IQ",
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
- *          "uii":{"#text":"201608161200240139000000000120"}
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "disposition_timeout":{"#text":"30"}
  *      }
  *  }
  */
