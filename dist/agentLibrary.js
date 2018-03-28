@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-03-14 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-03-28 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -446,8 +446,8 @@ var NewCallNotification = function() {
  *      "outdial_dispositions":{
  *          "@type":"CAMPAIGN|GATE",
  *          "disposition":[
- *              { "@contact_forwarding":"FALSE", "@disposition_id":"20556", "#text":"Not Available"},
- *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "#text":"Transfer Not Available"}
+ *              { "@contact_forwarding":"FALSE", "@disposition_id":"20556", "@is_complete":"1", "@is_default"="0", "@require_note"="0", "@save_survey"="1", "@xfer"="0", "#text":"Not Available"},
+ *              { "@contact_forwarding":"FALSE", "@disposition_id":"20559", "@is_complete":"1", "@is_default"="1", "@require_note"="1", "@save_survey"="1", "@xfer"="0", #text":"Transfer Not Available"}
  *          ]
  *      },
  *      "requeue_shortcuts":{
@@ -587,6 +587,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
             disp.requireNote = disp.requireNote === "1";
             disp.saveSurvey = disp.saveSurvey === "1";
             disp.xfer = disp.xfer === "1";
+            disp.isDefault = disp.isDefault === "1";
         }
     }
 
@@ -4825,7 +4826,8 @@ var ChatInactiveNotification = function() {
  *          "@destination":"IQ",
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
- *          "uii":{"#text":"201608161200240139000000000120"}
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "disposition_timeout":{"#text":"30"}
  *      }
  *  }
  */
@@ -4836,7 +4838,8 @@ ChatInactiveNotification.prototype.processResponse = function(notification) {
         message: "Received CHAT-INACTIVE notification",
         status: "OK",
         accountId: utils.getText(notif, "account_id"),
-        uii: utils.getText(notif, "uii")
+        uii: utils.getText(notif, "uii"),
+        dispositionTimeout: utils.getText(notif, "disposition_timeout")
     };
 
 };
@@ -4963,8 +4966,8 @@ var NewChatNotification = function() {
  *          },
  *          "chat_dispositions":{
  *              "disposition":[
- *                  { "@disposition_id":"2", "@is_success":"true", "@is_complete":"false", "@email_template_id":"1", "#text":"Complete"},
- *                  { "@disposition_id":"3", "@is_success":"true", "@is_complete":"false", "#text":"Requeue"}
+ *                  { "@disposition_id":"2", "@is_success":"true", "@is_complete":"false", "@is_default"="0", "@email_template_id":"1", "#text":"Complete"},
+ *                  { "@disposition_id":"3", "@is_success":"true", "@is_complete":"false", "@is_default"="0", "#text":"Requeue"}
  *              ]
  *          },
  *          "chat_requeue_shortcuts" :{
@@ -5042,6 +5045,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
             var disp = newChat.chatDispositions[d];
             disp.isComplete = disp.isComplete === "1";
             disp.isSuccess = disp.isSuccess === "1";
+            disp.isDefault = disp.isDefault === "1";
         }
     }
 

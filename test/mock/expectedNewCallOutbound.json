@@ -36,6 +36,7 @@
       {
         "contactForwarding": false,
         "dispositionId": "1",
+        "isDefault":true,
         "disposition": "Not Available",
         "isComplete": false,
         "requireNote": false,
@@ -45,6 +46,7 @@
       {
         "contactForwarding": false,
         "dispositionId": "2",
+        "isDefault":false,
         "disposition": "Transfer Not Available",
         "isComplete": false,
         "requireNote": false,
@@ -54,6 +56,7 @@
       {
         "contactForwarding": false,
         "dispositionId": "3",
+        "isDefault":false,
         "disposition": "Transfer Not Available - Ringing (no answer)",
         "isComplete": false,
         "requireNote": false,
