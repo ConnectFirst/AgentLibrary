@@ -6152,7 +6152,7 @@ var utils = {
                     var newCallNotif = new NewCallNotification();
                     var newCallResponse = newCallNotif.processResponse(data);
                     utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
-                    _processSessionsForCall(instance, data);
+                    _processSessionsForCall(instance);
                 }, 2000);
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
@@ -6823,19 +6823,18 @@ function _setupAddSessionCallback(instance, data) {
         // we already have a new call packet for this session
         _delayedAddSessionCallback(instance, data);
 
-    //} else if(call.uii && call.duration) {
+    //} else if(call.uii && call.duration) {        // TODO: do we actually need this check?
     } else {
         // uii mismatch, but call has been dispositioned
         UIModel.getInstance().pendingNewCallSessions[sessionUii] = UIModel.getInstance().pendingNewCallSessions[sessionUii] || {};
         UIModel.getInstance().pendingNewCallSessions[sessionUii][sessionId] = {
             addSession: _delayedAddSessionCallback,
-            data: data,
-            instance: instance
+            data: data
         };
     }
 }
 
-function _processSessionsForCall() {
+function _processSessionsForCall(instance) {
     var uii = UIModel.getInstance().currentCall.uii,
         delayedSessions = UIModel.getInstance().pendingNewCallSessions[uii];
 
@@ -6844,7 +6843,7 @@ function _processSessionsForCall() {
         for(var sessionId in delayedSessions) {
             if(delayedSessions.hasOwnProperty(sessionId)) {
                 var session = delayedSessions[sessionId];
-                session.addSession(session.instance, session.data);
+                session.addSession(instance, session.data);
             } else {
                 console.error('error processing sessions for uii: ' + uii + ' session: ' + sessionId );
             }
