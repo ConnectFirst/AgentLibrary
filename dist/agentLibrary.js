@@ -6826,7 +6826,7 @@ function _setupAddSessionCallback(instance, data) {
     //} else if(call.uii && call.duration) {
     } else {
         // uii mismatch, but call has been dispositioned
-        UIModel.getInstance().pendingNewCallSessions[sessionUii] = UIModel.getInstance.pendingNewCallSessions[sessionUii] || {};
+        UIModel.getInstance().pendingNewCallSessions[sessionUii] = UIModel.getInstance().pendingNewCallSessions[sessionUii] || {};
         UIModel.getInstance().pendingNewCallSessions[sessionUii][sessionId] = {
             addSession: _delayedAddSessionCallback,
             data: data,
