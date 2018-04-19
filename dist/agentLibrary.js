@@ -6817,7 +6817,7 @@ function _delayedAddSessionCallback(instance, data) {
 function _setupAddSessionCallback(instance, data) {
     var sessionUii = utils.getText(data.ui_notification, "uii"),
         call = UIModel.getInstance().currentCall,
-        sessionId = data.ui_notification.session_id;
+        sessionId = data.ui_notification.session_id['#text'];
 
     if(call.uii === sessionUii) {
         // we already have a new call packet for this session
