@@ -16,6 +16,7 @@ var UIModel = (function() {
         return {
 
             currentCall: {},                        // save the NEW-CALL notification in parsed form
+            pendingNewCallSessions: {},             // save any pending call sessions, in case the new call packet hasn't arrived
             callTokens:{},                          // Stores a map of all tokens for a call
             callbacks:[],
             libraryInstance: null,                  // Initialized to the library instance on startup

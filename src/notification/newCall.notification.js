@@ -104,6 +104,12 @@ var NewCallNotification = function() {
  *  }
  */
 NewCallNotification.prototype.processResponse = function(notification) {
+
+    // sleep for 2 sec.
+    // TODO: remove this before releasing
+    var now_ms = new Date().getTime();
+    while(new Date().getTime() < now_ms + 2000) {}
+
     var model = UIModel.getInstance();
     var notif = notification.ui_notification;
 

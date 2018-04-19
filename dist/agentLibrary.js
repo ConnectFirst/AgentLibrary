@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-04-02 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-04-19 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -512,6 +512,12 @@ var NewCallNotification = function() {
  *  }
  */
 NewCallNotification.prototype.processResponse = function(notification) {
+
+    // sleep for 2 sec.
+    // TODO: remove this before releasing
+    var now_ms = new Date().getTime();
+    while(new Date().getTime() < now_ms + 2000) {}
+
     var model = UIModel.getInstance();
     var notif = notification.ui_notification;
 
@@ -5623,6 +5629,7 @@ var UIModel = (function() {
         return {
 
             currentCall: {},                        // save the NEW-CALL notification in parsed form
+            pendingNewCallSessions: {},             // save any pending call sessions, in case the new call packet hasn't arrived
             callTokens:{},                          // Stores a map of all tokens for a call
             callbacks:[],
             libraryInstance: null,                  // Initialized to the library instance on startup
@@ -6090,9 +6097,7 @@ var utils = {
 
         switch (type.toUpperCase()){
             case MESSAGE_TYPES.ADD_SESSION:
-                var addSesNotif = new AddSessionNotification();
-                var addResponse = addSesNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.ADD_SESSION, addResponse);
+                _setupAddSessionCallback(instance, data);
                 break;
             case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
                 var dgChangeNotif = new DialGroupChangeNotification();
@@ -6152,6 +6157,7 @@ var utils = {
                 var newCallNotif = new NewCallNotification();
                 var newCallResponse = newCallNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+                _processSessionsForCall(instance, data);
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
@@ -6805,6 +6811,51 @@ var utils = {
         }
     }
 };
+
+function _delayedAddSessionCallback(instance, data) {
+    var addSesNotif = new AddSessionNotification();
+    var addResponse = addSesNotif.processResponse(data);
+    utils.fireCallback(instance, CALLBACK_TYPES.ADD_SESSION, addResponse);
+}
+
+function _setupAddSessionCallback(instance, data) {
+    var sessionUii = utils.getText(data.ui_notification, "uii"),
+        call = UIModel.getInstance().currentCall,
+        sessionId = data.ui_notification.session_id;
+
+    if(call.uii === sessionUii) {
+        // we already have a new call packet for this session
+        _delayedAddSessionCallback(instance, data);
+
+    } else if(call.duration) {
+        // uii mismatch, but call has been dispositioned
+        UIModel.getInstance().pendingNewCallSessions[uii] = UIModel.getInstance.pendingNewCallSessions[uii] || {};
+        UIModel.getInstance().pendingNewCallSessions[uii][sessionId] = {
+            addSession: _delayedAddSessionCallback,
+            data: data,
+            instance: instance
+        };
+    }
+}
+
+function _processSessionsForCall() {
+    var uii = UIModel.getInstance().currentCall.uii,
+        delayedSessions = UIModel.getInstance().pendingNewCallSessions[uii];
+
+    if(delayedSessions && Object.keys(delayedSessions).length > 0) {
+        // we have delayed sessions to process
+        for(var sessionId in delayedSessions) {
+            if(delayedSessions.hasOwnProperty(sessionId)) {
+                var session = delayedSessions[sessionId];
+                session.addSession(session.instance, session.data);
+            } else {
+                console.error('error processing sessions for uii: ' + uii + ' session: ' + sessionId );
+            }
+        }
+
+        delete UIModel.getInstance().pendingNewCallSessions[uii];
+    }
+}
 
 
 // CONSTANTS
