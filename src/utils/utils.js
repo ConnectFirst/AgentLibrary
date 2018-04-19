@@ -279,6 +279,11 @@ var utils = {
                 }
                 break;
             case MESSAGE_TYPES.NEW_CALL:
+                // sleep for 2 sec.
+                // TODO: remove this before releasing
+                var now_ms = new Date().getTime();
+                while(new Date().getTime() < now_ms + 2000) {}
+
                 var newCallNotif = new NewCallNotification();
                 var newCallResponse = newCallNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
