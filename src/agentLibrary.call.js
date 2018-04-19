@@ -327,6 +327,23 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary.Call
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {number} [countryId=""] Country Id for the dialDest
+     * @param {function} [callback=null] Callback function when warm transfer response received
+     */
+    AgentLibrary.prototype.internationalWarmXfer = function(dialDest, callerId, sipHeaders, countryId, callback){
+
+        UIModel.getInstance().warmXferRequest = new XferWarmRequest(dialDest, callerId, sipHeaders, countryId);
+        var msg = UIModel.getInstance().warmXferRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.XFER_WARM, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer to another number while keeping the original agent on the line (warm transfer).
+     * @memberof AgentLibrary.Call
+     * @param {number} dialDest Number to transfer to
+     * @param {number} [callerId=""] Caller Id for caller (DNIS)
      * @param {function} [callback=null] Callback function when warm transfer response received
      */
     AgentLibrary.prototype.warmXfer = function(dialDest, callerId, sipHeaders, callback){
