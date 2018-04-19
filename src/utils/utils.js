@@ -954,7 +954,8 @@ function _setupAddSessionCallback(instance, data) {
         // we already have a new call packet for this session
         _delayedAddSessionCallback(instance, data);
 
-    } else if(call.duration) {
+    //} else if(call.uii && call.duration) {
+    } else {
         // uii mismatch, but call has been dispositioned
         UIModel.getInstance().pendingNewCallSessions[uii] = UIModel.getInstance.pendingNewCallSessions[uii] || {};
         UIModel.getInstance().pendingNewCallSessions[uii][sessionId] = {
