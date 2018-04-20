@@ -935,4 +935,16 @@ function initAgentLibraryCore (context) {
         return UIModel.getInstance().campaignStats;
     };
 
+    /**********************
+     *  PRIVATE FUNCTIONS *
+     **********************/
+
+    AgentLibrary.prototype._utils = utils;
+
+    AgentLibrary.prototype._NewCallUtils = NewCallUtils;
+
+    AgentLibrary.prototype._getUIModel= function() {
+        return UIModel;
+    };
+
 }

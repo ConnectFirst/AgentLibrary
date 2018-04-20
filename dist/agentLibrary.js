@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-04-02 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-04-20 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -5623,6 +5623,7 @@ var UIModel = (function() {
         return {
 
             currentCall: {},                        // save the NEW-CALL notification in parsed form
+            pendingNewCallSessions: {},             // save any pending call sessions, in case the new call packet hasn't arrived
             callTokens:{},                          // Stores a map of all tokens for a call
             callbacks:[],
             libraryInstance: null,                  // Initialized to the library instance on startup
@@ -5866,6 +5867,54 @@ var UIModel = (function() {
 })();
 
 
+function NewCallUtils(instance, data) {
+    this.instance = instance;
+    this.data = data;
+
+    var that = this;
+
+    this.setupAddSessionCallback = function() {
+        var sessionUii = utils.getText(data.ui_notification, "uii"),
+            sessionId = utils.getText(data.ui_notification, "session_id"),
+            call = UIModel.getInstance().currentCall;
+
+        if(call.uii === sessionUii) {
+            // we already have a new call packet for this session
+            _delayedAddSessionCallback(that.instance, that.data);
+
+        } else {
+            // uii mismatch, but call has been dispositioned
+            UIModel.getInstance().pendingNewCallSessions[sessionUii] = UIModel.getInstance().pendingNewCallSessions[sessionUii] || {};
+            UIModel.getInstance().pendingNewCallSessions[sessionUii][sessionId] = that;
+        }
+    };
+
+    this.processSessionsForCall = function() {
+        var uii = UIModel.getInstance().currentCall.uii,
+            delayedSessions = UIModel.getInstance().pendingNewCallSessions[uii];
+
+        if(delayedSessions && Object.keys(delayedSessions).length > 0) {
+            // we have delayed sessions to process
+            for(var sessionId in delayedSessions) {
+                if(delayedSessions.hasOwnProperty(sessionId)) {
+                    var session = delayedSessions[sessionId];
+                    _delayedAddSessionCallback(session.instance, session.data);
+                } else {
+                    console.error('error processing sessions for uii: ' + uii + ' session: ' + sessionId );
+                }
+            }
+
+            delete UIModel.getInstance().pendingNewCallSessions[uii];
+        }
+    };
+
+    function _delayedAddSessionCallback(instance, data) {
+        var addSessionNotif = new AddSessionNotification();
+        var addResponse = addSessionNotif.processResponse(data);
+        utils.fireCallback(instance, CALLBACK_TYPES.ADD_SESSION, addResponse);
+    }
+}
+
 var utils = {
     logMessage: function(logLevel, message, data){
         var instance = UIModel.getInstance().libraryInstance;
@@ -6090,9 +6139,7 @@ var utils = {
 
         switch (type.toUpperCase()){
             case MESSAGE_TYPES.ADD_SESSION:
-                var addSesNotif = new AddSessionNotification();
-                var addResponse = addSesNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.ADD_SESSION, addResponse);
+                new NewCallUtils(instance, data).setupAddSessionCallback();
                 break;
             case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
                 var dgChangeNotif = new DialGroupChangeNotification();
@@ -6152,6 +6199,8 @@ var utils = {
                 var newCallNotif = new NewCallNotification();
                 var newCallResponse = newCallNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+                new NewCallUtils(instance, data).processSessionsForCall();
+
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
@@ -6805,6 +6854,8 @@ var utils = {
         }
     }
 };
+
+
 
 
 // CONSTANTS
@@ -7741,6 +7792,18 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getCampaignStats = function() {
         return UIModel.getInstance().campaignStats;
+    };
+
+    /**********************
+     *  PRIVATE FUNCTIONS *
+     **********************/
+
+    AgentLibrary.prototype._utils = utils;
+
+    AgentLibrary.prototype._NewCallUtils = NewCallUtils;
+
+    AgentLibrary.prototype._getUIModel= function() {
+        return UIModel;
     };
 
 }
