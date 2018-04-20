@@ -6,8 +6,8 @@ function NewCallUtils(instance, data) {
 
     this.setupAddSessionCallback = function() {
         var sessionUii = utils.getText(data.ui_notification, "uii"),
-            call = UIModel.getInstance().currentCall,
-            sessionId = data.ui_notification.session_id['#text'];
+            sessionId = utils.getText(data.ui_notification, "session_id"),
+            call = UIModel.getInstance().currentCall;
 
         if(call.uii === sessionUii) {
             // we already have a new call packet for this session
