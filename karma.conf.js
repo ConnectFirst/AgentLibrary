@@ -9,7 +9,8 @@ module.exports = function (config) {
 
         // list of files / patterns to load in the browser
         files: [
-            '**/*.js',
+            'agentLibrary.js',
+            '**/*.spec.js',
             { pattern: 'mock/**/*' }
         ],
 

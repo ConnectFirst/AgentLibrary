@@ -222,9 +222,7 @@ var utils = {
 
         switch (type.toUpperCase()){
             case MESSAGE_TYPES.ADD_SESSION:
-                var addSesNotif = new AddSessionNotification();
-                var addResponse = addSesNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.ADD_SESSION, addResponse);
+                new NewCallUtils(instance, data).setupAddSessionCallback();
                 break;
             case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
                 var dgChangeNotif = new DialGroupChangeNotification();
@@ -284,6 +282,8 @@ var utils = {
                 var newCallNotif = new NewCallNotification();
                 var newCallResponse = newCallNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+                new NewCallUtils(instance, data).processSessionsForCall();
+
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
@@ -937,3 +937,5 @@ var utils = {
         }
     }
 };
+
+
