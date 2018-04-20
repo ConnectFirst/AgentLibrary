@@ -6139,8 +6139,7 @@ var utils = {
 
         switch (type.toUpperCase()){
             case MESSAGE_TYPES.ADD_SESSION:
-                var newCallUtils = new NewCallUtils(instance, data);
-                newCallUtils.setupAddSessionCallback();
+                new NewCallUtils(instance, data).setupAddSessionCallback();
                 break;
             case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
                 var dgChangeNotif = new DialGroupChangeNotification();
@@ -6197,13 +6196,11 @@ var utils = {
                 }
                 break;
             case MESSAGE_TYPES.NEW_CALL:
-                setTimeout(function() {
-                    var newCallNotif = new NewCallNotification();
-                    var newCallResponse = newCallNotif.processResponse(data);
-                    utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
-                    var newCallUtils = new NewCallUtils(instance, data);
-                    newCallUtils.processSessionsForCall();
-                }, 8);
+                var newCallNotif = new NewCallNotification();
+                var newCallResponse = newCallNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+                new NewCallUtils(instance, data).processSessionsForCall();
+
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
