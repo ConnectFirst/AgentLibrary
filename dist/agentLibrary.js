@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-04-19 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-04-20 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -5867,6 +5867,54 @@ var UIModel = (function() {
 })();
 
 
+function NewCallUtils(instance, data) {
+    this.instance = instance;
+    this.data = data;
+
+    var that = this;
+
+    this.setupAddSessionCallback = function() {
+        var sessionUii = utils.getText(data.ui_notification, "uii"),
+            call = UIModel.getInstance().currentCall,
+            sessionId = data.ui_notification.session_id['#text'];
+
+        if(call.uii === sessionUii) {
+            // we already have a new call packet for this session
+            _delayedAddSessionCallback(that.instance, that.data);
+
+        } else {
+            // uii mismatch, but call has been dispositioned
+            UIModel.getInstance().pendingNewCallSessions[sessionUii] = UIModel.getInstance().pendingNewCallSessions[sessionUii] || {};
+            UIModel.getInstance().pendingNewCallSessions[sessionUii][sessionId] = that;
+        }
+    };
+
+    this.processSessionsForCall = function() {
+        var uii = UIModel.getInstance().currentCall.uii,
+            delayedSessions = UIModel.getInstance().pendingNewCallSessions[uii];
+
+        if(delayedSessions && Object.keys(delayedSessions).length > 0) {
+            // we have delayed sessions to process
+            for(var sessionId in delayedSessions) {
+                if(delayedSessions.hasOwnProperty(sessionId)) {
+                    var session = delayedSessions[sessionId];
+                    _delayedAddSessionCallback(session.instance, session.data);
+                } else {
+                    console.error('error processing sessions for uii: ' + uii + ' session: ' + sessionId );
+                }
+            }
+
+            delete UIModel.getInstance().pendingNewCallSessions[uii];
+        }
+    };
+
+    function _delayedAddSessionCallback(instance, data) {
+        var addSessionNotif = new AddSessionNotification();
+        var addResponse = addSessionNotif.processResponse(data);
+        utils.fireCallback(instance, CALLBACK_TYPES.ADD_SESSION, addResponse);
+    }
+}
+
 var utils = {
     logMessage: function(logLevel, message, data){
         var instance = UIModel.getInstance().libraryInstance;
@@ -6091,7 +6139,8 @@ var utils = {
 
         switch (type.toUpperCase()){
             case MESSAGE_TYPES.ADD_SESSION:
-                _setupAddSessionCallback(instance, data);
+                var newCallUtils = new NewCallUtils(instance, data);
+                newCallUtils.setupAddSessionCallback();
                 break;
             case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
                 var dgChangeNotif = new DialGroupChangeNotification();
@@ -6152,7 +6201,8 @@ var utils = {
                     var newCallNotif = new NewCallNotification();
                     var newCallResponse = newCallNotif.processResponse(data);
                     utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
-                    _processSessionsForCall(instance);
+                    var newCallUtils = new NewCallUtils(instance, data);
+                    newCallUtils.processSessionsForCall();
                 }, 2000);
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
@@ -6808,50 +6858,7 @@ var utils = {
     }
 };
 
-function _delayedAddSessionCallback(instance, data) {
-    var addSesNotif = new AddSessionNotification();
-    var addResponse = addSesNotif.processResponse(data);
-    utils.fireCallback(instance, CALLBACK_TYPES.ADD_SESSION, addResponse);
-}
 
-function _setupAddSessionCallback(instance, data) {
-    var sessionUii = utils.getText(data.ui_notification, "uii"),
-        call = UIModel.getInstance().currentCall,
-        sessionId = data.ui_notification.session_id['#text'];
-
-    if(call.uii === sessionUii) {
-        // we already have a new call packet for this session
-        _delayedAddSessionCallback(instance, data);
-
-    //} else if(call.uii && call.duration) {        // TODO: do we actually need this check?
-    } else {
-        // uii mismatch, but call has been dispositioned
-        UIModel.getInstance().pendingNewCallSessions[sessionUii] = UIModel.getInstance().pendingNewCallSessions[sessionUii] || {};
-        UIModel.getInstance().pendingNewCallSessions[sessionUii][sessionId] = {
-            addSession: _delayedAddSessionCallback,
-            data: data
-        };
-    }
-}
-
-function _processSessionsForCall(instance) {
-    var uii = UIModel.getInstance().currentCall.uii,
-        delayedSessions = UIModel.getInstance().pendingNewCallSessions[uii];
-
-    if(delayedSessions && Object.keys(delayedSessions).length > 0) {
-        // we have delayed sessions to process
-        for(var sessionId in delayedSessions) {
-            if(delayedSessions.hasOwnProperty(sessionId)) {
-                var session = delayedSessions[sessionId];
-                session.addSession(instance, session.data);
-            } else {
-                console.error('error processing sessions for uii: ' + uii + ' session: ' + sessionId );
-            }
-        }
-
-        delete UIModel.getInstance().pendingNewCallSessions[uii];
-    }
-}
 
 
 // CONSTANTS
