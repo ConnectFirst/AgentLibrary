@@ -6203,7 +6203,7 @@ var utils = {
                     utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
                     var newCallUtils = new NewCallUtils(instance, data);
                     newCallUtils.processSessionsForCall();
-                }, 2000);
+                }, 8);
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
                 if(UIModel.getInstance().offhookTermRequest === null){
