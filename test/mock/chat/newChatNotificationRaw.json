@@ -21,6 +21,8 @@
         "survey_pop_type":{"#text":"SUPPRESS"},
         "script_version":{"#text":"1"},
         "json_baggage":{"#text":'{"name":"danielle","email":"dani.libros@gmail.com"}'},
+        "idle_timeout":{"#text":"60"},
+
         "chat_requeue_shortcuts":{
             "shortcut":[
                 {"@chat_queue_id":"2", "@name":"test queue", "@skill_id":""}

@@ -354,6 +354,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             surveyPopType: "SUPPRESS",
             scriptId:"1",
             scriptVersion: "1",
+            idleTimeout: "60",
             preChatData: {name:'danielle', email:'dani.libros@gmail.com'},
             requeueShortcuts : { shortcuts : [
                 { chatQueueId : '2', name : 'test queue', skillId : '' }
