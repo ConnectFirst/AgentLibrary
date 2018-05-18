@@ -90,5 +90,10 @@ HoldRequest.prototype.processResponse = function(response) {
         utils.logMessage(LOG_LEVELS.WARN, "Error processing HOLD request. " + formattedResponse.detail, response);
     }
 
+    if(formattedResponse.sessionId !== '1') {
+        // we have a hold for a transfer session
+        UIModel.getInstance().transferSessions[formattedResponse.sessionId].onHold = formattedResponse.holdState;
+    }
+
     return formattedResponse;
 };
