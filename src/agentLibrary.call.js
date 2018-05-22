@@ -45,6 +45,7 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary.Call
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {number} [sipHeaders=[]] Name/Value header pairs
      * @param {function} [callback=null] Callback function when cold transfer response received
      */
     AgentLibrary.prototype.coldXfer = function(dialDest, callerId, sipHeaders, callback){
@@ -60,12 +61,13 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary.Call
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {number} [sipHeaders=[]] Name/Value header pairs
      * @param {number} [countryId=""] Country Id for the dialDest
      * @param {function} [callback=null] Callback function when warm transfer response received
      */
     AgentLibrary.prototype.internationalColdXfer = function(dialDest, callerId, sipHeaders, countryId, callback){
 
-        UIModel.getInstance().warmXferRequest = new XferColdRequest(dialDest, callerId, sipHeaders, countryId);
+        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId, sipHeaders, countryId);
         var msg = UIModel.getInstance().coldXferRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
@@ -154,7 +156,7 @@ function initAgentLibraryCall (context) {
     };
 
     /**
-     * Place a call on hold
+     * Place a specified session of a call on hold
      * @memberof AgentLibrary.Call
      * @param {boolean} holdState Whether we are putting call on hold or taking off hold - values true | false
      * @param {integer|string} sessionId session id of the call to place on hold

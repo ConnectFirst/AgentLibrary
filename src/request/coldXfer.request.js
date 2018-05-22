@@ -3,7 +3,7 @@ var XferColdRequest = function(dialDest, callerId, sipHeaders, countryId) {
     this.dialDest = dialDest;
     this.callerId = callerId || "";
     this.sipHeaders = sipHeaders || [];
-    this.countryId = countryId;
+    this.countryId = countryId || "";
 };
 
 XferColdRequest.prototype.formatJSON = function() {

@@ -93,9 +93,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -109,9 +107,7 @@
 
     
 
-    
     <h4 class="name" id="bargeIn"><span class="type-signature">(static) </span>AgentLibrary#bargeIn<span class="signature">(agentId, uii, monitorAgentId, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -362,16 +358,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="coach"><span class="type-signature">(static) </span>AgentLibrary#coach<span class="signature">(agentId, uii, monitorAgentId, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -622,16 +614,12 @@
 
 
 
-
-
         
             
 
     
 
-    
-    <h4 class="name" id="coldXfer"><span class="type-signature">(static) </span>AgentLibrary#coldXfer<span class="signature">(dialDest, callerId<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
+    <h4 class="name" id="coldXfer"><span class="type-signature">(static) </span>AgentLibrary#coldXfer<span class="signature">(dialDest, callerId<span class="signature-attributes">opt</span>, sipHeaders<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -752,6 +740,45 @@
 
         <tr>
             
+                <td class="name"><code>sipHeaders</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    []
+                
+                </td>
+            
+
+            <td class="description last">Name/Value header pairs</td>
+        </tr>
+
+    
+
+        <tr>
+            
                 <td class="name"><code>callback</code></td>
             
 
@@ -825,7 +852,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8161">line 8161</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8162">line 8162</a>
     </li></ul></dd>
     
 
@@ -851,16 +878,12 @@
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="dispositionCall"><span class="type-signature">(static) </span>AgentLibrary#dispositionCall<span class="signature">(uii, dispId, notes, callback, callbackDTS<span class="signature-attributes">opt</span>, contactForwardNumber<span class="signature-attributes">opt</span>, survey<span class="signature-attributes">opt</span>, externId<span class="signature-attributes">opt</span>, leadId<span class="signature-attributes">opt</span>, requestId<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -1316,7 +1339,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8201">line 8201</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8203">line 8203</a>
     </li></ul></dd>
     
 
@@ -1342,16 +1365,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="dispositionManualPass"><span class="type-signature">(static) </span>AgentLibrary#dispositionManualPass<span class="signature">(dispId, notes, callback, callbackDTS<span class="signature-attributes">opt</span>, leadId<span class="signature-attributes">opt</span>, requestId<span class="signature-attributes">opt</span>, externId<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -1693,7 +1712,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8222">line 8222</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8224">line 8224</a>
     </li></ul></dd>
     
 
@@ -1719,16 +1738,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="getCampaignDispositions"><span class="type-signature">(static) </span>AgentLibrary#getCampaignDispositions<span class="signature">(campaignId, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -1883,7 +1898,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8234">line 8234</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8236">line 8236</a>
     </li></ul></dd>
     
 
@@ -1909,16 +1924,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="getScript"><span class="type-signature">(static) </span>AgentLibrary#getScript<span class="signature">(scriptId, version, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -2109,7 +2120,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8520">line 8520</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8522">line 8522</a>
     </li></ul></dd>
     
 
@@ -2135,16 +2146,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="hangup"><span class="type-signature">(static) </span>AgentLibrary#hangup<span class="signature">(sessionId<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -2264,7 +2271,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8247">line 8247</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8249">line 8249</a>
     </li></ul></dd>
     
 
@@ -2290,16 +2297,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="hold"><span class="type-signature">(static) </span>AgentLibrary#hold<span class="signature">(holdState, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -2454,7 +2457,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8259">line 8259</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8261">line 8261</a>
     </li></ul></dd>
     
 
@@ -2480,23 +2483,19 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="holdSession"><span class="type-signature">(static) </span>AgentLibrary#holdSession<span class="signature">(holdState, sessionId, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
 
 
 <div class="description">
-    Place a call on hold
+    Place a specified session of a call on hold
 </div>
 
 
@@ -2682,7 +2681,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8274">line 8274</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8276">line 8276</a>
     </li></ul></dd>
     
 
@@ -2708,16 +2707,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
-    <h4 class="name" id="internationalColdXfer"><span class="type-signature">(static) </span>AgentLibrary#internationalColdXfer<span class="signature">(dialDest, callerId<span class="signature-attributes">opt</span>, countryId<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
+    <h4 class="name" id="internationalColdXfer"><span class="type-signature">(static) </span>AgentLibrary#internationalColdXfer<span class="signature">(dialDest, callerId<span class="signature-attributes">opt</span>, sipHeaders<span class="signature-attributes">opt</span>, countryId<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -2838,6 +2833,45 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
         <tr>
             
+                <td class="name"><code>sipHeaders</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    []
+                
+                </td>
+            
+
+            <td class="description last">Name/Value header pairs</td>
+        </tr>
+
+    
+
+        <tr>
+            
                 <td class="name"><code>countryId</code></td>
             
 
@@ -2950,7 +2984,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8177">line 8177</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8179">line 8179</a>
     </li></ul></dd>
     
 
@@ -2976,16 +3010,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="internationalWarmXfer"><span class="type-signature">(static) </span>AgentLibrary#internationalWarmXfer<span class="signature">(dialDest, callerId<span class="signature-attributes">opt</span>, countryId<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -3218,7 +3248,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8476">line 8476</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8478">line 8478</a>
     </li></ul></dd>
     
 
@@ -3244,16 +3274,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="manualOutdial"><span class="type-signature">(static) </span>AgentLibrary#manualOutdial<span class="signature">(destination, callerId, ringTime<span class="signature-attributes">opt</span>, countryId<span class="signature-attributes">opt</span>, queueId<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -3521,7 +3547,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8291">line 8291</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8293">line 8293</a>
     </li></ul></dd>
     
 
@@ -3547,16 +3573,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="manualOutdialCancel"><span class="type-signature">(static) </span>AgentLibrary#manualOutdialCancel<span class="signature">(uii)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -3656,7 +3678,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8302">line 8302</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8304">line 8304</a>
     </li></ul></dd>
     
 
@@ -3682,16 +3704,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="monitor"><span class="type-signature">(static) </span>AgentLibrary#monitor<span class="signature">(agentId, uii, monitorAgentId, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -3916,7 +3934,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8387">line 8387</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8389">line 8389</a>
     </li></ul></dd>
     
 
@@ -3942,16 +3960,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="pauseRecord"><span class="type-signature">(static) </span>AgentLibrary#pauseRecord<span class="signature">(record, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -4106,7 +4120,7 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8314">line 8314</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8316">line 8316</a>
     </li></ul></dd>
     
 
@@ -4132,16 +4146,12 @@ Format: survey = [ { label: "", externId: "", leadUpdateColumn: ""} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="previewDial"><span class="type-signature">(static) </span>AgentLibrary#previewDial<span class="signature">(requestId, leadPhone<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -4297,7 +4307,7 @@ Call previewFetch method first to get request id.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8329">line 8329</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8331">line 8331</a>
     </li></ul></dd>
     
 
@@ -4323,16 +4333,12 @@ Call previewFetch method first to get request id.
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="previewFetch"><span class="type-signature">(static) </span>AgentLibrary#previewFetch<span class="signature">(searchFields<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -4492,7 +4498,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8342">line 8342</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8344">line 8344</a>
     </li></ul></dd>
     
 
@@ -4518,16 +4524,12 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="record"><span class="type-signature">(static) </span>AgentLibrary#record<span class="signature">(record, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -4682,7 +4684,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8401">line 8401</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8403">line 8403</a>
     </li></ul></dd>
     
 
@@ -4708,16 +4710,12 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="requeueCall"><span class="type-signature">(static) </span>AgentLibrary#requeueCall<span class="signature">(queueId, skillId, maintain, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -4942,7 +4940,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8417">line 8417</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8419">line 8419</a>
     </li></ul></dd>
     
 
@@ -4968,16 +4966,12 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="safeModeCall"><span class="type-signature">(static) </span>AgentLibrary#safeModeCall<span class="signature">(requestId, leadPhone<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -5133,7 +5127,7 @@ Call safeModeFetch method first to get request id.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8432">line 8432</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8434">line 8434</a>
     </li></ul></dd>
     
 
@@ -5159,16 +5153,12 @@ Call safeModeFetch method first to get request id.
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="safeModeFetch"><span class="type-signature">(static) </span>AgentLibrary#safeModeFetch<span class="signature">(searchFields<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -5328,7 +5318,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8445">line 8445</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8447">line 8447</a>
     </li></ul></dd>
     
 
@@ -5354,16 +5344,12 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="safeSearchLeads"><span class="type-signature">(static) </span>AgentLibrary#safeSearchLeads<span class="signature">(searchFields<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -5523,7 +5509,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8460">line 8460</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8462">line 8462</a>
     </li></ul></dd>
     
 
@@ -5549,16 +5535,12 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="saveScriptResult"><span class="type-signature">(static) </span>AgentLibrary#saveScriptResult<span class="signature">(uii, scriptId, jsonResult)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -5704,7 +5686,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8544">line 8544</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8546">line 8546</a>
     </li></ul></dd>
     
 
@@ -5730,16 +5712,12 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="searchLeads"><span class="type-signature">(static) </span>AgentLibrary#searchLeads<span class="signature">(searchFields<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -5899,7 +5877,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8357">line 8357</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8359">line 8359</a>
     </li></ul></dd>
     
 
@@ -5925,16 +5903,12 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="setCallNotes"><span class="type-signature">(static) </span>AgentLibrary#setCallNotes<span class="signature">(notes, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -6089,7 +6063,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8371">line 8371</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8373">line 8373</a>
     </li></ul></dd>
     
 
@@ -6115,16 +6089,12 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="warmXfer"><span class="type-signature">(static) </span>AgentLibrary#warmXfer<span class="signature">(dialDest, callerId<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -6318,7 +6288,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8492">line 8492</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8494">line 8494</a>
     </li></ul></dd>
     
 
@@ -6344,16 +6314,12 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 
 
 
-
-
         
             
 
     
 
-    
     <h4 class="name" id="warmXferCancel"><span class="type-signature">(static) </span>AgentLibrary#warmXferCancel<span class="signature">(dialDest)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -6453,7 +6419,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8506">line 8506</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8508">line 8508</a>
     </li></ul></dd>
     
 
@@ -6463,8 +6429,6 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 
     
 </dl>
-
-
 
 
 
@@ -6503,7 +6467,7 @@ e.g. [ {key: "name", value: "Geoff"} ]</td>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri May 18 2018 14:28:46 GMT-0600 (MDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Tue May 22 2018 16:07:27 GMT-0600 (MDT)
 </footer>
 
 <script> prettyPrint(); </script>
