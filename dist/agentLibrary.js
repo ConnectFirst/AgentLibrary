@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-05-15 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-05-22 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1375,11 +1375,11 @@ ChatStateRequest.prototype.processResponse = function(response) {
 
 
 
-var XferColdRequest = function(dialDest, callerId, sipHeaders) {
+var XferColdRequest = function(dialDest, callerId, sipHeaders, countryId) {
     this.dialDest = dialDest;
     this.callerId = callerId || "";
     this.sipHeaders = sipHeaders || [];
-
+    this.countryId = countryId || "";
 };
 
 XferColdRequest.prototype.formatJSON = function() {
@@ -1406,6 +1406,9 @@ XferColdRequest.prototype.formatJSON = function() {
             },
             "caller_id":{
                 "#text":utils.toString(this.callerId)
+            },
+            "country_id": {
+                "#text":utils.toString(this.countryId)
             },
             "xfer_header": fields
         }
@@ -2004,8 +2007,10 @@ HangupRequest.prototype.formatJSON = function() {
 };
 
 
-var HoldRequest = function(holdState) {
+var HoldRequest = function(holdState, sessionId) {
     this.holdState = holdState;
+    this.sessionId = sessionId || '1';
+
 };
 
 /*
@@ -2036,7 +2041,7 @@ HoldRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(model.currentCall.uii)
             },
             "session_id":{
-                "#text":"1"
+                "#text": utils.toString(this.sessionId)
             },
             "hold_state":{
                 "#text":this.holdState === true || this.holdState === "true" ? "ON" : "OFF"
@@ -2091,6 +2096,11 @@ HoldRequest.prototype.processResponse = function(response) {
             formattedResponse.message = "Error processing HOLD request. " +  + formattedResponse.message + "\n" + formattedResponse.detail;
         }
         utils.logMessage(LOG_LEVELS.WARN, "Error processing HOLD request. " + formattedResponse.detail, response);
+    }
+
+    if(formattedResponse.sessionId !== '1') {
+        // we have a hold for a transfer session
+        UIModel.getInstance().transferSessions[formattedResponse.sessionId].onHold = formattedResponse.holdState;
     }
 
     return formattedResponse;
@@ -8146,10 +8156,29 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary.Call
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {number} [sipHeaders=[]] Name/Value header pairs
      * @param {function} [callback=null] Callback function when cold transfer response received
      */
     AgentLibrary.prototype.coldXfer = function(dialDest, callerId, sipHeaders, callback){
         UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId, sipHeaders);
+        var msg = UIModel.getInstance().coldXferRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer to another number and end the call for the original agent (cold transfer).
+     * @memberof AgentLibrary.Call
+     * @param {number} dialDest Number to transfer to
+     * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {number} [sipHeaders=[]] Name/Value header pairs
+     * @param {number} [countryId=""] Country Id for the dialDest
+     * @param {function} [callback=null] Callback function when warm transfer response received
+     */
+    AgentLibrary.prototype.internationalColdXfer = function(dialDest, callerId, sipHeaders, countryId, callback){
+
+        UIModel.getInstance().coldXferRequest = new XferColdRequest(dialDest, callerId, sipHeaders, countryId);
         var msg = UIModel.getInstance().coldXferRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.XFER_COLD, callback);
@@ -8231,6 +8260,21 @@ function initAgentLibraryCall (context) {
      */
     AgentLibrary.prototype.hold = function(holdState, callback){
         UIModel.getInstance().holdRequest = new HoldRequest(holdState);
+        var msg = UIModel.getInstance().holdRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.HOLD, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Place a specified session of a call on hold
+     * @memberof AgentLibrary.Call
+     * @param {boolean} holdState Whether we are putting call on hold or taking off hold - values true | false
+     * @param {integer|string} sessionId session id of the call to place on hold
+     * @param {function} [callback=null] Callback function when hold response received
+     */
+    AgentLibrary.prototype.holdSession = function(holdState, sessionId, callback){
+        UIModel.getInstance().holdRequest = new HoldRequest(holdState, sessionId);
         var msg = UIModel.getInstance().holdRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.HOLD, callback);
