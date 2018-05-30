@@ -486,4 +486,15 @@ function initAgentLibraryCall (context) {
         utils.sendMessage(this, msg);
     };
 
+   /**
+    * Send the direct agent transfer straight to voicemail, avoid any attempts to connect to the target agent
+    * @memberof AgentLibrary.Call
+    * @param {number} targetAgentId Agent id to receive the voicemail
+    */
+    AgentLibrary.prototype.voicemailDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'VOICEMAIL');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
 }

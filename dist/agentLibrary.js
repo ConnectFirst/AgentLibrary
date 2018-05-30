@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-05-29 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-05-30 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -8747,6 +8747,17 @@ function initAgentLibraryCall (context) {
      */
     AgentLibrary.prototype.cancelDirectAgentXfer = function(targetAgentId) {
         UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'CANCEL');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+   /**
+    * Send the direct agent transfer straight to voicemail, avoid any attempts to connect to the target agent
+    * @memberof AgentLibrary.Call
+    * @param {number} targetAgentId Agent id to receive the voicemail
+    */
+    AgentLibrary.prototype.voicemailDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'VOICEMAIL');
         var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
