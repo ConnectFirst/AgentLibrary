@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-05-22 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-05-29 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1759,6 +1759,140 @@ function setChatQueueSettings(response){
 
     model.chatSettings.chatQueues = JSON.parse(JSON.stringify(selectedChatQueues)); // copy array
 }
+
+
+var DirectAgentTransfer = function(targetAgentId, transferType) {
+    this.targetAgentId = targetAgentId;
+    this.transferType = transferType;
+};
+
+DirectAgentTransfer.prototype.formatJSON = function() {
+    var model = UIModel.getInstance();
+    var msg = {
+        "ui_request": {
+            "@destination": "IQ",
+            "@type": MESSAGE_TYPES.DIRECT_AGENT_TRANSFER,
+            "@message_id": utils.getMessageId(),
+            "@response_to": "",
+            "agent_id":{
+                "#text": model.agentSettings.agentId
+            },
+            "uii": {
+                "#text": utils.toString(model.currentCall.uii)
+            },
+            "target_agent_id": {
+                "#text": utils.toString(this.targetAgentId)
+            },
+            "transfer_type": {
+                "#text": utils.toString(this.transferType)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes DIRECT-AGENT-TRANSFER packets rec'd from IQ.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ10012016082314475000219",
+ *      "@response_to":"",
+ *      "@type":"DIRECT-AGENT-TRANSFER",
+ *      "status":{"#text":"OK"},
+ *      "message":{"#text":"OK"},
+ *      "type":{"#text":"WARM|COLD|CANCEL"}
+ *   }
+ * }
+ */
+DirectAgentTransfer.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var formattedResponse = utils.buildDefaultResponse(response);
+    formattedResponse.type = utils.getText(resp, 'type');
+
+    if(formattedResponse.status !== "OK"){
+        // log message response
+        var message = "There was an error processing the Direct Agent Transfer request. " + formattedResponse.message + " : " + formattedResponse.detail;
+        utils.logMessage(LOG_LEVELS.WARN, message, response);
+    }
+
+    return formattedResponse;
+};
+
+
+var DirectAgentTransferList = function() { };
+
+DirectAgentTransferList.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination": "IQ",
+            "@type": MESSAGE_TYPES.DIRECT_AGENT_TRANSFER_LIST,
+            "@message_id": utils.getMessageId(),
+            "@response_to": "",
+            "agent_id":{
+                "#text": UIModel.getInstance().agentSettings.agentId
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * This class processes DIRECT-AGENT-TRANSFER-LIST packets rec'd from IQ.
+ *
+ *  {
+ *      "ui_response":{
+ *          "@message_id":"IQD01DEV2018052917202600038",
+ *          "@response_to":"f0b2e8a3-87fe-13ee-4d00-9d145bfe2be8",
+ *          "@type":"DIRECT-AGENT-TRANSFER-LIST",
+ *          "status":{
+ *              "#text":"true"
+ *          },
+ *          "message":{
+ *              "#text":"OK"
+ *          },
+ *          "agents":{
+ *              "agent": [
+ *                  {
+ *                      "@agent_aux_state":"AVAILABLE",
+ *                      "@agent_id":"1184160",
+ *                      "@agent_state":"AVAILABLE",
+ *                      "@available":"true",
+ *                      "@first_name":"ross",
+ *                      "@last_name":"m",
+ *                      "@pending_disp":"false",
+ *                      "@state_duration":"379",
+ *                      "@username":"rm1"
+ *                  },
+ *                  {
+ *                      "@agent_aux_state":"AVAILABLE",
+ *                      "@agent_id":"1184161",
+ *                      "@agent_state":"AVAILABLE",
+ *                      "@available":"true",
+ *                      "@first_name":"ross",
+ *                      "@last_name":"m",
+ *                      "@pending_disp":"false",
+ *                      "@state_duration":"84",
+ *                      "@username":"rm2"
+ *                  }
+ *              ]
+ *          }
+ *      }
+ *  }
+ */
+DirectAgentTransferList.prototype.processResponse = function(response) {
+    var formattedResponse = utils.buildDefaultResponse(response);
+    formattedResponse.agents = utils.processResponseCollection(response, 'ui_response', 'agents');
+
+    if(formattedResponse.status !== "OK"){
+        // log message response
+        var message = "There was an error processing the Direct Agent Transfer List request. " + formattedResponse.message + " : " + formattedResponse.detail;
+        utils.logMessage(LOG_LEVELS.WARN, message, response);
+    }
+
+    return formattedResponse;
+};
 
 
 var DispositionRequest = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId) {
@@ -5696,6 +5830,8 @@ var UIModel = (function() {
             warmXferRequest : null,
             warmXferCancelRequest : null,
             chatListRequest: null,
+            directAgentTransferListRequest: null,
+            directAgentTransferRequest: null,
 
 
             // response packets
@@ -6136,10 +6272,24 @@ var utils = {
                 var chatStateResponse = chatState.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STATE, chatStateResponse);
                 break;
+            case MESSAGE_TYPES.DIRECT_AGENT_TRANSFER_LIST:
+                var agentList = new DirectAgentTransferList();
+                var responseTo = response.ui_response['@response_to'];
+                var request = utils.findRequestById(instance, responseTo);
+                var requestResponse = agentList.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_LIST, requestResponse);
+                break;
+            case MESSAGE_TYPES.DIRECT_AGENT_TRANSFER:
+                var agentXfer = new DirectAgentTransfer();
+                var responseTo = response.ui_response['@response_to'];
+                var request = utils.findRequestById(instance, responseTo);
+                var requestResponse = agentXfer.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER, requestResponse);
+                break;
         }
     },
 
-    processNotification: function(instance, data){
+    processNotification: function(instance, data) {
         var type = data.ui_notification['@type'];
         var messageId = data.ui_notification['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
@@ -6945,7 +7095,9 @@ const CALLBACK_TYPES = {
     "SUPERVISOR_LIST":"supervisorListResponse",
     "TCPA_SAFE_LEAD_STATE":"tcpaSafeLeadStateNotification",
     "XFER_COLD":"coldXferResponse",
-    "XFER_WARM":"warmXferResponse"
+    "XFER_WARM":"warmXferResponse",
+    "DIRECT_AGENT_TRANSFER_LIST": "directAgentTransferListResponse",
+    "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse"
 };
 
 const MESSAGE_TYPES = {
@@ -7023,7 +7175,9 @@ const MESSAGE_TYPES = {
     "TCPA_SAFE_LEAD_STATE":"TCPA-SAFE-LEAD-STATE",
     "XFER_COLD":"COLD-XFER",
     "XFER_WARM":"WARM-XFER",
-    "XFER_WARM_CANCEL":"WARM-XFER-CANCEL"
+    "XFER_WARM_CANCEL":"WARM-XFER-CANCEL",
+    "DIRECT_AGENT_TRANSFER_LIST": "DIRECT-AGENT-TRANSFER-LIST",
+    "DIRECT_AGENT_TRANSFER": "DIRECT-AGENT-TRANSFER"
 };
 
 
@@ -8472,6 +8626,7 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary.Call
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {number} [sipHeaders=[]] Name/Value header pairs
      * @param {number} [countryId=""] Country Id for the dialDest
      * @param {function} [callback=null] Callback function when warm transfer response received
      */
@@ -8489,6 +8644,7 @@ function initAgentLibraryCall (context) {
      * @memberof AgentLibrary.Call
      * @param {number} dialDest Number to transfer to
      * @param {number} [callerId=""] Caller Id for caller (DNIS)
+     * @param {number} [sipHeaders=[]] Name/Value header pairs
      * @param {function} [callback=null] Callback function when warm transfer response received
      */
     AgentLibrary.prototype.warmXfer = function(dialDest, callerId, sipHeaders, callback){
@@ -8546,6 +8702,52 @@ function initAgentLibraryCall (context) {
     AgentLibrary.prototype.saveScriptResult = function(uii, scriptId, jsonResult){
         UIModel.getInstance().scriptResultRequest = new ScriptResultRequest(uii, scriptId, jsonResult);
         var msg = UIModel.getInstance().scriptResultRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Get available list of agents available for Direct Transfer
+     * @memberof AgentLibrary.Call
+     */
+    AgentLibrary.prototype.directAgentXferList = function(callback) {
+        UIModel.getInstance().directAgentTransferListRequest = new DirectAgentTransferList();
+        var msg = UIModel.getInstance().directAgentTransferListRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_LIST, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer directly to an available agent from the directAgentXferList result and stay on the call
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to transfer the call to
+     */
+    AgentLibrary.prototype.warmDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'WARM');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer directly to an available agent from the directAgentXferList result
+     * and terminate the current agents call session
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to transfer the call to
+     */
+    AgentLibrary.prototype.coldDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'COLD');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Cancel the request to transfer directly to an agent
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to transfer the call to
+     */
+    AgentLibrary.prototype.cancelDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'CANCEL');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 

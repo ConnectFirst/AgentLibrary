@@ -440,4 +440,50 @@ function initAgentLibraryCall (context) {
         utils.sendMessage(this, msg);
     };
 
+    /**
+     * Get available list of agents available for Direct Transfer
+     * @memberof AgentLibrary.Call
+     */
+    AgentLibrary.prototype.directAgentXferList = function(callback) {
+        UIModel.getInstance().directAgentTransferListRequest = new DirectAgentTransferList();
+        var msg = UIModel.getInstance().directAgentTransferListRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_LIST, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer directly to an available agent from the directAgentXferList result and stay on the call
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to transfer the call to
+     */
+    AgentLibrary.prototype.warmDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'WARM');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer directly to an available agent from the directAgentXferList result
+     * and terminate the current agents call session
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to transfer the call to
+     */
+    AgentLibrary.prototype.coldDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'COLD');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Cancel the request to transfer directly to an agent
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to transfer the call to
+     */
+    AgentLibrary.prototype.cancelDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'CANCEL');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
 }

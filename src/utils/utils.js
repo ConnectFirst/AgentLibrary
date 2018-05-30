@@ -208,10 +208,24 @@ var utils = {
                 var chatStateResponse = chatState.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STATE, chatStateResponse);
                 break;
+            case MESSAGE_TYPES.DIRECT_AGENT_TRANSFER_LIST:
+                var agentList = new DirectAgentTransferList();
+                var responseTo = response.ui_response['@response_to'];
+                var request = utils.findRequestById(instance, responseTo);
+                var requestResponse = agentList.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_LIST, requestResponse);
+                break;
+            case MESSAGE_TYPES.DIRECT_AGENT_TRANSFER:
+                var agentXfer = new DirectAgentTransfer();
+                var responseTo = response.ui_response['@response_to'];
+                var request = utils.findRequestById(instance, responseTo);
+                var requestResponse = agentXfer.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER, requestResponse);
+                break;
         }
     },
 
-    processNotification: function(instance, data){
+    processNotification: function(instance, data) {
         var type = data.ui_notification['@type'];
         var messageId = data.ui_notification['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
