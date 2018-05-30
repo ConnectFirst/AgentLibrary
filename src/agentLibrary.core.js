@@ -77,7 +77,8 @@ const CALLBACK_TYPES = {
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse",
     "DIRECT_AGENT_TRANSFER_LIST": "directAgentTransferListResponse",
-    "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse"
+    "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse",
+    "DIRECT_AGENT_TRANSFER_ROUTE": "directAgentTransferRouteNotification"
 };
 
 const MESSAGE_TYPES = {
@@ -157,7 +158,8 @@ const MESSAGE_TYPES = {
     "XFER_WARM":"WARM-XFER",
     "XFER_WARM_CANCEL":"WARM-XFER-CANCEL",
     "DIRECT_AGENT_TRANSFER_LIST": "DIRECT-AGENT-TRANSFER-LIST",
-    "DIRECT_AGENT_TRANSFER": "DIRECT-AGENT-TRANSFER"
+    "DIRECT_AGENT_TRANSFER": "DIRECT-AGENT-TRANSFER",
+    "DIRECT_AGENT_ROUTE": "DIRECT-AGENT-ROUTE"
 };
 
 

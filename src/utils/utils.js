@@ -367,6 +367,11 @@ var utils = {
                 var chatCancelledResponse = chatCancelled.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
                 break;
+            case MESSAGE_TYPES.DIRECT_AGENT_ROUTE:
+                var directAgentTransfer = new DirectAgentTransferNotification();
+                var directAgentTransferResponse = directAgentTransfer.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_ROUTE, directAgentTransferResponse);
+                break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
 

@@ -175,6 +175,49 @@ DialGroupChangePendingNotification.prototype.processResponse = function(notifica
 };
 
 
+var DirectAgentTransferNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a DIRECT-AGENT-ROUTE notification.
+ * This event is sent from IQ when an agent is presented a direct transfer, in the case they are not in an
+ * available state to automatically be presented the call.
+ *
+ * {
+ *     "ui_notification": {
+ *         "@message_id": "IQ10012016080515294800318",
+ *         "@type": "DIRECT-AGENT-ROUTE",
+ *         "response_to": { "#text": "" },
+ *         "agent_id": { "#text": "" },
+ *         "uii": { "#text": "" },
+ *         "status": { "#text": "" },
+ *         "ani": { "#text": "" },
+ *         "dnis": { "#text": "" }
+ *         "source_type": { "#text": "" },
+ *         "source_id": { "#text": "" },
+ *         "source_name": { "#text": "" }
+ *     }
+ * }
+ */
+DirectAgentTransferNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+    var notif = notification.ui_notification;
+
+    formattedResponse.message = "Received DIRECT-AGENT-ROUTE notification";
+    formattedResponse.status = "OK";
+    formattedResponse.agentId = utils.getText(notif, "agent_id");
+    formattedResponse.uii = utils.getText(notif, "uii");
+    formattedResponse.ani = utils.getText(notif, "ani");
+    formattedResponse.dnis = utils.getText(notif, "dnis");
+    formattedResponse.sourceType = utils.getText(notif, "source_type");
+    formattedResponse.sourceId = utils.getText(notif, "source_id");
+    formattedResponse.sourceName = utils.getText(notif, "source_name");
+
+    return formattedResponse;
+};
+
+
 var DropSessionNotification = function() {
 
 };
@@ -6431,6 +6474,11 @@ var utils = {
                 var chatCancelledResponse = chatCancelled.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
                 break;
+            case MESSAGE_TYPES.DIRECT_AGENT_ROUTE:
+                var directAgentTransfer = new DirectAgentTransferNotification();
+                var directAgentTransferResponse = directAgentTransfer.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_ROUTE, directAgentTransferResponse);
+                break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
 
@@ -7097,7 +7145,8 @@ const CALLBACK_TYPES = {
     "XFER_COLD":"coldXferResponse",
     "XFER_WARM":"warmXferResponse",
     "DIRECT_AGENT_TRANSFER_LIST": "directAgentTransferListResponse",
-    "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse"
+    "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse",
+    "DIRECT_AGENT_TRANSFER_ROUTE": "directAgentTransferRouteNotification"
 };
 
 const MESSAGE_TYPES = {
@@ -7177,7 +7226,8 @@ const MESSAGE_TYPES = {
     "XFER_WARM":"WARM-XFER",
     "XFER_WARM_CANCEL":"WARM-XFER-CANCEL",
     "DIRECT_AGENT_TRANSFER_LIST": "DIRECT-AGENT-TRANSFER-LIST",
-    "DIRECT_AGENT_TRANSFER": "DIRECT-AGENT-TRANSFER"
+    "DIRECT_AGENT_TRANSFER": "DIRECT-AGENT-TRANSFER",
+    "DIRECT_AGENT_ROUTE": "DIRECT-AGENT-ROUTE"
 };
 
 
