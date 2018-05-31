@@ -370,7 +370,7 @@ var utils = {
             case MESSAGE_TYPES.DIRECT_AGENT_ROUTE:
                 var directAgentTransfer = new DirectAgentTransferNotification();
                 var directAgentTransferResponse = directAgentTransfer.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_ROUTE, directAgentTransferResponse);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_NOTIF, directAgentTransferResponse);
                 break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this

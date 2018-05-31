@@ -21,6 +21,7 @@ var DirectAgentTransferNotification = function() {
  *         "source_type": { "#text": "" },
  *         "source_id": { "#text": "" },
  *         "source_name": { "#text": "" }
+ *         "voicemail_url": { "#text": "" }
  *     }
  * }
  */
@@ -29,7 +30,7 @@ DirectAgentTransferNotification.prototype.processResponse = function(notificatio
     var notif = notification.ui_notification;
 
     formattedResponse.message = "Received DIRECT-AGENT-ROUTE notification";
-    formattedResponse.status = "OK";
+    formattedResponse.status = utils.getText(notif, "status");
     formattedResponse.agentId = utils.getText(notif, "agent_id");
     formattedResponse.uii = utils.getText(notif, "uii");
     formattedResponse.ani = utils.getText(notif, "ani");
@@ -37,6 +38,7 @@ DirectAgentTransferNotification.prototype.processResponse = function(notificatio
     formattedResponse.sourceType = utils.getText(notif, "source_type");
     formattedResponse.sourceId = utils.getText(notif, "source_id");
     formattedResponse.sourceName = utils.getText(notif, "source_name");
+    formattedResponse.voicemailUrl = utils.getText(notif, "voicemail_url");
 
     return formattedResponse;
 };

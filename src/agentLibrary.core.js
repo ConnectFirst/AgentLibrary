@@ -78,7 +78,7 @@ const CALLBACK_TYPES = {
     "XFER_WARM":"warmXferResponse",
     "DIRECT_AGENT_TRANSFER_LIST": "directAgentTransferListResponse",
     "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse",
-    "DIRECT_AGENT_TRANSFER_ROUTE": "directAgentTransferRouteNotification"
+    "DIRECT_AGENT_TRANSFER_NOTIF": "directAgentTransferNotification"
 };
 
 const MESSAGE_TYPES = {

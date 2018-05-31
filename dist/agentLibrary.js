@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-05-30 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-05-31 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -53,8 +53,23 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     }
 
     // Check to see if we have a transfer leg here, if so, register it
-    if(utils.getText(notif, "session_type") === 'OUTBOUND' && sessionAgentId === "" && utils.getText(notif, "allow_control") === true){
-        model.transferSessions[utils.getText(notif, "session_id")] = {sessionId:utils.getText(notif, "session_id"),destination:utils.getText(notif, "phone"),uii:utils.getText(notif, "uii")};
+    var sessionType = utils.getText(notif, "session_type"),
+        allowControl = utils.getText(notif, "allow_control"),
+        sessionId = utils.getText(notif, "session_id"),
+        uii = utils.getText(notif, "uii");
+    if(sessionId !== '1' && sessionAgentId !== model.agentSettings.agentId && allowControl) {
+        if(sessionType === 'OUTBOUND' || sessionType === 'AGENT') {
+            var destination = utils.getText(notif, "phone");
+            if(sessionType === 'AGENT' || sessionAgentId !== '') {
+                destination = utils.getText(notif, "agent_name");
+            }
+
+            model.transferSessions[sessionId] = {
+                sessionId: sessionId,
+                destination: destination,
+                uii: uii
+            };
+        }
     }
 
     // if agent session, set on call status
@@ -197,6 +212,7 @@ var DirectAgentTransferNotification = function() {
  *         "source_type": { "#text": "" },
  *         "source_id": { "#text": "" },
  *         "source_name": { "#text": "" }
+ *         "voicemail_url": { "#text": "" }
  *     }
  * }
  */
@@ -205,7 +221,7 @@ DirectAgentTransferNotification.prototype.processResponse = function(notificatio
     var notif = notification.ui_notification;
 
     formattedResponse.message = "Received DIRECT-AGENT-ROUTE notification";
-    formattedResponse.status = "OK";
+    formattedResponse.status = utils.getText(notif, "status");
     formattedResponse.agentId = utils.getText(notif, "agent_id");
     formattedResponse.uii = utils.getText(notif, "uii");
     formattedResponse.ani = utils.getText(notif, "ani");
@@ -213,6 +229,7 @@ DirectAgentTransferNotification.prototype.processResponse = function(notificatio
     formattedResponse.sourceType = utils.getText(notif, "source_type");
     formattedResponse.sourceId = utils.getText(notif, "source_id");
     formattedResponse.sourceName = utils.getText(notif, "source_name");
+    formattedResponse.voicemailUrl = utils.getText(notif, "voicemail_url");
 
     return formattedResponse;
 };
@@ -1804,9 +1821,10 @@ function setChatQueueSettings(response){
 }
 
 
-var DirectAgentTransfer = function(targetAgentId, transferType) {
+var DirectAgentTransfer = function(targetAgentId, transferType, uii) {
     this.targetAgentId = targetAgentId;
     this.transferType = transferType;
+    this.uii = uii || UIModel.getInstance().currentCall.uii;
 };
 
 DirectAgentTransfer.prototype.formatJSON = function() {
@@ -1818,10 +1836,10 @@ DirectAgentTransfer.prototype.formatJSON = function() {
             "@message_id": utils.getMessageId(),
             "@response_to": "",
             "agent_id":{
-                "#text": model.agentSettings.agentId
+                "#text": utils.toString(model.agentSettings.agentId)
             },
             "uii": {
-                "#text": utils.toString(model.currentCall.uii)
+                "#text": utils.toString(this.uii)
             },
             "target_agent_id": {
                 "#text": utils.toString(this.targetAgentId)
@@ -2275,9 +2293,10 @@ HoldRequest.prototype.processResponse = function(response) {
         utils.logMessage(LOG_LEVELS.WARN, "Error processing HOLD request. " + formattedResponse.detail, response);
     }
 
-    if(formattedResponse.sessionId !== '1') {
+    var model = UIModel.getInstance();
+    if(formattedResponse.sessionId !== '1' && model.transferSessions[formattedResponse.sessionId]) {
         // we have a hold for a transfer session
-        UIModel.getInstance().transferSessions[formattedResponse.sessionId].onHold = formattedResponse.holdState;
+        model.transferSessions[formattedResponse.sessionId].onHold = formattedResponse.holdState;
     }
 
     return formattedResponse;
@@ -6477,7 +6496,7 @@ var utils = {
             case MESSAGE_TYPES.DIRECT_AGENT_ROUTE:
                 var directAgentTransfer = new DirectAgentTransferNotification();
                 var directAgentTransferResponse = directAgentTransfer.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_ROUTE, directAgentTransferResponse);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_NOTIF, directAgentTransferResponse);
                 break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
@@ -7146,7 +7165,7 @@ const CALLBACK_TYPES = {
     "XFER_WARM":"warmXferResponse",
     "DIRECT_AGENT_TRANSFER_LIST": "directAgentTransferListResponse",
     "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse",
-    "DIRECT_AGENT_TRANSFER_ROUTE": "directAgentTransferRouteNotification"
+    "DIRECT_AGENT_TRANSFER_NOTIF": "directAgentTransferNotification"
 };
 
 const MESSAGE_TYPES = {
@@ -8808,6 +8827,19 @@ function initAgentLibraryCall (context) {
     */
     AgentLibrary.prototype.voicemailDirectAgentXfer = function(targetAgentId) {
         UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'VOICEMAIL');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+
+    /**
+     * Reject a presented direct agent transfer, if WARM requesting agent will be notified to try again,
+     * if COLD a voicemail will be left for the target agent
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to receive the voicemail
+     */
+    AgentLibrary.prototype.rejectDirectAgentXfer = function(uii) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer('0', 'REJECT', uii);
         var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
         utils.sendMessage(this, msg);
     };

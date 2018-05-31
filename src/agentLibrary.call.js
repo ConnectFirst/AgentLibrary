@@ -497,4 +497,17 @@ function initAgentLibraryCall (context) {
         utils.sendMessage(this, msg);
     };
 
+
+    /**
+     * Reject a presented direct agent transfer, if WARM requesting agent will be notified to try again,
+     * if COLD a voicemail will be left for the target agent
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to receive the voicemail
+     */
+    AgentLibrary.prototype.rejectDirectAgentXfer = function(uii) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer('0', 'REJECT', uii);
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
 }

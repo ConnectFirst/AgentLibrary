@@ -1,7 +1,8 @@
 
-var DirectAgentTransfer = function(targetAgentId, transferType) {
+var DirectAgentTransfer = function(targetAgentId, transferType, uii) {
     this.targetAgentId = targetAgentId;
     this.transferType = transferType;
+    this.uii = uii || UIModel.getInstance().currentCall.uii;
 };
 
 DirectAgentTransfer.prototype.formatJSON = function() {
@@ -13,10 +14,10 @@ DirectAgentTransfer.prototype.formatJSON = function() {
             "@message_id": utils.getMessageId(),
             "@response_to": "",
             "agent_id":{
-                "#text": model.agentSettings.agentId
+                "#text": utils.toString(model.agentSettings.agentId)
             },
             "uii": {
-                "#text": utils.toString(model.currentCall.uii)
+                "#text": utils.toString(this.uii)
             },
             "target_agent_id": {
                 "#text": utils.toString(this.targetAgentId)

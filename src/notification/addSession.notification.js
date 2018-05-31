@@ -44,8 +44,23 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     }
 
     // Check to see if we have a transfer leg here, if so, register it
-    if(utils.getText(notif, "session_type") === 'OUTBOUND' && sessionAgentId === "" && utils.getText(notif, "allow_control") === true){
-        model.transferSessions[utils.getText(notif, "session_id")] = {sessionId:utils.getText(notif, "session_id"),destination:utils.getText(notif, "phone"),uii:utils.getText(notif, "uii")};
+    var sessionType = utils.getText(notif, "session_type"),
+        allowControl = utils.getText(notif, "allow_control"),
+        sessionId = utils.getText(notif, "session_id"),
+        uii = utils.getText(notif, "uii");
+    if(sessionId !== '1' && sessionAgentId !== model.agentSettings.agentId && allowControl) {
+        if(sessionType === 'OUTBOUND' || sessionType === 'AGENT') {
+            var destination = utils.getText(notif, "phone");
+            if(sessionType === 'AGENT' || sessionAgentId !== '') {
+                destination = utils.getText(notif, "agent_name");
+            }
+
+            model.transferSessions[sessionId] = {
+                sessionId: sessionId,
+                destination: destination,
+                uii: uii
+            };
+        }
     }
 
     // if agent session, set on call status
