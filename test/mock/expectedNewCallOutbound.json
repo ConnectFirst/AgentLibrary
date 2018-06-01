@@ -10,6 +10,8 @@
   "isMonitoring": false,
   "allowHold": "",
   "allowTransfer": "",
+  "allowManualInternationalTransfer": "",
+  "allowDirectAgentTransfer": "",
   "allowHangup": "",
   "allowRequeue": "",
   "allowEndCallForEveryone": "",
