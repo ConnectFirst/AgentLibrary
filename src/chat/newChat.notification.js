@@ -29,6 +29,7 @@ var NewChatNotification = function() {
  *          "survey_pop_type":{"#text":""},
  *          "script_id":{"#text":""},
  *          "script_version":{"#text":""},
+ *          "idle_timeout":{"#text":""},
  *          "requeue_shortcuts":{
  *              "requeue_shortcut":{
  *                  "@chat_queue_id":"2",
@@ -82,6 +83,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
         surveyPopType: utils.getText(notif,'survey_pop_type'),
         scriptId: utils.getText(notif,'script_id'),
         scriptVersion: utils.getText(notif,'script_version'),
+        idleTimeout: utils.getText(notif,'idle_timeout'),
         preChatData: utils.getText(notif,'json_baggage')
     };
 
@@ -108,7 +110,6 @@ NewChatNotification.prototype.processResponse = function(notification) {
         }catch(err){
             utils.logMessage(LOG_LEVELS.ERROR, "Error parsing the pre-form chat data.", notif);
         }
-
     }
 
     // convert numbers to boolean

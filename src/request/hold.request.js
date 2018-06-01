@@ -1,6 +1,8 @@
 
-var HoldRequest = function(holdState) {
+var HoldRequest = function(holdState, sessionId) {
     this.holdState = holdState;
+    this.sessionId = sessionId || '1';
+
 };
 
 /*
@@ -31,7 +33,7 @@ HoldRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(model.currentCall.uii)
             },
             "session_id":{
-                "#text":"1"
+                "#text": utils.toString(this.sessionId)
             },
             "hold_state":{
                 "#text":this.holdState === true || this.holdState === "true" ? "ON" : "OFF"
@@ -86,6 +88,11 @@ HoldRequest.prototype.processResponse = function(response) {
             formattedResponse.message = "Error processing HOLD request. " +  + formattedResponse.message + "\n" + formattedResponse.detail;
         }
         utils.logMessage(LOG_LEVELS.WARN, "Error processing HOLD request. " + formattedResponse.detail, response);
+    }
+
+    if(formattedResponse.sessionId !== '1') {
+        // we have a hold for a transfer session
+        UIModel.getInstance().transferSessions[formattedResponse.sessionId].onHold = formattedResponse.holdState;
     }
 
     return formattedResponse;
