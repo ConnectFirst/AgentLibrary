@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-05-31 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-06-01 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -589,6 +589,8 @@ NewCallNotification.prototype.processResponse = function(notification) {
         isMonitoring: utils.getText(notif,'is_monitoring'),
         allowHold: utils.getText(notif,'allow_hold'),
         allowTransfer: utils.getText(notif,'allow_transfer'),
+        allowManualInternationalTransfer: utils.getText(notif,'allow_manual_international_transfer'),
+        allowDirectAgentTransfer: utils.getText(notif,'allow_direct_agent_transfer'),
         allowHangup: utils.getText(notif,'allow_hangup'),
         allowRequeue: utils.getText(notif,'allow_requeue'),
         allowEndCallForEveryone: utils.getText(notif,'allow_endcallforeveryone'),
