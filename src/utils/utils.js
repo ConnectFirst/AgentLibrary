@@ -208,10 +208,20 @@ var utils = {
                 var chatStateResponse = chatState.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STATE, chatStateResponse);
                 break;
+            case MESSAGE_TYPES.DIRECT_AGENT_TRANSFER_LIST:
+                var agentList = new DirectAgentTransferList();
+                var agentListResponse = agentList.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_LIST, agentListResponse);
+                break;
+            case MESSAGE_TYPES.DIRECT_AGENT_TRANSFER:
+                var agentXfer = new DirectAgentTransfer();
+                var agentXferResponse = agentXfer.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER, agentXferResponse);
+                break;
         }
     },
 
-    processNotification: function(instance, data){
+    processNotification: function(instance, data) {
         var type = data.ui_notification['@type'];
         var messageId = data.ui_notification['@message_id'];
         var dest = messageId === "" ? "IS" : messageId.slice(0, 2);
@@ -352,6 +362,11 @@ var utils = {
                 var chatCancelled = new ChatCancelledNotification();
                 var chatCancelledResponse = chatCancelled.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
+                break;
+            case MESSAGE_TYPES.DIRECT_AGENT_ROUTE:
+                var directAgentTransfer = new DirectAgentTransferNotification();
+                var directAgentTransferResponse = directAgentTransfer.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_NOTIF, directAgentTransferResponse);
                 break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
