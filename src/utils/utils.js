@@ -210,17 +210,13 @@ var utils = {
                 break;
             case MESSAGE_TYPES.DIRECT_AGENT_TRANSFER_LIST:
                 var agentList = new DirectAgentTransferList();
-                var responseTo = response.ui_response['@response_to'];
-                var request = utils.findRequestById(instance, responseTo);
-                var requestResponse = agentList.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_LIST, requestResponse);
+                var agentListResponse = agentList.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_LIST, agentListResponse);
                 break;
             case MESSAGE_TYPES.DIRECT_AGENT_TRANSFER:
                 var agentXfer = new DirectAgentTransfer();
-                var responseTo = response.ui_response['@response_to'];
-                var request = utils.findRequestById(instance, responseTo);
-                var requestResponse = agentXfer.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER, requestResponse);
+                var agentXferResponse = agentXfer.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER, agentXferResponse);
                 break;
         }
     },

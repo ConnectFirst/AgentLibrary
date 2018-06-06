@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-06-05 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-06-06 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -1915,32 +1915,30 @@ DirectAgentTransferList.prototype.formatJSON = function() {
  *          "message":{
  *              "#text":"OK"
  *          },
- *          "agents":{
- *              "agent": [
- *                  {
- *                      "@agent_aux_state":"AVAILABLE",
- *                      "@agent_id":"1184160",
- *                      "@agent_state":"AVAILABLE",
- *                      "@available":"true",
- *                      "@first_name":"ross",
- *                      "@last_name":"m",
- *                      "@pending_disp":"false",
- *                      "@state_duration":"379",
- *                      "@username":"rm1"
- *                  },
- *                  {
- *                      "@agent_aux_state":"AVAILABLE",
- *                      "@agent_id":"1184161",
- *                      "@agent_state":"AVAILABLE",
- *                      "@available":"true",
- *                      "@first_name":"ross",
- *                      "@last_name":"m",
- *                      "@pending_disp":"false",
- *                      "@state_duration":"84",
- *                      "@username":"rm2"
- *                  }
- *              ]
- *          }
+ *          "agents": [
+ *             {
+ *                 "@agent_aux_state":"AVAILABLE",
+ *                 "@agent_id":"1184160",
+ *                 "@agent_state":"AVAILABLE",
+ *                 "@available":"true",
+ *                 "@first_name":"ross",
+ *                 "@last_name":"m",
+ *                 "@pending_disp":"false",
+ *                 "@state_duration":"379",
+ *                 "@username":"rm1"
+ *             },
+ *             {
+ *                 "@agent_aux_state":"AVAILABLE",
+ *                 "@agent_id":"1184161",
+ *                 "@agent_state":"AVAILABLE",
+ *                 "@available":"true",
+ *                 "@first_name":"ross",
+ *                 "@last_name":"m",
+ *                 "@pending_disp":"false",
+ *                 "@state_duration":"84",
+ *                 "@username":"rm2"
+ *             }
+ *         ]
  *      }
  *  }
  */
@@ -6338,17 +6336,13 @@ var utils = {
                 break;
             case MESSAGE_TYPES.DIRECT_AGENT_TRANSFER_LIST:
                 var agentList = new DirectAgentTransferList();
-                var responseTo = response.ui_response['@response_to'];
-                var request = utils.findRequestById(instance, responseTo);
-                var requestResponse = agentList.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_LIST, requestResponse);
+                var agentListResponse = agentList.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_LIST, agentListResponse);
                 break;
             case MESSAGE_TYPES.DIRECT_AGENT_TRANSFER:
                 var agentXfer = new DirectAgentTransfer();
-                var responseTo = response.ui_response['@response_to'];
-                var request = utils.findRequestById(instance, responseTo);
-                var requestResponse = agentXfer.processResponse(response);
-                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER, requestResponse);
+                var agentXferResponse = agentXfer.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER, agentXferResponse);
                 break;
         }
     },

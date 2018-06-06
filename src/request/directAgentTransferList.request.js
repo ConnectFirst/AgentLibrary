@@ -31,32 +31,30 @@ DirectAgentTransferList.prototype.formatJSON = function() {
  *          "message":{
  *              "#text":"OK"
  *          },
- *          "agents":{
- *              "agent": [
- *                  {
- *                      "@agent_aux_state":"AVAILABLE",
- *                      "@agent_id":"1184160",
- *                      "@agent_state":"AVAILABLE",
- *                      "@available":"true",
- *                      "@first_name":"ross",
- *                      "@last_name":"m",
- *                      "@pending_disp":"false",
- *                      "@state_duration":"379",
- *                      "@username":"rm1"
- *                  },
- *                  {
- *                      "@agent_aux_state":"AVAILABLE",
- *                      "@agent_id":"1184161",
- *                      "@agent_state":"AVAILABLE",
- *                      "@available":"true",
- *                      "@first_name":"ross",
- *                      "@last_name":"m",
- *                      "@pending_disp":"false",
- *                      "@state_duration":"84",
- *                      "@username":"rm2"
- *                  }
- *              ]
- *          }
+ *          "agents": [
+ *             {
+ *                 "@agent_aux_state":"AVAILABLE",
+ *                 "@agent_id":"1184160",
+ *                 "@agent_state":"AVAILABLE",
+ *                 "@available":"true",
+ *                 "@first_name":"ross",
+ *                 "@last_name":"m",
+ *                 "@pending_disp":"false",
+ *                 "@state_duration":"379",
+ *                 "@username":"rm1"
+ *             },
+ *             {
+ *                 "@agent_aux_state":"AVAILABLE",
+ *                 "@agent_id":"1184161",
+ *                 "@agent_state":"AVAILABLE",
+ *                 "@available":"true",
+ *                 "@first_name":"ross",
+ *                 "@last_name":"m",
+ *                 "@pending_disp":"false",
+ *                 "@state_duration":"84",
+ *                 "@username":"rm2"
+ *             }
+ *         ]
  *      }
  *  }
  */
