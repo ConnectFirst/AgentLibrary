@@ -440,4 +440,74 @@ function initAgentLibraryCall (context) {
         utils.sendMessage(this, msg);
     };
 
+    /**
+     * Get available list of agents available for Direct Transfer
+     * @memberof AgentLibrary.Call
+     */
+    AgentLibrary.prototype.directAgentXferList = function(callback) {
+        UIModel.getInstance().directAgentTransferListRequest = new DirectAgentTransferList();
+        var msg = UIModel.getInstance().directAgentTransferListRequest.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_LIST, callback);
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer directly to an available agent from the directAgentXferList result and stay on the call
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to transfer the call to
+     */
+    AgentLibrary.prototype.warmDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'WARM');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Transfer directly to an available agent from the directAgentXferList result
+     * and terminate the current agents call session
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to transfer the call to
+     */
+    AgentLibrary.prototype.coldDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'COLD');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Cancel the request to transfer directly to an agent
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to transfer the call to
+     */
+    AgentLibrary.prototype.cancelDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'CANCEL');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+   /**
+    * Send the direct agent transfer straight to voicemail, avoid any attempts to connect to the target agent
+    * @memberof AgentLibrary.Call
+    * @param {number} targetAgentId Agent id to receive the voicemail
+    */
+    AgentLibrary.prototype.voicemailDirectAgentXfer = function(targetAgentId) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer(targetAgentId, 'VOICEMAIL');
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+
+    /**
+     * Reject a presented direct agent transfer, if WARM requesting agent will be notified to try again,
+     * if COLD a voicemail will be left for the target agent
+     * @memberof AgentLibrary.Call
+     * @param {number} targetAgentId Agent id to receive the voicemail
+     */
+    AgentLibrary.prototype.rejectDirectAgentXfer = function(uii) {
+        UIModel.getInstance().directAgentTransferRequest = new DirectAgentTransfer('0', 'REJECT', uii);
+        var msg = UIModel.getInstance().directAgentTransferRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
 }

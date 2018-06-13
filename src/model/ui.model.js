@@ -78,6 +78,8 @@ var UIModel = (function() {
             warmXferRequest : null,
             warmXferCancelRequest : null,
             chatListRequest: null,
+            directAgentTransferListRequest: null,
+            directAgentTransferRequest: null,
 
 
             // response packets

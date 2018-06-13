@@ -121,6 +121,8 @@ NewCallNotification.prototype.processResponse = function(notification) {
         isMonitoring: utils.getText(notif,'is_monitoring'),
         allowHold: utils.getText(notif,'allow_hold'),
         allowTransfer: utils.getText(notif,'allow_transfer'),
+        allowManualInternationalTransfer: utils.getText(notif,'allow_manual_international_transfer'),
+        allowDirectAgentTransfer: utils.getText(notif,'allow_direct_agent_transfer'),
         allowHangup: utils.getText(notif,'allow_hangup'),
         allowRequeue: utils.getText(notif,'allow_requeue'),
         allowEndCallForEveryone: utils.getText(notif,'allow_endcallforeveryone'),
