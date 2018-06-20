@@ -84,7 +84,9 @@
       "dialMode": "PREDICTIVE",
       "progressiveCallDelay": "0",
       "progressiveEnabled": false,
-      "requireFetchedLeadsCalled": false
+      "requireFetchedLeadsCalled": false,
+      "hciEnabled": true,
+      "hciClicker": true
     },
     {
       "allowLeadSearch": true,
@@ -96,7 +98,9 @@
       "dialMode": "PREVIEW",
       "progressiveCallDelay": "10",
       "progressiveEnabled": true,
-      "requireFetchedLeadsCalled": true
+      "requireFetchedLeadsCalled": true,
+      "hciEnabled": false,
+      "hciClicker": false
     }
   ],
   "insertCampaigns": [

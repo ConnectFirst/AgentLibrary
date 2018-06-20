@@ -232,6 +232,8 @@ LoginRequest.prototype.processResponse = function(response) {
                 group.allowPreviewLeadFilters = group.allowPreviewLeadFilters === "1";
                 group.progressiveEnabled = group.progressiveEnabled === "1";
                 group.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled === "1";
+                group.hciEnabled = group.hciEnabled === "1";
+                group.hciClicker = group.hciClicker === "1";
             }
             model.outboundSettings.availableOutdialGroups = dialGroups;
         }

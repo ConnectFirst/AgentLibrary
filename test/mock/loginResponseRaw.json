@@ -171,7 +171,9 @@
           "@dial_mode":"PREDICTIVE",
           "@progressive_call_delay":"0",
           "@progressive_enabled":"0",
-          "@require_fetched_leads_called":"0"
+          "@require_fetched_leads_called":"0",
+          "@hci_enabled":"1",
+          "@hci_clicker":"1"
         },
         {
           "@allow_lead_search":"YES",
