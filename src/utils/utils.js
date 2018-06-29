@@ -313,6 +313,11 @@ var utils = {
                 var pendingDispResponse = pendingDispNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.PENDING_DISP, pendingDispResponse);
                 break;
+            case MESSAGE_TYPES.PENDING_CHAT_DISP:
+                var pendingChatDispNotif = new PendingChatDispNotification();
+                var pendingChatDispResponse = pendingChatDispNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.PENDING_CHAT_DISP, pendingChatDispResponse);
+                break;
             case MESSAGE_TYPES.REVERSE_MATCH:
                 var reverseMatchNotif = new ReverseMatchNotification();
                 var reverseMatchResponse = reverseMatchNotif.processResponse(data);

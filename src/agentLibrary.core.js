@@ -58,6 +58,7 @@ const CALLBACK_TYPES = {
     "OPEN_SOCKET":"openResponse",
     "PAUSE_RECORD":"pauseRecordResponse",
     "PENDING_DISP":"pendingDispNotification",
+    "PENDING_CHAT_DISP":"pendingChatDispNotification",
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "RECORD":"recordResponse",
@@ -111,6 +112,7 @@ const MESSAGE_TYPES = {
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat
     "CHAT_CLIENT_RECONNECT" : "CHAT-CLIENT-RECONNECT",      // external chat
     "CHAT_MANUAL_SMS": "MANUAL-SMS",                        // external chat
+    "PENDING_CHAT_DISP": "PENDING-CHAT-DISP",               // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",

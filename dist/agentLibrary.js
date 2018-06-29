@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-06-11 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-06-29 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -746,6 +746,33 @@ function isCampaign(gate){
     }
     return false;
 }
+
+
+var PendingChatDispNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling a generic notification
+ *
+ *  {
+ *       "ui_notification":{
+ *           "@message_id":"IQD01DEV2018062912352800014",
+ *           "@type":"PENDING_CHAT_DISP",
+ *           "agent_id":{ "#text":"1182160" },
+ *           "uii":{ "#text":"201806291234550147950000000000" },
+ *           "status":{ "#text":"false" }
+ *       }
+ *   }
+ */
+PendingChatDispNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = {};
+    formattedResponse.agentId = utils.getText(notification.ui_notification,"agent_id");
+    formattedResponse.uii = utils.getText(notification.ui_notification,"uii");
+    formattedResponse.status = utils.getText(notification.ui_notification,"status") === 'true';
+
+    return formattedResponse;
+};
 
 
 var PendingDispNotification = function() {
@@ -6441,6 +6468,11 @@ var utils = {
                 var pendingDispResponse = pendingDispNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.PENDING_DISP, pendingDispResponse);
                 break;
+            case MESSAGE_TYPES.PENDING_CHAT_DISP:
+                var pendingChatDispNotif = new PendingChatDispNotification();
+                var pendingChatDispResponse = pendingChatDispNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.PENDING_CHAT_DISP, pendingChatDispResponse);
+                break;
             case MESSAGE_TYPES.REVERSE_MATCH:
                 var reverseMatchNotif = new ReverseMatchNotification();
                 var reverseMatchResponse = reverseMatchNotif.processResponse(data);
@@ -7143,6 +7175,7 @@ const CALLBACK_TYPES = {
     "OPEN_SOCKET":"openResponse",
     "PAUSE_RECORD":"pauseRecordResponse",
     "PENDING_DISP":"pendingDispNotification",
+    "PENDING_CHAT_DISP":"pendingChatDispNotification",
     "PREVIEW_FETCH":"previewFetchResponse",
     "PREVIEW_LEAD_STATE":"previewLeadStateNotification",
     "RECORD":"recordResponse",
@@ -7196,6 +7229,7 @@ const MESSAGE_TYPES = {
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat
     "CHAT_CLIENT_RECONNECT" : "CHAT-CLIENT-RECONNECT",      // external chat
     "CHAT_MANUAL_SMS": "MANUAL-SMS",                        // external chat
+    "PENDING_CHAT_DISP": "PENDING-CHAT-DISP",               // external chat
     "DIAL_GROUP_CHANGE":"DIAL_GROUP_CHANGE",
     "DIAL_GROUP_CHANGE_PENDING":"DIAL_GROUP_CHANGE_PENDING",
     "DROP_SESSION":"DROP-SESSION",
