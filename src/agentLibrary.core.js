@@ -46,6 +46,7 @@ const CALLBACK_TYPES = {
     "GENERIC_RESPONSE":"genericResponse",
     "HOLD":"holdResponse",
     "LOG_RESULTS":"logResultsResponse",
+    "LOG_CONSOLE_RESULTS":"logConsoleResultsResponse",
     "LOGIN":"loginResponse",
     "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
@@ -212,6 +213,7 @@ function initAgentLibraryCore (context) {
 
         // initialize indexedDB for logging
         this.openLogger();
+        this.openConsoleLogger();
 
         // set default values
         if(typeof config.callbacks !== 'undefined'){
