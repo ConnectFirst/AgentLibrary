@@ -1,12 +1,12 @@
-/*! cf-agent-library - v2.0.0 - 2018-06-29 - Connect First */
+/*! cf-agent-library - v2.1.7 - 2018-07-16 */
 /**
- * @fileOverview Exposed functionality for Connect First AgentUI.
- * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
- * @version 0.0.1
+ * @fileOverview Exposed functionality for Contact Center AgentUI.
+ * @version 2.1.7
  * @namespace AgentLibrary
  */
 
 ;(function (global) {
+
 
 var AddSessionNotification = function() {
 
