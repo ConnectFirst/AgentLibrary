@@ -1,7 +1,7 @@
-/*! cf-agent-library - v2.1.7 - 2018-07-16 */
+/*! cf-agent-library - v2.1.8 - 2018-07-16 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
- * @version 2.1.7
+ * @version 2.1.8
  * @namespace AgentLibrary
  */
 
