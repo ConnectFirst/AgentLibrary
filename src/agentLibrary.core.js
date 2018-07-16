@@ -80,12 +80,14 @@ const CALLBACK_TYPES = {
     "XFER_WARM":"warmXferResponse",
     "DIRECT_AGENT_TRANSFER_LIST": "directAgentTransferListResponse",
     "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse",
-    "DIRECT_AGENT_TRANSFER_NOTIF": "directAgentTransferNotification"
+    "DIRECT_AGENT_TRANSFER_NOTIF": "directAgentTransferNotification",
+    "AGENT_DEBUG_EMAIL_NOTIF": "agentDebugEmailNotification"
 };
 
 const MESSAGE_TYPES = {
     "ACK":"ACK",
     "ADD_SESSION":"ADD-SESSION",
+    "AGENT_DEBUG_EMAIL": "AGENT-DEBUG-EMAIL",
     "BARGE_IN":"BARGE-IN",
     "AGENT_STATE":"AGENT-STATE",
     "CALL_NOTES":"CALL-NOTES",

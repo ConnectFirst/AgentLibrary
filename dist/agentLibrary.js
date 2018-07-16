@@ -93,6 +93,40 @@ AddSessionNotification.prototype.processResponse = function(notification) {
 };
 
 
+var AdminDebugEmailNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling "AGENT-DEBUG-EMAIL" packets from IntelliQueue
+ *
+ * {
+ *   "ui_notification":{
+ *      "@message_id":"IQD01DEV2018071616521500004",
+ *      "@response_to":"",
+ *      "@type":"AGENT-DEBUG-EMAIL",
+ *      "email_to": {
+ *          "#text":"rmyers@connectfirst.com"
+ *      }
+ *      "requested_by": {
+ *          "#text":"Ross Myers"
+ *      }
+ *   }
+ * }
+ */
+AdminDebugEmailNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+    var notif = notification.ui_notification;
+
+    formattedResponse.status = "OK";
+    formattedResponse.message = "Received AGENT-DEBUG-EMAIL notification";
+    formattedResponse.emailTo = utils.getText(notif, "email_to");
+    formattedResponse.requestedBy = utils.getText(notif, "requested_by");
+
+    return formattedResponse;
+};
+
+
 var DialGroupChangeNotification = function() {
 
 };
@@ -6528,6 +6562,11 @@ var utils = {
                 var directAgentTransferResponse = directAgentTransfer.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_NOTIF, directAgentTransferResponse);
                 break;
+            case MESSAGE_TYPES.AGENT_DEBUG_EMAIL:
+                var emailNotif = new AdminDebugEmailNotification();
+                var emailNotifResp = emailNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_DEBUG_EMAIL_NOTIF, emailNotifResp);
+                break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
 
@@ -7197,12 +7236,14 @@ const CALLBACK_TYPES = {
     "XFER_WARM":"warmXferResponse",
     "DIRECT_AGENT_TRANSFER_LIST": "directAgentTransferListResponse",
     "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse",
-    "DIRECT_AGENT_TRANSFER_NOTIF": "directAgentTransferNotification"
+    "DIRECT_AGENT_TRANSFER_NOTIF": "directAgentTransferNotification",
+    "AGENT_DEBUG_EMAIL_NOTIF": "agentDebugEmailNotification"
 };
 
 const MESSAGE_TYPES = {
     "ACK":"ACK",
     "ADD_SESSION":"ADD-SESSION",
+    "AGENT_DEBUG_EMAIL": "AGENT-DEBUG-EMAIL",
     "BARGE_IN":"BARGE-IN",
     "AGENT_STATE":"AGENT-STATE",
     "CALL_NOTES":"CALL-NOTES",
