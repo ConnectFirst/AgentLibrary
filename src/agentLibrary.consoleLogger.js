@@ -60,13 +60,14 @@ function initAgentLibraryConsoleLogger(context) {
     };
 
     AgentLibrary.prototype.getConsoleLogRecords = function(type, callback) {
-        var agentId = this.agentSettings.agentId;   // only return records for this agent id
+        var agentId = UIModel.getInstance().agentSettings.agentId;   // only return records for this agent id
         var instance = this;
-        var transaction = instance._db.transaction(["logger"], "readonly");
-        var objStore = transaction.objectStore("logger");
+        var transaction = instance._consoleDb.transaction(["consoleLogger"], "readonly");
+        var objStore = transaction.objectStore("consoleLogger");
         var index = null,
             cursor = null,
-            range = null;
+            range = null,
+            limit = 5000;
 
         utils.setCallback(instance, CALLBACK_TYPES.LOG_CONSOLE_RESULTS, callback);
 
@@ -80,10 +81,12 @@ function initAgentLibraryConsoleLogger(context) {
             range = IDBKeyRange.only(agentId);
         }
 
+        var count = 0;
         index.openCursor(range, "prev").onsuccess = function(event){
             cursor = event.target.result;
-            if(cursor) {
+            if(cursor && count < limit) {
                 result.push(cursor.value);
+                count++;
                 cursor.continue();
             } else {
                 utils.fireCallback(instance, CALLBACK_TYPES.LOG_CONSOLE_RESULTS, result);
