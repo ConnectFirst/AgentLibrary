@@ -46,6 +46,7 @@ const CALLBACK_TYPES = {
     "GENERIC_RESPONSE":"genericResponse",
     "HOLD":"holdResponse",
     "LOG_RESULTS":"logResultsResponse",
+    "LOG_CONSOLE_RESULTS":"logConsoleResultsResponse",
     "LOGIN":"loginResponse",
     "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
@@ -79,12 +80,14 @@ const CALLBACK_TYPES = {
     "XFER_WARM":"warmXferResponse",
     "DIRECT_AGENT_TRANSFER_LIST": "directAgentTransferListResponse",
     "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse",
-    "DIRECT_AGENT_TRANSFER_NOTIF": "directAgentTransferNotification"
+    "DIRECT_AGENT_TRANSFER_NOTIF": "directAgentTransferNotification",
+    "AGENT_DEBUG_EMAIL_NOTIF": "agentDebugEmailNotification"
 };
 
 const MESSAGE_TYPES = {
     "ACK":"ACK",
     "ADD_SESSION":"ADD-SESSION",
+    "AGENT_DEBUG_EMAIL": "AGENT-DEBUG-EMAIL",
     "BARGE_IN":"BARGE-IN",
     "AGENT_STATE":"AGENT-STATE",
     "CALL_NOTES":"CALL-NOTES",
@@ -212,6 +215,7 @@ function initAgentLibraryCore (context) {
 
         // initialize indexedDB for logging
         this.openLogger();
+        this.openConsoleLogger();
 
         // set default values
         if(typeof config.callbacks !== 'undefined'){

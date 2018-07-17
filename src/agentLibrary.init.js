@@ -7,6 +7,7 @@ var initAgentLibrary = function (context) {
     initAgentLibraryLead(context);
     initAgentLibraryChat(context);
     initAgentLibraryLogger(context);
+    initAgentLibraryConsoleLogger(context);
 
     return context.AgentLibrary;
 };

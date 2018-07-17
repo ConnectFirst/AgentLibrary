@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.0.0 - 2018-06-29 - Connect First */
+/*! cf-agent-library - v2.0.0 - 2018-07-16 - Connect First */
 /**
  * @fileOverview Exposed functionality for Connect First AgentUI.
  * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
@@ -88,6 +88,40 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     formattedResponse.monitoring = utils.getText(notif, "monitoring");
     formattedResponse.agentId = utils.getText(notif, "agent_id");
     formattedResponse.transferSessions = model.transferSessions;
+
+    return formattedResponse;
+};
+
+
+var AdminDebugEmailNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling "AGENT-DEBUG-EMAIL" packets from IntelliQueue
+ *
+ * {
+ *   "ui_notification":{
+ *      "@message_id":"IQD01DEV2018071616521500004",
+ *      "@response_to":"",
+ *      "@type":"AGENT-DEBUG-EMAIL",
+ *      "email_to": {
+ *          "#text":"rmyers@connectfirst.com"
+ *      }
+ *      "requested_by": {
+ *          "#text":"Ross Myers"
+ *      }
+ *   }
+ * }
+ */
+AdminDebugEmailNotification.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+    var notif = notification.ui_notification;
+
+    formattedResponse.status = "OK";
+    formattedResponse.message = "Received AGENT-DEBUG-EMAIL notification";
+    formattedResponse.emailTo = utils.getText(notif, "email_to");
+    formattedResponse.requestedBy = utils.getText(notif, "requested_by");
 
     return formattedResponse;
 };
@@ -6528,6 +6562,11 @@ var utils = {
                 var directAgentTransferResponse = directAgentTransfer.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_NOTIF, directAgentTransferResponse);
                 break;
+            case MESSAGE_TYPES.AGENT_DEBUG_EMAIL:
+                var emailNotif = new AdminDebugEmailNotification();
+                var emailNotifResp = emailNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_DEBUG_EMAIL_NOTIF, emailNotifResp);
+                break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
 
@@ -7163,6 +7202,7 @@ const CALLBACK_TYPES = {
     "GENERIC_RESPONSE":"genericResponse",
     "HOLD":"holdResponse",
     "LOG_RESULTS":"logResultsResponse",
+    "LOG_CONSOLE_RESULTS":"logConsoleResultsResponse",
     "LOGIN":"loginResponse",
     "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
@@ -7196,12 +7236,14 @@ const CALLBACK_TYPES = {
     "XFER_WARM":"warmXferResponse",
     "DIRECT_AGENT_TRANSFER_LIST": "directAgentTransferListResponse",
     "DIRECT_AGENT_TRANSFER": "directAgentTransferResponse",
-    "DIRECT_AGENT_TRANSFER_NOTIF": "directAgentTransferNotification"
+    "DIRECT_AGENT_TRANSFER_NOTIF": "directAgentTransferNotification",
+    "AGENT_DEBUG_EMAIL_NOTIF": "agentDebugEmailNotification"
 };
 
 const MESSAGE_TYPES = {
     "ACK":"ACK",
     "ADD_SESSION":"ADD-SESSION",
+    "AGENT_DEBUG_EMAIL": "AGENT-DEBUG-EMAIL",
     "BARGE_IN":"BARGE-IN",
     "AGENT_STATE":"AGENT-STATE",
     "CALL_NOTES":"CALL-NOTES",
@@ -7329,6 +7371,7 @@ function initAgentLibraryCore (context) {
 
         // initialize indexedDB for logging
         this.openLogger();
+        this.openConsoleLogger();
 
         // set default values
         if(typeof config.callbacks !== 'undefined'){
@@ -9181,7 +9224,7 @@ function initAgentLibraryChat (context) {
 }
 
 
-function initAgentLibraryLogger (context) {
+function initAgentLibraryLogger(context) {
 
     'use strict';
 
@@ -9192,30 +9235,30 @@ function initAgentLibraryLogger (context) {
 
         if("indexedDB" in context){
             // Open database
-            var dbRequest = indexedDB.open("AgentLibraryLogging", 5); // version number
+            var dbRequest = indexedDB.open("AgentLibraryLogging", 6); // version number
 
-            dbRequest.onerror = function(event){
+            dbRequest.onerror = function(event) {
                 console.error("Error requesting DB access");
             };
 
-            dbRequest.onsuccess = function(event){
+            dbRequest.onsuccess = function(event) {
                 instance._db = event.target.result;
 
                 //prune items older than 2 days
-                instance.purgeLog();
+                instance.purgeLog(instance._db, "logger");
 
-                instance._db.onerror = function(event){
+                instance._db.onerror = function(event) {
                     // Generic error handler for all errors targeted at this database requests
                     console.error("AgentLibrary: Database error - " + event.target.errorCode);
                 };
 
-                instance._db.onsuccess = function(event){
+                instance._db.onsuccess = function(event) {
                     console.log("AgentLibrary: Successful logging of record");
                 };
             };
 
             // This event is only implemented in recent browsers
-            dbRequest.onupgradeneeded = function(event){
+            dbRequest.onupgradeneeded = function(event) {
                 instance._db = event.target.result;
 
                 // Create an objectStore to hold log information. Key path should be unique
@@ -9244,18 +9287,18 @@ function initAgentLibraryLogger (context) {
      * Purge records older than 2 days from the AgentLibrary log
      * @memberof AgentLibrary
      */
-    AgentLibrary.prototype.purgeLog = function(){
+    AgentLibrary.prototype.purgeLog = function(db, store){
         var instance = this;
 
-        if(instance._db){
-            var transaction = instance._db.transaction(["logger"], "readwrite");
-            var objectStore = transaction.objectStore("logger");
+        if(db){
+            var transaction = db.transaction([store], "readwrite");
+            var objectStore = transaction.objectStore(store);
             var dateIndex = objectStore.index("dts");
             var endDate = new Date();
             endDate.setDate(endDate.getDate() - 2); // two days ago
 
             var range = IDBKeyRange.upperBound(endDate);
-            var destroy = dateIndex.openCursor(range).onsuccess = function(event){
+            dateIndex.openCursor(range).onsuccess = function(event){
                 var cursor = event.target.result;
                 if(cursor){
                     objectStore.delete(cursor.primaryKey);
@@ -9270,10 +9313,8 @@ function initAgentLibraryLogger (context) {
      * Clear the AgentLibrary log by emptying the IndexedDB object store
      * @memberof AgentLibrary
      */
-    AgentLibrary.prototype.clearLog = function(){
-        var instance = this;
-
-        var transaction = instance._db.transaction(["logger"], "readwrite");
+    AgentLibrary.prototype.clearLog = function(db){
+        var transaction = db.transaction(["logger"], "readwrite");
         var objectStore = transaction.objectStore("logger");
 
         var objectStoreRequest = objectStore.clear();
@@ -9283,15 +9324,16 @@ function initAgentLibraryLogger (context) {
         };
     };
 
-    AgentLibrary.prototype.deleteDB = function(){
-        var DBDeleteRequest = indexedDB.deleteDatabase("AgentLibraryLogging");
+    AgentLibrary.prototype.deleteDB = function(dbName){
+        dbName = dbName || 'AgentLibraryLogging';
+        var DBDeleteRequest = indexedDB.deleteDatabase(dbName);
 
          DBDeleteRequest.onerror = function(event) {
-         console.log("Error deleting database.");
+         console.log("Error deleting database.", dbName);
          };
 
          DBDeleteRequest.onsuccess = function(event) {
-         console.log("Database deleted successfully");
+         console.log("Database", dbName, "deleted successfully");
          };
     };
 
@@ -9441,6 +9483,157 @@ function initAgentLibraryLogger (context) {
     };
 
 }
+
+function initAgentLibraryConsoleLogger(context) {
+
+    'use strict';
+
+    var AgentLibrary = context.AgentLibrary;
+
+    AgentLibrary.prototype.openConsoleLogger = function() {
+        var instance = this;
+
+        if("indexedDB" in context){
+            var dbRequest = indexedDB.open("AgentLibraryConsoleLogging", 1);
+
+            dbRequest.onerror = function(event){
+                console.error("Error requesting DB access");
+            };
+
+            dbRequest.onsuccess = function(event){
+                instance._consoleDb = event.target.result;
+
+                //prune items older than 2 days
+                instance.purgeLog(instance._consoleDb, "consoleLogger");
+
+                instance._consoleDb.onerror = function(event) {
+                    // Generic error handler for all errors targeted at this database requests
+                    console.error("AgentLibrary: Database error - " + event.target.errorCode);
+                };
+
+                instance._consoleDb.onsuccess = function(event) {
+                    console.log("AgentLibrary: Successful logging of record");
+                };
+
+                _overrideConsole();
+            };
+
+            // This event is only implemented in recent browsers
+            dbRequest.onupgradeneeded = function(event) {
+                instance._consoleDb = event.target.result;
+
+                // Create an objectStore to hold log information. Key path should be unique
+                if(!instance._consoleDb.objectStoreNames.contains("consoleLogger")){
+                    var objectStore = instance._consoleDb.createObjectStore("consoleLogger", { autoIncrement: true });
+
+                    // simple indicies: index name, index column path
+                    objectStore.createIndex("type", "type", {unique: false});
+                    objectStore.createIndex("dts", "dts", {unique: false});
+                    objectStore.createIndex("agentId", "agentId", {unique: false});
+
+                    // index for type and agent id
+                    var name = "typeAndAgent";
+                    var keyPath = ['type', 'agentId'];
+                    objectStore.createIndex(name, keyPath, {unique: false});
+                }
+
+                _overrideConsole();
+            };
+
+        } else {
+            console.warn("AgentLibrary: indexedDB NOT supported by your Browser.");
+        }
+    };
+
+    AgentLibrary.prototype.getConsoleLogRecords = function(type, callback) {
+        var agentId = UIModel.getInstance().agentSettings.agentId;   // only return records for this agent id
+        var instance = this;
+        var transaction = instance._consoleDb.transaction(["consoleLogger"], "readonly");
+        var objStore = transaction.objectStore("consoleLogger");
+        var index = null,
+            cursor = null,
+            range = null,
+            limit = 5000;
+
+        utils.setCallback(instance, CALLBACK_TYPES.LOG_CONSOLE_RESULTS, callback);
+
+        var result = [];
+        if(type) {
+            // everything with this type
+            index = objStore.index("typeAndAgent");
+            range = IDBKeyRange.only([type.toUpperCase(), agentId]);
+        } else {
+            index = objStore.index("agentId");
+            range = IDBKeyRange.only(agentId);
+        }
+
+        var count = 0;
+        index.openCursor(range, "prev").onsuccess = function(event){
+            cursor = event.target.result;
+            if(cursor && count < limit) {
+                result.push(cursor.value);
+                count++;
+                cursor.continue();
+            } else {
+                utils.fireCallback(instance, CALLBACK_TYPES.LOG_CONSOLE_RESULTS, result);
+            }
+        };
+    };
+
+    function _overrideConsole() {
+        // override the window.console functions, process as normal then save to the local db
+        var browserConsole = Object.assign({}, window.console);
+        (function (defaultConsole) {
+            var instance = UIModel.getInstance().libraryInstance;
+            var agentSettings = UIModel.getInstance().agentSettings;
+
+            function _getRecord(type, text) {
+                if(typeof text === 'function') {
+                    text = text.toString();
+                } else if(typeof text === 'object') {
+                    try {
+                        text = JSON.stringify(text);
+                    } catch(e) {}
+                }
+
+                return {
+                    type: type,
+                    message: text,
+                    dts: new Date(),
+                    agentId: agentSettings.agentId,
+                    agentName: agentSettings.firstName + ' ' + agentSettings.lastName
+                };
+            }
+
+            function _saveRecord(type, text) {
+                if (instance._consoleDb) {
+                    var transaction = instance._consoleDb.transaction(["consoleLogger"], "readwrite");
+                    var store = transaction.objectStore("consoleLogger");
+
+                    store.add(_getRecord(type, text));
+                }
+            }
+
+            window.console.log = function(text) {
+                defaultConsole.log(text);
+                _saveRecord('LOG', text);
+            };
+            window.console.info = function(text) {
+                defaultConsole.info(text);
+                _saveRecord('INFO', text);
+            };
+            window.console.warn = function(text) {
+                defaultConsole.warn(text);
+                _saveRecord('WARN', text);
+            };
+            window.console.error = function(text) {
+                defaultConsole.error(text);
+                _saveRecord('ERROR', text);
+            };
+        }(browserConsole));
+    }
+}
+
 var initAgentLibrary = function (context) {
 
     initAgentLibraryCore(context);
@@ -9450,6 +9643,7 @@ var initAgentLibrary = function (context) {
     initAgentLibraryLead(context);
     initAgentLibraryChat(context);
     initAgentLibraryLogger(context);
+    initAgentLibraryConsoleLogger(context);
 
     return context.AgentLibrary;
 };
@@ -9473,4 +9667,5 @@ if (typeof define === 'function' && define.amd) {
     //console.log("AgentLibrary: Not using AMD");
     initAgentLibrary(this);
 }
+
 } (this));
