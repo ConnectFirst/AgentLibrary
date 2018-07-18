@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/*! cf-agent-library - v2.1.8 - 2018-07-16 */
-=======
-/*! cf-agent-library - v2.0.0 - 2018-07-18 - Connect First */
->>>>>>> 22a4308... CCI-6524 stop ping call on hangup
+/*! cf-agent-library - v2.1.8 - 2018-07-18 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
