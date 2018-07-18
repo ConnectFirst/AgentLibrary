@@ -6387,7 +6387,7 @@ var utils = {
 
         switch (type.toUpperCase()){
             case MESSAGE_TYPES.ADD_SESSION:
-                if(UIModel().agentSettings.isOffhook) {
+                if(UIModel.getInstance().agentSettings.isOffhook) {
                     new NewCallUtils(instance, data).setupAddSessionCallback();
                 } else {
                     console.log('agent off hook terminated, not accepting session', data);
@@ -6453,7 +6453,7 @@ var utils = {
                 }
                 break;
             case MESSAGE_TYPES.NEW_CALL:
-                if(UIModel().agentSettings.isOffhook) {
+                if(UIModel.getInstance().agentSettings.isOffhook) {
                     var newCallNotif = new NewCallNotification();
                     var newCallResponse = newCallNotif.processResponse(data);
                     utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
