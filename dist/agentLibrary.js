@@ -6391,7 +6391,11 @@ var utils = {
 
         switch (type.toUpperCase()){
             case MESSAGE_TYPES.ADD_SESSION:
-                new NewCallUtils(instance, data).setupAddSessionCallback();
+                if(UIModel().agentSettings.isOffhook) {
+                    new NewCallUtils(instance, data).setupAddSessionCallback();
+                } else {
+                    console.log('agent off hook terminated, not accepting session', data);
+                }
                 break;
             case MESSAGE_TYPES.DIAL_GROUP_CHANGE:
                 var dgChangeNotif = new DialGroupChangeNotification();
@@ -6453,10 +6457,14 @@ var utils = {
                 }
                 break;
             case MESSAGE_TYPES.NEW_CALL:
-                var newCallNotif = new NewCallNotification();
-                var newCallResponse = newCallNotif.processResponse(data);
-                utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
-                new NewCallUtils(instance, data).processSessionsForCall();
+                if(UIModel().agentSettings.isOffhook) {
+                    var newCallNotif = new NewCallNotification();
+                    var newCallResponse = newCallNotif.processResponse(data);
+                    utils.fireCallback(instance, CALLBACK_TYPES.NEW_CALL, newCallResponse);
+                    new NewCallUtils(instance, data).processSessionsForCall();
+                } else {
+                    console.log('agent off hook terminated, not accepting call', data);
+                }
 
                 break;
             case MESSAGE_TYPES.OFFHOOK_TERM:
