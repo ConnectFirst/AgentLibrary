@@ -447,9 +447,6 @@ var utils = {
         var type = data.ui_stats['@type'];
         var message = "Received " + type.toUpperCase() + " response message from IS";
 
-        // log message response
-        utils.logMessage(LOG_LEVELS.STATS, message, data);
-
         // Fire callback function
         switch (type.toUpperCase()) {
             case MESSAGE_TYPES.STATS_AGENT:
