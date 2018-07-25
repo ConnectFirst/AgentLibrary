@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.8 - 2018-07-16 */
+/*! cf-agent-library - v2.1.8 - 2018-07-18 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -6439,6 +6439,11 @@ var utils = {
                         utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
                     }
                 }else{
+                    if(generic.messageCode === "001") {
+                        // caller hangup, stop pinging call
+                        clearInterval(UIModel.getInstance().pingIntervalId);
+                    }
+
                     // no corresponding request, just fire generic notification callback
                     utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
                 }
