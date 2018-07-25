@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/*! cf-agent-library - v2.0.0 - 2018-07-16 - Connect First */
-=======
-/*! cf-agent-library - v2.1.8 - 2018-07-18 */
->>>>>>> master
+/*! cf-agent-library - v2.1.8 - 2018-07-25 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
