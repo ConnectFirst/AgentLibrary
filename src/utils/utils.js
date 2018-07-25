@@ -378,6 +378,11 @@ var utils = {
                 var directAgentTransferResponse = directAgentTransfer.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.DIRECT_AGENT_TRANSFER_NOTIF, directAgentTransferResponse);
                 break;
+            case MESSAGE_TYPES.AGENT_DEBUG_EMAIL:
+                var emailNotif = new AdminDebugEmailNotification();
+                var emailNotifResp = emailNotif.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.AGENT_DEBUG_EMAIL_NOTIF, emailNotifResp);
+                break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
 
@@ -446,9 +451,6 @@ var utils = {
     processStats: function(instance, data) {
         var type = data.ui_stats['@type'];
         var message = "Received " + type.toUpperCase() + " response message from IS";
-
-        // log message response
-        utils.logMessage(LOG_LEVELS.STATS, message, data);
 
         // Fire callback function
         switch (type.toUpperCase()) {
