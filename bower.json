@@ -1,9 +1,6 @@
 {
   "name": "cf-agent-library",
   "version":"2.0.0",
-  "authors": [
-    "Danielle Lamb-Books <dlbooks@connectfirst.com>"
-  ],
   "description": "Javascript library for Agent UI functionality",
   "main": "./dist/agentLibrary.js",
   "keywords": [
