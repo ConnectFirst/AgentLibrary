@@ -1,12 +1,16 @@
+<<<<<<< HEAD
 /*! cf-agent-library - v2.0.0 - 2018-07-16 - Connect First */
+=======
+/*! cf-agent-library - v2.1.8 - 2018-07-18 */
+>>>>>>> master
 /**
- * @fileOverview Exposed functionality for Connect First AgentUI.
- * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
- * @version 0.0.1
+ * @fileOverview Exposed functionality for Contact Center AgentUI.
+ * @version 2.1.8
  * @namespace AgentLibrary
  */
 
 ;(function (global) {
+
 
 var AddSessionNotification = function() {
 
@@ -6473,6 +6477,11 @@ var utils = {
                         utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
                     }
                 }else{
+                    if(generic.messageCode === "001") {
+                        // caller hangup, stop pinging call
+                        clearInterval(UIModel.getInstance().pingIntervalId);
+                    }
+
                     // no corresponding request, just fire generic notification callback
                     utils.fireCallback(instance, CALLBACK_TYPES.GENERIC_NOTIFICATION, generic);
                 }

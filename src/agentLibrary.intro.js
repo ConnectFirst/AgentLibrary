@@ -1,7 +1,6 @@
 /**
- * @fileOverview Exposed functionality for Connect First AgentUI.
- * @author <a href="mailto:dlbooks@connectfirst.com">Danielle Lamb-Books </a>
- * @version 0.0.1
+ * @fileOverview Exposed functionality for Contact Center AgentUI.
+ * @version 2.1.8
  * @namespace AgentLibrary
  */
 
