@@ -79,6 +79,9 @@
     "allow_manual_calls":{
       "#text":"1"
     },
+    "allow_historical_dialing" :{
+      "#text":"1"
+    },
     "allow_manual_intl_calls":{
       "#text":"1"
     },

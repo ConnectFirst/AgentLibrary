@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.8 - 2018-07-25 */
+/*! cf-agent-library - v2.1.8 - 2018-08-28 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -2939,6 +2939,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
             model.agentPermissions.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring') === "1";
             model.agentPermissions.allowAutoAnswer = utils.getText(resp, 'allow_auto_answer') === "1";
+            model.agentPermissions.allowHistoricalDialing = utils.getText(resp, 'allow_historical_dialing') === "1";
 
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 

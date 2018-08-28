@@ -9,6 +9,7 @@
   "allowLoginControl": true,
   "allowLoginUpdates": true,
   "allowManualCalls": true,
+  "allowHistoricalDialing": true,
   "allowManualPass": true,
   "allowManualIntlCalls": true,
   "allowManualOutboundGates": true,
