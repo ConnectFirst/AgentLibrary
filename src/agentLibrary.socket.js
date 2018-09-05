@@ -43,8 +43,11 @@ function initAgentLibrarySocket (context) {
                     clearInterval(UIModel.getInstance().statsIntervalId);
                     UIModel.getInstance().statsIntervalId = null;
 
-                    // if we are still logged in, try to reconnect
+                    // if we are still logged in, set reconnect flag and try to reconnect
                     if(UIModel.getInstance().agentSettings.isLoggedIn){
+                        instance._isReconnect = true;
+                        console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
+
                         setTimeout(function(){
                             instance.openSocket();
                         }, 5000);
