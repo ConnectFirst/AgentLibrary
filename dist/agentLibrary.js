@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/*! cf-agent-library - v2.1.8 - 2018-08-28 */
-=======
-/*! cf-agent-library - v2.1.9 - 2018-07-25 */
->>>>>>> master
+/*! cf-agent-library - v2.1.10 - 2018-09-05 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
