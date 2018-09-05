@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*! cf-agent-library - v2.1.8 - 2018-08-28 */
+=======
+/*! cf-agent-library - v2.1.9 - 2018-07-25 */
+>>>>>>> master
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -6641,9 +6645,6 @@ var utils = {
     processStats: function(instance, data) {
         var type = data.ui_stats['@type'];
         var message = "Received " + type.toUpperCase() + " response message from IS";
-
-        // log message response
-        utils.logMessage(LOG_LEVELS.STATS, message, data);
 
         // Fire callback function
         switch (type.toUpperCase()) {
