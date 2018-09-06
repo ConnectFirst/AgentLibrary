@@ -4867,9 +4867,7 @@ ChatManualSmsRequest.prototype.formatJSON = function() {
 
 
 
-var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
-    this.uii = uii;
-    this.agentId = agentId;
+var MonitorChatRequest = function(monitorAgentId) {
     this.monitorAgentId = monitorAgentId;
 };
 
@@ -4882,7 +4880,6 @@ var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
  *      "@type":"CHAT-MONITOR",
  *      "@message_id":"",
  *      "@response_to":"",
- *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
  *      "monitor_agent_id":{"#text":""}
  *    }
@@ -4895,9 +4892,6 @@ MonitorChatRequest.prototype.formatJSON = function() {
             "@type":MESSAGE_TYPES.MONITOR_CHAT,
             "@message_id":utils.getMessageId(),
             "@response_to":"",
-            "uii":{
-                "#text":utils.toString(this.uii)
-            },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
             },
@@ -9142,12 +9136,10 @@ function initAgentLibraryChat (context) {
     /**
      * Request to add a session on an existing chat
      * @memberof AgentLibrary.Chat
-     * @param {string} uii Unique identifier for the chat session
-     * @param {string} agentId Current logged in agent id
-     * @param {string} monitorAgentId Agent id handling this chat
+     * @param {string} monitorAgentId Agent id handling this chat, the agent being monitored
      */
-    AgentLibrary.prototype.monitorChat = function(uii, agentId, monitorAgentId){
-        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, monitorAgentId);
+    AgentLibrary.prototype.monitorChat = function(monitorAgentId){
+        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(monitorAgentId);
         var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -9297,7 +9289,6 @@ function initAgentLibraryLogger(context) {
             try{
                 var transaction = db.transaction([store], "readwrite");
                 var objectStore = transaction.objectStore(store);
-                console.log(objectStore.index("dts"));
 
                 var dateIndex = objectStore.index("dts");
                 var endDate = new Date();
@@ -9312,7 +9303,7 @@ function initAgentLibraryLogger(context) {
                     }
                 };
             } catch(err){
-                console.log(err);
+                // no op
             }
         }
     };
