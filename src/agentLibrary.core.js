@@ -110,6 +110,7 @@ const MESSAGE_TYPES = {
     "CHAT_STATE":"CHAT-STATE",                              // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
+    "STOP_MONITOR_CHAT":"CHAT-DROP-MONITORING-SESSION",     // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat

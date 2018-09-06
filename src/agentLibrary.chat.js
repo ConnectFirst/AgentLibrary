@@ -169,6 +169,27 @@ function initAgentLibraryChat (context) {
     };
 
     /**
+     * Request to stop a chat monitoring session for a specific agent
+     * @memberof AgentLibrary.Chat
+     * @param {string} monitorAgentId Agent id of agent being monitored
+     */
+    AgentLibrary.prototype.stopMonitoringChatsByAgent = function(monitorAgentId){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest(monitorAgentId);
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to drop all chat monitoring sessions for the logged in agent
+     * @memberof AgentLibrary.Chat
+     */
+    AgentLibrary.prototype.stopMonitoringAllChats = function(){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest();
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
      * Request to terminate an active chat session
      * @memberof AgentLibrary.Chat
      * @param {string} uii Unique identifier for the chat session

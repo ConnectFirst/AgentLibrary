@@ -4905,6 +4905,45 @@ MonitorChatRequest.prototype.formatJSON = function() {
 };
 
 
+
+var StopMonitorChatRequest = function(monitorAgentId) {
+    this.monitorAgentId = monitorAgentId || "";
+};
+
+/*
+ * External Chat:
+ * Requests a termination of a chat monitor session for an agent
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-DROP-MONITORING-SESSION",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "agent_id":{"#text":""},
+ *      "monitor_agent_id":{"#text":""}
+ *    }
+ * }
+ */
+MonitorChatRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.STOP_MONITOR_CHAT,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "monitor_agent_id":{
+                "#text":utils.toString(this.monitorAgentId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
 var SupervisorListRequest = function() {
 
 };
@@ -7263,6 +7302,7 @@ const MESSAGE_TYPES = {
     "CHAT_STATE":"CHAT-STATE",                              // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
+    "STOP_MONITOR_CHAT":"CHAT-DROP-MONITORING-SESSION",     // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat
@@ -9141,6 +9181,27 @@ function initAgentLibraryChat (context) {
     AgentLibrary.prototype.monitorChat = function(monitorAgentId){
         UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(monitorAgentId);
         var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to stop a chat monitoring session for a specific agent
+     * @memberof AgentLibrary.Chat
+     * @param {string} monitorAgentId Agent id of agent being monitored
+     */
+    AgentLibrary.prototype.stopMonitoringChatsByAgent = function(monitorAgentId){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest(monitorAgentId);
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to drop all chat monitoring sessions for the logged in agent
+     * @memberof AgentLibrary.Chat
+     */
+    AgentLibrary.prototype.stopMonitoringAllChats = function(){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest();
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 
