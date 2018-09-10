@@ -4924,7 +4924,7 @@ var StopMonitorChatRequest = function(monitorAgentId) {
  *    }
  * }
  */
-MonitorChatRequest.prototype.formatJSON = function() {
+StopMonitorChatRequest.prototype.formatJSON = function() {
     var msg = {
         "ui_request": {
             "@destination":"IQ",
