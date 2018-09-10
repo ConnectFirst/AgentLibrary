@@ -607,9 +607,8 @@ var utils = {
             return result;
         }
 
-        // Convert to array for simplicity in the next block below
         if (!Array.isArray(itemsRaw)) {
-            result.push(this._processItem(itemsRaw, textName));
+            itemsRaw = [itemsRaw];
         }
 
         for (var i = 0; i < itemsRaw.length; i++) {
