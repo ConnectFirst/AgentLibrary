@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-05 */
+/*! cf-agent-library - v2.1.10 - 2018-09-06 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -4867,9 +4867,7 @@ ChatManualSmsRequest.prototype.formatJSON = function() {
 
 
 
-var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
-    this.uii = uii;
-    this.agentId = agentId;
+var MonitorChatRequest = function(monitorAgentId) {
     this.monitorAgentId = monitorAgentId;
 };
 
@@ -4882,7 +4880,6 @@ var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
  *      "@type":"CHAT-MONITOR",
  *      "@message_id":"",
  *      "@response_to":"",
- *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
  *      "monitor_agent_id":{"#text":""}
  *    }
@@ -4895,9 +4892,45 @@ MonitorChatRequest.prototype.formatJSON = function() {
             "@type":MESSAGE_TYPES.MONITOR_CHAT,
             "@message_id":utils.getMessageId(),
             "@response_to":"",
-            "uii":{
-                "#text":utils.toString(this.uii)
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
             },
+            "monitor_agent_id":{
+                "#text":utils.toString(this.monitorAgentId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
+var StopMonitorChatRequest = function(monitorAgentId) {
+    this.monitorAgentId = monitorAgentId || "";
+};
+
+/*
+ * External Chat:
+ * Requests a termination of a chat monitor session for an agent
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-DROP-MONITORING-SESSION",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "agent_id":{"#text":""},
+ *      "monitor_agent_id":{"#text":""}
+ *    }
+ * }
+ */
+StopMonitorChatRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.STOP_MONITOR_CHAT,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
             },
@@ -7269,6 +7302,7 @@ const MESSAGE_TYPES = {
     "CHAT_STATE":"CHAT-STATE",                              // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
+    "STOP_MONITOR_CHAT":"CHAT-DROP-MONITORING-SESSION",     // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat
@@ -9142,13 +9176,32 @@ function initAgentLibraryChat (context) {
     /**
      * Request to add a session on an existing chat
      * @memberof AgentLibrary.Chat
-     * @param {string} uii Unique identifier for the chat session
-     * @param {string} agentId Current logged in agent id
-     * @param {string} monitorAgentId Agent id handling this chat
+     * @param {string} monitorAgentId Agent id handling this chat, the agent being monitored
      */
-    AgentLibrary.prototype.monitorChat = function(uii, agentId, monitorAgentId){
-        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, monitorAgentId);
+    AgentLibrary.prototype.monitorChat = function(monitorAgentId){
+        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(monitorAgentId);
         var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to stop a chat monitoring session for a specific agent
+     * @memberof AgentLibrary.Chat
+     * @param {string} monitorAgentId Agent id of agent being monitored
+     */
+    AgentLibrary.prototype.stopMonitoringChatsByAgent = function(monitorAgentId){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest(monitorAgentId);
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to drop all chat monitoring sessions for the logged in agent
+     * @memberof AgentLibrary.Chat
+     */
+    AgentLibrary.prototype.stopMonitoringAllChats = function(){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest();
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 
@@ -9294,21 +9347,25 @@ function initAgentLibraryLogger(context) {
         var instance = this;
 
         if(db){
-            var transaction = db.transaction([store], "readwrite");
-            var objectStore = transaction.objectStore(store);
-            var dateIndex = objectStore.index("dts");
-            var endDate = new Date();
-            endDate.setDate(endDate.getDate() - 2); // two days ago
+            try{
+                var transaction = db.transaction([store], "readwrite");
+                var objectStore = transaction.objectStore(store);
 
-            var range = IDBKeyRange.upperBound(endDate);
-            dateIndex.openCursor(range).onsuccess = function(event){
-                var cursor = event.target.result;
-                if(cursor){
-                    objectStore.delete(cursor.primaryKey);
-                    cursor.continue();
-                }
+                var dateIndex = objectStore.index("dts");
+                var endDate = new Date();
+                endDate.setDate(endDate.getDate() - 2); // two days ago
 
-            };
+                var range = IDBKeyRange.upperBound(endDate);
+                dateIndex.openCursor(range).onsuccess = function(event){
+                    var cursor = event.target.result;
+                    if(cursor){
+                        objectStore.delete(cursor.primaryKey);
+                        cursor.continue();
+                    }
+                };
+            } catch(err){
+                // no op
+            }
         }
     };
 

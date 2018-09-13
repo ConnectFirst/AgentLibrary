@@ -160,13 +160,32 @@ function initAgentLibraryChat (context) {
     /**
      * Request to add a session on an existing chat
      * @memberof AgentLibrary.Chat
-     * @param {string} uii Unique identifier for the chat session
-     * @param {string} agentId Current logged in agent id
-     * @param {string} monitorAgentId Agent id handling this chat
+     * @param {string} monitorAgentId Agent id handling this chat, the agent being monitored
      */
-    AgentLibrary.prototype.monitorChat = function(uii, agentId, monitorAgentId){
-        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, monitorAgentId);
+    AgentLibrary.prototype.monitorChat = function(monitorAgentId){
+        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(monitorAgentId);
         var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to stop a chat monitoring session for a specific agent
+     * @memberof AgentLibrary.Chat
+     * @param {string} monitorAgentId Agent id of agent being monitored
+     */
+    AgentLibrary.prototype.stopMonitoringChatsByAgent = function(monitorAgentId){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest(monitorAgentId);
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to drop all chat monitoring sessions for the logged in agent
+     * @memberof AgentLibrary.Chat
+     */
+    AgentLibrary.prototype.stopMonitoringAllChats = function(){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest();
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 
