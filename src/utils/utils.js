@@ -43,15 +43,8 @@ var utils = {
             }
 
         } else {
-            // add message to queue
+            // add message to queue if socket is not open.
             instance._queuedMsgs.push({dts: new Date(), msg: msg});
-
-            if(UIModel.getInstance().agentSettings.isLoggedIn){
-                // try to reconnect
-                instance._isReconnect = true;
-                instance.openSocket();
-                console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
-            }
         }
     },
 
