@@ -195,6 +195,21 @@ ConfigRequest.prototype.processResponse = function(response) {
                 model.connectionSettings.isOnCall = utils.getText(resp, "is_on_call");
                 model.connectionSettings.activeCallUii  =  utils.getText(resp, "active_call_uii");
                 model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
+
+                if(model.connectionSettings.isOnCall === false && model.currentCall.uii){
+
+                    var mockEndCallPacket = {
+                        "ui_notification":{
+                            "@message_id" : "",
+                            "@type":"END-CALL",
+                            "uii":{"#text": model.currentCall.uii},
+                            "term_reason":{"#text" : "SOCKET-DISCONNECT"}
+                        }
+                    };
+
+                    utils.processNotification(UIModel.getInstance().libraryInstance, mockEndCallPacket);
+                }
+
                 utils.logMessage(LOG_LEVELS.INFO, message, response);
             }
         }
