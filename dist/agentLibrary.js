@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-07 */
+/*! cf-agent-library - v2.1.10 - 2018-09-17 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1770,6 +1770,10 @@ ConfigRequest.prototype.processResponse = function(response) {
             }else{
                 // this was a reconnect
                 message = "Processed a Layer 2 Reconnect Successfully";
+
+                model.connectionSettings.isOnCall = utils.getText(resp, "is_on_call");
+                model.connectionSettings.activeCallUii  =  utils.getText(resp, "active_call_uii");
+                model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
                 utils.logMessage(LOG_LEVELS.INFO, message, response);
             }
         }
