@@ -197,7 +197,6 @@ ConfigRequest.prototype.processResponse = function(response) {
                 model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
 
                 if(model.connectionSettings.isOnCall === false && model.currentCall.uii){
-
                     var mockEndCallPacket = {
                         "ui_notification":{
                             "@message_id" : "",
@@ -208,6 +207,16 @@ ConfigRequest.prototype.processResponse = function(response) {
                     };
 
                     utils.processNotification(UIModel.getInstance().libraryInstance, mockEndCallPacket);
+                }else if(model.connectionSettings.isOnCall === false && model.agentSettings.isOffhook){
+                    var mockOffhookTerm = {
+                        ui_notification : {
+                            "@type":"OFF-HOOK-TERM",
+                            "@message_id" : ""
+                        }
+                    };
+
+                    utils.processNotification(UIModel.getInstance().libraryInstance, mockOffhookTerm);
+
                 }
 
                 utils.logMessage(LOG_LEVELS.INFO, message, response);
