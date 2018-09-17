@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-06 */
+/*! cf-agent-library - v2.1.10 - 2018-09-17 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -6266,15 +6266,8 @@ var utils = {
             }
 
         } else {
-            // add message to queue
+            // add message to queue if socket is not open.
             instance._queuedMsgs.push({dts: new Date(), msg: msg});
-
-            if(UIModel.getInstance().agentSettings.isLoggedIn){
-                // try to reconnect
-                instance._isReconnect = true;
-                instance.openSocket();
-                console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
-            }
         }
     },
 
@@ -8199,8 +8192,11 @@ function initAgentLibrarySocket (context) {
                     clearInterval(UIModel.getInstance().statsIntervalId);
                     UIModel.getInstance().statsIntervalId = null;
 
-                    // if we are still logged in, try to reconnect
+                    // if we are still logged in, set reconnect flag and try to reconnect
                     if(UIModel.getInstance().agentSettings.isLoggedIn){
+                        instance._isReconnect = true;
+                        console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
+
                         setTimeout(function(){
                             instance.openSocket();
                         }, 5000);
