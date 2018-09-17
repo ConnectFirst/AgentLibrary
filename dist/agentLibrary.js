@@ -5049,6 +5049,42 @@ ChatClientReconnectNotification.prototype.processResponse = function(notificatio
 
 };
 
+var AddChatSessionNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling "ADD-CHAT-SESSION" packets from IntelliQueue.
+ *
+ * {
+ *   "ui_notification": {
+ *       "@message_id": "IQ982008082918151403727",
+ *       "@response_to": "",
+ *       "@type": "ADD-CHAT-SESSION",
+ *       "session_id": { "#text": "2" },
+ *       "uii": { "#text": "200808291814560000000900016558" },
+ *       "session_type": { "#text": "AGENT|MONITORING" },
+ *       "agent_id": { "#text": "1856" } // null unless monitor type,
+ *       "transcript": { }
+ *   }
+ *  }
+ */
+AddChatSessionNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+    var formattedResponse = utils.buildDefaultResponse(notification);
+
+    formattedResponse.status = "OK";
+    formattedResponse.message = "Received ADD-CHAT-SESSION notification";
+    formattedResponse.sessionId = utils.getText(notif, "session_id");
+    formattedResponse.uii = utils.getText(notif, "uii");
+    formattedResponse.sessionType = utils.getText(notif, "session_type");
+    formattedResponse.agentId = utils.getText(notif, "agent_id");
+    formattedResponse.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript')[0];
+
+    return formattedResponse;
+};
+
+
 var ChatActiveNotification = function() {
 
 };
@@ -6589,6 +6625,11 @@ var utils = {
                 var chatCancelledResponse = chatCancelled.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_ADD_SESSION:
+                var addChatSession = new AddChatSessionNotification();
+                var addChatSessionResponse = addChatSession.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ADD_SESSION, addChatSessionResponse);
+                break;
             case MESSAGE_TYPES.DIRECT_AGENT_ROUTE:
                 var directAgentTransfer = new DirectAgentTransferNotification();
                 var directAgentTransferResponse = directAgentTransfer.processResponse(data);
@@ -6804,125 +6845,130 @@ var utils = {
      *   }
      */
 
-    processResponseCollection: function(response, groupProp, itemProp, textName) {
-        var items = [];
-        var item = {};
-        var itemsRaw = [];
-        var textName = textName || "text";
+    processResponseCollection: function (response, groupProp, itemProp, textName) {
+        textName = textName || "text";
 
-        if(response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined'){
-            itemsRaw = response[groupProp][itemProp];
+        if (response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined') {
+            var itemsRaw = response[groupProp][itemProp];
+            return this._processItems(itemsRaw, textName);
+        } else {
+            return [];
         }
-
-        if(Array.isArray(itemsRaw)) {
-            // multiple items
-            for (var i = 0; i < itemsRaw.length; i++) {
-                var formattedKey = "";
-                for(var key in itemsRaw[i]){
-                    if(key.match(/^#/)){
-                        // dealing with text property
-                        formattedKey = textName;
-                    }else{
-                        // dealing with attribute
-                        formattedKey = key.replace(/@/, ''); // remove leading '@'
-                        formattedKey = formattedKey.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); }); // convert to camelCase
-                    }
-
-                    if(typeof itemsRaw[i][key] === "object"){
-                        if(Object.keys(itemsRaw[i][key]).length === 1 && itemsRaw[i][key]['#text']) {
-                            // only one property - #text attribute
-                            item[formattedKey] = itemsRaw[i][key]['#text'];
-                        }else if(Object.keys(itemsRaw[i][key]).length === 0){
-                            // dealing with empty property
-                            item[formattedKey] = "";
-                        }else {
-                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1) {
-                                //console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
-                                var newIt = [];
-                                newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
-                                if(formattedKey.substr(formattedKey.length - 1) !== 's') {
-                                    item[formattedKey + 's'] = newIt;
-                                } else {
-                                    item[formattedKey] = newIt;
-                                }
-                            } else {
-                                var newItemProp = Object.keys(itemsRaw[i][key])[0];
-                                var newItems = [];
-                                newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
-                                item[formattedKey] = newItems;
-                            }
-                        }
-                    }else{
-                        // can't convert 0 | 1 to boolean since some are counters
-                        if(itemsRaw[i][key].toUpperCase() === "TRUE"){
-                            item[formattedKey] = true;
-                        }else if(itemsRaw[i][key].toUpperCase() === "FALSE"){
-                            item[formattedKey] = false;
-                        }else{
-                            item[formattedKey] = itemsRaw[i][key];
-                        }
-                    }
-                }
-
-                items.push(item);
-                item = {};
-            }
-        }else{
-            // single item
-            var formattedProp = "";
-            for(var prop in itemsRaw){
-                if(prop.match(/^#/)) {
-                    // dealing with text property
-                    formattedProp = textName;
-                }else{
-                    // dealing with attribute
-                    formattedProp = prop.replace(/@/, ''); // remove leading '@'
-                    formattedProp = formattedProp.replace(/_([a-z])/g, function (g) {
-                        return g[1].toUpperCase();
-                    }); // convert to camelCase
-                }
-
-                if(typeof itemsRaw[prop] === "object"){
-                    if(itemsRaw[prop]['#text'] && Object.keys(itemsRaw[prop]).length === 1) {
-                        // dealing only with #text element
-                        item[formattedProp] = itemsRaw[prop]['#text'];
-                    }else if(Object.keys(itemsRaw[prop]).length === 0){
-                        // dealing with empty property
-                        item[formattedProp] = "";
-                    }else{
-                        // make recursive call
-                        if(Array.isArray(itemsRaw[prop]) || Object.keys(itemsRaw[prop]).length > 1){
-                            var newIt = [];
-                            newIt = utils.processResponseCollection(response[groupProp], itemProp, prop, textName);
-                            if(formattedProp.substr(formattedProp.length - 1) !== 's'){
-                                item[formattedProp + 's'] = newIt;
-                            }else{
-                                item[formattedProp] = newIt;
-                            }
-                        }else {
-                            var newProp = Object.keys(itemsRaw[prop])[0];
-                            var newItms = [];
-                            newItms = utils.processResponseCollection(itemsRaw, prop, newProp);
-                            item[formattedProp] = newItms;
-                        }
-                    }
-                }else{
-                    // can't convert 0 | 1 to boolean since some are counters
-                    if(itemsRaw[prop].toUpperCase() === "TRUE"){
-                        item[formattedProp] = true;
-                    }else if(itemsRaw[prop].toUpperCase() === "FALSE"){
-                        item[formattedProp] = false;
-                    }else {
-                        item[formattedProp] = itemsRaw[prop];
-                    }
-                }
-            }
-
-            items.push(item);
-        }
-
-        return items;
     },
+
+
+    _processItems: function (itemsRaw, textName) {
+
+        var result = [];
+        if (typeof itemsRaw === "undefined" || itemsRaw === null) {
+            return result;
+        }
+
+        if (!Array.isArray(itemsRaw)) {
+            itemsRaw = [itemsRaw];
+        }
+
+        for (var i = 0; i < itemsRaw.length; i++) {
+            result.push(this._processItem(itemsRaw[i], textName));
+        }
+
+        return result;
+    },
+
+
+    _processItem: function (itemRaw, textName) {
+
+        /*
+         * Be sure that the item we are processing is not a #text node only, where the "texName" is also "text". If this
+         * is the case, it means there's a default value that needs to get converted and isn't going to be mapped to a custom
+         * field.  Therefore, we treat it as just a single value, not an object.
+         */
+        if (textName === "text" && Object.keys(itemRaw).length === 1 && itemRaw['#text'] != null) {
+            return this._tryConvertValueToBoolean(itemRaw["#text"]);
+        }
+
+        // Convert the raw item to a new item, with keys and values processed below
+        //
+        var item = {};
+        for (var key in itemRaw) {
+            var formattedKey = this._convertToFormattedKey(key, textName);
+
+            var value = itemRaw[key];
+
+            // If we aren't an object, set the value and continue to next key
+            if (typeof value !== "object") {
+                item[formattedKey] = this._tryConvertValueToBoolean(value);
+                continue;
+            }
+
+            if ((Array.isArray(value) && value.length === 0) || Object.keys(value).length === 0) {
+
+                // Empty property
+                item[formattedKey] = "";
+
+            } else if (Array.isArray(value) || Object.keys(value).length > 1) {
+
+                // Array or object with more than one key
+                formattedKey = this._convertKeyForCollection(formattedKey);
+                item[formattedKey] = this._processItems(value, textName);
+
+            } else if (Object.keys(value).length === 1 && value['#text'] != null) {
+
+                // One property of type "#text"
+                item[formattedKey] = value['#text'];
+
+            } else {
+
+                // One property not with key "#text"
+                item[formattedKey] = this._processItems(value[Object.keys(value)[0]], "text");
+            }
+        }
+
+        return item;
+    },
+
+
+    _convertToFormattedKey: function (key, textName) {
+        var formattedKey;
+        if (key.match(/^#/)) {
+            // dealing with text property
+            formattedKey = textName;
+        } else {
+            // dealing with attribute
+            formattedKey = key.replace(/@/, ''); // remove leading '@'
+            formattedKey = formattedKey.replace(/_([a-z])/g, function (g) {
+                return g[1].toUpperCase();
+            }); // convert to camelCase
+        }
+
+        return formattedKey;
+    },
+
+
+    _convertKeyForCollection: function (formattedKey) {
+        if (formattedKey.substr(formattedKey.length - 1) !== 's') {
+            return formattedKey + 's';
+        }
+
+        return formattedKey;
+    },
+
+
+    _tryConvertValueToBoolean: function (value) {
+        if (value === null) {
+            return null;
+        }
+
+        // can't convert 0 | 1 to boolean since some are counters
+        if (value.toUpperCase() === "TRUE") {
+            return true;
+        } else if (value.toUpperCase() === "FALSE") {
+            return false;
+        } else {
+            return value;
+        }
+    },
+
 
     fireCallback: function(instance, type, response) {
         response = response || "";
@@ -7218,6 +7264,7 @@ const CALLBACK_TYPES = {
     "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_LIST":"chatListResponse",                 // external chat
+    "CHAT_ADD_SESSION":"addChatSessionNotification",// external chat
     "CHAT_CLIENT_RECONNECT" : "chatClientReconnectNotification",
     "CHAT_STATE":"chatStateResponse",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
@@ -7295,6 +7342,7 @@ const MESSAGE_TYPES = {
     "CHAT_STATE":"CHAT-STATE",                              // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
+    "CHAT_ADD_SESSION":"ADD-CHAT-SESSION",                  // external chat
     "STOP_MONITOR_CHAT":"CHAT-DROP-MONITORING-SESSION",     // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat

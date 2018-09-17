@@ -302,7 +302,7 @@ describe( 'Tests for Agent Library chat methods', function() {
             message: "Hello. How can I help you?",
             whisper: true,
             dts: new Date("2017-05-10T12:40:28"),
-            mediaLinks : [ { text : 'https://d01-mms-files.s3.amazonaws.com/99999999/088f5c25-055a-4eb4-b25c-75f03ec59f8d.jpg' } ]
+            mediaLinks : [ 'https://d01-mms-files.s3.amazonaws.com/99999999/088f5c25-055a-4eb4-b25c-75f03ec59f8d.jpg' ]
         };
 
         expect(response).toEqual(expectedResponse);
