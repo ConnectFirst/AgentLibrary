@@ -220,7 +220,8 @@ ConfigRequest.prototype.processResponse = function(response) {
 
                         };
 
-                        utils.processNotification(UIModel.getInstance().libraryInstance, offHookTermPacket);
+                        var agentProcessOffhookCallback = utils.processNotification(UIModel.getInstance().libraryInstance, offHookTermPacket);
+                        UIModel.getInstance().libraryInstance.offhookTerm(agentProcessOffhookCallback);
                     }
                 }
 
