@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-07 */
+/*! cf-agent-library - v2.1.10 - 2018-09-18 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1650,6 +1650,9 @@ ConfigRequest.prototype.formatJSON = function() {
             },
             "update_from_adminui":{
                 "#text":utils.toString(this.updateFromAdminUI)
+            },
+            "agent_platform_id" : {
+                "#text" : utils.toString(2) //Hard-coded platformId
             }
         }
     };
