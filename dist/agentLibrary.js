@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-17 */
+/*! cf-agent-library - v2.1.10 - 2018-09-18 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1790,7 +1790,16 @@ ConfigRequest.prototype.processResponse = function(response) {
                     }
 
                     if(model.agentSettings.isOffhook){
-                        utils.processRequest(new OffhookTermRequest());
+                        var offHookTermPacket = {
+                            "ui_notification" : {
+                                "agent_id" : {"#text": UIModel.getInstance().agentSettings.agentId},
+                                "@type" : "OFF-HOOK-TERM",
+                                "@message_id": ""
+                            }
+
+                        };
+
+                        utils.processNotification(UIModel.getInstance().libraryInstance, offHookTermPacket);
                     }
                 }
 
