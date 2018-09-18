@@ -211,7 +211,16 @@ ConfigRequest.prototype.processResponse = function(response) {
                     }
 
                     if(model.agentSettings.isOffhook){
-                        utils.processRequest(new OffhookTermRequest());
+                        var offHookTermPacket = {
+                            "ui_notification" : {
+                                "agent_id" : {"#text": UIModel.getInstance().agentSettings.agentId},
+                                "@type" : "OFF-HOOK-TERM",
+                                "@message_id": ""
+                            }
+
+                        };
+
+                        utils.processNotification(UIModel.getInstance().libraryInstance, offHookTermPacket);
                     }
                 }
 
