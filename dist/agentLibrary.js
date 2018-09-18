@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-07 */
+/*! cf-agent-library - v2.1.10 - 2018-09-18 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -645,7 +645,18 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.scriptResponse = {};
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+    newCall.lead = utils.processResponseCollection(notification, 'ui_notification', 'lead')[0];
 
+    // parse extra data correctly
+    try {
+        delete newCall.lead.extraDatas;
+        newCall.lead.extraData = {};
+        for(var key in notif.lead.extra_data) {
+            newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
+        }
+    } catch(e) {
+        console.warn('error parseing lead extra data: ' + e);
+    }
     // set saved script response if present
     try{
         var savedModel = JSON.parse(notif.script_result["#text"]).model;
