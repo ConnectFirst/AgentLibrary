@@ -15,7 +15,8 @@ var ChatActiveNotification = function() {
  *          "@destination":"IQ",
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
- *          "uii":{"#text":"201608161200240139000000000120"}
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "is_monitoring":{"#text":"TURE"|"FALSE"}
  *      }
  *  }
  */
@@ -26,7 +27,8 @@ ChatActiveNotification.prototype.processResponse = function(notification) {
         message: "Received CHAT-ACTIVE notification",
         status: "OK",
         accountId: utils.getText(notif, "account_id"),
-        uii: utils.getText(notif, "uii")
+        uii: utils.getText(notif, "uii"),
+        isMonitoring: utils.getText(notif, "is_monitoring")
     };
 
 };

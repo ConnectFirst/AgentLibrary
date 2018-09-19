@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-17 */
+/*! cf-agent-library - v2.1.10 - 2018-09-19 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -5101,7 +5101,8 @@ var ChatActiveNotification = function() {
  *          "@destination":"IQ",
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
- *          "uii":{"#text":"201608161200240139000000000120"}
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "is_monitoring":{"#text":"TURE"|"FALSE"}
  *      }
  *  }
  */
@@ -5112,7 +5113,8 @@ ChatActiveNotification.prototype.processResponse = function(notification) {
         message: "Received CHAT-ACTIVE notification",
         status: "OK",
         accountId: utils.getText(notif, "account_id"),
-        uii: utils.getText(notif, "uii")
+        uii: utils.getText(notif, "uii"),
+        isMonitoring: utils.getText(notif, "is_monitoring")
     };
 
 };
@@ -5301,6 +5303,8 @@ var NewChatNotification = function() {
  *          "script_id":{"#text":""},
  *          "script_version":{"#text":""},
  *          "idle_timeout":{"#text":""},
+ *          "is_monitoring":{#text":"TRUE"|"FALSE"},
+ *          "monitored_agent_id":{"#text":"123"| ""} <-- only populated if is_monitoring == TRUE
  *          "requeue_shortcuts":{
  *              "requeue_shortcut":{
  *                  "@chat_queue_id":"2",
@@ -5355,6 +5359,8 @@ NewChatNotification.prototype.processResponse = function(notification) {
         scriptId: utils.getText(notif,'script_id'),
         scriptVersion: utils.getText(notif,'script_version'),
         idleTimeout: utils.getText(notif,'idle_timeout'),
+        isMonitoring: utils.getText(notif,'is_monitoring'),
+        monitoredAgentId: utils.getText(notif,'monitored_agent_id'),
         preChatData: utils.getText(notif,'json_baggage')
     };
 

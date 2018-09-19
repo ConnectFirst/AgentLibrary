@@ -212,7 +212,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             message: "Received CHAT-ACTIVE notification",
             status: "OK",
             accountId: "99999999",
-            uii: "201608161200240139000000000120"
+            uii: "201608161200240139000000000120",
+            isMonitoring: false
         };
 
         expect(response).toEqual(expectedResponse);
@@ -355,6 +356,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             scriptId:"1",
             scriptVersion: "1",
             idleTimeout: "60",
+            isMonitoring: false,
+            monitoredAgentId: "",
             preChatData: {name:'danielle', email:'dani.libros@gmail.com'},
             requeueShortcuts : { shortcuts : [
                 { chatQueueId : '2', name : 'test queue', skillId : '' }

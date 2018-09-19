@@ -30,6 +30,8 @@ var NewChatNotification = function() {
  *          "script_id":{"#text":""},
  *          "script_version":{"#text":""},
  *          "idle_timeout":{"#text":""},
+ *          "is_monitoring":{#text":"TRUE"|"FALSE"},
+ *          "monitored_agent_id":{"#text":"123"| ""} <-- only populated if is_monitoring == TRUE
  *          "requeue_shortcuts":{
  *              "requeue_shortcut":{
  *                  "@chat_queue_id":"2",
@@ -84,6 +86,8 @@ NewChatNotification.prototype.processResponse = function(notification) {
         scriptId: utils.getText(notif,'script_id'),
         scriptVersion: utils.getText(notif,'script_version'),
         idleTimeout: utils.getText(notif,'idle_timeout'),
+        isMonitoring: utils.getText(notif,'is_monitoring'),
+        monitoredAgentId: utils.getText(notif,'monitored_agent_id'),
         preChatData: utils.getText(notif,'json_baggage')
     };
 
