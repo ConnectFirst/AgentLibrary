@@ -1717,6 +1717,7 @@ ConfigRequest.prototype.processResponse = function(response) {
     var model = UIModel.getInstance();
     var message = "";
     var formattedResponse = utils.buildDefaultResponse(response);
+    var Lib = UIModel.getInstance().libraryInstance;
 
     if(detail === "Logon Session Configuration Updated!"){
         // this is an update login packet
@@ -1786,7 +1787,7 @@ ConfigRequest.prototype.processResponse = function(response) {
                             }
                         };
 
-                        utils.processNotification(UIModel.getInstance().libraryInstance, mockEndCallPacket);
+                        utils.processNotification(Lib, mockEndCallPacket);
                     }
 
                     if(model.agentSettings.isOffhook){
@@ -1799,8 +1800,21 @@ ConfigRequest.prototype.processResponse = function(response) {
 
                         };
 
-                        var agentProcessOffhookCallback = utils.processNotification(UIModel.getInstance().libraryInstance, offHookTermPacket);
-                        UIModel.getInstance().libraryInstance.offhookTerm(agentProcessOffhookCallback);
+                        var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
+                        Lib.offhookTerm(agentProcessOffhookCallback);
+                    }
+                }else{
+                    //agent still is on call and there are transferSessions, verify no transferSession were drop
+                    var activeAgentUiSessions = Lib.getTransferSessions();
+                    var activeAgentSessions = response.ui_response.active_call_sessions.call_session_id.map(function(sessionObj){
+                        return sessionObj['#text'];
+                    });
+
+                    for(var transferSession in activeAgentUiSessions){
+                        if(activeAgentSessions.indexOf(transferSession) === -1){
+                            //if the active ui session is no longer active, we need to tell the ui
+                            delete UIModel.getInstance().transferSessions[transferSession];
+                        }
                     }
                 }
 
