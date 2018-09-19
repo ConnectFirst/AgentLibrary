@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-18 */
+/*! cf-agent-library - v2.1.10 - 2018-09-19 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1799,8 +1799,8 @@ ConfigRequest.prototype.processResponse = function(response) {
 
                         };
 
-                        var agentProcess = utils.processNotification(UIModel.getInstance().libraryInstance, offHookTermPacket);
-                        UIModel.getInstance().libraryInstance.offhookTerm(agentProcess);
+                        var agentProcessOffhookCallback = utils.processNotification(UIModel.getInstance().libraryInstance, offHookTermPacket);
+                        UIModel.getInstance().libraryInstance.offhookTerm(agentProcessOffhookCallback);
                     }
                 }
 
