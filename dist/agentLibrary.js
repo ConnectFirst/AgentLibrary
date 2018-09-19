@@ -1650,6 +1650,9 @@ ConfigRequest.prototype.formatJSON = function() {
             },
             "update_from_adminui":{
                 "#text":utils.toString(this.updateFromAdminUI)
+            },
+            "agent_platform_id" : {
+                "#text" : utils.toString(2) //Hard-coded platformId
             }
         }
     };
