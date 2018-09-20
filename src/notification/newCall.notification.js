@@ -153,7 +153,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
             newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
         }
     } catch(e) {
-        console.warn('error parseing lead extra data: ' + e);
+        console.warn('error parsing lead extra data: ' + e);
     }
     // set saved script response if present
     try{
