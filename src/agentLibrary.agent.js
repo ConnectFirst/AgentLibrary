@@ -48,10 +48,11 @@ function initAgentLibraryAgent (context) {
      * @param {string} [skillProfileId=null] The skill profile the agent will be logged into.
      * @param {string} [dialGroupId=null] The outbound dial group id the agent will be logged into.
      * @param {string} [updateFromAdminUI=false] Whether the request is generated from the AdminUI or not.
+     * @param {boolean} isForce Whether the agent login is forcing an existing agentlogin out.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI);
+    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, isForce, updateFromAdminUI, callback){
+        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, isForce, updateFromAdminUI);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);

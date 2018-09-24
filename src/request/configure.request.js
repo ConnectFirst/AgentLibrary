@@ -1,5 +1,5 @@
 
-var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, isForce, updateFromAdminUI) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillProfileId = skillProfileId || "";
@@ -8,6 +8,7 @@ var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGr
     this.updateFromAdminUI = updateFromAdminUI || false;
     this.loginType = "NO-SELECTION";
     this.updateLogin = false;
+    this.isForce = isForce;
 
     // Remove any ids agent doesn't have access to
     var model = UIModel.getInstance();
@@ -74,6 +75,9 @@ ConfigRequest.prototype.formatJSON = function() {
             },
             "agent_platform_id" : {
                 "#text" : utils.toString(2) //Hard-coded platformId
+            },
+            "is_force" : {
+                "#text" : utils.toString(this.isForce)
             }
         }
     };
