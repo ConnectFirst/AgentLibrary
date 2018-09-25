@@ -1661,6 +1661,9 @@ ConfigRequest.prototype.formatJSON = function() {
             },
             "update_from_adminui":{
                 "#text":utils.toString(this.updateFromAdminUI)
+            },
+            "agent_platform_id" : {
+                "#text" : utils.toString(2) //Hard-coded platformId
             }
         }
     };
@@ -1787,6 +1790,7 @@ ConfigRequest.prototype.processResponse = function(response) {
                 model.connectionSettings.activeCallUii  =  utils.getText(resp, "active_call_uii");
                 model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
 
+
                 if(model.connectionSettings.isOnCall === false){
                     if(model.currentCall.uii) {
                         var mockEndCallPacket = {
@@ -1815,6 +1819,9 @@ ConfigRequest.prototype.processResponse = function(response) {
                         Lib.offhookTerm(agentProcessOffhookCallback);
                     }
                 }else{
+                    //reset pending disp if disp lost.
+                    model.currentCall.pendingDisp = model.connectionSettings.isPendingDisp;
+
                     //agent still is on call and there are transferSessions, verify no transferSession were drop
                     var activeAgentUiSessions = Lib.getTransferSessions();
                     var activeAgentSessions = response.ui_response.active_call_sessions.call_session_id.map(function(sessionObj){
