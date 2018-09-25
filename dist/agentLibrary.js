@@ -645,7 +645,18 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.scriptResponse = {};
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+    newCall.lead = utils.processResponseCollection(notification, 'ui_notification', 'lead')[0];
 
+    // parse extra data correctly
+    try {
+        delete newCall.lead.extraDatas;
+        newCall.lead.extraData = {};
+        for(var key in notif.lead.extra_data) {
+            newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
+        }
+    } catch(e) {
+        console.warn('error parsing lead extra data: ' + e);
+    }
     // set saved script response if present
     try{
         var savedModel = JSON.parse(notif.script_result["#text"]).model;
@@ -9345,21 +9356,26 @@ function initAgentLibraryLogger(context) {
         var instance = this;
 
         if(db){
-            var transaction = db.transaction([store], "readwrite");
-            var objectStore = transaction.objectStore(store);
-            var dateIndex = objectStore.index("dts");
-            var endDate = new Date();
-            endDate.setDate(endDate.getDate() - 2); // two days ago
+            try{
+                var transaction = db.transaction([store], "readwrite");
+                var objectStore = transaction.objectStore(store);
+                var dateIndex = objectStore.index("dts");
+                var endDate = new Date();
+                endDate.setDate(endDate.getDate() - 2); // two days ago
 
-            var range = IDBKeyRange.upperBound(endDate);
-            dateIndex.openCursor(range).onsuccess = function(event){
-                var cursor = event.target.result;
-                if(cursor){
-                    objectStore.delete(cursor.primaryKey);
-                    cursor.continue();
-                }
+                var range = IDBKeyRange.upperBound(endDate);
+                dateIndex.openCursor(range).onsuccess = function(event){
+                    var cursor = event.target.result;
+                    if(cursor){
+                        objectStore.delete(cursor.primaryKey);
+                        cursor.continue();
+                    }
 
-            };
+                };
+            } catch(err){
+                // no op
+            }
+
         }
     };
 

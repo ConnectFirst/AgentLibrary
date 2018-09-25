@@ -65,21 +65,26 @@ function initAgentLibraryLogger(context) {
         var instance = this;
 
         if(db){
-            var transaction = db.transaction([store], "readwrite");
-            var objectStore = transaction.objectStore(store);
-            var dateIndex = objectStore.index("dts");
-            var endDate = new Date();
-            endDate.setDate(endDate.getDate() - 2); // two days ago
+            try{
+                var transaction = db.transaction([store], "readwrite");
+                var objectStore = transaction.objectStore(store);
+                var dateIndex = objectStore.index("dts");
+                var endDate = new Date();
+                endDate.setDate(endDate.getDate() - 2); // two days ago
 
-            var range = IDBKeyRange.upperBound(endDate);
-            dateIndex.openCursor(range).onsuccess = function(event){
-                var cursor = event.target.result;
-                if(cursor){
-                    objectStore.delete(cursor.primaryKey);
-                    cursor.continue();
-                }
+                var range = IDBKeyRange.upperBound(endDate);
+                dateIndex.openCursor(range).onsuccess = function(event){
+                    var cursor = event.target.result;
+                    if(cursor){
+                        objectStore.delete(cursor.primaryKey);
+                        cursor.continue();
+                    }
 
-            };
+                };
+            } catch(err){
+                // no op
+            }
+
         }
     };
 
