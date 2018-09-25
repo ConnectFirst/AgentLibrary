@@ -655,7 +655,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
             newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
         }
     } catch(e) {
-        console.warn('error parseing lead extra data: ' + e);
+        console.warn('error parsing lead extra data: ' + e);
     }
     // set saved script response if present
     try{
@@ -3029,7 +3029,8 @@ LoginRequest.prototype.processResponse = function(response) {
                 group.allowPreviewLeadFilters = group.allowPreviewLeadFilters === "1";
                 group.progressiveEnabled = group.progressiveEnabled === "1";
                 group.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled === "1";
-                group.hciEnabled = group.hciEnabled === "1";
+                group.hciType = parseInt(group.hciEnabled);
+                group.hciEnabled = group.hciEnabled === "1" || group.hciEnabled === "2";
                 group.hciClicker = group.hciClicker === "1";
             }
             model.outboundSettings.availableOutdialGroups = dialGroups;
