@@ -59,7 +59,8 @@ ChatMessageRequest.prototype.formatJSON = function() {
  *      "account_id":{"#text":""},
  *      "from":{"#text":""},
  *      "message":{"#text":"hello"},
- *      "dts":{"#text":"2017-05-10 12:40:28"}
+ *      "dts":{"#text":"2017-05-10 12:40:28"},
+ *      "dequeue_agent_id":{"#text":"123"}
  *    }
  * }
  */
@@ -75,6 +76,7 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
         whisper: utils.getText(resp, 'whisper'),
+        dequeueAgentId: utils.getText(resp, 'dequeue_agent_id'),
         dts: dtsDate,
         mediaLinks :  utils.processResponseCollection(resp, "media_links", "link")
     };
