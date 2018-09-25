@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-20 */
+/*! cf-agent-library - v2.1.10 - 2018-09-25 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -655,7 +655,7 @@ NewCallNotification.prototype.processResponse = function(notification) {
             newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
         }
     } catch(e) {
-        console.warn('error parseing lead extra data: ' + e);
+        console.warn('error parsing lead extra data: ' + e);
     }
     // set saved script response if present
     try{
@@ -9349,21 +9349,26 @@ function initAgentLibraryLogger(context) {
         var instance = this;
 
         if(db){
-            var transaction = db.transaction([store], "readwrite");
-            var objectStore = transaction.objectStore(store);
-            var dateIndex = objectStore.index("dts");
-            var endDate = new Date();
-            endDate.setDate(endDate.getDate() - 2); // two days ago
+            try{
+                var transaction = db.transaction([store], "readwrite");
+                var objectStore = transaction.objectStore(store);
+                var dateIndex = objectStore.index("dts");
+                var endDate = new Date();
+                endDate.setDate(endDate.getDate() - 2); // two days ago
 
-            var range = IDBKeyRange.upperBound(endDate);
-            dateIndex.openCursor(range).onsuccess = function(event){
-                var cursor = event.target.result;
-                if(cursor){
-                    objectStore.delete(cursor.primaryKey);
-                    cursor.continue();
-                }
+                var range = IDBKeyRange.upperBound(endDate);
+                dateIndex.openCursor(range).onsuccess = function(event){
+                    var cursor = event.target.result;
+                    if(cursor){
+                        objectStore.delete(cursor.primaryKey);
+                        cursor.continue();
+                    }
 
-            };
+                };
+            } catch(err){
+                // no op
+            }
+
         }
     };
 
