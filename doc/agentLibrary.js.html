@@ -26,19 +26,7 @@
     
     <section>
         <article>
-<<<<<<< HEAD
-<<<<<<< HEAD
-            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v2.1.10 - 2018-09-25 */
-=======
-<<<<<<< HEAD
-            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v2.1.10 - 2018-09-18 */
-=======
-            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v2.1.10 - 2018-09-19 */
->>>>>>> develop
->>>>>>> develop
-=======
             <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v2.1.10 - 2018-09-26 */
->>>>>>> CCI-6713-predictiveClicker
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1629,7 +1617,7 @@ XferColdRequest.prototype.processResponse = function(response) {
 };
 
 
-var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillProfileId = skillProfileId || "";
@@ -1638,6 +1626,7 @@ var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGr
     this.updateFromAdminUI = updateFromAdminUI || false;
     this.loginType = "NO-SELECTION";
     this.updateLogin = false;
+    this.isForce = isForce;
 
     // Remove any ids agent doesn't have access to
     var model = UIModel.getInstance();
@@ -1704,6 +1693,9 @@ ConfigRequest.prototype.formatJSON = function() {
             },
             "agent_platform_id" : {
                 "#text" : utils.toString(2) //Hard-coded platformId
+            },
+            "is_force" : {
+                "#text" : utils.toString(this.isForce)
             }
         }
     };
@@ -1830,6 +1822,7 @@ ConfigRequest.prototype.processResponse = function(response) {
                 model.connectionSettings.activeCallUii  =  utils.getText(resp, "active_call_uii");
                 model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
 
+
                 if(model.connectionSettings.isOnCall === false){
                     if(model.currentCall.uii) {
                         var mockEndCallPacket = {
@@ -1858,6 +1851,9 @@ ConfigRequest.prototype.processResponse = function(response) {
                         Lib.offhookTerm(agentProcessOffhookCallback);
                     }
                 }else{
+                    //reset pending disp if disp lost.
+                    model.currentCall.pendingDisp = model.connectionSettings.isPendingDisp;
+
                     //agent still is on call and there are transferSessions, verify no transferSession were drop
                     var activeAgentUiSessions = Lib.getTransferSessions();
                     var activeAgentSessions = response.ui_response.active_call_sessions.call_session_id.map(function(sessionObj){
@@ -3072,7 +3068,6 @@ LoginRequest.prototype.processResponse = function(response) {
                 group.allowPreviewLeadFilters = group.allowPreviewLeadFilters === "1";
                 group.progressiveEnabled = group.progressiveEnabled === "1";
                 group.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled === "1";
-                console.log(group.hciEnabled);
                 group.hciType = parseInt(group.hciEnabled) || 0;
                 group.hciEnabled = group.hciEnabled === "1" || group.hciEnabled === "2";
                 group.hciClicker = group.hciClicker === "1";
@@ -8380,10 +8375,11 @@ function initAgentLibraryAgent (context) {
      * @param {string} [skillProfileId=null] The skill profile the agent will be logged into.
      * @param {string} [dialGroupId=null] The outbound dial group id the agent will be logged into.
      * @param {string} [updateFromAdminUI=false] Whether the request is generated from the AdminUI or not.
+     * @param {boolean} isForce Whether the agent login is forcing an existing agentlogin out.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI);
+    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
+        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);
@@ -9793,19 +9789,7 @@ if (typeof define === 'function' &amp;&amp; define.amd) {
 <br class="clear">
 
 <footer>
-<<<<<<< HEAD
-<<<<<<< HEAD
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Sep 25 2018 15:23:18 GMT-0600 (MDT)
-=======
-<<<<<<< HEAD
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Sep 18 2018 15:37:49 GMT-0600 (MDT)
-=======
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Sep 19 2018 14:18:15 GMT-0600 (Mountain Daylight Time)
->>>>>>> develop
->>>>>>> develop
-=======
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Sep 26 2018 12:19:07 GMT-0600 (MDT)
->>>>>>> CCI-6713-predictiveClicker
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Sep 26 2018 14:50:29 GMT-0600 (Mountain Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>
