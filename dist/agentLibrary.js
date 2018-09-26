@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/*! cf-agent-library - v2.1.10 - 2018-09-25 */
-=======
 /*! cf-agent-library - v2.1.10 - 2018-09-26 */
->>>>>>> CCI-6719-allowLogin
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
