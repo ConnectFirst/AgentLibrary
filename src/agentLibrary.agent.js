@@ -51,7 +51,7 @@ function initAgentLibraryAgent (context) {
      * @param {boolean} isForce Whether the agent login is forcing an existing agentlogin out.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, isForce, updateFromAdminUI, callback){
+    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
         UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 

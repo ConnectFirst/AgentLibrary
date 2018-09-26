@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-25 */
+/*! cf-agent-library - v2.1.10 - 2018-09-26 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -8338,7 +8338,7 @@ function initAgentLibraryAgent (context) {
      * @param {boolean} isForce Whether the agent login is forcing an existing agentlogin out.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, isForce, updateFromAdminUI, callback){
+    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
         UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
