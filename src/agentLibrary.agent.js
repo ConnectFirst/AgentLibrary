@@ -52,7 +52,7 @@ function initAgentLibraryAgent (context) {
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
     AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, isForce, updateFromAdminUI, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, isForce, updateFromAdminUI);
+        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);

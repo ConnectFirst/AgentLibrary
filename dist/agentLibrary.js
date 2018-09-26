@@ -1578,7 +1578,7 @@ XferColdRequest.prototype.processResponse = function(response) {
 };
 
 
-var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, isForce, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillProfileId = skillProfileId || "";
@@ -8339,7 +8339,7 @@ function initAgentLibraryAgent (context) {
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
     AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, isForce, updateFromAdminUI, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, isForce, updateFromAdminUI);
+        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);
