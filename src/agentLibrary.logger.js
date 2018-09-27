@@ -68,7 +68,6 @@ function initAgentLibraryLogger(context) {
             try{
                 var transaction = db.transaction([store], "readwrite");
                 var objectStore = transaction.objectStore(store);
-
                 var dateIndex = objectStore.index("dts");
                 var endDate = new Date();
                 endDate.setDate(endDate.getDate() - 2); // two days ago
@@ -80,10 +79,12 @@ function initAgentLibraryLogger(context) {
                         objectStore.delete(cursor.primaryKey);
                         cursor.continue();
                     }
+
                 };
             } catch(err){
                 // no op
             }
+
         }
     };
 

@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-24 */
+/*! cf-agent-library - v2.1.10 - 2018-09-26 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -645,7 +645,18 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.scriptResponse = {};
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+    newCall.lead = utils.processResponseCollection(notification, 'ui_notification', 'lead')[0];
 
+    // parse extra data correctly
+    try {
+        delete newCall.lead.extraDatas;
+        newCall.lead.extraData = {};
+        for(var key in notif.lead.extra_data) {
+            newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
+        }
+    } catch(e) {
+        console.warn('error parsing lead extra data: ' + e);
+    }
     // set saved script response if present
     try{
         var savedModel = JSON.parse(notif.script_result["#text"]).model;
@@ -1578,7 +1589,7 @@ XferColdRequest.prototype.processResponse = function(response) {
 };
 
 
-var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillProfileId = skillProfileId || "";
@@ -1587,6 +1598,7 @@ var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGr
     this.updateFromAdminUI = updateFromAdminUI || false;
     this.loginType = "NO-SELECTION";
     this.updateLogin = false;
+    this.isForce = isForce;
 
     // Remove any ids agent doesn't have access to
     var model = UIModel.getInstance();
@@ -1650,6 +1662,12 @@ ConfigRequest.prototype.formatJSON = function() {
             },
             "update_from_adminui":{
                 "#text":utils.toString(this.updateFromAdminUI)
+            },
+            "agent_platform_id" : {
+                "#text" : utils.toString(2) //Hard-coded platformId
+            },
+            "is_force" : {
+                "#text" : utils.toString(this.isForce)
             }
         }
     };
@@ -1717,6 +1735,7 @@ ConfigRequest.prototype.processResponse = function(response) {
     var model = UIModel.getInstance();
     var message = "";
     var formattedResponse = utils.buildDefaultResponse(response);
+    var Lib = UIModel.getInstance().libraryInstance;
 
     if(detail === "Logon Session Configuration Updated!"){
         // this is an update login packet
@@ -1770,6 +1789,57 @@ ConfigRequest.prototype.processResponse = function(response) {
             }else{
                 // this was a reconnect
                 message = "Processed a Layer 2 Reconnect Successfully";
+
+                model.connectionSettings.isOnCall = utils.getText(resp, "is_on_call");
+                model.connectionSettings.activeCallUii  =  utils.getText(resp, "active_call_uii");
+                model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
+
+
+                if(model.connectionSettings.isOnCall === false){
+                    if(model.currentCall.uii) {
+                        var mockEndCallPacket = {
+                            "ui_notification": {
+                                "@message_id": "",
+                                "@type": "END-CALL",
+                                "uii": {"#text": model.currentCall.uii},
+                                "term_reason": {"#text": "SOCKET-DISCONNECT"}
+                            }
+                        };
+
+                        utils.processNotification(Lib, mockEndCallPacket);
+                    }
+
+                    if(model.agentSettings.isOffhook){
+                        var offHookTermPacket = {
+                            "ui_notification" : {
+                                "agent_id" : {"#text": UIModel.getInstance().agentSettings.agentId},
+                                "@type" : "OFF-HOOK-TERM",
+                                "@message_id": ""
+                            }
+
+                        };
+
+                        var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
+                        Lib.offhookTerm(agentProcessOffhookCallback);
+                    }
+                }else{
+                    //reset pending disp if disp lost.
+                    model.currentCall.pendingDisp = model.connectionSettings.isPendingDisp;
+
+                    //agent still is on call and there are transferSessions, verify no transferSession were drop
+                    var activeAgentUiSessions = Lib.getTransferSessions();
+                    var activeAgentSessions = response.ui_response.active_call_sessions.call_session_id.map(function(sessionObj){
+                        return sessionObj['#text'];
+                    });
+
+                    for(var transferSession in activeAgentUiSessions){
+                        if(activeAgentSessions.indexOf(transferSession) === -1){
+                            //if the active ui session is no longer active, we need to tell the ui
+                            delete UIModel.getInstance().transferSessions[transferSession];
+                        }
+                    }
+                }
+
                 utils.logMessage(LOG_LEVELS.INFO, message, response);
             }
         }
@@ -2970,7 +3040,8 @@ LoginRequest.prototype.processResponse = function(response) {
                 group.allowPreviewLeadFilters = group.allowPreviewLeadFilters === "1";
                 group.progressiveEnabled = group.progressiveEnabled === "1";
                 group.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled === "1";
-                group.hciEnabled = group.hciEnabled === "1";
+                group.hciType = parseInt(group.hciEnabled) || 0;
+                group.hciEnabled = group.hciEnabled === "1" || group.hciEnabled === "2";
                 group.hciClicker = group.hciClicker === "1";
             }
             model.outboundSettings.availableOutdialGroups = dialGroups;
@@ -8366,10 +8437,11 @@ function initAgentLibraryAgent (context) {
      * @param {string} [skillProfileId=null] The skill profile the agent will be logged into.
      * @param {string} [dialGroupId=null] The outbound dial group id the agent will be logged into.
      * @param {string} [updateFromAdminUI=false] Whether the request is generated from the AdminUI or not.
+     * @param {boolean} isForce Whether the agent login is forcing an existing agentlogin out.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI);
+    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
+        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);
@@ -9402,7 +9474,6 @@ function initAgentLibraryLogger(context) {
             try{
                 var transaction = db.transaction([store], "readwrite");
                 var objectStore = transaction.objectStore(store);
-
                 var dateIndex = objectStore.index("dts");
                 var endDate = new Date();
                 endDate.setDate(endDate.getDate() - 2); // two days ago
@@ -9414,10 +9485,12 @@ function initAgentLibraryLogger(context) {
                         objectStore.delete(cursor.primaryKey);
                         cursor.continue();
                     }
+
                 };
             } catch(err){
                 // no op
             }
+
         }
     };
 
