@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-26 */
+/*! cf-agent-library - v2.1.10 - 2018-09-27 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -649,13 +649,15 @@ NewCallNotification.prototype.processResponse = function(notification) {
 
     // parse extra data correctly
     try {
-        delete newCall.lead.extraDatas;
-        newCall.lead.extraData = {};
-        for(var key in notif.lead.extra_data) {
-            newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
+        if(notif.lead && notif.lead.extra_data) {
+            delete newCall.lead.extraDatas;
+            newCall.lead.extraData = {};
+            for(var key in notif.lead.extra_data) {
+                newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
+            }
         }
     } catch(e) {
-        console.warn('error parsing lead extra data: ' + e);
+        console.warn('error parsing new call lead extra data: ' + e);
     }
     // set saved script response if present
     try{
@@ -3626,9 +3628,35 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
 
     // send over requestId (as well as requestKey for backwards compatibility)
     // to match previewLeadState.notification property
-    for(var l = 0; l < leads.length; l++){
-        leads[l].requestId = leads[l].requestKey;
-        leads[l].ani = leads[l].destination; // add ani prop since used in new call packet & update lead
+    for(var l = 0; l < leads.length; l++) {
+        var lead = leads[l];
+        lead.requestId = lead.requestKey;
+        lead.ani = lead.destination; // add ani prop since used in new call packet & update lead
+
+        // parse extra data correctly
+        try {
+            var notifLead = notif.destinations.lead[l];
+
+            if(notifLead.extra_data) {
+                // if this lead doesn't match the current lead, find it from the notification
+                if(notifLead['@lead_id'] !== lead.leadId) {
+                    notifLead = (notif.destinations.lead).filter(
+                        function(destLead) {
+                            return destLead['@lead_id'] === lead.leadId;
+                        }
+                    );
+                }
+
+                delete lead.extraDatas;
+                lead.extraData = {};
+                for(var key in notifLead.extra_data) {
+                    lead.extraData[key] = notifLead.extra_data[key]['#text'];
+                }
+            }
+
+        } catch(e) {
+            console.warn('error parsing lead extra data: ' + e);
+        }
     }
 
     var formattedResponse = {
@@ -4021,8 +4049,34 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
     // send over requestId (as well as requestKey for backwards compatibility)
     // to match tcpaSafeLeadState.notification property
     for(var l = 0; l < leads.length; l++){
-        leads[l].requestId = leads[l].requestKey;
-        leads[l].ani = leads[l].destination; // add ani prop since used in new call packet & update lead
+        var lead = leads[l];
+        lead.requestId = lead.requestKey;
+        lead.ani = lead.destination; // add ani prop since used in new call packet & update lead
+
+        // parse extra data correctly
+        try {
+            var notifLead = notif.destinations.lead[l];
+
+            if(notifLead.extra_data) {
+                // if this lead doesn't match the current lead, find it from the notification
+                if(notifLead['@lead_id'] !== lead.leadId) {
+                    notifLead = (notif.destinations.lead).filter(
+                        function(destLead) {
+                            return destLead['@lead_id'] === lead.leadId;
+                        }
+                    );
+                }
+
+                delete lead.extraDatas;
+                lead.extraData = {};
+                for(var key in notifLead.extra_data) {
+                    lead.extraData[key] = notifLead.extra_data[key]['#text'];
+                }
+            }
+
+        } catch(e) {
+            console.warn('error parsing lead extra data: ' + e);
+        }
     }
 
     var formattedResponse = {
