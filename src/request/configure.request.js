@@ -237,7 +237,9 @@ ConfigRequest.prototype.processResponse = function(response) {
                     //normally in the case of disconnect during transition
 
                     model.currentCall.uii  = model.connectionSettings.activeCallUii;
+                    model.currentCall.pendingDisp = false;
                     Lib.hangup();
+                    
                 }else{
                     //agent still is on call and there are transferSessions, verify no transferSession were drop
                     var activeAgentUiSessions = Lib.getTransferSessions();
