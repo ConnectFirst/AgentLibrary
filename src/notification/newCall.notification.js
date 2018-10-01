@@ -147,13 +147,15 @@ NewCallNotification.prototype.processResponse = function(notification) {
 
     // parse extra data correctly
     try {
-        delete newCall.lead.extraDatas;
-        newCall.lead.extraData = {};
-        for(var key in notif.lead.extra_data) {
-            newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
+        if(notif.lead && notif.lead.extra_data) {
+            delete newCall.lead.extraDatas;
+            newCall.lead.extraData = {};
+            for(var key in notif.lead.extra_data) {
+                newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
+            }
         }
     } catch(e) {
-        console.warn('error parsing lead extra data: ' + e);
+        console.warn('error parsing new call lead extra data: ' + e);
     }
     // set saved script response if present
     try{

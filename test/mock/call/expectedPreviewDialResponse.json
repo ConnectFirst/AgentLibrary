@@ -42,7 +42,11 @@
       "auxExternalUrl": "",
       "appUrl": "",
       "requestId": "IQ10012016081712583500760",
-      "ani": "5555555551"
+      "ani": "5555555551",
+      "extraData": {
+        "Another_Name": "Something",
+        "AnotherField": "Nothing"
+      }
     },
     {
       "auxData1": "",
