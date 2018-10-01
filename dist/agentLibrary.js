@@ -1830,7 +1830,7 @@ ConfigRequest.prototype.processResponse = function(response) {
 
                     model.currentCall.uii  = model.connectionSettings.activeCallUii;
                     model.currentCall.pendingDisp = false;
-                    Lib.hangup(1);
+                    Lib.hangup(1, false);
                     
                 }else{
                     //agent still is on call and there are transferSessions, verify no transferSession were drop
@@ -2313,8 +2313,9 @@ DispositionManualPassRequest.prototype.formatJSON = function() {
 };
 
 
-var HangupRequest = function(sessionId) {
+var HangupRequest = function(sessionId, resetPendingDisp) {
     this.sessionId = sessionId || null;
+    this.resetPendingDisp = resetPendingDisp || false;
 };
 
 HangupRequest.prototype.formatJSON = function() {
@@ -2332,6 +2333,9 @@ HangupRequest.prototype.formatJSON = function() {
             },
             "session_id":{
                 "#text":utils.toString(this.sessionId === null ? UIModel.getInstance().currentCall.sessionId : this.sessionId)
+            },
+            "cancel_pending_disp" : {
+                "#text" : utils.toString(this.resetPendingDisp)
             }
         }
     };
@@ -8673,9 +8677,10 @@ function initAgentLibraryCall (context) {
      * Sends a hangup request message
      * @memberof AgentLibrary.Call
      * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
+     * @param {boolean} resetPendingDisp, reset pendingDisp to false, in case of bad reconnect
      */
-    AgentLibrary.prototype.hangup = function(sessionId){
-        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
+    AgentLibrary.prototype.hangup = function(sessionId, resetPendingDisp){
+        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId, resetPendingDisp);
         var msg = UIModel.getInstance().hangupRequest.formatJSON();
         utils.sendMessage(this, msg);
     };

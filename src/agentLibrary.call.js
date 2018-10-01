@@ -134,9 +134,10 @@ function initAgentLibraryCall (context) {
      * Sends a hangup request message
      * @memberof AgentLibrary.Call
      * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
+     * @param {boolean} resetPendingDisp, reset pendingDisp to false, in case of bad reconnect
      */
-    AgentLibrary.prototype.hangup = function(sessionId){
-        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
+    AgentLibrary.prototype.hangup = function(sessionId, resetPendingDisp){
+        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId, resetPendingDisp);
         var msg = UIModel.getInstance().hangupRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
