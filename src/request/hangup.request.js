@@ -21,7 +21,7 @@ HangupRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.sessionId === null ? UIModel.getInstance().currentCall.sessionId : this.sessionId)
             },
             "cancel_pending_disp" : {
-                "#text" : this.resetPendingDisp
+                "#text" : this.resetPendingDisp === true ? "TRUE" : "FALSE"
             }
         }
     };
