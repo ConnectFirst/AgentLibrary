@@ -232,11 +232,11 @@ ConfigRequest.prototype.processResponse = function(response) {
                         var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
                         Lib.offhookTerm(agentProcessOffhookCallback);
                     }
-                }else if(model.connectionSettings.isOnCall && !model.agentSettings.onCall){
+                }else if(model.connectionSettings.isOnCall && model.currentCall.uii !== model.connectionSettings.activeCallUii){
                     //if the agent does not know it is on a call, but IQ thinks it is on a call
                     //normally in the case of disconnect during transition
 
-                    model.currentCall.uii  = model.connectionSettings.activeCallUii;
+                    model.currentCall.uii = model.connectionSettings.activeCallUii;
                     model.currentCall.pendingDisp = false;
                     Lib.hangup(1, true);
                     
