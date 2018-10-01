@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-28 */
+/*! cf-agent-library - v2.1.10 - 2018-10-01 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1829,7 +1829,9 @@ ConfigRequest.prototype.processResponse = function(response) {
                     //normally in the case of disconnect during transition
 
                     model.currentCall.uii  = model.connectionSettings.activeCallUii;
+                    model.currentCall.pendingDisp = false;
                     Lib.hangup();
+                    
                 }else{
                     //agent still is on call and there are transferSessions, verify no transferSession were drop
                     var activeAgentUiSessions = Lib.getTransferSessions();
