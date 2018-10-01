@@ -1830,7 +1830,7 @@ ConfigRequest.prototype.processResponse = function(response) {
 
                     model.currentCall.uii  = model.connectionSettings.activeCallUii;
                     model.currentCall.pendingDisp = false;
-                    Lib.hangup();
+                    Lib.hangup(1);
                     
                 }else{
                     //agent still is on call and there are transferSessions, verify no transferSession were drop
