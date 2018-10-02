@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-10-01 */
+/*! cf-agent-library - v2.1.10 - 2018-10-02 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1824,7 +1824,7 @@ ConfigRequest.prototype.processResponse = function(response) {
                         var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
                         Lib.offhookTerm(agentProcessOffhookCallback);
                     }
-                }else if(model.connectionSettings.isOnCall && model.currentCall.uii !== model.connectionSettings.activeCallUii){
+                }else if(model.connectionSettings.isOnCall && (model.currentCall.uii !== model.connectionSettings.activeCallUii || Lib.waitingForAddSession === true)){
                     //if the agent does not know it is on a call, but IQ thinks it is on a call
                     //normally in the case of disconnect during transition
 
@@ -6035,6 +6035,7 @@ var UIModel = (function() {
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
+            waitingForAddSession : null,
 
             // internal chat requests
             chatAliasRequest : null,
@@ -8174,6 +8175,10 @@ function initAgentLibraryCore (context) {
      */
     AgentLibrary.prototype.getTransferSessions = function() {
         return UIModel.getInstance().transferSessions;
+    };
+
+    AgentLibrary.prototype.getPendingSessions = function() {
+        return UIModel.getInstance().pendingNewCallSessions;
     };
     /**
      * Get the Agent Permissions object containing the current state of agent permissions
