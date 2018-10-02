@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-05 */
+/*! cf-agent-library - v2.1.10 - 2018-10-02 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -645,7 +645,20 @@ NewCallNotification.prototype.processResponse = function(notification) {
     newCall.surveyResponse = utils.processResponseCollection(notification, 'ui_notification', 'survey_response', 'detail')[0];
     newCall.scriptResponse = {};
     newCall.transferPhoneBook = utils.processResponseCollection(notification, 'ui_notification', 'transfer_phone_book')[0];
+    newCall.lead = utils.processResponseCollection(notification, 'ui_notification', 'lead')[0];
 
+    // parse extra data correctly
+    try {
+        if(notif.lead && notif.lead.extra_data) {
+            delete newCall.lead.extraDatas;
+            newCall.lead.extraData = {};
+            for(var key in notif.lead.extra_data) {
+                newCall.lead.extraData[key] = notif.lead.extra_data[key]['#text'];
+            }
+        }
+    } catch(e) {
+        console.warn('error parsing new call lead extra data: ' + e);
+    }
     // set saved script response if present
     try{
         var savedModel = JSON.parse(notif.script_result["#text"]).model;
@@ -1578,7 +1591,7 @@ XferColdRequest.prototype.processResponse = function(response) {
 };
 
 
-var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillProfileId = skillProfileId || "";
@@ -1587,6 +1600,7 @@ var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGr
     this.updateFromAdminUI = updateFromAdminUI || false;
     this.loginType = "NO-SELECTION";
     this.updateLogin = false;
+    this.isForce = isForce;
 
     // Remove any ids agent doesn't have access to
     var model = UIModel.getInstance();
@@ -1650,6 +1664,12 @@ ConfigRequest.prototype.formatJSON = function() {
             },
             "update_from_adminui":{
                 "#text":utils.toString(this.updateFromAdminUI)
+            },
+            "agent_platform_id" : {
+                "#text" : utils.toString(2) //Hard-coded platformId
+            },
+            "is_force" : {
+                "#text" : utils.toString(this.isForce)
             }
         }
     };
@@ -1717,6 +1737,7 @@ ConfigRequest.prototype.processResponse = function(response) {
     var model = UIModel.getInstance();
     var message = "";
     var formattedResponse = utils.buildDefaultResponse(response);
+    var Lib = UIModel.getInstance().libraryInstance;
 
     if(detail === "Logon Session Configuration Updated!"){
         // this is an update login packet
@@ -1770,6 +1791,62 @@ ConfigRequest.prototype.processResponse = function(response) {
             }else{
                 // this was a reconnect
                 message = "Processed a Layer 2 Reconnect Successfully";
+
+                model.connectionSettings.isOnCall = utils.getText(resp, "is_on_call");
+                model.connectionSettings.activeCallUii  =  utils.getText(resp, "active_call_uii");
+                model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
+
+
+                if(model.connectionSettings.isOnCall === false){
+                    if(model.currentCall.uii) {
+                        var mockEndCallPacket = {
+                            "ui_notification": {
+                                "@message_id": "",
+                                "@type": "END-CALL",
+                                "uii": {"#text": model.currentCall.uii},
+                                "term_reason": {"#text": "SOCKET-DISCONNECT"}
+                            }
+                        };
+
+                        utils.processNotification(Lib, mockEndCallPacket);
+                    }
+
+                    if(model.agentSettings.isOffhook){
+                        var offHookTermPacket = {
+                            "ui_notification" : {
+                                "agent_id" : {"#text": UIModel.getInstance().agentSettings.agentId},
+                                "@type" : "OFF-HOOK-TERM",
+                                "@message_id": ""
+                            }
+
+                        };
+
+                        var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
+                        Lib.offhookTerm(agentProcessOffhookCallback);
+                    }
+                }else if(model.connectionSettings.isOnCall && (model.currentCall.uii !== model.connectionSettings.activeCallUii || Lib.waitingForAddSession === true)){
+                    //if the agent does not know it is on a call, but IQ thinks it is on a call
+                    //normally in the case of disconnect during transition
+
+                    model.currentCall.uii = model.connectionSettings.activeCallUii;
+                    model.currentCall.pendingDisp = false;
+                    Lib.hangup(1, true);
+                    
+                }else{
+                    //agent still is on call and there are transferSessions, verify no transferSession were drop
+                    var activeAgentUiSessions = Lib.getTransferSessions();
+                    var activeAgentSessions = response.ui_response.active_call_sessions.call_session_id.map(function(sessionObj){
+                        return sessionObj['#text'];
+                    });
+
+                    for(var transferSession in activeAgentUiSessions){
+                        if(activeAgentSessions.indexOf(transferSession) === -1){
+                            //if the active ui session is no longer active, we need to tell the ui
+                            delete UIModel.getInstance().transferSessions[transferSession];
+                        }
+                    }
+                }
+
                 utils.logMessage(LOG_LEVELS.INFO, message, response);
             }
         }
@@ -2236,8 +2313,9 @@ DispositionManualPassRequest.prototype.formatJSON = function() {
 };
 
 
-var HangupRequest = function(sessionId) {
+var HangupRequest = function(sessionId, resetPendingDisp) {
     this.sessionId = sessionId || null;
+    this.resetPendingDisp = resetPendingDisp || false;
 };
 
 HangupRequest.prototype.formatJSON = function() {
@@ -2255,6 +2333,9 @@ HangupRequest.prototype.formatJSON = function() {
             },
             "session_id":{
                 "#text":utils.toString(this.sessionId === null ? UIModel.getInstance().currentCall.sessionId : this.sessionId)
+            },
+            "cancel_pending_disp" : {
+                "#text" : this.resetPendingDisp === true ? "TRUE" : "FALSE"
             }
         }
     };
@@ -2970,7 +3051,8 @@ LoginRequest.prototype.processResponse = function(response) {
                 group.allowPreviewLeadFilters = group.allowPreviewLeadFilters === "1";
                 group.progressiveEnabled = group.progressiveEnabled === "1";
                 group.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled === "1";
-                group.hciEnabled = group.hciEnabled === "1";
+                group.hciType = parseInt(group.hciEnabled) || 0;
+                group.hciEnabled = group.hciEnabled === "1" || group.hciEnabled === "2";
                 group.hciClicker = group.hciClicker === "1";
             }
             model.outboundSettings.availableOutdialGroups = dialGroups;
@@ -3555,9 +3637,35 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
 
     // send over requestId (as well as requestKey for backwards compatibility)
     // to match previewLeadState.notification property
-    for(var l = 0; l < leads.length; l++){
-        leads[l].requestId = leads[l].requestKey;
-        leads[l].ani = leads[l].destination; // add ani prop since used in new call packet & update lead
+    for(var l = 0; l < leads.length; l++) {
+        var lead = leads[l];
+        lead.requestId = lead.requestKey;
+        lead.ani = lead.destination; // add ani prop since used in new call packet & update lead
+
+        // parse extra data correctly
+        try {
+            var notifLead = notif.destinations.lead[l];
+
+            if(notifLead.extra_data) {
+                // if this lead doesn't match the current lead, find it from the notification
+                if(notifLead['@lead_id'] !== lead.leadId) {
+                    notifLead = (notif.destinations.lead).filter(
+                        function(destLead) {
+                            return destLead['@lead_id'] === lead.leadId;
+                        }
+                    );
+                }
+
+                delete lead.extraDatas;
+                lead.extraData = {};
+                for(var key in notifLead.extra_data) {
+                    lead.extraData[key] = notifLead.extra_data[key]['#text'];
+                }
+            }
+
+        } catch(e) {
+            console.warn('error parsing lead extra data: ' + e);
+        }
     }
 
     var formattedResponse = {
@@ -3950,8 +4058,34 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
     // send over requestId (as well as requestKey for backwards compatibility)
     // to match tcpaSafeLeadState.notification property
     for(var l = 0; l < leads.length; l++){
-        leads[l].requestId = leads[l].requestKey;
-        leads[l].ani = leads[l].destination; // add ani prop since used in new call packet & update lead
+        var lead = leads[l];
+        lead.requestId = lead.requestKey;
+        lead.ani = lead.destination; // add ani prop since used in new call packet & update lead
+
+        // parse extra data correctly
+        try {
+            var notifLead = notif.destinations.lead[l];
+
+            if(notifLead.extra_data) {
+                // if this lead doesn't match the current lead, find it from the notification
+                if(notifLead['@lead_id'] !== lead.leadId) {
+                    notifLead = (notif.destinations.lead).filter(
+                        function(destLead) {
+                            return destLead['@lead_id'] === lead.leadId;
+                        }
+                    );
+                }
+
+                delete lead.extraDatas;
+                lead.extraData = {};
+                for(var key in notifLead.extra_data) {
+                    lead.extraData[key] = notifLead.extra_data[key]['#text'];
+                }
+            }
+
+        } catch(e) {
+            console.warn('error parsing lead extra data: ' + e);
+        }
     }
 
     var formattedResponse = {
@@ -5901,6 +6035,7 @@ var UIModel = (function() {
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
+            waitingForAddSession : null,
 
             // internal chat requests
             chatAliasRequest : null,
@@ -6233,15 +6368,8 @@ var utils = {
             }
 
         } else {
-            // add message to queue
+            // add message to queue if socket is not open.
             instance._queuedMsgs.push({dts: new Date(), msg: msg});
-
-            if(UIModel.getInstance().agentSettings.isLoggedIn){
-                // try to reconnect
-                instance._isReconnect = true;
-                instance.openSocket();
-                console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
-            }
         }
     },
 
@@ -8048,6 +8176,10 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getTransferSessions = function() {
         return UIModel.getInstance().transferSessions;
     };
+
+    AgentLibrary.prototype.getPendingSessions = function() {
+        return UIModel.getInstance().pendingNewCallSessions;
+    };
     /**
      * Get the Agent Permissions object containing the current state of agent permissions
      * @memberof AgentLibrary.Core.Settings
@@ -8165,8 +8297,11 @@ function initAgentLibrarySocket (context) {
                     clearInterval(UIModel.getInstance().statsIntervalId);
                     UIModel.getInstance().statsIntervalId = null;
 
-                    // if we are still logged in, try to reconnect
+                    // if we are still logged in, set reconnect flag and try to reconnect
                     if(UIModel.getInstance().agentSettings.isLoggedIn){
+                        instance._isReconnect = true;
+                        console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
+
                         setTimeout(function(){
                             instance.openSocket();
                         }, 5000);
@@ -8280,10 +8415,11 @@ function initAgentLibraryAgent (context) {
      * @param {string} [skillProfileId=null] The skill profile the agent will be logged into.
      * @param {string} [dialGroupId=null] The outbound dial group id the agent will be logged into.
      * @param {string} [updateFromAdminUI=false] Whether the request is generated from the AdminUI or not.
+     * @param {boolean} isForce Whether the agent login is forcing an existing agentlogin out.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI);
+    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
+        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
         var msg = UIModel.getInstance().configRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);
@@ -8546,9 +8682,10 @@ function initAgentLibraryCall (context) {
      * Sends a hangup request message
      * @memberof AgentLibrary.Call
      * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
+     * @param {boolean} resetPendingDisp, reset pendingDisp to false, in case of bad reconnect
      */
-    AgentLibrary.prototype.hangup = function(sessionId){
-        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
+    AgentLibrary.prototype.hangup = function(sessionId, resetPendingDisp){
+        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId, resetPendingDisp);
         var msg = UIModel.getInstance().hangupRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -9294,21 +9431,26 @@ function initAgentLibraryLogger(context) {
         var instance = this;
 
         if(db){
-            var transaction = db.transaction([store], "readwrite");
-            var objectStore = transaction.objectStore(store);
-            var dateIndex = objectStore.index("dts");
-            var endDate = new Date();
-            endDate.setDate(endDate.getDate() - 2); // two days ago
+            try{
+                var transaction = db.transaction([store], "readwrite");
+                var objectStore = transaction.objectStore(store);
+                var dateIndex = objectStore.index("dts");
+                var endDate = new Date();
+                endDate.setDate(endDate.getDate() - 2); // two days ago
 
-            var range = IDBKeyRange.upperBound(endDate);
-            dateIndex.openCursor(range).onsuccess = function(event){
-                var cursor = event.target.result;
-                if(cursor){
-                    objectStore.delete(cursor.primaryKey);
-                    cursor.continue();
-                }
+                var range = IDBKeyRange.upperBound(endDate);
+                dateIndex.openCursor(range).onsuccess = function(event){
+                    var cursor = event.target.result;
+                    if(cursor){
+                        objectStore.delete(cursor.primaryKey);
+                        cursor.continue();
+                    }
 
-            };
+                };
+            } catch(err){
+                // no op
+            }
+
         }
     };
 
