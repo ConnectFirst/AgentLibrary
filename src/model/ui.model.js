@@ -23,6 +23,7 @@ var UIModel = (function() {
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
+            waitingForAddSession : null,
 
             // internal chat requests
             chatAliasRequest : null,

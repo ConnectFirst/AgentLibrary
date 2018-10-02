@@ -232,6 +232,14 @@ ConfigRequest.prototype.processResponse = function(response) {
                         var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
                         Lib.offhookTerm(agentProcessOffhookCallback);
                     }
+                }else if(model.connectionSettings.isOnCall && (model.currentCall.uii !== model.connectionSettings.activeCallUii || Lib.waitingForAddSession === true)){
+                    //if the agent does not know it is on a call, but IQ thinks it is on a call
+                    //normally in the case of disconnect during transition
+
+                    model.currentCall.uii = model.connectionSettings.activeCallUii;
+                    model.currentCall.pendingDisp = false;
+                    Lib.hangup(1, true);
+                    
                 }else{
                     //agent still is on call and there are transferSessions, verify no transferSession were drop
                     var activeAgentUiSessions = Lib.getTransferSessions();

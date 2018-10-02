@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-09-28 */
+/*! cf-agent-library - v2.1.10 - 2018-10-02 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1824,6 +1824,14 @@ ConfigRequest.prototype.processResponse = function(response) {
                         var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
                         Lib.offhookTerm(agentProcessOffhookCallback);
                     }
+                }else if(model.connectionSettings.isOnCall && (model.currentCall.uii !== model.connectionSettings.activeCallUii || Lib.waitingForAddSession === true)){
+                    //if the agent does not know it is on a call, but IQ thinks it is on a call
+                    //normally in the case of disconnect during transition
+
+                    model.currentCall.uii = model.connectionSettings.activeCallUii;
+                    model.currentCall.pendingDisp = false;
+                    Lib.hangup(1, true);
+                    
                 }else{
                     //agent still is on call and there are transferSessions, verify no transferSession were drop
                     var activeAgentUiSessions = Lib.getTransferSessions();
@@ -2305,8 +2313,9 @@ DispositionManualPassRequest.prototype.formatJSON = function() {
 };
 
 
-var HangupRequest = function(sessionId) {
+var HangupRequest = function(sessionId, resetPendingDisp) {
     this.sessionId = sessionId || null;
+    this.resetPendingDisp = resetPendingDisp || false;
 };
 
 HangupRequest.prototype.formatJSON = function() {
@@ -2324,6 +2333,9 @@ HangupRequest.prototype.formatJSON = function() {
             },
             "session_id":{
                 "#text":utils.toString(this.sessionId === null ? UIModel.getInstance().currentCall.sessionId : this.sessionId)
+            },
+            "cancel_pending_disp" : {
+                "#text" : this.resetPendingDisp === true ? "TRUE" : "FALSE"
             }
         }
     };
@@ -6023,6 +6035,7 @@ var UIModel = (function() {
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
+            waitingForAddSession : null,
 
             // internal chat requests
             chatAliasRequest : null,
@@ -8163,6 +8176,10 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getTransferSessions = function() {
         return UIModel.getInstance().transferSessions;
     };
+
+    AgentLibrary.prototype.getPendingSessions = function() {
+        return UIModel.getInstance().pendingNewCallSessions;
+    };
     /**
      * Get the Agent Permissions object containing the current state of agent permissions
      * @memberof AgentLibrary.Core.Settings
@@ -8665,9 +8682,10 @@ function initAgentLibraryCall (context) {
      * Sends a hangup request message
      * @memberof AgentLibrary.Call
      * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
+     * @param {boolean} resetPendingDisp, reset pendingDisp to false, in case of bad reconnect
      */
-    AgentLibrary.prototype.hangup = function(sessionId){
-        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
+    AgentLibrary.prototype.hangup = function(sessionId, resetPendingDisp){
+        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId, resetPendingDisp);
         var msg = UIModel.getInstance().hangupRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
