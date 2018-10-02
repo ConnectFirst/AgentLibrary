@@ -162,7 +162,7 @@ function initAgentLibraryChat (context) {
      * @memberof AgentLibrary.Chat
      * @param {string} monitorAgentId Agent id handling this chat, the agent being monitored
      */
-    AgentLibrary.prototype.monitorChat = function(monitorAgentId){
+    AgentLibrary.prototype.monitorAgentChats = function(monitorAgentId){
         UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(monitorAgentId);
         var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
         utils.sendMessage(this, msg);
@@ -183,7 +183,7 @@ function initAgentLibraryChat (context) {
      * Request to drop all chat monitoring sessions for the logged in agent
      * @memberof AgentLibrary.Chat
      */
-    AgentLibrary.prototype.stopMonitoringAllChats = function(){
+    AgentLibrary.prototype.stopMonitoringAllAgentChats = function(){
         UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest();
         var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
         utils.sendMessage(this, msg);
