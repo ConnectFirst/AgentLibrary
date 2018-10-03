@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-10-02 */
+/*! cf-agent-library - v2.1.10 - 2018-10-03 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -5226,7 +5226,7 @@ var ChatActiveNotification = function() {
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "is_monitoring":{"#text":"TURE"|"FALSE"}
+ *          "is_monitoring":{"#text":"TRUE"|"FALSE"}
  *      }
  *  }
  */
@@ -5296,7 +5296,8 @@ var ChatInactiveNotification = function() {
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "disposition_timeout":{"#text":"30"}
+ *          "disposition_timeout":{"#text":"30"},
+ *          "dequeue_agent_id":{"#text":"123"}
  *      }
  *  }
  */
@@ -5308,7 +5309,8 @@ ChatInactiveNotification.prototype.processResponse = function(notification) {
         status: "OK",
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
-        dispositionTimeout: utils.getText(notif, "disposition_timeout")
+        dispositionTimeout: utils.getText(notif, "disposition_timeout"),
+        dequeueAgentId: utils.getText(notif, "dequeue_agent_id")
     };
 
 };
@@ -5377,6 +5379,7 @@ var ChatTypingNotification = function() {
  *          "account_id":{"#text":"99999999"},
  *          "from":{"#text":""},
  *          "message":{"#text":"this is the message before actual send"}
+ *          "dequeue_agent_id":{"#text":"123"}
  *      }
  *  }
  */
@@ -5390,7 +5393,8 @@ ChatTypingNotification.prototype.processResponse = function(notification) {
         uii: utils.getText(notif, "uii"),
         from: utils.getText(notif, "from"),
         type: utils.getText(notif, "type"),
-        pendingMessage: utils.getText(notif, "message")
+        pendingMessage: utils.getText(notif, "message"),
+        dequeueAgentId: utils.getText(notif, "dequeue_agent_id")
     };
 
 };

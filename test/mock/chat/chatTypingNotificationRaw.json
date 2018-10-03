@@ -8,7 +8,8 @@
         "uii":{"#text":"201608161200240139000000000120"},
         "from":{"#text":"System"},
         "type":{"#text":"SYSTEM"},
-        "message":{"#text":"this is the message before actual send"}
+        "message":{"#text":"this is the message before actual send"},
+        "dequeue_agent_id":{"#text":"1"}
     }
 }
 

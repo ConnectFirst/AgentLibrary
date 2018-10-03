@@ -230,7 +230,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             status: "OK",
             accountId: "99999999",
             uii: "201608161200240139000000000120",
-            dispositionTimeout: "30"
+            dispositionTimeout: "30",
+            dequeueAgentId: "1"
         };
 
         expect(response).toEqual(expectedResponse);
@@ -271,7 +272,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             uii: "201608161200240139000000000120",
             from: "System",
             type: "SYSTEM",
-            pendingMessage: "this is the message before actual send"
+            pendingMessage: "this is the message before actual send",
+            dequeueAgentId: "1"
         };
 
         expect(response).toEqual(expectedResponse);
