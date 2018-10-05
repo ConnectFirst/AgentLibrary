@@ -43,79 +43,46 @@ QueueStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var queues = [];
-    var gate = {};
     var gateRaw = {};
 
-    if(Array.isArray(resp.gate)){
-        for(var c=0; c< resp.gate.length; c++){
-            gateRaw = resp.gate[c];
-            if(gateRaw){
-                gate = {
-                    abandon:gateRaw["@aba"],
-                    active:gateRaw["@active"],
-                    answer:gateRaw["@ans"],
-                    asa:gateRaw["@asa"],
-                    available:gateRaw["@avail"],
-                    avgAbandon:gateRaw["@avga"],
-                    avgQueue:gateRaw["@avgq"],
-                    avgTalk:gateRaw["@avgt"],
-                    deflected:gateRaw["@def"],
-                    queueId:gateRaw["@id"],
-                    inQueue:gateRaw["@inq"],
-                    longCall:gateRaw["@long_c"],
-                    longestInQueue:gateRaw["@longq"],
-                    queueName:gateRaw["@name"],
-                    presented:gateRaw["@pres"],
-                    routing:gateRaw["@route"],
-                    shortAbandon:gateRaw["@short_aba"],
-                    shortCall:gateRaw["@short_c"],
-                    sla:gateRaw["@sla"],
-                    slaPass:gateRaw["@sla_p"],
-                    slaFail:gateRaw["@sla_f"],
-                    staffed:gateRaw["@staff"],
-                    tAbandonTime:gateRaw["@t_aba"],
-                    tQueueTime:gateRaw["@t_q"],
-                    tSpeedOfAnswer:gateRaw["@t_soa"],
-                    utilization:gateRaw["@util"]
-                };
-            }
+    if (!Array.isArray(resp.gate)) {
+        resp.gate = [resp.gate];
+    }
 
-            queues.push(gate);
-        }
-    }else{
-        gateRaw = resp.gate;
-        if(gateRaw){
-            gate = {
-                abandon:gateRaw["@aba"],
-                active:gateRaw["@active"],
-                answer:gateRaw["@ans"],
-                asa:gateRaw["@asa"],
-                available:gateRaw["@avail"],
-                avgAbandon:gateRaw["@avga"],
-                avgQueue:gateRaw["@avgq"],
-                avgTalk:gateRaw["@avgt"],
-                deflected:gateRaw["@def"],
-                queueId:gateRaw["@id"],
-                inQueue:gateRaw["@inq"],
-                longCall:gateRaw["@long_c"],
-                longestInQueue:gateRaw["@longq"],
-                queueName:gateRaw["@name"],
-                presented:gateRaw["@pres"],
-                routing:gateRaw["@route"],
-                shortAbandon:gateRaw["@short_aba"],
-                shortCall:gateRaw["@short_c"],
-                sla:gateRaw["@sla"],
-                slaPass:gateRaw["@sla_p"],
-                slaFail:gateRaw["@sla_f"],
-                staffed:gateRaw["@staff"],
-                tAbandonTime:gateRaw["@t_aba"],
-                tQueueTime:gateRaw["@t_q"],
-                tSpeedOfAnswer:gateRaw["@t_soa"],
-                utilization:gateRaw["@util"]
-            };
+    for(var c = 0; c < resp.gate.length; c++) {
+        gateRaw = resp.gate[c];
+        if (gateRaw == null) {
+            continue;
         }
 
-        queues.push(gate);
+        queues.push({
+            abandon: gateRaw["@aba"],
+            active: gateRaw["@active"],
+            answer: gateRaw["@ans"],
+            asa: gateRaw["@asa"],
+            available: gateRaw["@avail"],
+            avgAbandon: gateRaw["@avga"],
+            avgQueue: gateRaw["@avgq"],
+            avgTalk: gateRaw["@avgt"],
+            deflected: gateRaw["@def"],
+            queueId: gateRaw["@id"],
+            inQueue: gateRaw["@inq"],
+            longCall: gateRaw["@long_c"],
+            longestInQueue: gateRaw["@longq"],
+            queueName: gateRaw["@name"],
+            presented: gateRaw["@pres"],
+            routing: gateRaw["@route"],
+            shortAbandon: gateRaw["@short_aba"],
+            shortCall: gateRaw["@short_c"],
+            sla: gateRaw["@sla"],
+            slaPass: gateRaw["@sla_p"],
+            slaFail: gateRaw["@sla_f"],
+            staffed: gateRaw["@staff"],
+            tAbandonTime: gateRaw["@t_aba"],
+            tQueueTime: gateRaw["@t_q"],
+            tSpeedOfAnswer: gateRaw["@t_soa"],
+            utilization: gateRaw["@util"]
+        });
     }
 
     var queueStats = {
