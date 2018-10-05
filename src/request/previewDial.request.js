@@ -87,6 +87,12 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
         lead.requestId = lead.requestKey;
         lead.ani = lead.destination; // add ani prop since used in new call packet & update lead
 
+        // In case of a single lead returned, the XML converter to JSON will add lead as an object and not an array
+        //
+        if (!Array.isArray(notif.destinations.lead)) {
+            notif.destinations.lead = [notif.destinations.lead];
+        }
+
         // parse extra data correctly
         try {
             var notifLead = notif.destinations.lead[l];
