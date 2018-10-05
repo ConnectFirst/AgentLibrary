@@ -211,7 +211,7 @@ LoginRequest.prototype.processResponse = function(response) {
             }
 
             // Set collection values
-            processCampaigns(response);
+            model.outboundSettings.availableCampaigns = _processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
             processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
@@ -260,83 +260,52 @@ LoginRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-function processCampaigns(response){
+
+function _processCampaigns(response){
     var campaigns = [];
-    var campaign = {};
-    var campaignsRaw = [];
-    var customLabels = [];
-    var labelArray = [];
-    var label = "";
-    var campaignId = 0;
-    var campaignName = "";
-    var allowLeadUpdates = 0;
+    var campaignsRaw = null;
 
     if(typeof response.ui_response.campaigns.campaign !== 'undefined'){
         campaignsRaw = response.ui_response.campaigns.campaign;
     }
 
-    if(Array.isArray(campaignsRaw)){
-        // dealing with an array
-        for(var c = 0; c < campaignsRaw.length; c++){
-            campaignId = campaignsRaw[c]['@campaign_id'];
-            campaignName = campaignsRaw[c]['@campaign_name'];
-            allowLeadUpdates = campaignsRaw[c]['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-            customLabels = campaignsRaw[c]['custom_labels'];
-            labelArray = [];
-            label = "";
-
-            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-            for (var prop in customLabels) {
-                label = prop.replace(/@/, ''); // remove leading '@'
-                var obj = {};
-                obj[label] = customLabels[prop];
-                labelArray.push(obj);
-            }
-
-            campaign = {
-                allowLeadUpdates: allowLeadUpdates,
-                campaignId: campaignId,
-                campaignName: campaignName,
-                surveyId: campaignsRaw[c]['@survey_id'],
-                surveyName: campaignsRaw[c]['@survey_name'],
-                customLabels: labelArray
-            };
-            campaigns.push(campaign);
-        }
-    }else{
-        if(campaignsRaw){
-            // single campaign object
-            campaignId = campaignsRaw['@campaign_id'];
-            campaignName = campaignsRaw['@campaign_name'];
-            allowLeadUpdates = campaignsRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-            customLabels = campaignsRaw['custom_labels'];
-            labelArray = [];
-            label = "";
-
-            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-            for (var p in customLabels) {
-                label = p.replace(/@/, ''); // remove leading '@'
-                var obj = {};
-                obj[label] = customLabels[p];
-                labelArray.push(obj);
-            }
-
-            campaign = {
-                allowLeadUpdates: allowLeadUpdates,
-                campaignId: campaignId,
-                campaignName: campaignName,
-                surveyId: campaignsRaw['@survey_id'],
-                surveyName: campaignsRaw['@survey_name'],
-                customLabels: labelArray
-            };
-            campaigns.push(campaign);
-        }
+    if(!Array.isArray(campaignsRaw)) {
+        campaignsRaw = [campaignsRaw];
     }
 
-    UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
+    for(var c = 0; c < campaignsRaw.length; c++){
+        campaigns.push(_processCampaign(campaignsRaw[c]));
+    }
 }
+
+
+function _processCampaign(campaignRaw) {
+    // single campaign object
+    var campaignId = campaignRaw['@campaign_id'];
+    var allowLeadUpdates = campaignRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
+    UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
+
+    var customLabels = campaignRaw['custom_labels'];
+    var labelArray = [];
+
+    for (var p in customLabels) {
+        var label = p.replace(/@/, ''); // remove leading '@'
+        var obj = {};
+        obj[label] = customLabels[p];
+
+        labelArray.push(obj);
+    }
+
+    return {
+        campaignId: campaignId,
+        campaignName: campaignRaw['@campaign_name'],
+        surveyId: campaignRaw['@survey_id'],
+        surveyName: campaignRaw['@survey_name'],
+        customLabels: labelArray,
+        allowLeadUpdates: allowLeadUpdates
+    };
+}
+
 
 /**
  * example packet
