@@ -60,7 +60,8 @@ ChatMessageRequest.prototype.formatJSON = function() {
  *      "from":{"#text":""},
  *      "message":{"#text":"hello"},
  *      "dts":{"#text":"2017-05-10 12:40:28"},
- *      "dequeue_agent_id":{"#text":"123"}
+ *      "dequeue_agent_id":{"#text":"123"},
+ *      "whisper":{"#text":'TRUE'|'FALSE'"}
  *    }
  * }
  */

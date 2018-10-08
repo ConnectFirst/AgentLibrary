@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-10-03 */
+/*! cf-agent-library - v2.1.10 - 2018-10-08 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -4534,7 +4534,8 @@ ChatMessageRequest.prototype.formatJSON = function() {
  *      "from":{"#text":""},
  *      "message":{"#text":"hello"},
  *      "dts":{"#text":"2017-05-10 12:40:28"},
- *      "dequeue_agent_id":{"#text":"123"}
+ *      "dequeue_agent_id":{"#text":"123"},
+ *      "whisper":{"#text":'TRUE'|'FALSE'"}
  *    }
  * }
  */
@@ -5453,9 +5454,9 @@ var NewChatNotification = function() {
  *          }
  *          "transcript":{
  *              "message":[
- *                  { "@from":"system", "@type":"SYSTEM", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
- *                  { "@from":"dlbooks", "@type":"AGENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
- *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
+ *                  { "@from":"system", "@type":"SYSTEM", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
+ *                  { "@from":"dlbooks", "@type":"AGENT", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
+ *                  { "@from":"user1", "@type":"CLIENT", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
  *          "json_baggage":{"#text":"json_string_form_data"}, <--- pre-form chat data
@@ -5489,6 +5490,7 @@ NewChatNotification.prototype.processResponse = function(notification) {
         idleTimeout: utils.getText(notif,'idle_timeout'),
         isMonitoring: utils.getText(notif,'is_monitoring'),
         monitoredAgentId: utils.getText(notif,'monitored_agent_id'),
+        isWhisper: utils.getText(notif,'whisper'),
         preChatData: utils.getText(notif,'json_baggage')
     };
 
