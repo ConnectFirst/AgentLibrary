@@ -276,8 +276,8 @@ function initAgentLibraryCall (context) {
      * @param {number} monitorAgentId UII Agent Id of the agent you wish to monitor
      * @param {function} [callback=null] Callback function when silent monitor response received
      */
-    AgentLibrary.prototype.monitor = function(agentId, uii, monitorAgentId, callback){
-        UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE", agentId, uii, monitorAgentId);
+    AgentLibrary.prototype.monitor = function(agentId, monitorAgentId, callback){
+        UIModel.getInstance().bargeInRequest = new BargeInRequest("MUTE", agentId, null, monitorAgentId);
         var msg = UIModel.getInstance().bargeInRequest.formatJSON();
 
         utils.setCallback(this, CALLBACK_TYPES.SILENT_MONITOR, callback);
