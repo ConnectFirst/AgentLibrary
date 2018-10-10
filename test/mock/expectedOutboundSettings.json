@@ -85,6 +85,7 @@
       "progressiveCallDelay": "0",
       "progressiveEnabled": false,
       "requireFetchedLeadsCalled": false,
+      "hciType": 1,
       "hciEnabled": true,
       "hciClicker": true
     },
@@ -99,6 +100,7 @@
       "progressiveCallDelay": "10",
       "progressiveEnabled": true,
       "requireFetchedLeadsCalled": true,
+      "hciType": 0,
       "hciEnabled": false,
       "hciClicker": false
     }

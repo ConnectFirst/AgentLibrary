@@ -889,6 +889,10 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getTransferSessions = function() {
         return UIModel.getInstance().transferSessions;
     };
+
+    AgentLibrary.prototype.getPendingSessions = function() {
+        return UIModel.getInstance().pendingNewCallSessions;
+    };
     /**
      * Get the Agent Permissions object containing the current state of agent permissions
      * @memberof AgentLibrary.Core.Settings

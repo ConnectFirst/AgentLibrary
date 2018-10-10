@@ -82,9 +82,35 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
 
     // send over requestId (as well as requestKey for backwards compatibility)
     // to match previewLeadState.notification property
-    for(var l = 0; l < leads.length; l++){
-        leads[l].requestId = leads[l].requestKey;
-        leads[l].ani = leads[l].destination; // add ani prop since used in new call packet & update lead
+    for(var l = 0; l < leads.length; l++) {
+        var lead = leads[l];
+        lead.requestId = lead.requestKey;
+        lead.ani = lead.destination; // add ani prop since used in new call packet & update lead
+
+        // parse extra data correctly
+        try {
+            var notifLead = notif.destinations.lead[l];
+
+            if(notifLead.extra_data) {
+                // if this lead doesn't match the current lead, find it from the notification
+                if(notifLead['@lead_id'] !== lead.leadId) {
+                    notifLead = (notif.destinations.lead).filter(
+                        function(destLead) {
+                            return destLead['@lead_id'] === lead.leadId;
+                        }
+                    );
+                }
+
+                delete lead.extraDatas;
+                lead.extraData = {};
+                for(var key in notifLead.extra_data) {
+                    lead.extraData[key] = notifLead.extra_data[key]['#text'];
+                }
+            }
+
+        } catch(e) {
+            console.warn('error parsing lead extra data: ' + e);
+        }
     }
 
     var formattedResponse = {

@@ -62,7 +62,15 @@
           "gate_keeper": {},
           "aux_greeting": {},
           "aux_external_url": {},
-          "app_url": {}
+          "app_url": {},
+          "extra_data": {
+            "Another_Name": {
+              "#text": "Something"
+            },
+            "AnotherField": {
+              "#text": "Nothing"
+            }
+          }
         },
         {
           "@aux_data1": "",

@@ -1,5 +1,5 @@
 
-var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI) {
+var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce) {
     this.queueIds = queueIds || [];
     this.chatIds = chatIds || [];
     this.skillProfileId = skillProfileId || "";
@@ -8,6 +8,7 @@ var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGr
     this.updateFromAdminUI = updateFromAdminUI || false;
     this.loginType = "NO-SELECTION";
     this.updateLogin = false;
+    this.isForce = isForce;
 
     // Remove any ids agent doesn't have access to
     var model = UIModel.getInstance();
@@ -71,6 +72,12 @@ ConfigRequest.prototype.formatJSON = function() {
             },
             "update_from_adminui":{
                 "#text":utils.toString(this.updateFromAdminUI)
+            },
+            "agent_platform_id" : {
+                "#text" : utils.toString(2) //Hard-coded platformId
+            },
+            "is_force" : {
+                "#text" : utils.toString(this.isForce)
             }
         }
     };
@@ -138,6 +145,7 @@ ConfigRequest.prototype.processResponse = function(response) {
     var model = UIModel.getInstance();
     var message = "";
     var formattedResponse = utils.buildDefaultResponse(response);
+    var Lib = UIModel.getInstance().libraryInstance;
 
     if(detail === "Logon Session Configuration Updated!"){
         // this is an update login packet
@@ -191,6 +199,62 @@ ConfigRequest.prototype.processResponse = function(response) {
             }else{
                 // this was a reconnect
                 message = "Processed a Layer 2 Reconnect Successfully";
+
+                model.connectionSettings.isOnCall = utils.getText(resp, "is_on_call");
+                model.connectionSettings.activeCallUii  =  utils.getText(resp, "active_call_uii");
+                model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
+
+
+                if(model.connectionSettings.isOnCall === false){
+                    if(model.currentCall.uii) {
+                        var mockEndCallPacket = {
+                            "ui_notification": {
+                                "@message_id": "",
+                                "@type": "END-CALL",
+                                "uii": {"#text": model.currentCall.uii},
+                                "term_reason": {"#text": "SOCKET-DISCONNECT"}
+                            }
+                        };
+
+                        utils.processNotification(Lib, mockEndCallPacket);
+                    }
+
+                    if(model.agentSettings.isOffhook){
+                        var offHookTermPacket = {
+                            "ui_notification" : {
+                                "agent_id" : {"#text": UIModel.getInstance().agentSettings.agentId},
+                                "@type" : "OFF-HOOK-TERM",
+                                "@message_id": ""
+                            }
+
+                        };
+
+                        var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
+                        Lib.offhookTerm(agentProcessOffhookCallback);
+                    }
+                }else if(model.connectionSettings.isOnCall && (model.currentCall.uii !== model.connectionSettings.activeCallUii || Lib.waitingForAddSession === true)){
+                    //if the agent does not know it is on a call, but IQ thinks it is on a call
+                    //normally in the case of disconnect during transition
+
+                    model.currentCall.uii = model.connectionSettings.activeCallUii;
+                    model.currentCall.pendingDisp = false;
+                    Lib.hangup(1, true);
+                    
+                }else{
+                    //agent still is on call and there are transferSessions, verify no transferSession were drop
+                    var activeAgentUiSessions = Lib.getTransferSessions();
+                    var activeAgentSessions = response.ui_response.active_call_sessions.call_session_id.map(function(sessionObj){
+                        return sessionObj['#text'];
+                    });
+
+                    for(var transferSession in activeAgentUiSessions){
+                        if(activeAgentSessions.indexOf(transferSession) === -1){
+                            //if the active ui session is no longer active, we need to tell the ui
+                            delete UIModel.getInstance().transferSessions[transferSession];
+                        }
+                    }
+                }
+
                 utils.logMessage(LOG_LEVELS.INFO, message, response);
             }
         }
