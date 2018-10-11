@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-10-10 */
+/*! cf-agent-library - v2.1.10 - 2018-10-11 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -660,18 +660,19 @@ NewCallNotification.prototype.processResponse = function(notification) {
         console.warn('error parsing new call lead extra data: ' + e);
     }
 
-    // process custom labels correctly
-    newCall.baggage.customLabels = {};
-    var notifLabels = notif.baggage['custom_labels'];
-    for(var key in notifLabels) {
-        var result = '';
-        if(notifLabels && notifLabels[key] && notifLabels[key]['#text']) {
-            result = notifLabels[key]['#text'];
+    if(newCall.baggage) {
+        // process custom labels correctly
+        newCall.baggage.customLabels = {};
+        var notifLabels = notif.baggage['custom_labels'];
+        for(var key in notifLabels) {
+            var result = '';
+            if(notifLabels && notifLabels[key] && notifLabels[key]['#text']) {
+                result = notifLabels[key]['#text'];
+            }
+
+            newCall.baggage.customLabels[key] = result;
         }
-
-        newCall.baggage.customLabels[key] = result;
     }
-
 
     // set saved script response if present
     try{
