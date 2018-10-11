@@ -34,6 +34,7 @@ const CALLBACK_TYPES = {
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_LIST":"chatListResponse",                 // external chat
     "CHAT_ADD_SESSION":"addChatSessionNotification",// external chat
+    "CHAT_STOP_MONITOR":"stopAgentChatMonitorNotification",// external chat
     "CHAT_CLIENT_RECONNECT" : "chatClientReconnectNotification",
     "CHAT_STATE":"chatStateResponse",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",

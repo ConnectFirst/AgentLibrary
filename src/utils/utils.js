@@ -371,6 +371,11 @@ var utils = {
                 var addChatSessionResponse = addChatSession.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ADD_SESSION, addChatSessionResponse);
                 break;
+            case MESSAGE_TYPES.STOP_MONITOR_CHAT:
+                var stopChatMonitor = new StopMonitorChatRequest();
+                var stopChatMonitorResponse = stopChatMonitor.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STOP_MONITOR, stopChatMonitorResponse);
+                break;
             case MESSAGE_TYPES.DIRECT_AGENT_ROUTE:
                 var directAgentTransfer = new DirectAgentTransferNotification();
                 var directAgentTransferResponse = directAgentTransfer.processResponse(data);

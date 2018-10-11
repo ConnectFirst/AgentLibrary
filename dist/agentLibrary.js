@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-10-08 */
+/*! cf-agent-library - v2.1.10 - 2018-10-10 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -3230,6 +3230,7 @@ LogoutRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+
 var OffhookInitRequest = function() {
 
 };
@@ -5068,6 +5069,31 @@ StopMonitorChatRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+/*
+ * Process a CHAT-DROP-MONITORING-SESSION notification. Used to notify supervisor monitors that agent has logged out.
+ *
+ * {"ui_notification":{
+ *      "@message_id":"IQ10012016080217135001344",
+ *      "@response_to":"",
+ *      "@type":"CHAT-DROP-MONITORING-SESSION",
+ *      "monitored_agent_id":{"#text":"1"},
+ *      "account_id":{"#text":"99999999"},
+ *      "uii":{"#text":""}
+ *    }
+ * }
+ */
+StopMonitorChatRequest.prototype.processResponse = function(data) {
+    var notif = data.ui_notification;
+
+    var formattedResponse = {
+        monitoredAgentId : utils.getText(notif, "monitored_agent_id"),
+        accountId : utils.getText(notif, "account_id"),
+        uii : utils.getText(notif, "uii")
+    };
+
+    return formattedResponse;
+};
+
 
 var SupervisorListRequest = function() {
 
@@ -5490,7 +5516,6 @@ NewChatNotification.prototype.processResponse = function(notification) {
         idleTimeout: utils.getText(notif,'idle_timeout'),
         isMonitoring: utils.getText(notif,'is_monitoring'),
         monitoredAgentId: utils.getText(notif,'monitored_agent_id'),
-        isWhisper: utils.getText(notif,'whisper'),
         preChatData: utils.getText(notif,'json_baggage')
     };
 
@@ -6766,6 +6791,11 @@ var utils = {
                 var addChatSessionResponse = addChatSession.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ADD_SESSION, addChatSessionResponse);
                 break;
+            case MESSAGE_TYPES.STOP_MONITOR_CHAT:
+                var stopChatMonitor = new StopMonitorChatRequest();
+                var stopChatMonitorResponse = stopChatMonitor.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STOP_MONITOR, stopChatMonitorResponse);
+                break;
             case MESSAGE_TYPES.DIRECT_AGENT_ROUTE:
                 var directAgentTransfer = new DirectAgentTransferNotification();
                 var directAgentTransferResponse = directAgentTransfer.processResponse(data);
@@ -7401,6 +7431,7 @@ const CALLBACK_TYPES = {
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_LIST":"chatListResponse",                 // external chat
     "CHAT_ADD_SESSION":"addChatSessionNotification",// external chat
+    "CHAT_STOP_MONITOR":"stopAgentChatMonitorNotification",// external chat
     "CHAT_CLIENT_RECONNECT" : "chatClientReconnectNotification",
     "CHAT_STATE":"chatStateResponse",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
