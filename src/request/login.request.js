@@ -261,78 +261,43 @@ LoginRequest.prototype.processResponse = function(response) {
 };
 
 function processCampaigns(response){
-    var campaigns = [];
-    var campaign = {};
     var campaignsRaw = [];
-    var customLabels = [];
-    var labelArray = [];
-    var label = "";
-    var campaignId = 0;
-    var campaignName = "";
-    var allowLeadUpdates = 0;
+    var campaigns = [];
 
     if(typeof response.ui_response.campaigns.campaign !== 'undefined'){
         campaignsRaw = response.ui_response.campaigns.campaign;
     }
 
-    if(Array.isArray(campaignsRaw)){
-        // dealing with an array
-        for(var c = 0; c < campaignsRaw.length; c++){
-            campaignId = campaignsRaw[c]['@campaign_id'];
-            campaignName = campaignsRaw[c]['@campaign_name'];
-            allowLeadUpdates = campaignsRaw[c]['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-            customLabels = campaignsRaw[c]['custom_labels'];
-            labelArray = [];
-            label = "";
+    // if this is just 1 campaign, add it to an array and process below
+    if(campaignsRaw && !Array.isArray(campaignsRaw)){
+        campaignsRaw = [campaignsRaw];
+    }
 
-            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
+    for(var c = 0; c < campaignsRaw.length; c++) {
+        var campaign = campaignsRaw[c];
+        var campaignId = campaign['@campaign_id'];
+        var campaignName = campaign['@campaign_name'];
+        var allowLeadUpdates = campaign['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
+        var customLabels = campaign['custom_labels'];
+        var labelObj = {};
+        var label = "";
 
-            for (var prop in customLabels) {
-                label = prop.replace(/@/, ''); // remove leading '@'
-                var obj = {};
-                obj[label] = customLabels[prop];
-                labelArray.push(obj);
-            }
+        UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
 
-            campaign = {
-                allowLeadUpdates: allowLeadUpdates,
-                campaignId: campaignId,
-                campaignName: campaignName,
-                surveyId: campaignsRaw[c]['@survey_id'],
-                surveyName: campaignsRaw[c]['@survey_name'],
-                customLabels: labelArray
-            };
-            campaigns.push(campaign);
+        for(var prop in customLabels) {
+            label = prop.replace(/@/, ''); // remove leading '@'
+            labelObj[label] = customLabels[prop];
         }
-    }else{
-        if(campaignsRaw){
-            // single campaign object
-            campaignId = campaignsRaw['@campaign_id'];
-            campaignName = campaignsRaw['@campaign_name'];
-            allowLeadUpdates = campaignsRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-            customLabels = campaignsRaw['custom_labels'];
-            labelArray = [];
-            label = "";
 
-            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-            for (var p in customLabels) {
-                label = p.replace(/@/, ''); // remove leading '@'
-                var obj = {};
-                obj[label] = customLabels[p];
-                labelArray.push(obj);
-            }
-
-            campaign = {
-                allowLeadUpdates: allowLeadUpdates,
-                campaignId: campaignId,
-                campaignName: campaignName,
-                surveyId: campaignsRaw['@survey_id'],
-                surveyName: campaignsRaw['@survey_name'],
-                customLabels: labelArray
-            };
-            campaigns.push(campaign);
-        }
+        campaign = {
+            allowLeadUpdates: allowLeadUpdates,
+            campaignId: campaignId,
+            campaignName: campaignName,
+            surveyId: campaign['@survey_id'],
+            surveyName: campaign['@survey_name'],
+            customLabels: labelObj
+        };
+        campaigns.push(campaign);
     }
 
     UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
