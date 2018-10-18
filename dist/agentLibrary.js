@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-10-02 */
+/*! cf-agent-library - v2.1.10 - 2018-10-18 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1336,14 +1336,17 @@ CallbacksPendingRequest.prototype.formatJSON = function() {
 CallbacksPendingRequest.prototype.processResponse = function(response) {
     var leadsRaw = response.ui_response.lead;
     var leads = [];
-    if(Array.isArray(leadsRaw)){
-        for(var l = 0; l < leadsRaw.length; l++){
-            var leadRaw = leadsRaw[l];
-            var lead = parseLead(leadRaw);
-            leads.push(lead);
+    if(!Array.isArray(leadsRaw)) {
+        leadsRaw = [leadsRaw];
+    }
+
+    for(var l = 0; l < leadsRaw.length; l++){
+        var leadRaw = leadsRaw[l];
+        if (leadRaw == null) {
+            continue;
         }
-    }else if(leadsRaw){
-        leads.push(parseLead(leadsRaw));
+
+        leads.push(parseLead(leadRaw));
     }
 
     UIModel.getInstance().agentSettings.pendingCallbacks = JSON.parse(JSON.stringify(leads));
@@ -1907,17 +1910,15 @@ function setGateSettings(response){
     var gates = model.inboundSettings.availableQueues;
     var selectedGateIds = [];
     var selectedGates = [];
-    var gateIds = response.ui_response.gates.gate_id;
+    var gateIds = response.ui_response.gates.gate_id || [];
 
-    if(gateIds){
-        if(Array.isArray(gateIds)){ // multiple gates assigned
-            for(var s = 0; s < gateIds.length; s++){
-                var obj = gateIds[s];
-                selectedGateIds.push(obj["#text"]);
-            }
-        }else{ // single gate assigned
-            selectedGateIds.push(gateIds["#text"]);
-        }
+    if (!Array.isArray(gateIds)) {
+        gateIds = [gateIds];
+    }
+
+    for(var s = 0; s < gateIds.length; s++){
+        var obj = gateIds[s];
+        selectedGateIds.push(obj["#text"]);
     }
 
     for(var gIdx = 0; gIdx < gates.length; gIdx++){
@@ -1936,18 +1937,15 @@ function setChatQueueSettings(response){
     var selectedChatQueueIds = [];
     var selectedChatQueues = [];
     var cQueues = response.ui_response.chat_queues || {};
-    var chatQueueIds = cQueues.chat_queue_id;
+    var chatQueueIds = cQueues.chat_queue_id || [];
 
-    if(chatQueueIds){
-        if(Array.isArray(chatQueueIds)){ // multiple chatQueues assigned
-            for(var c = 0; c < chatQueueIds.length; c++){
-                var obj = chatQueueIds[c];
-                selectedChatQueueIds.push(obj["#text"]);
-            }
-        }else{ // single chat queue assigned
-            selectedChatQueueIds.push(chatQueueIds["#text"]);
-        }
+    if (!Array.isArray(chatQueueIds)) {
+        chatQueueIds = [chatQueueIds];
+    }
 
+    for(var c = 0; c < chatQueueIds.length; c++){
+        var obj = chatQueueIds[c];
+        selectedChatQueueIds.push(obj["#text"]);
     }
 
     for(var cIdx = 0; cIdx < chatQueues.length; cIdx++){
@@ -3029,7 +3027,7 @@ LoginRequest.prototype.processResponse = function(response) {
             }
 
             // Set collection values
-            processCampaigns(response);
+            model.outboundSettings.availableCampaigns = _processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
             processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
@@ -3078,83 +3076,54 @@ LoginRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-function processCampaigns(response){
+
+function _processCampaigns(response){
     var campaigns = [];
-    var campaign = {};
-    var campaignsRaw = [];
-    var customLabels = [];
-    var labelArray = [];
-    var label = "";
-    var campaignId = 0;
-    var campaignName = "";
-    var allowLeadUpdates = 0;
+    var campaignsRaw = null;
 
     if(typeof response.ui_response.campaigns.campaign !== 'undefined'){
         campaignsRaw = response.ui_response.campaigns.campaign;
     }
 
-    if(Array.isArray(campaignsRaw)){
-        // dealing with an array
-        for(var c = 0; c < campaignsRaw.length; c++){
-            campaignId = campaignsRaw[c]['@campaign_id'];
-            campaignName = campaignsRaw[c]['@campaign_name'];
-            allowLeadUpdates = campaignsRaw[c]['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-            customLabels = campaignsRaw[c]['custom_labels'];
-            labelArray = [];
-            label = "";
-
-            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-            for (var prop in customLabels) {
-                label = prop.replace(/@/, ''); // remove leading '@'
-                var obj = {};
-                obj[label] = customLabels[prop];
-                labelArray.push(obj);
-            }
-
-            campaign = {
-                allowLeadUpdates: allowLeadUpdates,
-                campaignId: campaignId,
-                campaignName: campaignName,
-                surveyId: campaignsRaw[c]['@survey_id'],
-                surveyName: campaignsRaw[c]['@survey_name'],
-                customLabels: labelArray
-            };
-            campaigns.push(campaign);
-        }
-    }else{
-        if(campaignsRaw){
-            // single campaign object
-            campaignId = campaignsRaw['@campaign_id'];
-            campaignName = campaignsRaw['@campaign_name'];
-            allowLeadUpdates = campaignsRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-            customLabels = campaignsRaw['custom_labels'];
-            labelArray = [];
-            label = "";
-
-            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-            for (var p in customLabels) {
-                label = p.replace(/@/, ''); // remove leading '@'
-                var obj = {};
-                obj[label] = customLabels[p];
-                labelArray.push(obj);
-            }
-
-            campaign = {
-                allowLeadUpdates: allowLeadUpdates,
-                campaignId: campaignId,
-                campaignName: campaignName,
-                surveyId: campaignsRaw['@survey_id'],
-                surveyName: campaignsRaw['@survey_name'],
-                customLabels: labelArray
-            };
-            campaigns.push(campaign);
-        }
+    if(!Array.isArray(campaignsRaw)) {
+        campaignsRaw = [campaignsRaw];
     }
 
-    UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
+    for(var c = 0; c < campaignsRaw.length; c++){
+        campaigns.push(_processCampaign(campaignsRaw[c]));
+    }
+
+    return campaigns;
 }
+
+
+function _processCampaign(campaignRaw) {
+    // single campaign object
+    var campaignId = campaignRaw['@campaign_id'];
+    var allowLeadUpdates = campaignRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
+    UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
+
+    var customLabels = campaignRaw['custom_labels'];
+    var labelArray = [];
+
+    for (var p in customLabels) {
+        var label = p.replace(/@/, ''); // remove leading '@'
+        var obj = {};
+        obj[label] = customLabels[p];
+
+        labelArray.push(obj);
+    }
+
+    return {
+        campaignId: campaignId,
+        campaignName: campaignRaw['@campaign_name'],
+        surveyId: campaignRaw['@survey_id'],
+        surveyName: campaignRaw['@survey_name'],
+        customLabels: labelArray,
+        allowLeadUpdates: allowLeadUpdates
+    };
+}
+
 
 /**
  * example packet
@@ -3641,6 +3610,12 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
         var lead = leads[l];
         lead.requestId = lead.requestKey;
         lead.ani = lead.destination; // add ani prop since used in new call packet & update lead
+
+        // In case of a single lead returned, the XML converter to JSON will add lead as an object and not an array
+        //
+        if (!Array.isArray(notif.destinations.lead)) {
+            notif.destinations.lead = [notif.destinations.lead];
+        }
 
         // parse extra data correctly
         try {
@@ -5555,12 +5530,17 @@ var AgentStats = function() {
 AgentStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats.agent;
     var agentStats = [];
-    if(resp && Array.isArray(resp)) {
-        for(var i = 0; i < resp.length; i++){
-            var a = {
+
+    if (!Array.isArray(resp)) {
+        resp = [resp];
+    }
+
+    try {
+        for (var i = 0; i < resp.length; i++) {
+            agentStats.push({
                 agentLoginType: resp[i]["@alt"],
                 agentType: resp[i]["@atype"],
-                avgTalkTime:resp[i]["@avgtt"],
+                avgTalkTime: resp[i]["@avgtt"],
                 calls: resp[i]["@calls"],
                 isDequeueAgent: resp[i]["@da"],
                 defaultRoute: resp[i]["@droute"],
@@ -5583,42 +5563,9 @@ AgentStats.prototype.processResponse = function(stats) {
                 uii: resp[i]["@uii"],
                 utilization: resp[i]["@util"],
                 callDuration: resp[i]["@call_duration"]
-            };
-            agentStats.push(a);
+            });
         }
-    }else {
-        try {
-            var agent = {
-                agentLoginType: resp["@alt"],
-                agentType: resp["@atype"],
-                avgTalkTime: resp["@avgtt"],
-                calls: resp["@calls"],
-                isDequeueAgent: resp["@da"],
-                defaultRoute: resp["@droute"],
-                firstName: resp["@f"],
-                queueDesc: resp["@gdesc"],
-                queueName: resp["@gname"],
-                agentId: resp["@id"],
-                lastName: resp["@l"],
-                loginDuration: resp["@ldur"],
-                loginType: resp["@ltype"],
-                offHook: resp["@oh"],
-                pendingDisp: resp["@pd"],
-                presented: resp["@pres"],
-                rna: resp["@rna"],
-                stateDuration: resp["@sdur"],
-                skillProfileName: resp["@sp"],
-                agentState: resp["@state"],
-                totalTalkTime: resp["@ttt"],
-                username: resp["@u"],
-                uii: resp["@uii"],
-                utilization: resp["@util"],
-                callDuration: resp["@call_duration"]
-            };
-            agentStats.push(agent);
-        }catch(e){
-            // do nothing for now
-        }
+    } catch(e) {
 
     }
 
@@ -5722,67 +5669,43 @@ CampaignStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var campaigns = [];
-    var campRaw = {};
-    var camp = {};
+    var campRaw = null;
 
-    if(Array.isArray(resp.campaign)){
-        for(var c=0; c< resp.campaign.length; c++){
-            campRaw = resp.campaign[c];
-            if(campRaw){
-                camp = {
-                    active:campRaw["@a"],
-                    abandon:campRaw["@aba"],
-                    answer:campRaw["@an"],
-                    available:campRaw["@av"],
-                    busy:campRaw["@b"],
-                    complete:campRaw["@c"],
-                    error:campRaw["@e"],
-                    fax:campRaw["@f"],
-                    campaignId:campRaw["@id"],
-                    intercept:campRaw["@int"],
-                    machine:campRaw["@m"],
-                    noanswer:campRaw["@na"],
-                    campaignName:campRaw["@name"],
-                    pending:campRaw["@p"],
-                    ready:campRaw["@r"],
-                    staffed:campRaw["@s"],
-                    totalConnects:campRaw["@tc"],
-                    totalTalkTime:campRaw["@ttt"]
-                };
-            }
+    if (!Array.isArray(resp.campaign)) {
+        resp.campaign = [resp.campaign];
+    }
 
-            campaigns.push(camp);
-        }
-    }else{
-        campRaw = resp.campaign;
-        if(campRaw){
-            camp = {
-                active:campRaw["@a"],
-                abandon:campRaw["@aba"],
-                answer:campRaw["@an"],
-                available:campRaw["@av"],
-                busy:campRaw["@b"],
-                complete:campRaw["@c"],
-                error:campRaw["@e"],
-                fax:campRaw["@f"],
-                campaignId:campRaw["@id"],
-                intercept:campRaw["@int"],
-                machine:campRaw["@m"],
-                noanswer:campRaw["@na"],
-                campaignName:campRaw["@name"],
-                pending:campRaw["@p"],
-                ready:campRaw["@r"],
-                staffed:campRaw["@s"],
-                totalConnects:campRaw["@tc"],
-                totalTalkTime:campRaw["@ttt"]
-            };
+    for(var c = 0; c < resp.campaign.length; c++){
+        campRaw = resp.campaign[c];
+
+        if (campRaw == null) {
+            continue;
         }
 
-        campaigns.push(camp);
+        campaigns.push({
+            active:campRaw["@a"],
+            abandon:campRaw["@aba"],
+            answer:campRaw["@an"],
+            available:campRaw["@av"],
+            busy:campRaw["@b"],
+            complete:campRaw["@c"],
+            error:campRaw["@e"],
+            fax:campRaw["@f"],
+            campaignId:campRaw["@id"],
+            intercept:campRaw["@int"],
+            machine:campRaw["@m"],
+            noanswer:campRaw["@na"],
+            campaignName:campRaw["@name"],
+            pending:campRaw["@p"],
+            ready:campRaw["@r"],
+            staffed:campRaw["@s"],
+            totalConnects:campRaw["@tc"],
+            totalTalkTime:campRaw["@ttt"]
+        });
     }
 
     var campaignStats = {
-        type:resp["@type"],
+        type: resp["@type"],
         campaigns: campaigns,
         totals:totals
     };
@@ -5924,79 +5847,46 @@ QueueStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var queues = [];
-    var gate = {};
     var gateRaw = {};
 
-    if(Array.isArray(resp.gate)){
-        for(var c=0; c< resp.gate.length; c++){
-            gateRaw = resp.gate[c];
-            if(gateRaw){
-                gate = {
-                    abandon:gateRaw["@aba"],
-                    active:gateRaw["@active"],
-                    answer:gateRaw["@ans"],
-                    asa:gateRaw["@asa"],
-                    available:gateRaw["@avail"],
-                    avgAbandon:gateRaw["@avga"],
-                    avgQueue:gateRaw["@avgq"],
-                    avgTalk:gateRaw["@avgt"],
-                    deflected:gateRaw["@def"],
-                    queueId:gateRaw["@id"],
-                    inQueue:gateRaw["@inq"],
-                    longCall:gateRaw["@long_c"],
-                    longestInQueue:gateRaw["@longq"],
-                    queueName:gateRaw["@name"],
-                    presented:gateRaw["@pres"],
-                    routing:gateRaw["@route"],
-                    shortAbandon:gateRaw["@short_aba"],
-                    shortCall:gateRaw["@short_c"],
-                    sla:gateRaw["@sla"],
-                    slaPass:gateRaw["@sla_p"],
-                    slaFail:gateRaw["@sla_f"],
-                    staffed:gateRaw["@staff"],
-                    tAbandonTime:gateRaw["@t_aba"],
-                    tQueueTime:gateRaw["@t_q"],
-                    tSpeedOfAnswer:gateRaw["@t_soa"],
-                    utilization:gateRaw["@util"]
-                };
-            }
+    if (!Array.isArray(resp.gate)) {
+        resp.gate = [resp.gate];
+    }
 
-            queues.push(gate);
-        }
-    }else{
-        gateRaw = resp.gate;
-        if(gateRaw){
-            gate = {
-                abandon:gateRaw["@aba"],
-                active:gateRaw["@active"],
-                answer:gateRaw["@ans"],
-                asa:gateRaw["@asa"],
-                available:gateRaw["@avail"],
-                avgAbandon:gateRaw["@avga"],
-                avgQueue:gateRaw["@avgq"],
-                avgTalk:gateRaw["@avgt"],
-                deflected:gateRaw["@def"],
-                queueId:gateRaw["@id"],
-                inQueue:gateRaw["@inq"],
-                longCall:gateRaw["@long_c"],
-                longestInQueue:gateRaw["@longq"],
-                queueName:gateRaw["@name"],
-                presented:gateRaw["@pres"],
-                routing:gateRaw["@route"],
-                shortAbandon:gateRaw["@short_aba"],
-                shortCall:gateRaw["@short_c"],
-                sla:gateRaw["@sla"],
-                slaPass:gateRaw["@sla_p"],
-                slaFail:gateRaw["@sla_f"],
-                staffed:gateRaw["@staff"],
-                tAbandonTime:gateRaw["@t_aba"],
-                tQueueTime:gateRaw["@t_q"],
-                tSpeedOfAnswer:gateRaw["@t_soa"],
-                utilization:gateRaw["@util"]
-            };
+    for(var c = 0; c < resp.gate.length; c++) {
+        gateRaw = resp.gate[c];
+        if (gateRaw == null) {
+            continue;
         }
 
-        queues.push(gate);
+        queues.push({
+            abandon: gateRaw["@aba"],
+            active: gateRaw["@active"],
+            answer: gateRaw["@ans"],
+            asa: gateRaw["@asa"],
+            available: gateRaw["@avail"],
+            avgAbandon: gateRaw["@avga"],
+            avgQueue: gateRaw["@avgq"],
+            avgTalk: gateRaw["@avgt"],
+            deflected: gateRaw["@def"],
+            queueId: gateRaw["@id"],
+            inQueue: gateRaw["@inq"],
+            longCall: gateRaw["@long_c"],
+            longestInQueue: gateRaw["@longq"],
+            queueName: gateRaw["@name"],
+            presented: gateRaw["@pres"],
+            routing: gateRaw["@route"],
+            shortAbandon: gateRaw["@short_aba"],
+            shortCall: gateRaw["@short_c"],
+            sla: gateRaw["@sla"],
+            slaPass: gateRaw["@sla_p"],
+            slaFail: gateRaw["@sla_f"],
+            staffed: gateRaw["@staff"],
+            tAbandonTime: gateRaw["@t_aba"],
+            tQueueTime: gateRaw["@t_q"],
+            tSpeedOfAnswer: gateRaw["@t_soa"],
+            utilization: gateRaw["@util"]
+        });
     }
 
     var queueStats = {

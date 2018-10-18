@@ -276,6 +276,8 @@ function _processCampaigns(response){
     for(var c = 0; c < campaignsRaw.length; c++){
         campaigns.push(_processCampaign(campaignsRaw[c]));
     }
+
+    return campaigns;
 }
 
 
