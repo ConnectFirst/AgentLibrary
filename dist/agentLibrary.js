@@ -3100,12 +3100,14 @@ function _processCampaigns(response){
         campaignsRaw = response.ui_response.campaigns.campaign;
     }
 
-    if(!Array.isArray(campaignsRaw)) {
-        campaignsRaw = [campaignsRaw];
-    }
+    if(campaignsRaw){
+        if(!Array.isArray(campaignsRaw)) {
+            campaignsRaw = [campaignsRaw];
+        }
 
-    for(var c = 0; c < campaignsRaw.length; c++){
-        campaigns.push(_processCampaign(campaignsRaw[c]));
+        for(var c = 0; c < campaignsRaw.length; c++){
+            campaigns.push(_processCampaign(campaignsRaw[c]));
+        }
     }
 
     return campaigns;
