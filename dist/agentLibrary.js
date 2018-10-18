@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-10-10 */
+/*! cf-agent-library - v2.1.10 - 2018-10-18 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -5076,22 +5076,15 @@ StopMonitorChatRequest.prototype.formatJSON = function() {
  *      "@message_id":"IQ10012016080217135001344",
  *      "@response_to":"",
  *      "@type":"CHAT-DROP-MONITORING-SESSION",
- *      "monitored_agent_id":{"#text":"1"},
- *      "account_id":{"#text":"99999999"},
- *      "uii":{"#text":""}
+ *      "monitored_agent_id":{"#text":"1"}
  *    }
  * }
  */
 StopMonitorChatRequest.prototype.processResponse = function(data) {
     var notif = data.ui_notification;
 
-    var formattedResponse = {
-        monitoredAgentId : utils.getText(notif, "monitored_agent_id"),
-        accountId : utils.getText(notif, "account_id"),
-        uii : utils.getText(notif, "uii")
-    };
+    return ({ monitoredAgentId : utils.getText(notif, "monitored_agent_id") });
 
-    return formattedResponse;
 };
 
 
