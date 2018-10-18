@@ -26,7 +26,7 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v2.1.10 - 2018-09-27 */
+            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v2.1.10 - 2018-10-18 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1364,14 +1364,17 @@ CallbacksPendingRequest.prototype.formatJSON = function() {
 CallbacksPendingRequest.prototype.processResponse = function(response) {
     var leadsRaw = response.ui_response.lead;
     var leads = [];
-    if(Array.isArray(leadsRaw)){
-        for(var l = 0; l &lt; leadsRaw.length; l++){
-            var leadRaw = leadsRaw[l];
-            var lead = parseLead(leadRaw);
-            leads.push(lead);
+    if(!Array.isArray(leadsRaw)) {
+        leadsRaw = [leadsRaw];
+    }
+
+    for(var l = 0; l &lt; leadsRaw.length; l++){
+        var leadRaw = leadsRaw[l];
+        if (leadRaw == null) {
+            continue;
         }
-    }else if(leadsRaw){
-        leads.push(parseLead(leadsRaw));
+
+        leads.push(parseLead(leadRaw));
     }
 
     UIModel.getInstance().agentSettings.pendingCallbacks = JSON.parse(JSON.stringify(leads));
@@ -1852,10 +1855,15 @@ ConfigRequest.prototype.processResponse = function(response) {
                         var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
                         Lib.offhookTerm(agentProcessOffhookCallback);
                     }
-                }else{
-                    //reset pending disp if disp lost.
-                    model.currentCall.pendingDisp = model.connectionSettings.isPendingDisp;
+                }else if(model.connectionSettings.isOnCall &amp;&amp; (model.currentCall.uii !== model.connectionSettings.activeCallUii || Lib.waitingForAddSession === true)){
+                    //if the agent does not know it is on a call, but IQ thinks it is on a call
+                    //normally in the case of disconnect during transition
 
+                    model.currentCall.uii = model.connectionSettings.activeCallUii;
+                    model.currentCall.pendingDisp = false;
+                    Lib.hangup(1, true);
+                    
+                }else{
                     //agent still is on call and there are transferSessions, verify no transferSession were drop
                     var activeAgentUiSessions = Lib.getTransferSessions();
                     var activeAgentSessions = response.ui_response.active_call_sessions.call_session_id.map(function(sessionObj){
@@ -1930,17 +1938,15 @@ function setGateSettings(response){
     var gates = model.inboundSettings.availableQueues;
     var selectedGateIds = [];
     var selectedGates = [];
-    var gateIds = response.ui_response.gates.gate_id;
+    var gateIds = response.ui_response.gates.gate_id || [];
 
-    if(gateIds){
-        if(Array.isArray(gateIds)){ // multiple gates assigned
-            for(var s = 0; s &lt; gateIds.length; s++){
-                var obj = gateIds[s];
-                selectedGateIds.push(obj["#text"]);
-            }
-        }else{ // single gate assigned
-            selectedGateIds.push(gateIds["#text"]);
-        }
+    if (!Array.isArray(gateIds)) {
+        gateIds = [gateIds];
+    }
+
+    for(var s = 0; s &lt; gateIds.length; s++){
+        var obj = gateIds[s];
+        selectedGateIds.push(obj["#text"]);
     }
 
     for(var gIdx = 0; gIdx &lt; gates.length; gIdx++){
@@ -1959,18 +1965,15 @@ function setChatQueueSettings(response){
     var selectedChatQueueIds = [];
     var selectedChatQueues = [];
     var cQueues = response.ui_response.chat_queues || {};
-    var chatQueueIds = cQueues.chat_queue_id;
+    var chatQueueIds = cQueues.chat_queue_id || [];
 
-    if(chatQueueIds){
-        if(Array.isArray(chatQueueIds)){ // multiple chatQueues assigned
-            for(var c = 0; c &lt; chatQueueIds.length; c++){
-                var obj = chatQueueIds[c];
-                selectedChatQueueIds.push(obj["#text"]);
-            }
-        }else{ // single chat queue assigned
-            selectedChatQueueIds.push(chatQueueIds["#text"]);
-        }
+    if (!Array.isArray(chatQueueIds)) {
+        chatQueueIds = [chatQueueIds];
+    }
 
+    for(var c = 0; c &lt; chatQueueIds.length; c++){
+        var obj = chatQueueIds[c];
+        selectedChatQueueIds.push(obj["#text"]);
     }
 
     for(var cIdx = 0; cIdx &lt; chatQueues.length; cIdx++){
@@ -2336,8 +2339,9 @@ DispositionManualPassRequest.prototype.formatJSON = function() {
 };
 
 
-var HangupRequest = function(sessionId) {
+var HangupRequest = function(sessionId, resetPendingDisp) {
     this.sessionId = sessionId || null;
+    this.resetPendingDisp = resetPendingDisp || false;
 };
 
 HangupRequest.prototype.formatJSON = function() {
@@ -2355,6 +2359,9 @@ HangupRequest.prototype.formatJSON = function() {
             },
             "session_id":{
                 "#text":utils.toString(this.sessionId === null ? UIModel.getInstance().currentCall.sessionId : this.sessionId)
+            },
+            "cancel_pending_disp" : {
+                "#text" : this.resetPendingDisp === true ? "TRUE" : "FALSE"
             }
         }
     };
@@ -3048,7 +3055,7 @@ LoginRequest.prototype.processResponse = function(response) {
             }
 
             // Set collection values
-            processCampaigns(response);
+            model.outboundSettings.availableCampaigns = _processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
             processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
@@ -3097,83 +3104,54 @@ LoginRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-function processCampaigns(response){
+
+function _processCampaigns(response){
     var campaigns = [];
-    var campaign = {};
-    var campaignsRaw = [];
-    var customLabels = [];
-    var labelArray = [];
-    var label = "";
-    var campaignId = 0;
-    var campaignName = "";
-    var allowLeadUpdates = 0;
+    var campaignsRaw = null;
 
     if(typeof response.ui_response.campaigns.campaign !== 'undefined'){
         campaignsRaw = response.ui_response.campaigns.campaign;
     }
 
-    if(Array.isArray(campaignsRaw)){
-        // dealing with an array
-        for(var c = 0; c &lt; campaignsRaw.length; c++){
-            campaignId = campaignsRaw[c]['@campaign_id'];
-            campaignName = campaignsRaw[c]['@campaign_name'];
-            allowLeadUpdates = campaignsRaw[c]['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-            customLabels = campaignsRaw[c]['custom_labels'];
-            labelArray = [];
-            label = "";
-
-            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-            for (var prop in customLabels) {
-                label = prop.replace(/@/, ''); // remove leading '@'
-                var obj = {};
-                obj[label] = customLabels[prop];
-                labelArray.push(obj);
-            }
-
-            campaign = {
-                allowLeadUpdates: allowLeadUpdates,
-                campaignId: campaignId,
-                campaignName: campaignName,
-                surveyId: campaignsRaw[c]['@survey_id'],
-                surveyName: campaignsRaw[c]['@survey_name'],
-                customLabels: labelArray
-            };
-            campaigns.push(campaign);
-        }
-    }else{
-        if(campaignsRaw){
-            // single campaign object
-            campaignId = campaignsRaw['@campaign_id'];
-            campaignName = campaignsRaw['@campaign_name'];
-            allowLeadUpdates = campaignsRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-            customLabels = campaignsRaw['custom_labels'];
-            labelArray = [];
-            label = "";
-
-            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-            for (var p in customLabels) {
-                label = p.replace(/@/, ''); // remove leading '@'
-                var obj = {};
-                obj[label] = customLabels[p];
-                labelArray.push(obj);
-            }
-
-            campaign = {
-                allowLeadUpdates: allowLeadUpdates,
-                campaignId: campaignId,
-                campaignName: campaignName,
-                surveyId: campaignsRaw['@survey_id'],
-                surveyName: campaignsRaw['@survey_name'],
-                customLabels: labelArray
-            };
-            campaigns.push(campaign);
-        }
+    if(!Array.isArray(campaignsRaw)) {
+        campaignsRaw = [campaignsRaw];
     }
 
-    UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
+    for(var c = 0; c &lt; campaignsRaw.length; c++){
+        campaigns.push(_processCampaign(campaignsRaw[c]));
+    }
+
+    return campaigns;
 }
+
+
+function _processCampaign(campaignRaw) {
+    // single campaign object
+    var campaignId = campaignRaw['@campaign_id'];
+    var allowLeadUpdates = campaignRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
+    UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
+
+    var customLabels = campaignRaw['custom_labels'];
+    var labelArray = [];
+
+    for (var p in customLabels) {
+        var label = p.replace(/@/, ''); // remove leading '@'
+        var obj = {};
+        obj[label] = customLabels[p];
+
+        labelArray.push(obj);
+    }
+
+    return {
+        campaignId: campaignId,
+        campaignName: campaignRaw['@campaign_name'],
+        surveyId: campaignRaw['@survey_id'],
+        surveyName: campaignRaw['@survey_name'],
+        customLabels: labelArray,
+        allowLeadUpdates: allowLeadUpdates
+    };
+}
+
 
 /**
  * example packet
@@ -3660,6 +3638,12 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
         var lead = leads[l];
         lead.requestId = lead.requestKey;
         lead.ani = lead.destination; // add ani prop since used in new call packet &amp; update lead
+
+        // In case of a single lead returned, the XML converter to JSON will add lead as an object and not an array
+        //
+        if (!Array.isArray(notif.destinations.lead)) {
+            notif.destinations.lead = [notif.destinations.lead];
+        }
 
         // parse extra data correctly
         try {
@@ -5574,12 +5558,17 @@ var AgentStats = function() {
 AgentStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats.agent;
     var agentStats = [];
-    if(resp &amp;&amp; Array.isArray(resp)) {
-        for(var i = 0; i &lt; resp.length; i++){
-            var a = {
+
+    if (!Array.isArray(resp)) {
+        resp = [resp];
+    }
+
+    try {
+        for (var i = 0; i &lt; resp.length; i++) {
+            agentStats.push({
                 agentLoginType: resp[i]["@alt"],
                 agentType: resp[i]["@atype"],
-                avgTalkTime:resp[i]["@avgtt"],
+                avgTalkTime: resp[i]["@avgtt"],
                 calls: resp[i]["@calls"],
                 isDequeueAgent: resp[i]["@da"],
                 defaultRoute: resp[i]["@droute"],
@@ -5602,42 +5591,9 @@ AgentStats.prototype.processResponse = function(stats) {
                 uii: resp[i]["@uii"],
                 utilization: resp[i]["@util"],
                 callDuration: resp[i]["@call_duration"]
-            };
-            agentStats.push(a);
+            });
         }
-    }else {
-        try {
-            var agent = {
-                agentLoginType: resp["@alt"],
-                agentType: resp["@atype"],
-                avgTalkTime: resp["@avgtt"],
-                calls: resp["@calls"],
-                isDequeueAgent: resp["@da"],
-                defaultRoute: resp["@droute"],
-                firstName: resp["@f"],
-                queueDesc: resp["@gdesc"],
-                queueName: resp["@gname"],
-                agentId: resp["@id"],
-                lastName: resp["@l"],
-                loginDuration: resp["@ldur"],
-                loginType: resp["@ltype"],
-                offHook: resp["@oh"],
-                pendingDisp: resp["@pd"],
-                presented: resp["@pres"],
-                rna: resp["@rna"],
-                stateDuration: resp["@sdur"],
-                skillProfileName: resp["@sp"],
-                agentState: resp["@state"],
-                totalTalkTime: resp["@ttt"],
-                username: resp["@u"],
-                uii: resp["@uii"],
-                utilization: resp["@util"],
-                callDuration: resp["@call_duration"]
-            };
-            agentStats.push(agent);
-        }catch(e){
-            // do nothing for now
-        }
+    } catch(e) {
 
     }
 
@@ -5741,67 +5697,43 @@ CampaignStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var campaigns = [];
-    var campRaw = {};
-    var camp = {};
+    var campRaw = null;
 
-    if(Array.isArray(resp.campaign)){
-        for(var c=0; c&lt; resp.campaign.length; c++){
-            campRaw = resp.campaign[c];
-            if(campRaw){
-                camp = {
-                    active:campRaw["@a"],
-                    abandon:campRaw["@aba"],
-                    answer:campRaw["@an"],
-                    available:campRaw["@av"],
-                    busy:campRaw["@b"],
-                    complete:campRaw["@c"],
-                    error:campRaw["@e"],
-                    fax:campRaw["@f"],
-                    campaignId:campRaw["@id"],
-                    intercept:campRaw["@int"],
-                    machine:campRaw["@m"],
-                    noanswer:campRaw["@na"],
-                    campaignName:campRaw["@name"],
-                    pending:campRaw["@p"],
-                    ready:campRaw["@r"],
-                    staffed:campRaw["@s"],
-                    totalConnects:campRaw["@tc"],
-                    totalTalkTime:campRaw["@ttt"]
-                };
-            }
+    if (!Array.isArray(resp.campaign)) {
+        resp.campaign = [resp.campaign];
+    }
 
-            campaigns.push(camp);
-        }
-    }else{
-        campRaw = resp.campaign;
-        if(campRaw){
-            camp = {
-                active:campRaw["@a"],
-                abandon:campRaw["@aba"],
-                answer:campRaw["@an"],
-                available:campRaw["@av"],
-                busy:campRaw["@b"],
-                complete:campRaw["@c"],
-                error:campRaw["@e"],
-                fax:campRaw["@f"],
-                campaignId:campRaw["@id"],
-                intercept:campRaw["@int"],
-                machine:campRaw["@m"],
-                noanswer:campRaw["@na"],
-                campaignName:campRaw["@name"],
-                pending:campRaw["@p"],
-                ready:campRaw["@r"],
-                staffed:campRaw["@s"],
-                totalConnects:campRaw["@tc"],
-                totalTalkTime:campRaw["@ttt"]
-            };
+    for(var c = 0; c &lt; resp.campaign.length; c++){
+        campRaw = resp.campaign[c];
+
+        if (campRaw == null) {
+            continue;
         }
 
-        campaigns.push(camp);
+        campaigns.push({
+            active:campRaw["@a"],
+            abandon:campRaw["@aba"],
+            answer:campRaw["@an"],
+            available:campRaw["@av"],
+            busy:campRaw["@b"],
+            complete:campRaw["@c"],
+            error:campRaw["@e"],
+            fax:campRaw["@f"],
+            campaignId:campRaw["@id"],
+            intercept:campRaw["@int"],
+            machine:campRaw["@m"],
+            noanswer:campRaw["@na"],
+            campaignName:campRaw["@name"],
+            pending:campRaw["@p"],
+            ready:campRaw["@r"],
+            staffed:campRaw["@s"],
+            totalConnects:campRaw["@tc"],
+            totalTalkTime:campRaw["@ttt"]
+        });
     }
 
     var campaignStats = {
-        type:resp["@type"],
+        type: resp["@type"],
         campaigns: campaigns,
         totals:totals
     };
@@ -5943,79 +5875,46 @@ QueueStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var queues = [];
-    var gate = {};
     var gateRaw = {};
 
-    if(Array.isArray(resp.gate)){
-        for(var c=0; c&lt; resp.gate.length; c++){
-            gateRaw = resp.gate[c];
-            if(gateRaw){
-                gate = {
-                    abandon:gateRaw["@aba"],
-                    active:gateRaw["@active"],
-                    answer:gateRaw["@ans"],
-                    asa:gateRaw["@asa"],
-                    available:gateRaw["@avail"],
-                    avgAbandon:gateRaw["@avga"],
-                    avgQueue:gateRaw["@avgq"],
-                    avgTalk:gateRaw["@avgt"],
-                    deflected:gateRaw["@def"],
-                    queueId:gateRaw["@id"],
-                    inQueue:gateRaw["@inq"],
-                    longCall:gateRaw["@long_c"],
-                    longestInQueue:gateRaw["@longq"],
-                    queueName:gateRaw["@name"],
-                    presented:gateRaw["@pres"],
-                    routing:gateRaw["@route"],
-                    shortAbandon:gateRaw["@short_aba"],
-                    shortCall:gateRaw["@short_c"],
-                    sla:gateRaw["@sla"],
-                    slaPass:gateRaw["@sla_p"],
-                    slaFail:gateRaw["@sla_f"],
-                    staffed:gateRaw["@staff"],
-                    tAbandonTime:gateRaw["@t_aba"],
-                    tQueueTime:gateRaw["@t_q"],
-                    tSpeedOfAnswer:gateRaw["@t_soa"],
-                    utilization:gateRaw["@util"]
-                };
-            }
+    if (!Array.isArray(resp.gate)) {
+        resp.gate = [resp.gate];
+    }
 
-            queues.push(gate);
-        }
-    }else{
-        gateRaw = resp.gate;
-        if(gateRaw){
-            gate = {
-                abandon:gateRaw["@aba"],
-                active:gateRaw["@active"],
-                answer:gateRaw["@ans"],
-                asa:gateRaw["@asa"],
-                available:gateRaw["@avail"],
-                avgAbandon:gateRaw["@avga"],
-                avgQueue:gateRaw["@avgq"],
-                avgTalk:gateRaw["@avgt"],
-                deflected:gateRaw["@def"],
-                queueId:gateRaw["@id"],
-                inQueue:gateRaw["@inq"],
-                longCall:gateRaw["@long_c"],
-                longestInQueue:gateRaw["@longq"],
-                queueName:gateRaw["@name"],
-                presented:gateRaw["@pres"],
-                routing:gateRaw["@route"],
-                shortAbandon:gateRaw["@short_aba"],
-                shortCall:gateRaw["@short_c"],
-                sla:gateRaw["@sla"],
-                slaPass:gateRaw["@sla_p"],
-                slaFail:gateRaw["@sla_f"],
-                staffed:gateRaw["@staff"],
-                tAbandonTime:gateRaw["@t_aba"],
-                tQueueTime:gateRaw["@t_q"],
-                tSpeedOfAnswer:gateRaw["@t_soa"],
-                utilization:gateRaw["@util"]
-            };
+    for(var c = 0; c &lt; resp.gate.length; c++) {
+        gateRaw = resp.gate[c];
+        if (gateRaw == null) {
+            continue;
         }
 
-        queues.push(gate);
+        queues.push({
+            abandon: gateRaw["@aba"],
+            active: gateRaw["@active"],
+            answer: gateRaw["@ans"],
+            asa: gateRaw["@asa"],
+            available: gateRaw["@avail"],
+            avgAbandon: gateRaw["@avga"],
+            avgQueue: gateRaw["@avgq"],
+            avgTalk: gateRaw["@avgt"],
+            deflected: gateRaw["@def"],
+            queueId: gateRaw["@id"],
+            inQueue: gateRaw["@inq"],
+            longCall: gateRaw["@long_c"],
+            longestInQueue: gateRaw["@longq"],
+            queueName: gateRaw["@name"],
+            presented: gateRaw["@pres"],
+            routing: gateRaw["@route"],
+            shortAbandon: gateRaw["@short_aba"],
+            shortCall: gateRaw["@short_c"],
+            sla: gateRaw["@sla"],
+            slaPass: gateRaw["@sla_p"],
+            slaFail: gateRaw["@sla_f"],
+            staffed: gateRaw["@staff"],
+            tAbandonTime: gateRaw["@t_aba"],
+            tQueueTime: gateRaw["@t_q"],
+            tSpeedOfAnswer: gateRaw["@t_soa"],
+            utilization: gateRaw["@util"]
+        });
     }
 
     var queueStats = {
@@ -6054,6 +5953,7 @@ var UIModel = (function() {
             pingIntervalId: null,                   // The id of the timer used to send ping-call messages
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
+            waitingForAddSession : null,
 
             // internal chat requests
             chatAliasRequest : null,
@@ -8194,6 +8094,10 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype.getTransferSessions = function() {
         return UIModel.getInstance().transferSessions;
     };
+
+    AgentLibrary.prototype.getPendingSessions = function() {
+        return UIModel.getInstance().pendingNewCallSessions;
+    };
     /**
      * Get the Agent Permissions object containing the current state of agent permissions
      * @memberof AgentLibrary.Core.Settings
@@ -8696,9 +8600,10 @@ function initAgentLibraryCall (context) {
      * Sends a hangup request message
      * @memberof AgentLibrary.Call
      * @param {string} [sessionId=""] Session to hangup, defaults to current call session id
+     * @param {boolean} resetPendingDisp, reset pendingDisp to false, in case of bad reconnect
      */
-    AgentLibrary.prototype.hangup = function(sessionId){
-        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId);
+    AgentLibrary.prototype.hangup = function(sessionId, resetPendingDisp){
+        UIModel.getInstance().hangupRequest = new HangupRequest(sessionId, resetPendingDisp);
         var msg = UIModel.getInstance().hangupRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
@@ -9843,7 +9748,7 @@ if (typeof define === 'function' &amp;&amp; define.amd) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Sep 27 2018 10:27:11 GMT-0600 (Mountain Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Oct 18 2018 11:13:16 GMT-0600 (MDT)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -315,17 +315,15 @@ function setGateSettings(response){
     var gates = model.inboundSettings.availableQueues;
     var selectedGateIds = [];
     var selectedGates = [];
-    var gateIds = response.ui_response.gates.gate_id;
+    var gateIds = response.ui_response.gates.gate_id || [];
 
-    if(gateIds){
-        if(Array.isArray(gateIds)){ // multiple gates assigned
-            for(var s = 0; s < gateIds.length; s++){
-                var obj = gateIds[s];
-                selectedGateIds.push(obj["#text"]);
-            }
-        }else{ // single gate assigned
-            selectedGateIds.push(gateIds["#text"]);
-        }
+    if (!Array.isArray(gateIds)) {
+        gateIds = [gateIds];
+    }
+
+    for(var s = 0; s < gateIds.length; s++){
+        var obj = gateIds[s];
+        selectedGateIds.push(obj["#text"]);
     }
 
     for(var gIdx = 0; gIdx < gates.length; gIdx++){
@@ -344,18 +342,15 @@ function setChatQueueSettings(response){
     var selectedChatQueueIds = [];
     var selectedChatQueues = [];
     var cQueues = response.ui_response.chat_queues || {};
-    var chatQueueIds = cQueues.chat_queue_id;
+    var chatQueueIds = cQueues.chat_queue_id || [];
 
-    if(chatQueueIds){
-        if(Array.isArray(chatQueueIds)){ // multiple chatQueues assigned
-            for(var c = 0; c < chatQueueIds.length; c++){
-                var obj = chatQueueIds[c];
-                selectedChatQueueIds.push(obj["#text"]);
-            }
-        }else{ // single chat queue assigned
-            selectedChatQueueIds.push(chatQueueIds["#text"]);
-        }
+    if (!Array.isArray(chatQueueIds)) {
+        chatQueueIds = [chatQueueIds];
+    }
 
+    for(var c = 0; c < chatQueueIds.length; c++){
+        var obj = chatQueueIds[c];
+        selectedChatQueueIds.push(obj["#text"]);
     }
 
     for(var cIdx = 0; cIdx < chatQueues.length; cIdx++){
