@@ -19,6 +19,7 @@ var ChatTypingNotification = function() {
  *          "account_id":{"#text":"99999999"},
  *          "from":{"#text":""},
  *          "message":{"#text":"this is the message before actual send"}
+ *          "dequeue_agent_id":{"#text":"123"}
  *      }
  *  }
  */
@@ -32,7 +33,8 @@ ChatTypingNotification.prototype.processResponse = function(notification) {
         uii: utils.getText(notif, "uii"),
         from: utils.getText(notif, "from"),
         type: utils.getText(notif, "type"),
-        pendingMessage: utils.getText(notif, "message")
+        pendingMessage: utils.getText(notif, "message"),
+        dequeueAgentId: utils.getText(notif, "dequeue_agent_id")
     };
 
 };

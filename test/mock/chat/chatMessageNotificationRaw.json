@@ -10,6 +10,7 @@
         "type":{"#text":"AGENT"},
         "message":{"#text":"Hello. How can I help you?"},
         "whisper":{"#text":"TRUE"},
+        "dequeue_agent_id":{"#text":"1"},
         "dts":{"#text":"2017-05-10 12:40:28"},
         "media_links": {
             "link": {

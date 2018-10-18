@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-10-11 */
+/*! cf-agent-library - v2.1.10 - 2018-10-18 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -3222,6 +3222,7 @@ LogoutRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+
 var OffhookInitRequest = function() {
 
 };
@@ -4525,7 +4526,9 @@ ChatMessageRequest.prototype.formatJSON = function() {
  *      "account_id":{"#text":""},
  *      "from":{"#text":""},
  *      "message":{"#text":"hello"},
- *      "dts":{"#text":"2017-05-10 12:40:28"}
+ *      "dts":{"#text":"2017-05-10 12:40:28"},
+ *      "dequeue_agent_id":{"#text":"123"},
+ *      "whisper":{"#text":'TRUE'|'FALSE'"}
  *    }
  * }
  */
@@ -4541,6 +4544,7 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
         whisper: utils.getText(resp, 'whisper'),
+        dequeueAgentId: utils.getText(resp, 'dequeue_agent_id'),
         dts: dtsDate,
         mediaLinks :  utils.processResponseCollection(resp, "media_links", "link")
     };
@@ -4981,9 +4985,7 @@ ChatManualSmsRequest.prototype.formatJSON = function() {
 
 
 
-var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
-    this.uii = uii;
-    this.agentId = agentId;
+var MonitorChatRequest = function(monitorAgentId) {
     this.monitorAgentId = monitorAgentId;
 };
 
@@ -4996,7 +4998,6 @@ var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
  *      "@type":"CHAT-MONITOR",
  *      "@message_id":"",
  *      "@response_to":"",
- *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
  *      "monitor_agent_id":{"#text":""}
  *    }
@@ -5009,9 +5010,6 @@ MonitorChatRequest.prototype.formatJSON = function() {
             "@type":MESSAGE_TYPES.MONITOR_CHAT,
             "@message_id":utils.getMessageId(),
             "@response_to":"",
-            "uii":{
-                "#text":utils.toString(this.uii)
-            },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
             },
@@ -5022,6 +5020,63 @@ MonitorChatRequest.prototype.formatJSON = function() {
     };
 
     return JSON.stringify(msg);
+};
+
+
+
+var StopMonitorChatRequest = function(monitorAgentId) {
+    this.monitorAgentId = monitorAgentId || "";
+};
+
+/*
+ * External Chat:
+ * Requests a termination of a chat monitor session for an agent
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-DROP-MONITORING-SESSION",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "agent_id":{"#text":""},
+ *      "monitor_agent_id":{"#text":""}
+ *    }
+ * }
+ */
+StopMonitorChatRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.STOP_MONITOR_CHAT,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "monitor_agent_id":{
+                "#text":utils.toString(this.monitorAgentId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * Process a CHAT-DROP-MONITORING-SESSION notification. Used to notify supervisor monitors that agent has logged out.
+ *
+ * {"ui_notification":{
+ *      "@message_id":"IQ10012016080217135001344",
+ *      "@response_to":"",
+ *      "@type":"CHAT-DROP-MONITORING-SESSION",
+ *      "monitored_agent_id":{"#text":"1"}
+ *    }
+ * }
+ */
+StopMonitorChatRequest.prototype.processResponse = function(data) {
+    var notif = data.ui_notification;
+
+    return ({ monitoredAgentId : utils.getText(notif, "monitored_agent_id") });
+
 };
 
 
@@ -5130,6 +5185,42 @@ ChatClientReconnectNotification.prototype.processResponse = function(notificatio
 
 };
 
+var AddChatSessionNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling "ADD-CHAT-SESSION" packets from IntelliQueue.
+ *
+ * {
+ *   "ui_notification": {
+ *       "@message_id": "IQ982008082918151403727",
+ *       "@response_to": "",
+ *       "@type": "ADD-CHAT-SESSION",
+ *       "session_id": { "#text": "2" },
+ *       "uii": { "#text": "200808291814560000000900016558" },
+ *       "session_type": { "#text": "AGENT|MONITORING" },
+ *       "agent_id": { "#text": "1856" } // null unless monitor type,
+ *       "transcript": { }
+ *   }
+ *  }
+ */
+AddChatSessionNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+    var formattedResponse = utils.buildDefaultResponse(notification);
+
+    formattedResponse.status = "OK";
+    formattedResponse.message = "Received ADD-CHAT-SESSION notification";
+    formattedResponse.sessionId = utils.getText(notif, "session_id");
+    formattedResponse.uii = utils.getText(notif, "uii");
+    formattedResponse.sessionType = utils.getText(notif, "session_type");
+    formattedResponse.agentId = utils.getText(notif, "agent_id");
+    formattedResponse.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript')[0];
+
+    return formattedResponse;
+};
+
+
 var ChatActiveNotification = function() {
 
 };
@@ -5146,7 +5237,8 @@ var ChatActiveNotification = function() {
  *          "@destination":"IQ",
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
- *          "uii":{"#text":"201608161200240139000000000120"}
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "is_monitoring":{"#text":"TRUE"|"FALSE"}
  *      }
  *  }
  */
@@ -5157,7 +5249,8 @@ ChatActiveNotification.prototype.processResponse = function(notification) {
         message: "Received CHAT-ACTIVE notification",
         status: "OK",
         accountId: utils.getText(notif, "account_id"),
-        uii: utils.getText(notif, "uii")
+        uii: utils.getText(notif, "uii"),
+        isMonitoring: utils.getText(notif, "is_monitoring")
     };
 
 };
@@ -5215,7 +5308,8 @@ var ChatInactiveNotification = function() {
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "disposition_timeout":{"#text":"30"}
+ *          "disposition_timeout":{"#text":"30"},
+ *          "dequeue_agent_id":{"#text":"123"}
  *      }
  *  }
  */
@@ -5227,7 +5321,8 @@ ChatInactiveNotification.prototype.processResponse = function(notification) {
         status: "OK",
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
-        dispositionTimeout: utils.getText(notif, "disposition_timeout")
+        dispositionTimeout: utils.getText(notif, "disposition_timeout"),
+        dequeueAgentId: utils.getText(notif, "dequeue_agent_id")
     };
 
 };
@@ -5296,6 +5391,7 @@ var ChatTypingNotification = function() {
  *          "account_id":{"#text":"99999999"},
  *          "from":{"#text":""},
  *          "message":{"#text":"this is the message before actual send"}
+ *          "dequeue_agent_id":{"#text":"123"}
  *      }
  *  }
  */
@@ -5309,7 +5405,8 @@ ChatTypingNotification.prototype.processResponse = function(notification) {
         uii: utils.getText(notif, "uii"),
         from: utils.getText(notif, "from"),
         type: utils.getText(notif, "type"),
-        pendingMessage: utils.getText(notif, "message")
+        pendingMessage: utils.getText(notif, "message"),
+        dequeueAgentId: utils.getText(notif, "dequeue_agent_id")
     };
 
 };
@@ -5346,6 +5443,8 @@ var NewChatNotification = function() {
  *          "script_id":{"#text":""},
  *          "script_version":{"#text":""},
  *          "idle_timeout":{"#text":""},
+ *          "is_monitoring":{#text":"TRUE"|"FALSE"},
+ *          "monitored_agent_id":{"#text":"123"| ""} <-- only populated if is_monitoring == TRUE
  *          "requeue_shortcuts":{
  *              "requeue_shortcut":{
  *                  "@chat_queue_id":"2",
@@ -5366,9 +5465,9 @@ var NewChatNotification = function() {
  *          }
  *          "transcript":{
  *              "message":[
- *                  { "@from":"system", "@type":"SYSTEM", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
- *                  { "@from":"dlbooks", "@type":"AGENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
- *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
+ *                  { "@from":"system", "@type":"SYSTEM", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
+ *                  { "@from":"dlbooks", "@type":"AGENT", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
+ *                  { "@from":"user1", "@type":"CLIENT", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
  *          "json_baggage":{"#text":"json_string_form_data"}, <--- pre-form chat data
@@ -5400,6 +5499,8 @@ NewChatNotification.prototype.processResponse = function(notification) {
         scriptId: utils.getText(notif,'script_id'),
         scriptVersion: utils.getText(notif,'script_version'),
         idleTimeout: utils.getText(notif,'idle_timeout'),
+        isMonitoring: utils.getText(notif,'is_monitoring'),
+        monitoredAgentId: utils.getText(notif,'monitored_agent_id'),
         preChatData: utils.getText(notif,'json_baggage')
     };
 
@@ -6671,6 +6772,16 @@ var utils = {
                 var chatCancelledResponse = chatCancelled.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_ADD_SESSION:
+                var addChatSession = new AddChatSessionNotification();
+                var addChatSessionResponse = addChatSession.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ADD_SESSION, addChatSessionResponse);
+                break;
+            case MESSAGE_TYPES.STOP_MONITOR_CHAT:
+                var stopChatMonitor = new StopMonitorChatRequest();
+                var stopChatMonitorResponse = stopChatMonitor.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STOP_MONITOR, stopChatMonitorResponse);
+                break;
             case MESSAGE_TYPES.DIRECT_AGENT_ROUTE:
                 var directAgentTransfer = new DirectAgentTransferNotification();
                 var directAgentTransferResponse = directAgentTransfer.processResponse(data);
@@ -6886,125 +6997,130 @@ var utils = {
      *   }
      */
 
-    processResponseCollection: function(response, groupProp, itemProp, textName) {
-        var items = [];
-        var item = {};
-        var itemsRaw = [];
-        var textName = textName || "text";
+    processResponseCollection: function (response, groupProp, itemProp, textName) {
+        textName = textName || "text";
 
-        if(response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined'){
-            itemsRaw = response[groupProp][itemProp];
+        if (response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined') {
+            var itemsRaw = response[groupProp][itemProp];
+            return this._processItems(itemsRaw, textName);
+        } else {
+            return [];
         }
-
-        if(Array.isArray(itemsRaw)) {
-            // multiple items
-            for (var i = 0; i < itemsRaw.length; i++) {
-                var formattedKey = "";
-                for(var key in itemsRaw[i]){
-                    if(key.match(/^#/)){
-                        // dealing with text property
-                        formattedKey = textName;
-                    }else{
-                        // dealing with attribute
-                        formattedKey = key.replace(/@/, ''); // remove leading '@'
-                        formattedKey = formattedKey.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); }); // convert to camelCase
-                    }
-
-                    if(typeof itemsRaw[i][key] === "object"){
-                        if(Object.keys(itemsRaw[i][key]).length === 1 && itemsRaw[i][key]['#text']) {
-                            // only one property - #text attribute
-                            item[formattedKey] = itemsRaw[i][key]['#text'];
-                        }else if(Object.keys(itemsRaw[i][key]).length === 0){
-                            // dealing with empty property
-                            item[formattedKey] = "";
-                        }else {
-                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1) {
-                                //console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
-                                var newIt = [];
-                                newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
-                                if(formattedKey.substr(formattedKey.length - 1) !== 's') {
-                                    item[formattedKey + 's'] = newIt;
-                                } else {
-                                    item[formattedKey] = newIt;
-                                }
-                            } else {
-                                var newItemProp = Object.keys(itemsRaw[i][key])[0];
-                                var newItems = [];
-                                newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
-                                item[formattedKey] = newItems;
-                            }
-                        }
-                    }else{
-                        // can't convert 0 | 1 to boolean since some are counters
-                        if(itemsRaw[i][key].toUpperCase() === "TRUE"){
-                            item[formattedKey] = true;
-                        }else if(itemsRaw[i][key].toUpperCase() === "FALSE"){
-                            item[formattedKey] = false;
-                        }else{
-                            item[formattedKey] = itemsRaw[i][key];
-                        }
-                    }
-                }
-
-                items.push(item);
-                item = {};
-            }
-        }else{
-            // single item
-            var formattedProp = "";
-            for(var prop in itemsRaw){
-                if(prop.match(/^#/)) {
-                    // dealing with text property
-                    formattedProp = textName;
-                }else{
-                    // dealing with attribute
-                    formattedProp = prop.replace(/@/, ''); // remove leading '@'
-                    formattedProp = formattedProp.replace(/_([a-z])/g, function (g) {
-                        return g[1].toUpperCase();
-                    }); // convert to camelCase
-                }
-
-                if(typeof itemsRaw[prop] === "object"){
-                    if(itemsRaw[prop]['#text'] && Object.keys(itemsRaw[prop]).length === 1) {
-                        // dealing only with #text element
-                        item[formattedProp] = itemsRaw[prop]['#text'];
-                    }else if(Object.keys(itemsRaw[prop]).length === 0){
-                        // dealing with empty property
-                        item[formattedProp] = "";
-                    }else{
-                        // make recursive call
-                        if(Array.isArray(itemsRaw[prop]) || Object.keys(itemsRaw[prop]).length > 1){
-                            var newIt = [];
-                            newIt = utils.processResponseCollection(response[groupProp], itemProp, prop, textName);
-                            if(formattedProp.substr(formattedProp.length - 1) !== 's'){
-                                item[formattedProp + 's'] = newIt;
-                            }else{
-                                item[formattedProp] = newIt;
-                            }
-                        }else {
-                            var newProp = Object.keys(itemsRaw[prop])[0];
-                            var newItms = [];
-                            newItms = utils.processResponseCollection(itemsRaw, prop, newProp);
-                            item[formattedProp] = newItms;
-                        }
-                    }
-                }else{
-                    // can't convert 0 | 1 to boolean since some are counters
-                    if(itemsRaw[prop].toUpperCase() === "TRUE"){
-                        item[formattedProp] = true;
-                    }else if(itemsRaw[prop].toUpperCase() === "FALSE"){
-                        item[formattedProp] = false;
-                    }else {
-                        item[formattedProp] = itemsRaw[prop];
-                    }
-                }
-            }
-
-            items.push(item);
-        }
-
-        return items;
     },
+
+
+    _processItems: function (itemsRaw, textName) {
+
+        var result = [];
+        if (typeof itemsRaw === "undefined" || itemsRaw === null) {
+            return result;
+        }
+
+        if (!Array.isArray(itemsRaw)) {
+            itemsRaw = [itemsRaw];
+        }
+
+        for (var i = 0; i < itemsRaw.length; i++) {
+            result.push(this._processItem(itemsRaw[i], textName));
+        }
+
+        return result;
+    },
+
+
+    _processItem: function (itemRaw, textName) {
+
+        /*
+         * Be sure that the item we are processing is not a #text node only, where the "texName" is also "text". If this
+         * is the case, it means there's a default value that needs to get converted and isn't going to be mapped to a custom
+         * field.  Therefore, we treat it as just a single value, not an object.
+         */
+        if (textName === "text" && Object.keys(itemRaw).length === 1 && itemRaw['#text'] != null) {
+            return this._tryConvertValueToBoolean(itemRaw["#text"]);
+        }
+
+        // Convert the raw item to a new item, with keys and values processed below
+        //
+        var item = {};
+        for (var key in itemRaw) {
+            var formattedKey = this._convertToFormattedKey(key, textName);
+
+            var value = itemRaw[key];
+
+            // If we aren't an object, set the value and continue to next key
+            if (typeof value !== "object") {
+                item[formattedKey] = this._tryConvertValueToBoolean(value);
+                continue;
+            }
+
+            if ((Array.isArray(value) && value.length === 0) || Object.keys(value).length === 0) {
+
+                // Empty property
+                item[formattedKey] = "";
+
+            } else if (Array.isArray(value) || Object.keys(value).length > 1) {
+
+                // Array or object with more than one key
+                formattedKey = this._convertKeyForCollection(formattedKey);
+                item[formattedKey] = this._processItems(value, textName);
+
+            } else if (Object.keys(value).length === 1 && value['#text'] != null) {
+
+                // One property of type "#text"
+                item[formattedKey] = value['#text'];
+
+            } else {
+
+                // One property not with key "#text"
+                item[formattedKey] = this._processItems(value[Object.keys(value)[0]], "text");
+            }
+        }
+
+        return item;
+    },
+
+
+    _convertToFormattedKey: function (key, textName) {
+        var formattedKey;
+        if (key.match(/^#/)) {
+            // dealing with text property
+            formattedKey = textName;
+        } else {
+            // dealing with attribute
+            formattedKey = key.replace(/@/, ''); // remove leading '@'
+            formattedKey = formattedKey.replace(/_([a-z])/g, function (g) {
+                return g[1].toUpperCase();
+            }); // convert to camelCase
+        }
+
+        return formattedKey;
+    },
+
+
+    _convertKeyForCollection: function (formattedKey) {
+        if (formattedKey.substr(formattedKey.length - 1) !== 's') {
+            return formattedKey + 's';
+        }
+
+        return formattedKey;
+    },
+
+
+    _tryConvertValueToBoolean: function (value) {
+        if (value === null) {
+            return null;
+        }
+
+        // can't convert 0 | 1 to boolean since some are counters
+        if (value.toUpperCase() === "TRUE") {
+            return true;
+        } else if (value.toUpperCase() === "FALSE") {
+            return false;
+        } else {
+            return value;
+        }
+    },
+
 
     fireCallback: function(instance, type, response) {
         response = response || "";
@@ -7300,6 +7416,8 @@ const CALLBACK_TYPES = {
     "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_LIST":"chatListResponse",                 // external chat
+    "CHAT_ADD_SESSION":"addChatSessionNotification",// external chat
+    "CHAT_STOP_MONITOR":"stopAgentChatMonitorNotification",// external chat
     "CHAT_CLIENT_RECONNECT" : "chatClientReconnectNotification",
     "CHAT_STATE":"chatStateResponse",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
@@ -7377,6 +7495,8 @@ const MESSAGE_TYPES = {
     "CHAT_STATE":"CHAT-STATE",                              // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
+    "CHAT_ADD_SESSION":"ADD-CHAT-SESSION",                  // external chat
+    "STOP_MONITOR_CHAT":"CHAT-DROP-MONITORING-SESSION",     // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat
@@ -9259,13 +9379,32 @@ function initAgentLibraryChat (context) {
     /**
      * Request to add a session on an existing chat
      * @memberof AgentLibrary.Chat
-     * @param {string} uii Unique identifier for the chat session
-     * @param {string} agentId Current logged in agent id
-     * @param {string} monitorAgentId Agent id handling this chat
+     * @param {string} monitorAgentId Agent id handling this chat, the agent being monitored
      */
-    AgentLibrary.prototype.monitorChat = function(uii, agentId, monitorAgentId){
-        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, monitorAgentId);
+    AgentLibrary.prototype.monitorAgentChats = function(monitorAgentId){
+        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(monitorAgentId);
         var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to stop a chat monitoring session for a specific agent
+     * @memberof AgentLibrary.Chat
+     * @param {string} monitorAgentId Agent id of agent being monitored
+     */
+    AgentLibrary.prototype.stopMonitoringChatsByAgent = function(monitorAgentId){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest(monitorAgentId);
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to drop all chat monitoring sessions for the logged in agent
+     * @memberof AgentLibrary.Chat
+     */
+    AgentLibrary.prototype.stopMonitoringAllAgentChats = function(){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest();
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 
