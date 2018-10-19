@@ -158,6 +158,7 @@ module.exports = function(grunt) {
         'karma'
     ]);
     grunt.registerTask('build', [
+        'test',
         'concat:dist',
         'uglify:dist'
     ]);
