@@ -94,6 +94,11 @@
     "allow_auto_answer":{
       "#text":"0"
     },
+    "allow_agent_stats" : { "#text": "1" },
+    "allow_camp_stats" : { "#text": "1" },
+    "allow_gate_stats" : { "#text": "1" },
+    "allow_chat_stats" : { "#text": "1" },
+
     "show_lead_history":{
       "#text":"1"
     },

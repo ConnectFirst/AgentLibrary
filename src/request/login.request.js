@@ -203,6 +203,10 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring') === "1";
             model.agentPermissions.allowAutoAnswer = utils.getText(resp, 'allow_auto_answer') === "1";
             model.agentPermissions.allowHistoricalDialing = utils.getText(resp, 'allow_historical_dialing') === "1";
+            model.agentPermissions.allowAgentStats = utils.getText(resp, 'allow_agent_stats') === "1";
+            model.agentPermissions.allowCampaignStats = utils.getText(resp, 'allow_camp_stats') === "1";
+            model.agentPermissions.allowGateStats = utils.getText(resp, 'allow_gate_stats') === "1";
+            model.agentPermissions.allowChatStats = utils.getText(resp, 'allow_chat_stats') === "1";
 
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
