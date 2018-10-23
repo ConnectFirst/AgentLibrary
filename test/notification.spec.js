@@ -15,22 +15,24 @@ var dialDest = "sip:99@boulder-voip.connectfirst.com";
 describe( 'Tests for processing notification messages in Agent Library', function() {
     beforeEach(function() {
         fixture.setBase('mock');  // If base path is different from the default `spec/fixtures`
-        this.loginResponseRaw = fixture.load('loginResponseRaw.json');
-        this.configResponseRaw = fixture.load('configResponseRaw.json');
-        this.dgChangeNotificationRaw = fixture.load('dialGroupChangeNotificationRaw.json');
-        this.expectedAgentSettings = fixture.load('expectedAgentSettings.json');
-        this.expectedAgentPermissions = fixture.load('expectedAgentPermissions.json');
-        this.expectedInboundSettings = fixture.load('expectedInboundSettings.json');
-        this.expectedOutboundSettings = fixture.load('expectedOutboundSettings.json');
-        this.gatesChangeNotificationRaw = fixture.load('gatesChangeNotificationRaw.json');
-        this.endCallNotificationRaw = fixture.load('endCallNotificationRaw.json');
-        this.genericCancelCallbackNotificationRaw = fixture.load('genericCancelCallbackNotificationRaw.json');
-        this.newCallNotificationRaw = fixture.load('newCallNotificationRaw.json');
-        this.expectedNewCallOutbound = fixture.load('expectedNewCallOutbound.json');
-        this.addSessionNotificationRaw = fixture.load('addSessionNotificationRaw.json');
-        this.dropSessionNotificationRaw = fixture.load('dropSessionNotificationRaw.json');
-        this.earlyUiiNotificationRaw = fixture.load('earlyUiiNotificationRaw.json');
-        this.expectedTokens = fixture.load('expectedTokens.json');
+        this.ui_response_Login = fixture.load('ui_response.Login.json');
+        this.ui_response_Configure = fixture.load('ui_response.Configure.json');
+
+        this.processed_data_AgentSettings = fixture.load('processed_data.AgentSettings.json');
+        this.processed_data_AgentPermissions = fixture.load('processed_data.AgentPermissions.json');
+        this.processed_data_InboundSettings = fixture.load('processed_data.InboundSettings.json');
+        this.processed_data_OutboundSettings = fixture.load('processed_data.OutboundSettings.json');
+        this.processed_data_NewCall_Outbound = fixture.load('processed_data.NewCall.Outbound.json');
+        this.processed_data_Lead = fixture.load('processed_data.Lead.json');
+
+        this.ui_notification_DialGroupChange = fixture.load('ui_notification.DialGroupChange.json');
+        this.ui_notification_GatesChange = fixture.load('ui_notification.GatesChange.json');
+        this.ui_notification_EndCall = fixture.load('ui_notification.EndCall.json');
+        this.ui_notification_Generic = fixture.load('ui_notification.Generic.json');
+        this.ui_notification_NewCall = fixture.load('ui_notification.NewCall.json');
+        this.ui_notification_AddSession = fixture.load('ui_notification.AddSession.json');
+        this.ui_notification_DropSession = fixture.load('ui_notification.DropSession.json');
+        this.ui_notification_EarlyUii = fixture.load('ui_notification.EarlyUii.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -89,25 +91,25 @@ describe( 'Tests for processing notification messages in Agent Library', functio
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         // for change dial group event, first we receive a IQ LOGIN message
         // then we get the DIAL_GROUP_CHANGE message
-        var updatedConfigMessage = JSON.parse(JSON.stringify(this.configResponseRaw));
+        var updatedConfigMessage = JSON.parse(JSON.stringify(this.ui_response_Configure));
         updatedConfigMessage.ui_response.outdial_group_id["#text"] = updatedDialGroupId;
         updatedConfigMessage.ui_response.detail["#text"] = "Logon Session Configuration Updated!";
 
         // update outboundSettings and agentPermissions on model
         Lib.getConfigRequest().processResponse(updatedConfigMessage);
-        Lib.getDialGroupChangeNotification().processResponse(this.dgChangeNotificationRaw);
+        Lib.getDialGroupChangeNotification().processResponse(this.ui_notification_DialGroupChange);
 
         var dialGroup = Lib.getOutboundSettings().outdialGroup;
         var agentPermissions = Lib.getAgentPermissions();
-        var expectedDialGroups = this.expectedOutboundSettings.availableOutdialGroups;
+        var expectedDialGroups = this.processed_data_OutboundSettings.availableOutdialGroups;
         var expectedDialGroup = {};
-        var updatedExpectedPermissions = JSON.parse(JSON.stringify(this.expectedAgentPermissions));
+        var updatedExpectedPermissions = JSON.parse(JSON.stringify(this.processed_data_AgentPermissions));
 
         // find new dial group, set expected permission values
         for(var e = 0; e < expectedDialGroups.length; e++){
@@ -133,18 +135,18 @@ describe( 'Tests for processing notification messages in Agent Library', functio
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         // process end call event
-        Lib.getEndCallNotification().processResponse(this.endCallNotificationRaw);
+        Lib.getEndCallNotification().processResponse(this.ui_notification_EndCall);
 
         var currentCall = Lib.getCurrentCall();
         var expectedCurrentCall = {
-          duration: this.endCallNotificationRaw.ui_notification.call_duration['#text'] || "",
-          termParty: this.endCallNotificationRaw.ui_notification.term_party['#text'] || "",
-          termReason: this.endCallNotificationRaw.ui_notification.term_reason['#text'] || ""
+          duration: this.ui_notification_EndCall.ui_notification.call_duration['#text'] || "",
+          termParty: this.ui_notification_EndCall.ui_notification.term_party['#text'] || "",
+          termReason: this.ui_notification_EndCall.ui_notification.term_reason['#text'] || ""
         };
 
         var callState = Lib.getAgentSettings().callState;
@@ -164,17 +166,17 @@ describe( 'Tests for processing notification messages in Agent Library', functio
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         // process gates change event
-        var gateChangeNotifRaw = JSON.parse(JSON.stringify(this.gatesChangeNotificationRaw));
+        var gateChangeNotifRaw = JSON.parse(JSON.stringify(this.ui_notification_GatesChange));
         gateChangeNotifRaw.ui_notification.gate_ids["#text"] = updatedGateIds;
         Lib.getGatesChangeNotification().processResponse(gateChangeNotifRaw);
 
         var gates = Lib.getInboundSettings().queues;
-        var availGates = this.expectedInboundSettings.availableQueues;
+        var availGates = this.processed_data_InboundSettings.availableQueues;
         var expectedGates = [];
 
         // find new gates
@@ -196,11 +198,11 @@ describe( 'Tests for processing notification messages in Agent Library', functio
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
-        var response = Lib.getGenericNotification().processResponse(this.genericCancelCallbackNotificationRaw);
+        var response = Lib.getGenericNotification().processResponse(this.ui_notification_Generic);
         var expectedResponse = {
             message: "OK",
             detail: "Pending Callback Successfully Cancelled.",
@@ -219,21 +221,21 @@ describe( 'Tests for processing notification messages in Agent Library', functio
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         // process new call event
-        var newCallNotifRaw = JSON.parse(JSON.stringify(this.newCallNotificationRaw));
+        var newCallNotifRaw = JSON.parse(JSON.stringify(this.ui_notification_NewCall));
         var response = Lib.getNewCallNotification().processResponse(newCallNotifRaw);
         var modelNewCall = Lib.getCurrentCall();
         var modelTokens = Lib.getCallTokens();
 
         delete response.queueDts; // dates won't match
 
-        expect(response).toEqual(this.expectedNewCallOutbound);
+        expect(response).toEqual(this.processed_data_NewCall_Outbound);
         expect(response).toEqual(modelNewCall);
-        expect(modelTokens).toEqual(this.expectedTokens);
+        expect(modelTokens).toEqual(this.processed_data_Lead);
     });
 
     it( 'should process a add-session notification message', function() {
@@ -244,12 +246,12 @@ describe( 'Tests for processing notification messages in Agent Library', functio
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         // process add session event
-        var addSessionNotifRaw = JSON.parse(JSON.stringify(this.addSessionNotificationRaw));
+        var addSessionNotifRaw = JSON.parse(JSON.stringify(this.ui_notification_AddSession));
         var response = Lib.getAddSessionNotification().processResponse(addSessionNotifRaw);
 
         var expectedResponse = {
@@ -278,12 +280,12 @@ describe( 'Tests for processing notification messages in Agent Library', functio
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         // process early uii event
-        var dropSesNotifRaw = JSON.parse(JSON.stringify(this.dropSessionNotificationRaw));
+        var dropSesNotifRaw = JSON.parse(JSON.stringify(this.ui_notification_DropSession));
         var response = Lib.getDropSessionNotification().processResponse(dropSesNotifRaw);
 
         var expectedResponse = {
@@ -305,12 +307,12 @@ describe( 'Tests for processing notification messages in Agent Library', functio
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         // process early uii event
-        var earlyUiiNotifRaw = JSON.parse(JSON.stringify(this.earlyUiiNotificationRaw));
+        var earlyUiiNotifRaw = JSON.parse(JSON.stringify(this.ui_notification_EarlyUii));
         var response = Lib.getEarlyUiiNotification().processResponse(earlyUiiNotifRaw);
 
         var expectedResponse = {

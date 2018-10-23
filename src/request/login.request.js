@@ -203,6 +203,10 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring') === "1";
             model.agentPermissions.allowAutoAnswer = utils.getText(resp, 'allow_auto_answer') === "1";
             model.agentPermissions.allowHistoricalDialing = utils.getText(resp, 'allow_historical_dialing') === "1";
+            model.agentPermissions.allowAgentStats = utils.getText(resp, 'allow_agent_stats') === "1";
+            model.agentPermissions.allowCampaignStats = utils.getText(resp, 'allow_camp_stats') === "1";
+            model.agentPermissions.allowGateStats = utils.getText(resp, 'allow_gate_stats') === "1";
+            model.agentPermissions.allowChatStats = utils.getText(resp, 'allow_chat_stats') === "1";
 
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
@@ -211,7 +215,7 @@ LoginRequest.prototype.processResponse = function(response) {
             }
 
             // Set collection values
-            processCampaigns(response);
+            model.outboundSettings.availableCampaigns = _processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
             processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
@@ -260,48 +264,56 @@ LoginRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-function processCampaigns(response){
-    var campaignsRaw = [];
+
+function _processCampaigns(response){
     var campaigns = [];
+    var campaignsRaw = null;
 
     if(typeof response.ui_response.campaigns.campaign !== 'undefined'){
         campaignsRaw = response.ui_response.campaigns.campaign;
     }
 
-    // if this is just 1 campaign, add it to an array and process below
-    if(campaignsRaw && !Array.isArray(campaignsRaw)){
-        campaignsRaw = [campaignsRaw];
-    }
-
-    for(var c = 0; c < campaignsRaw.length; c++) {
-        var campaign = campaignsRaw[c];
-        var campaignId = campaign['@campaign_id'];
-        var campaignName = campaign['@campaign_name'];
-        var allowLeadUpdates = campaign['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-        var customLabels = campaign['custom_labels'];
-        var labelObj = {};
-        var label = "";
-
-        UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-        for(var prop in customLabels) {
-            label = prop.replace(/@/, ''); // remove leading '@'
-            labelObj[label] = customLabels[prop];
+    if(campaignsRaw){
+        if(!Array.isArray(campaignsRaw)) {
+            campaignsRaw = [campaignsRaw];
         }
 
-        campaign = {
-            allowLeadUpdates: allowLeadUpdates,
-            campaignId: campaignId,
-            campaignName: campaignName,
-            surveyId: campaign['@survey_id'],
-            surveyName: campaign['@survey_name'],
-            customLabels: labelObj
-        };
-        campaigns.push(campaign);
+        for(var c = 0; c < campaignsRaw.length; c++){
+            campaigns.push(_processCampaign(campaignsRaw[c]));
+        }
     }
 
-    UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
+    return campaigns;
 }
+
+
+function _processCampaign(campaignRaw) {
+    // single campaign object
+    var campaignId = campaignRaw['@campaign_id'];
+    var allowLeadUpdates = campaignRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
+    UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
+
+    var customLabels = campaignRaw['custom_labels'];
+    var labelArray = [];
+
+    for (var p in customLabels) {
+        var label = p.replace(/@/, ''); // remove leading '@'
+        var obj = {};
+        obj[label] = customLabels[p];
+
+        labelArray.push(obj);
+    }
+
+    return {
+        campaignId: campaignId,
+        campaignName: campaignRaw['@campaign_name'],
+        surveyId: campaignRaw['@survey_id'],
+        surveyName: campaignRaw['@survey_name'],
+        customLabels: labelArray,
+        allowLeadUpdates: allowLeadUpdates
+    };
+}
+
 
 /**
  * example packet

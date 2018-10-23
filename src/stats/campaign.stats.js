@@ -45,67 +45,43 @@ CampaignStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var campaigns = [];
-    var campRaw = {};
-    var camp = {};
+    var campRaw = null;
 
-    if(Array.isArray(resp.campaign)){
-        for(var c=0; c< resp.campaign.length; c++){
-            campRaw = resp.campaign[c];
-            if(campRaw){
-                camp = {
-                    active:campRaw["@a"],
-                    abandon:campRaw["@aba"],
-                    answer:campRaw["@an"],
-                    available:campRaw["@av"],
-                    busy:campRaw["@b"],
-                    complete:campRaw["@c"],
-                    error:campRaw["@e"],
-                    fax:campRaw["@f"],
-                    campaignId:campRaw["@id"],
-                    intercept:campRaw["@int"],
-                    machine:campRaw["@m"],
-                    noanswer:campRaw["@na"],
-                    campaignName:campRaw["@name"],
-                    pending:campRaw["@p"],
-                    ready:campRaw["@r"],
-                    staffed:campRaw["@s"],
-                    totalConnects:campRaw["@tc"],
-                    totalTalkTime:campRaw["@ttt"]
-                };
-            }
+    if (!Array.isArray(resp.campaign)) {
+        resp.campaign = [resp.campaign];
+    }
 
-            campaigns.push(camp);
-        }
-    }else{
-        campRaw = resp.campaign;
-        if(campRaw){
-            camp = {
-                active:campRaw["@a"],
-                abandon:campRaw["@aba"],
-                answer:campRaw["@an"],
-                available:campRaw["@av"],
-                busy:campRaw["@b"],
-                complete:campRaw["@c"],
-                error:campRaw["@e"],
-                fax:campRaw["@f"],
-                campaignId:campRaw["@id"],
-                intercept:campRaw["@int"],
-                machine:campRaw["@m"],
-                noanswer:campRaw["@na"],
-                campaignName:campRaw["@name"],
-                pending:campRaw["@p"],
-                ready:campRaw["@r"],
-                staffed:campRaw["@s"],
-                totalConnects:campRaw["@tc"],
-                totalTalkTime:campRaw["@ttt"]
-            };
+    for(var c = 0; c < resp.campaign.length; c++){
+        campRaw = resp.campaign[c];
+
+        if (campRaw == null) {
+            continue;
         }
 
-        campaigns.push(camp);
+        campaigns.push({
+            active:campRaw["@a"],
+            abandon:campRaw["@aba"],
+            answer:campRaw["@an"],
+            available:campRaw["@av"],
+            busy:campRaw["@b"],
+            complete:campRaw["@c"],
+            error:campRaw["@e"],
+            fax:campRaw["@f"],
+            campaignId:campRaw["@id"],
+            intercept:campRaw["@int"],
+            machine:campRaw["@m"],
+            noanswer:campRaw["@na"],
+            campaignName:campRaw["@name"],
+            pending:campRaw["@p"],
+            ready:campRaw["@r"],
+            staffed:campRaw["@s"],
+            totalConnects:campRaw["@tc"],
+            totalTalkTime:campRaw["@ttt"]
+        });
     }
 
     var campaignStats = {
-        type:resp["@type"],
+        type: resp["@type"],
         campaigns: campaigns,
         totals:totals
     };

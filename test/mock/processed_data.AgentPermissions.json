@@ -25,5 +25,9 @@
   "progressiveEnabled": false,
   "requireFetchedLeadsCalled": false,
   "showLeadHistory": true,
-  "allowAutoAnswer": false
+  "allowAutoAnswer": false,
+  "allowAgentStats" : true,
+  "allowCampaignStats" : true,
+  "allowGateStats" : true,
+  "allowChatStats" : true
 }

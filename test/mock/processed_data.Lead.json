@@ -21,9 +21,13 @@
   "zip": "44105", 
   "auxData3": "Call Ctr 1",
   "auxPhone": "",
-  "customLabels": [
-    { "aux_1Label" : "", "aux_2Label" : "", "aux_3Label" : "", "aux_4Label" : "", "aux_5Label" : "" }
-  ],
+  "customLabels": {
+    "aux_1_label" : "",
+    "aux_2_label" : "",
+    "aux_3_label" : "",
+    "aux_4_label" : "",
+    "aux_5_label" : ""
+  },
   "ani" : "5555555555",
   "dnis" : "",
   "uii" : "201002091133350139990000000010",
