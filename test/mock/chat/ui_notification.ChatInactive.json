@@ -6,7 +6,8 @@
         "@response_to":"",
         "account_id":{"#text":"99999999"},
         "uii":{"#text":"201608161200240139000000000120"},
-        "disposition_timeout":{"#text":"30"}
+        "disposition_timeout":{"#text":"30"},
+        "dequeue_agent_id":{"#text":"1"}
     }
 }
 

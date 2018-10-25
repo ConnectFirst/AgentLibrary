@@ -30,6 +30,8 @@ var NewChatNotification = function() {
  *          "script_id":{"#text":""},
  *          "script_version":{"#text":""},
  *          "idle_timeout":{"#text":""},
+ *          "is_monitoring":{#text":"TRUE"|"FALSE"},
+ *          "monitored_agent_id":{"#text":"123"| ""} <-- only populated if is_monitoring == TRUE
  *          "requeue_shortcuts":{
  *              "requeue_shortcut":{
  *                  "@chat_queue_id":"2",
@@ -50,9 +52,9 @@ var NewChatNotification = function() {
  *          }
  *          "transcript":{
  *              "message":[
- *                  { "@from":"system", "@type":"SYSTEM", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
- *                  { "@from":"dlbooks", "@type":"AGENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
- *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
+ *                  { "@from":"system", "@type":"SYSTEM", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
+ *                  { "@from":"dlbooks", "@type":"AGENT", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
+ *                  { "@from":"user1", "@type":"CLIENT", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
  *          "json_baggage":{"#text":"json_string_form_data"}, <--- pre-form chat data
@@ -84,6 +86,8 @@ NewChatNotification.prototype.processResponse = function(notification) {
         scriptId: utils.getText(notif,'script_id'),
         scriptVersion: utils.getText(notif,'script_version'),
         idleTimeout: utils.getText(notif,'idle_timeout'),
+        isMonitoring: utils.getText(notif,'is_monitoring'),
+        monitoredAgentId: utils.getText(notif,'monitored_agent_id'),
         preChatData: utils.getText(notif,'json_baggage')
     };
 

@@ -213,7 +213,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             message: "Received CHAT-ACTIVE notification",
             status: "OK",
             accountId: "99999999",
-            uii: "201608161200240139000000000120"
+            uii: "201608161200240139000000000120",
+            isMonitoring: false
         };
 
         expect(response).toEqual(expectedResponse);
@@ -230,7 +231,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             status: "OK",
             accountId: "99999999",
             uii: "201608161200240139000000000120",
-            dispositionTimeout: "30"
+            dispositionTimeout: "30",
+            dequeueAgentId: "1"
         };
 
         expect(response).toEqual(expectedResponse);
@@ -271,7 +273,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             uii: "201608161200240139000000000120",
             from: "System",
             type: "SYSTEM",
-            pendingMessage: "this is the message before actual send"
+            pendingMessage: "this is the message before actual send",
+            dequeueAgentId: "1"
         };
 
         expect(response).toEqual(expectedResponse);
@@ -302,8 +305,9 @@ describe( 'Tests for Agent Library chat methods', function() {
             type: "AGENT",
             message: "Hello. How can I help you?",
             whisper: true,
+            dequeueAgentId: "1",
             dts: new Date("2017-05-10T12:40:28"),
-            mediaLinks : [ { text : 'https://d01-mms-files.s3.amazonaws.com/99999999/088f5c25-055a-4eb4-b25c-75f03ec59f8d.jpg' } ]
+            mediaLinks : [ 'https://d01-mms-files.s3.amazonaws.com/99999999/088f5c25-055a-4eb4-b25c-75f03ec59f8d.jpg' ]
         };
 
         expect(response).toEqual(expectedResponse);
@@ -356,6 +360,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             scriptId:"1",
             scriptVersion: "1",
             idleTimeout: "60",
+            isMonitoring: false,
+            monitoredAgentId: "",
             preChatData: {name:'danielle', email:'dani.libros@gmail.com'},
             requeueShortcuts : { shortcuts : [
                 { chatQueueId : '2', name : 'test queue', skillId : '' }

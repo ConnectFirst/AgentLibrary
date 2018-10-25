@@ -16,7 +16,8 @@ var ChatInactiveNotification = function() {
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "disposition_timeout":{"#text":"30"}
+ *          "disposition_timeout":{"#text":"30"},
+ *          "dequeue_agent_id":{"#text":"123"}
  *      }
  *  }
  */
@@ -28,7 +29,8 @@ ChatInactiveNotification.prototype.processResponse = function(notification) {
         status: "OK",
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
-        dispositionTimeout: utils.getText(notif, "disposition_timeout")
+        dispositionTimeout: utils.getText(notif, "disposition_timeout"),
+        dequeueAgentId: utils.getText(notif, "dequeue_agent_id")
     };
 
 };
