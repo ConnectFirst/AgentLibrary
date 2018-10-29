@@ -25,5 +25,6 @@
   "progressiveEnabled": false,
   "requireFetchedLeadsCalled": false,
   "showLeadHistory": true,
-  "allowAutoAnswer": false
+  "allowAutoAnswer": false,
+  "enableAutoAnswer" : false
 }
