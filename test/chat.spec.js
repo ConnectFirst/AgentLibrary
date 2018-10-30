@@ -327,7 +327,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             message : 'Received CHAT-CLIENT-RECONNECT notification',
             status : 'OK',
             uii: "201608161200240139000000000120",
-            accountId: "99999999"
+            accountId: "99999999",
+            agentId: "1"
         };
 
         expect(response).toEqual(expectedResponse);
