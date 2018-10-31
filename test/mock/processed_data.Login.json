@@ -73,7 +73,7 @@
     "wasMonitoring": false,
     "disableSupervisorMonitoring": "0",
     "allowAutoAnswer": "0",
-    "enableAutoAnswer" : "0"
+    "defaultAutoAnswerOn" : "0"
   },
   "agentPermissions": {
     "allowBlended": true,

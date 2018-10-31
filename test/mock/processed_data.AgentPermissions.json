@@ -26,5 +26,5 @@
   "requireFetchedLeadsCalled": false,
   "showLeadHistory": true,
   "allowAutoAnswer": false,
-  "enableAutoAnswer" : false
+  "defaultAutoAnswerOn" : false
 }
