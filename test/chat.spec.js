@@ -17,14 +17,15 @@ describe( 'Tests for Agent Library chat methods', function() {
         accountId = "99999999";
 
         fixture.setBase('mock');  // If base path is different from the default `spec/fixtures`
-        this.chatActiveNotificationRaw = fixture.load('chat/chatActiveNotificationRaw.json');
-        this.chatInactiveNotificationRaw = fixture.load('chat/chatInactiveNotificationRaw.json');
-        this.chatPresentedNotificationRaw = fixture.load('chat/chatPresentedNotificationRaw.json');
-        this.chatTypingNotificationRaw = fixture.load('chat/chatTypingNotificationRaw.json');
-        this.newChatNotificationRaw = fixture.load('chat/newChatNotificationRaw.json');
-        this.chatMessageNotificationRaw = fixture.load('chat/chatMessageNotificationRaw.json');
-        this.chatListResponseRaw = fixture.load('chat/chatListResponseRaw.json');
-        this.chatClientReconnectNotificationRaw = fixture.load('chat/chatClientReconnectNotificationRaw.json');
+        this.ui_notification_ChatActive = fixture.load('chat/ui_notification.ChatActive.json');
+        this.ui_notification_ChatInactive = fixture.load('chat/ui_notification.ChatInactive.json');
+        this.ui_notification_ChatPresented = fixture.load('chat/ui_notification.ChatPresented.json');
+        this.ui_notification_ChatTyping = fixture.load('chat/ui_notification.ChatTyping.json');
+        this.ui_notification_NewChat = fixture.load('chat/ui_notification.NewChat.json');
+        this.ui_notification_ChatMessage = fixture.load('chat/ui_notification.ChatMessage.json');
+        this.ui_notification_ChatClientReconnect = fixture.load('chat/ui_notification.ChatClientReconnect.json');
+
+        this.ui_response_ChatList = fixture.load('chat/ui_response.ChatList.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -207,12 +208,13 @@ describe( 'Tests for Agent Library chat methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        var response = Lib.getChatActiveNotification().processResponse(this.chatActiveNotificationRaw);
+        var response = Lib.getChatActiveNotification().processResponse(this.ui_notification_ChatActive);
         var expectedResponse =  {
             message: "Received CHAT-ACTIVE notification",
             status: "OK",
             accountId: "99999999",
-            uii: "201608161200240139000000000120"
+            uii: "201608161200240139000000000120",
+            isMonitoring: false
         };
 
         expect(response).toEqual(expectedResponse);
@@ -223,13 +225,14 @@ describe( 'Tests for Agent Library chat methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        var response = Lib.getChatInactiveNotification().processResponse(this.chatInactiveNotificationRaw);
+        var response = Lib.getChatInactiveNotification().processResponse(this.ui_notification_ChatInactive);
         var expectedResponse =  {
             message: "Received CHAT-INACTIVE notification",
             status: "OK",
             accountId: "99999999",
             uii: "201608161200240139000000000120",
-            dispositionTimeout: "30"
+            dispositionTimeout: "30",
+            dequeueAgentId: "1"
         };
 
         expect(response).toEqual(expectedResponse);
@@ -240,7 +243,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        var response = Lib.getChatPresentedNotification().processResponse(this.chatPresentedNotificationRaw);
+        var response = Lib.getChatPresentedNotification().processResponse(this.ui_notification_ChatPresented);
         var expectedResponse =  {
             message: "Received CHAT-PRESENTED notification",
             status: "OK",
@@ -262,7 +265,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        var response = Lib.getChatTypingNotification().processResponse(this.chatTypingNotificationRaw);
+        var response = Lib.getChatTypingNotification().processResponse(this.ui_notification_ChatTyping);
         var expectedResponse =  {
             message: "Received CHAT-TYPING notification",
             status: "OK",
@@ -270,7 +273,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             uii: "201608161200240139000000000120",
             from: "System",
             type: "SYSTEM",
-            pendingMessage: "this is the message before actual send"
+            pendingMessage: "this is the message before actual send",
+            dequeueAgentId: "1"
         };
 
         expect(response).toEqual(expectedResponse);
@@ -282,7 +286,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         Lib.socket._open();
         Lib.chatList(17,18);
 
-        var msg = Lib.getChatListRequest().processResponse(this.chatListResponseRaw);
+        var msg = Lib.getChatListRequest().processResponse(this.ui_response_ChatList);
 
         expect(Number(msg.agentId)).toBe(17);
         expect(msg.chatList[0].uii).toBe("333");
@@ -293,7 +297,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        var response = Lib.getChatMessageRequest().processResponse(this.chatMessageNotificationRaw);
+        var response = Lib.getChatMessageRequest().processResponse(this.ui_notification_ChatMessage);
         var expectedResponse =  {
             uii: "201608161200240139000000000120",
             accountId: "99999999",
@@ -301,8 +305,9 @@ describe( 'Tests for Agent Library chat methods', function() {
             type: "AGENT",
             message: "Hello. How can I help you?",
             whisper: true,
+            dequeueAgentId: "1",
             dts: new Date("2017-05-10T12:40:28"),
-            mediaLinks : [ { text : 'https://d01-mms-files.s3.amazonaws.com/99999999/088f5c25-055a-4eb4-b25c-75f03ec59f8d.jpg' } ]
+            mediaLinks : [ 'https://d01-mms-files.s3.amazonaws.com/99999999/088f5c25-055a-4eb4-b25c-75f03ec59f8d.jpg' ]
         };
 
         expect(response).toEqual(expectedResponse);
@@ -314,15 +319,16 @@ describe( 'Tests for Agent Library chat methods', function() {
         Lib.socket._open();
 
         // process chat client reconnect
-        var chatClientReconnectNotificationRaw = JSON.parse(JSON.stringify(this.chatClientReconnectNotificationRaw));
-        var response = Lib.getChatClientReconnectNotification().processResponse(chatClientReconnectNotificationRaw);
+        var ui_notification_ChatClientReconnect = JSON.parse(JSON.stringify(this.ui_notification_ChatClientReconnect));
+        var response = Lib.getChatClientReconnectNotification().processResponse(ui_notification_ChatClientReconnect);
 
 
         var expectedResponse = {
             message : 'Received CHAT-CLIENT-RECONNECT notification',
             status : 'OK',
             uii: "201608161200240139000000000120",
-            accountId: "99999999"
+            accountId: "99999999",
+            agentId: "1"
         };
 
         expect(response).toEqual(expectedResponse);
@@ -334,7 +340,7 @@ describe( 'Tests for Agent Library chat methods', function() {
         Lib.socket._open();
 
         // process new call event
-        var newChatNotifRaw = JSON.parse(JSON.stringify(this.newChatNotificationRaw));
+        var newChatNotifRaw = JSON.parse(JSON.stringify(this.ui_notification_NewChat));
         var response = Lib.getNewChatNotification().processResponse(newChatNotifRaw);
 
         var expectedResponse = {
@@ -355,6 +361,8 @@ describe( 'Tests for Agent Library chat methods', function() {
             scriptId:"1",
             scriptVersion: "1",
             idleTimeout: "60",
+            isMonitoring: false,
+            monitoredAgentId: "",
             preChatData: {name:'danielle', email:'dani.libros@gmail.com'},
             requeueShortcuts : { shortcuts : [
                 { chatQueueId : '2', name : 'test queue', skillId : '' }

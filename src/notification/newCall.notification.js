@@ -157,6 +157,21 @@ NewCallNotification.prototype.processResponse = function(notification) {
     } catch(e) {
         console.warn('error parsing new call lead extra data: ' + e);
     }
+
+    if(newCall.baggage) {
+        // process custom labels correctly
+        newCall.baggage.customLabels = {};
+        var notifLabels = notif.baggage['custom_labels'];
+        for(var key in notifLabels) {
+            var result = '';
+            if(notifLabels && notifLabels[key] && notifLabels[key]['#text']) {
+                result = notifLabels[key]['#text'];
+            }
+
+            newCall.baggage.customLabels[key] = result;
+        }
+    }
+
     // set saved script response if present
     try{
         var savedModel = JSON.parse(notif.script_result["#text"]).model;

@@ -1,14 +1,13 @@
 {
     "ui_notification":{
         "@message_id":"IQ10012016081611595000289",
-        "@type":"CHAT-TYPING",
+        "@type":"CHAT-INACTIVE",
         "@destination":"IQ",
         "@response_to":"",
         "account_id":{"#text":"99999999"},
         "uii":{"#text":"201608161200240139000000000120"},
-        "from":{"#text":"System"},
-        "type":{"#text":"SYSTEM"},
-        "message":{"#text":"this is the message before actual send"}
+        "disposition_timeout":{"#text":"30"},
+        "dequeue_agent_id":{"#text":"1"}
     }
 }
 

@@ -33,6 +33,8 @@ const CALLBACK_TYPES = {
     "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_LIST":"chatListResponse",                 // external chat
+    "CHAT_ADD_SESSION":"addChatSessionNotification",// external chat
+    "CHAT_STOP_MONITOR":"stopAgentChatMonitorNotification",// external chat
     "CHAT_CLIENT_RECONNECT" : "chatClientReconnectNotification",
     "CHAT_STATE":"chatStateResponse",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
@@ -110,6 +112,8 @@ const MESSAGE_TYPES = {
     "CHAT_STATE":"CHAT-STATE",                              // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
+    "CHAT_ADD_SESSION":"ADD-CHAT-SESSION",                  // external chat
+    "STOP_MONITOR_CHAT":"CHAT-DROP-MONITORING-SESSION",     // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat

@@ -20,14 +20,15 @@ describe( 'Tests for Agent Library agent methods', function() {
         dialDest = "sip:99@boulder-voip.connectfirst.com";
 
         fixture.setBase('mock');  // If base path is different from the default `spec/fixtures`
-        this.loginResponseRaw = fixture.load('loginResponseRaw.json');
-        this.configResponseRaw = fixture.load('configResponseRaw.json');
-        this.expectedAgentSettings = fixture.load('expectedAgentSettings.json');
-        this.expectedAgentPermissions = fixture.load('expectedAgentPermissions.json');
-        this.expectedInboundSettings = fixture.load('expectedInboundSettings.json');
-        this.expectedOutboundSettings = fixture.load('expectedOutboundSettings.json');
-        this.expectedConnectionSettings = fixture.load('expectedConnectionSettings.json');
-        this.expectedChatSettings = fixture.load('expectedChatSettings.json');
+        this.ui_response_login = fixture.load('ui_response.Login.json');
+        this.ui_response_Configure = fixture.load('ui_response.Configure.json');
+
+        this.processed_data_AgentSettings = fixture.load('processed_data.AgentSettings.json');
+        this.processed_data_AgentPermissions = fixture.load('processed_data.AgentPermissions.json');
+        this.processed_data_InboundSettings = fixture.load('processed_data.InboundSettings.json');
+        this.processed_data_OutboundSettings = fixture.load('processed_data.OutboundSettings.json');
+        this.processed_data_ConnectionSettings = fixture.load('processed_data.ConnectionSettings.json');
+        this.processed_data_ChatSettings = fixture.load('processed_data.ChatSettings.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -110,7 +111,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket._open();
 
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_login);
 
         var settings = Lib.getAgentSettings();
         delete settings.loginDTS; // datetime won't match, remove
@@ -118,10 +119,10 @@ describe( 'Tests for Agent Library agent methods', function() {
         var inbound = Lib.getInboundSettings();
         var outbound = Lib.getOutboundSettings();
 
-        expect(permissions).toEqual(this.expectedAgentPermissions);
-        expect(settings).toEqual(this.expectedAgentSettings);
-        expect(inbound).toEqual(this.expectedInboundSettings);
-        expect(outbound).toEqual(this.expectedOutboundSettings);
+        expect(permissions).toEqual(this.processed_data_AgentPermissions);
+        expect(settings).toEqual(this.processed_data_AgentSettings);
+        expect(inbound).toEqual(this.processed_data_InboundSettings);
+        expect(outbound).toEqual(this.processed_data_OutboundSettings);
     });
 
      it( 'should build configureAgent message and send message over socket', function() {
@@ -145,9 +146,9 @@ describe( 'Tests for Agent Library agent methods', function() {
         Lib.socket._open();
 
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         var settings = Lib.getAgentSettings();
         delete settings.loginDTS; // datetime won't match, remove
@@ -156,9 +157,9 @@ describe( 'Tests for Agent Library agent methods', function() {
         var inbound = Lib.getInboundSettings();
         var chat = Lib.getChatSettings();
 
-        var expectedOutbound = JSON.parse(JSON.stringify(this.expectedOutboundSettings));
-        var expectedInbound = JSON.parse(JSON.stringify(this.expectedInboundSettings));
-        var expectedChat = JSON.parse(JSON.stringify(this.expectedChatSettings));
+        var expectedOutbound = JSON.parse(JSON.stringify(this.processed_data_OutboundSettings));
+        var expectedInbound = JSON.parse(JSON.stringify(this.processed_data_InboundSettings));
+        var expectedChat = JSON.parse(JSON.stringify(this.processed_data_ChatSettings));
 
         // set expected dial group
         for(var e = 0; e < expectedOutbound.availableOutdialGroups.length; e++){
@@ -195,7 +196,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         expect(inbound).toEqual(expectedInbound);
         expect(outbound).toEqual(expectedOutbound);
         expect(chat).toEqual(expectedChat);
-        expect(connection).toEqual(this.expectedConnectionSettings);
+        expect(connection).toEqual(this.processed_data_ConnectionSettings);
     });
 
 });

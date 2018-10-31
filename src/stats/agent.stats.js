@@ -43,12 +43,17 @@ var AgentStats = function() {
 AgentStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats.agent;
     var agentStats = [];
-    if(resp && Array.isArray(resp)) {
-        for(var i = 0; i < resp.length; i++){
-            var a = {
+
+    if (!Array.isArray(resp)) {
+        resp = [resp];
+    }
+
+    try {
+        for (var i = 0; i < resp.length; i++) {
+            agentStats.push({
                 agentLoginType: resp[i]["@alt"],
                 agentType: resp[i]["@atype"],
-                avgTalkTime:resp[i]["@avgtt"],
+                avgTalkTime: resp[i]["@avgtt"],
                 calls: resp[i]["@calls"],
                 isDequeueAgent: resp[i]["@da"],
                 defaultRoute: resp[i]["@droute"],
@@ -71,42 +76,9 @@ AgentStats.prototype.processResponse = function(stats) {
                 uii: resp[i]["@uii"],
                 utilization: resp[i]["@util"],
                 callDuration: resp[i]["@call_duration"]
-            };
-            agentStats.push(a);
+            });
         }
-    }else {
-        try {
-            var agent = {
-                agentLoginType: resp["@alt"],
-                agentType: resp["@atype"],
-                avgTalkTime: resp["@avgtt"],
-                calls: resp["@calls"],
-                isDequeueAgent: resp["@da"],
-                defaultRoute: resp["@droute"],
-                firstName: resp["@f"],
-                queueDesc: resp["@gdesc"],
-                queueName: resp["@gname"],
-                agentId: resp["@id"],
-                lastName: resp["@l"],
-                loginDuration: resp["@ldur"],
-                loginType: resp["@ltype"],
-                offHook: resp["@oh"],
-                pendingDisp: resp["@pd"],
-                presented: resp["@pres"],
-                rna: resp["@rna"],
-                stateDuration: resp["@sdur"],
-                skillProfileName: resp["@sp"],
-                agentState: resp["@state"],
-                totalTalkTime: resp["@ttt"],
-                username: resp["@u"],
-                uii: resp["@uii"],
-                utilization: resp["@util"],
-                callDuration: resp["@call_duration"]
-            };
-            agentStats.push(agent);
-        }catch(e){
-            // do nothing for now
-        }
+    } catch(e) {
 
     }
 

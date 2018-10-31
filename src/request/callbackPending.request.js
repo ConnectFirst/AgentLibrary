@@ -60,14 +60,17 @@ CallbacksPendingRequest.prototype.formatJSON = function() {
 CallbacksPendingRequest.prototype.processResponse = function(response) {
     var leadsRaw = response.ui_response.lead;
     var leads = [];
-    if(Array.isArray(leadsRaw)){
-        for(var l = 0; l < leadsRaw.length; l++){
-            var leadRaw = leadsRaw[l];
-            var lead = parseLead(leadRaw);
-            leads.push(lead);
+    if(!Array.isArray(leadsRaw)) {
+        leadsRaw = [leadsRaw];
+    }
+
+    for(var l = 0; l < leadsRaw.length; l++){
+        var leadRaw = leadsRaw[l];
+        if (leadRaw == null) {
+            continue;
         }
-    }else if(leadsRaw){
-        leads.push(parseLead(leadsRaw));
+
+        leads.push(parseLead(leadRaw));
     }
 
     UIModel.getInstance().agentSettings.pendingCallbacks = JSON.parse(JSON.stringify(leads));

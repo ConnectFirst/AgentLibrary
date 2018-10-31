@@ -8,16 +8,18 @@ var address = 'ws://test.address';
 describe( 'Tests for processing stat messages in Agent Library', function() {
     beforeEach(function() {
         fixture.setBase('mock');  // If base path is different from the default `spec/fixtures`
-        this.loginResponseRaw = fixture.load('loginResponseRaw.json');
-        this.configResponseRaw = fixture.load('configResponseRaw.json');
-        this.campaignStatsRaw = fixture.load('stats/campaignStatsRaw.json');
-        this.queueStatsRaw = fixture.load('stats/queueStatsRaw.json');
-        this.agentStatsRaw = fixture.load('stats/agentStatsRaw.json');
-        this.agentDailyStatsRaw = fixture.load('stats/agentDailyStatsRaw.json');
-        this.expectedCampaignStats = fixture.load('stats/expectedCampaignStats.json');
-        this.expectedQueueStats = fixture.load('stats/expectedQueueStats.json');
-        this.expectedAgentStats = fixture.load('stats/expectedAgentStats.json');
-        this.expectedAgentDailyStats = fixture.load('stats/expectedAgentDailyStats.json');
+        this.ui_response_Login = fixture.load('ui_response.Login.json');
+        this.ui_response_Configure = fixture.load('ui_response.Configure.json');
+
+        this.ui_stats_Campaign = fixture.load('stats/ui_stats.Campaign.json');
+        this.ui_stats_Queue = fixture.load('stats/ui_stats.Queue.json');
+        this.ui_stats_Agent = fixture.load('stats/ui_stats.Agent.json');
+        this.ui_stats_AgentDaily = fixture.load('stats/ui_stats.AgentDaily.json');
+
+        this.processed_data_Campaign = fixture.load('stats/processed_data.Campaign.json');
+        this.processed_data_Queue = fixture.load('stats/processed_data.Queue.json');
+        this.processed_data_Agent = fixture.load('stats/processed_data.Agent.json');
+        this.processed_data_AgentDaily = fixture.load('stats/processed_data.AgentDaily.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -71,10 +73,10 @@ describe( 'Tests for processing stat messages in Agent Library', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        Lib.getAgentStatsPacket().processResponse(this.agentStatsRaw);
+        Lib.getAgentStatsPacket().processResponse(this.ui_stats_Agent);
         var agentStats = Lib.getAgentStats();
 
-        expect(agentStats).toEqual(this.expectedAgentStats);
+        expect(agentStats).toEqual(this.processed_data_Agent);
     });
 
     it( 'should process an agent daily stat message', function() {
@@ -82,10 +84,10 @@ describe( 'Tests for processing stat messages in Agent Library', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        Lib.getAgentDailyStatsPacket().processResponse(this.agentDailyStatsRaw);
+        Lib.getAgentDailyStatsPacket().processResponse(this.ui_stats_AgentDaily);
         var agentDailyStats = Lib.getAgentDailyStats();
 
-        expect(agentDailyStats).toEqual(this.expectedAgentDailyStats);
+        expect(agentDailyStats).toEqual(this.processed_data_AgentDaily);
     });
 
 
@@ -94,10 +96,10 @@ describe( 'Tests for processing stat messages in Agent Library', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        Lib.getQueueStatsPacket().processResponse(this.queueStatsRaw);
+        Lib.getQueueStatsPacket().processResponse(this.ui_stats_Queue);
         var queueStats = Lib.getQueueStats();
 
-        expect(queueStats).toEqual(this.expectedQueueStats);
+        expect(queueStats).toEqual(this.processed_data_Queue);
     });
 
     it( 'should process a campaign stat message', function() {
@@ -105,10 +107,10 @@ describe( 'Tests for processing stat messages in Agent Library', function() {
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
 
-        Lib.getCampaignStatsPacket().processResponse(this.campaignStatsRaw);
+        Lib.getCampaignStatsPacket().processResponse(this.ui_stats_Campaign);
         var campaignStats = Lib.getCampaignStats();
 
-        expect(campaignStats).toEqual(this.expectedCampaignStats);
+        expect(campaignStats).toEqual(this.processed_data_Campaign);
     });
 
 });

@@ -21,19 +21,22 @@ describe( 'Tests for Agent Library call methods', function() {
         dialDest = "sip:99@boulder-voip.connectfirst.com";
 
         fixture.setBase('mock');  // If base path is different from the default `spec/fixtures`
-        this.loginResponseRaw = fixture.load('loginResponseRaw.json');
-        this.configResponseRaw = fixture.load('configResponseRaw.json');
-        this.previewDialResponseRaw = fixture.load('call/previewDialResponseRaw.json');
-        this.expectedPreviewDialResponse = fixture.load('call/expectedPreviewDialResponse.json');
-        this.campaignDispositionsRaw = fixture.load('call/campaignDispositionsRaw.json');
-        this.expectedOutdialDispositionRequest = fixture.load('call/expectedOutdialDispositionRequest.json');
-        this.expectedDispositionManualPassRequest = fixture.load('call/expectedDispositionManualPassRequest.json');
-        this.expectedWarmXferRequest = fixture.load('call/expectedWarmXferRequest.json');
-        this.expectedInternationalWarmXferRequest = fixture.load('call/expectedInternationalWarmXferRequest.json');
-        this.expectedColdXferRequest = fixture.load('call/expectedColdXferRequest.json');
-        this.expectedWarmXferCancelRequest = fixture.load('call/expectedWarmXferCancelRequest.json');
-        this.warmXferResponseRaw = fixture.load('call/warmXferResponseRaw.json');
-        this.coldXferResponseRaw = fixture.load('call/coldXferResponseRaw.json');
+        this.ui_response_Login = fixture.load('ui_response.Login.json');
+        this.ui_response_Configure = fixture.load('ui_response.Configure.json');
+
+        this.processed_data_PreviewDial = fixture.load('call/processed_data.previewDialRequest.json');
+
+        this.ui_response_PreviewDial = fixture.load('call/ui_response.previewDial.json');
+        this.ui_response_CampaignDispositions = fixture.load('call/ui_response.campaignDispositions.json');
+        this.ui_response_WarmXfer = fixture.load('call/ui_response.warmXfer.json');
+        this.ui_response_ColdXfer = fixture.load('call/ui_response.coldXfer.json');
+
+        this.ui_request_OutdialDispositions = fixture.load('call/ui_request.outdialDisposition.json');
+        this.ui_request_OutDialDispositions_manualPass = fixture.load('call/ui_request.outdialDisposition.manualPass.json');
+        this.ui_request_WarmXfer = fixture.load('call/ui_request.warmXfer.json');
+        this.ui_request_WarmXfer_international = fixture.load('call/ui_request.warmXfer.international.json');
+        this.ui_request_ColdXfer = fixture.load('call/ui_request.coldXfer.json');
+        this.ui_request_WarmXferCancel = fixture.load('call/ui_request.warmXferCancel.json');
 
         var WebSocket = jasmine.createSpy();
         WebSocket.andCallFake(function (url) {
@@ -118,9 +121,9 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.bargeIn("FULL");
 
         var bargeInResponse =   {
@@ -153,9 +156,9 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.setCallNotes("A new Note!");
 
         // process call-notes response
@@ -186,13 +189,13 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.getCampaignDispositions(campaignId);
 
         // process response
-        var response = Lib.getCampaignDispositionsRequest().processResponse(this.campaignDispositionsRaw);
+        var response = Lib.getCampaignDispositionsRequest().processResponse(this.ui_response_CampaignDispositions);
         var expectedResponse = [
             {dispositionId: "1", disposition:"requeue"},
             {dispositionId: "2", disposition:"complete"}
@@ -216,9 +219,9 @@ describe( 'Tests for Agent Library call methods', function() {
         Lib.socket._open();
 
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         Lib.coldXfer(dest, callerId, xferHeaders);
         var msg = Lib.getColdTransferRequest().formatJSON();
@@ -227,7 +230,7 @@ describe( 'Tests for Agent Library call methods', function() {
 
         Lib.socket._message(msg);
 
-        expect(requestMsg).toEqual(this.expectedColdXferRequest);
+        expect(requestMsg).toEqual(this.ui_request_ColdXfer);
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
@@ -242,13 +245,13 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.coldXfer(dest, callerId);
 
         // process warm-xfer response
-        var response = Lib.getColdTransferRequest().processResponse(this.coldXferResponseRaw);
+        var response = Lib.getColdTransferRequest().processResponse(this.ui_response_ColdXfer);
         var expectedResponse = {
             "message":"OK",
             "detail":"",
@@ -315,9 +318,9 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.hold(holdState);
 
         var holdResponse = {
@@ -394,9 +397,9 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         Lib.dispositionCall(uii, dispId, notes, callback, null, null, survey);
         var msg = Lib.getDispositionRequest().formatJSON();
@@ -405,7 +408,7 @@ describe( 'Tests for Agent Library call methods', function() {
 
         Lib.socket._message(msg);
 
-        expect(requestMsg).toEqual(this.expectedOutdialDispositionRequest);
+        expect(requestMsg).toEqual(this.ui_request_OutdialDispositions);
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
@@ -424,9 +427,9 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         Lib.dispositionManualPass(dispId, notes, callback, null, leadId, requestKey, externId);
         var msg = Lib.getDispositionManualPassRequest().formatJSON();
@@ -435,7 +438,7 @@ describe( 'Tests for Agent Library call methods', function() {
 
         Lib.socket._message(msg);
 
-        expect(requestMsg).toEqual(this.expectedDispositionManualPassRequest);
+        expect(requestMsg).toEqual(this.ui_request_OutDialDispositions_manualPass);
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
@@ -478,9 +481,9 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.pauseRecord(record);
 
         var pauseResponse =  {
@@ -544,15 +547,15 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.previewDial(action, searchFields, requestId);
 
         // process preview dial response
-        var previewDialResponse = JSON.parse(JSON.stringify(this.previewDialResponseRaw));
+        var previewDialResponse = JSON.parse(JSON.stringify(this.ui_response_PreviewDial));
         var response = Lib.getPreviewDialRequest().processResponse(previewDialResponse);
-        var expectedResponse = this.expectedPreviewDialResponse;
+        var expectedResponse = this.processed_data_PreviewDial;
 
         expect(response).toEqual(expectedResponse);
     });
@@ -594,9 +597,9 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.record(record);
 
         var recordResponse =  {
@@ -657,15 +660,15 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.safeModeCall(action, searchFields, requestId);
 
         // process tcpa safe response
-        var tcpaSafeResponse = JSON.parse(JSON.stringify(this.previewDialResponseRaw));
+        var tcpaSafeResponse = JSON.parse(JSON.stringify(this.ui_response_PreviewDial));
         var response = Lib.getTcpaSafeRequest().processResponse(tcpaSafeResponse);
-        var expectedResponse = this.expectedPreviewDialResponse;
+        var expectedResponse = this.processed_data_PreviewDial;
 
         expect(response).toEqual(expectedResponse);
     });
@@ -681,9 +684,9 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         Lib.warmXfer(dest, callerId, xferHeaders);
         var msg = Lib.getWarmTransferRequest().formatJSON();
@@ -692,7 +695,7 @@ describe( 'Tests for Agent Library call methods', function() {
 
         Lib.socket._message(msg);
 
-        expect(requestMsg).toEqual(this.expectedWarmXferRequest);
+        expect(requestMsg).toEqual(this.ui_request_WarmXfer);
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
@@ -709,9 +712,9 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         Lib.internationalWarmXfer(dest, callerId, xferHeaders, countryId);
         var msg = Lib.getWarmTransferRequest().formatJSON();
@@ -720,7 +723,7 @@ describe( 'Tests for Agent Library call methods', function() {
 
         Lib.socket._message(msg);
 
-        expect(requestMsg).toEqual(this.expectedInternationalWarmXferRequest);
+        expect(requestMsg).toEqual(this.ui_request_WarmXfer_international);
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });
@@ -734,13 +737,13 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.warmXfer(dest, callerId, []);
 
         // process warm-xfer response
-        var response = Lib.getWarmTransferRequest().processResponse(this.warmXferResponseRaw);
+        var response = Lib.getWarmTransferRequest().processResponse(this.ui_response_WarmXfer);
         var expectedResponse = {
             "message":"OK",
             "detail":"",
@@ -763,13 +766,13 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
         Lib.internationalWarmXfer(dest, callerId, [], "USA");
 
         // process warm-xfer response
-        var response = Lib.getWarmTransferRequest().processResponse(this.warmXferResponseRaw);
+        var response = Lib.getWarmTransferRequest().processResponse(this.ui_response_WarmXfer);
         var expectedResponse = {
             "message":"OK",
             "detail":"",
@@ -792,9 +795,9 @@ describe( 'Tests for Agent Library call methods', function() {
 
         // set login and config values
         Lib.loginAgent(username, password);
-        Lib.getLoginRequest().processResponse(this.loginResponseRaw);
+        Lib.getLoginRequest().processResponse(this.ui_response_Login);
         Lib.configureAgent(dialDest, gateIds, chatIds, skillProfileId, dialGroupId);
-        Lib.getConfigRequest().processResponse(this.configResponseRaw);
+        Lib.getConfigRequest().processResponse(this.ui_response_Configure);
 
         Lib.warmXferCancel(dest);
         var msg = Lib.getWarmTransferCancelRequest().formatJSON();
@@ -803,7 +806,7 @@ describe( 'Tests for Agent Library call methods', function() {
 
         Lib.socket._message(msg);
 
-        expect(requestMsg).toEqual(this.expectedWarmXferCancelRequest);
+        expect(requestMsg).toEqual(this.ui_request_WarmXferCancel);
         expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
         expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
     });

@@ -1,8 +1,6 @@
 
 
-var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
-    this.uii = uii;
-    this.agentId = agentId;
+var MonitorChatRequest = function(monitorAgentId) {
     this.monitorAgentId = monitorAgentId;
 };
 
@@ -15,7 +13,6 @@ var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
  *      "@type":"CHAT-MONITOR",
  *      "@message_id":"",
  *      "@response_to":"",
- *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
  *      "monitor_agent_id":{"#text":""}
  *    }
@@ -28,9 +25,6 @@ MonitorChatRequest.prototype.formatJSON = function() {
             "@type":MESSAGE_TYPES.MONITOR_CHAT,
             "@message_id":utils.getMessageId(),
             "@response_to":"",
-            "uii":{
-                "#text":utils.toString(this.uii)
-            },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
             },

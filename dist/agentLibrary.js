@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-10-02 */
+/*! cf-agent-library - v2.1.10 - 2018-10-31 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -659,6 +659,21 @@ NewCallNotification.prototype.processResponse = function(notification) {
     } catch(e) {
         console.warn('error parsing new call lead extra data: ' + e);
     }
+
+    if(newCall.baggage) {
+        // process custom labels correctly
+        newCall.baggage.customLabels = {};
+        var notifLabels = notif.baggage['custom_labels'];
+        for(var key in notifLabels) {
+            var result = '';
+            if(notifLabels && notifLabels[key] && notifLabels[key]['#text']) {
+                result = notifLabels[key]['#text'];
+            }
+
+            newCall.baggage.customLabels[key] = result;
+        }
+    }
+
     // set saved script response if present
     try{
         var savedModel = JSON.parse(notif.script_result["#text"]).model;
@@ -1336,14 +1351,17 @@ CallbacksPendingRequest.prototype.formatJSON = function() {
 CallbacksPendingRequest.prototype.processResponse = function(response) {
     var leadsRaw = response.ui_response.lead;
     var leads = [];
-    if(Array.isArray(leadsRaw)){
-        for(var l = 0; l < leadsRaw.length; l++){
-            var leadRaw = leadsRaw[l];
-            var lead = parseLead(leadRaw);
-            leads.push(lead);
+    if(!Array.isArray(leadsRaw)) {
+        leadsRaw = [leadsRaw];
+    }
+
+    for(var l = 0; l < leadsRaw.length; l++){
+        var leadRaw = leadsRaw[l];
+        if (leadRaw == null) {
+            continue;
         }
-    }else if(leadsRaw){
-        leads.push(parseLead(leadsRaw));
+
+        leads.push(parseLead(leadRaw));
     }
 
     UIModel.getInstance().agentSettings.pendingCallbacks = JSON.parse(JSON.stringify(leads));
@@ -1907,17 +1925,15 @@ function setGateSettings(response){
     var gates = model.inboundSettings.availableQueues;
     var selectedGateIds = [];
     var selectedGates = [];
-    var gateIds = response.ui_response.gates.gate_id;
+    var gateIds = response.ui_response.gates.gate_id || [];
 
-    if(gateIds){
-        if(Array.isArray(gateIds)){ // multiple gates assigned
-            for(var s = 0; s < gateIds.length; s++){
-                var obj = gateIds[s];
-                selectedGateIds.push(obj["#text"]);
-            }
-        }else{ // single gate assigned
-            selectedGateIds.push(gateIds["#text"]);
-        }
+    if (!Array.isArray(gateIds)) {
+        gateIds = [gateIds];
+    }
+
+    for(var s = 0; s < gateIds.length; s++){
+        var obj = gateIds[s];
+        selectedGateIds.push(obj["#text"]);
     }
 
     for(var gIdx = 0; gIdx < gates.length; gIdx++){
@@ -1936,18 +1952,15 @@ function setChatQueueSettings(response){
     var selectedChatQueueIds = [];
     var selectedChatQueues = [];
     var cQueues = response.ui_response.chat_queues || {};
-    var chatQueueIds = cQueues.chat_queue_id;
+    var chatQueueIds = cQueues.chat_queue_id || [];
 
-    if(chatQueueIds){
-        if(Array.isArray(chatQueueIds)){ // multiple chatQueues assigned
-            for(var c = 0; c < chatQueueIds.length; c++){
-                var obj = chatQueueIds[c];
-                selectedChatQueueIds.push(obj["#text"]);
-            }
-        }else{ // single chat queue assigned
-            selectedChatQueueIds.push(chatQueueIds["#text"]);
-        }
+    if (!Array.isArray(chatQueueIds)) {
+        chatQueueIds = [chatQueueIds];
+    }
 
+    for(var c = 0; c < chatQueueIds.length; c++){
+        var obj = chatQueueIds[c];
+        selectedChatQueueIds.push(obj["#text"]);
     }
 
     for(var cIdx = 0; cIdx < chatQueues.length; cIdx++){
@@ -3021,6 +3034,10 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring') === "1";
             model.agentPermissions.allowAutoAnswer = utils.getText(resp, 'allow_auto_answer') === "1";
             model.agentPermissions.allowHistoricalDialing = utils.getText(resp, 'allow_historical_dialing') === "1";
+            model.agentPermissions.allowAgentStats = utils.getText(resp, 'allow_agent_stats') === "1";
+            model.agentPermissions.allowCampaignStats = utils.getText(resp, 'allow_camp_stats') === "1";
+            model.agentPermissions.allowGateStats = utils.getText(resp, 'allow_gate_stats') === "1";
+            model.agentPermissions.allowChatStats = utils.getText(resp, 'allow_chat_stats') === "1";
 
             model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
 
@@ -3029,7 +3046,7 @@ LoginRequest.prototype.processResponse = function(response) {
             }
 
             // Set collection values
-            processCampaigns(response);
+            model.outboundSettings.availableCampaigns = _processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
             processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
@@ -3078,83 +3095,56 @@ LoginRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-function processCampaigns(response){
+
+function _processCampaigns(response){
     var campaigns = [];
-    var campaign = {};
-    var campaignsRaw = [];
-    var customLabels = [];
-    var labelArray = [];
-    var label = "";
-    var campaignId = 0;
-    var campaignName = "";
-    var allowLeadUpdates = 0;
+    var campaignsRaw = null;
 
     if(typeof response.ui_response.campaigns.campaign !== 'undefined'){
         campaignsRaw = response.ui_response.campaigns.campaign;
     }
 
-    if(Array.isArray(campaignsRaw)){
-        // dealing with an array
-        for(var c = 0; c < campaignsRaw.length; c++){
-            campaignId = campaignsRaw[c]['@campaign_id'];
-            campaignName = campaignsRaw[c]['@campaign_name'];
-            allowLeadUpdates = campaignsRaw[c]['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-            customLabels = campaignsRaw[c]['custom_labels'];
-            labelArray = [];
-            label = "";
-
-            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-            for (var prop in customLabels) {
-                label = prop.replace(/@/, ''); // remove leading '@'
-                var obj = {};
-                obj[label] = customLabels[prop];
-                labelArray.push(obj);
-            }
-
-            campaign = {
-                allowLeadUpdates: allowLeadUpdates,
-                campaignId: campaignId,
-                campaignName: campaignName,
-                surveyId: campaignsRaw[c]['@survey_id'],
-                surveyName: campaignsRaw[c]['@survey_name'],
-                customLabels: labelArray
-            };
-            campaigns.push(campaign);
+    if(campaignsRaw){
+        if(!Array.isArray(campaignsRaw)) {
+            campaignsRaw = [campaignsRaw];
         }
-    }else{
-        if(campaignsRaw){
-            // single campaign object
-            campaignId = campaignsRaw['@campaign_id'];
-            campaignName = campaignsRaw['@campaign_name'];
-            allowLeadUpdates = campaignsRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-            customLabels = campaignsRaw['custom_labels'];
-            labelArray = [];
-            label = "";
 
-            UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-            for (var p in customLabels) {
-                label = p.replace(/@/, ''); // remove leading '@'
-                var obj = {};
-                obj[label] = customLabels[p];
-                labelArray.push(obj);
-            }
-
-            campaign = {
-                allowLeadUpdates: allowLeadUpdates,
-                campaignId: campaignId,
-                campaignName: campaignName,
-                surveyId: campaignsRaw['@survey_id'],
-                surveyName: campaignsRaw['@survey_name'],
-                customLabels: labelArray
-            };
-            campaigns.push(campaign);
+        for(var c = 0; c < campaignsRaw.length; c++){
+            campaigns.push(_processCampaign(campaignsRaw[c]));
         }
     }
 
-    UIModel.getInstance().outboundSettings.availableCampaigns = campaigns;
+    return campaigns;
 }
+
+
+function _processCampaign(campaignRaw) {
+    // single campaign object
+    var campaignId = campaignRaw['@campaign_id'];
+    var allowLeadUpdates = campaignRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
+    UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
+
+    var customLabels = campaignRaw['custom_labels'];
+    var labelArray = [];
+
+    for (var p in customLabels) {
+        var label = p.replace(/@/, ''); // remove leading '@'
+        var obj = {};
+        obj[label] = customLabels[p];
+
+        labelArray.push(obj);
+    }
+
+    return {
+        campaignId: campaignId,
+        campaignName: campaignRaw['@campaign_name'],
+        surveyId: campaignRaw['@survey_id'],
+        surveyName: campaignRaw['@survey_name'],
+        customLabels: labelArray,
+        allowLeadUpdates: allowLeadUpdates
+    };
+}
+
 
 /**
  * example packet
@@ -3241,6 +3231,7 @@ LogoutRequest.prototype.formatJSON = function() {
 
     return JSON.stringify(msg);
 };
+
 
 var OffhookInitRequest = function() {
 
@@ -3641,6 +3632,12 @@ PreviewDialRequest.prototype.processResponse = function(notification) {
         var lead = leads[l];
         lead.requestId = lead.requestKey;
         lead.ani = lead.destination; // add ani prop since used in new call packet & update lead
+
+        // In case of a single lead returned, the XML converter to JSON will add lead as an object and not an array
+        //
+        if (!Array.isArray(notif.destinations.lead)) {
+            notif.destinations.lead = [notif.destinations.lead];
+        }
 
         // parse extra data correctly
         try {
@@ -4545,7 +4542,9 @@ ChatMessageRequest.prototype.formatJSON = function() {
  *      "account_id":{"#text":""},
  *      "from":{"#text":""},
  *      "message":{"#text":"hello"},
- *      "dts":{"#text":"2017-05-10 12:40:28"}
+ *      "dts":{"#text":"2017-05-10 12:40:28"},
+ *      "dequeue_agent_id":{"#text":"123"},
+ *      "whisper":{"#text":'TRUE'|'FALSE'"}
  *    }
  * }
  */
@@ -4561,6 +4560,7 @@ ChatMessageRequest.prototype.processResponse = function(response) {
         type: utils.getText(resp, 'type'),
         message: utils.getText(resp, 'message'),
         whisper: utils.getText(resp, 'whisper'),
+        dequeueAgentId: utils.getText(resp, 'dequeue_agent_id'),
         dts: dtsDate,
         mediaLinks :  utils.processResponseCollection(resp, "media_links", "link")
     };
@@ -5001,9 +5001,7 @@ ChatManualSmsRequest.prototype.formatJSON = function() {
 
 
 
-var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
-    this.uii = uii;
-    this.agentId = agentId;
+var MonitorChatRequest = function(monitorAgentId) {
     this.monitorAgentId = monitorAgentId;
 };
 
@@ -5016,7 +5014,6 @@ var MonitorChatRequest = function(uii, agentId, monitorAgentId) {
  *      "@type":"CHAT-MONITOR",
  *      "@message_id":"",
  *      "@response_to":"",
- *      "uii":{"#text":""},
  *      "agent_id":{"#text":""},
  *      "monitor_agent_id":{"#text":""}
  *    }
@@ -5029,9 +5026,6 @@ MonitorChatRequest.prototype.formatJSON = function() {
             "@type":MESSAGE_TYPES.MONITOR_CHAT,
             "@message_id":utils.getMessageId(),
             "@response_to":"",
-            "uii":{
-                "#text":utils.toString(this.uii)
-            },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
             },
@@ -5042,6 +5036,63 @@ MonitorChatRequest.prototype.formatJSON = function() {
     };
 
     return JSON.stringify(msg);
+};
+
+
+
+var StopMonitorChatRequest = function(monitorAgentId) {
+    this.monitorAgentId = monitorAgentId || "";
+};
+
+/*
+ * External Chat:
+ * Requests a termination of a chat monitor session for an agent
+ *
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":"CHAT-DROP-MONITORING-SESSION",
+ *      "@message_id":"",
+ *      "@response_to":"",
+ *      "agent_id":{"#text":""},
+ *      "monitor_agent_id":{"#text":""}
+ *    }
+ * }
+ */
+StopMonitorChatRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.STOP_MONITOR_CHAT,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "monitor_agent_id":{
+                "#text":utils.toString(this.monitorAgentId)
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+/*
+ * Process a CHAT-DROP-MONITORING-SESSION notification. Used to notify supervisor monitors that agent has logged out.
+ *
+ * {"ui_notification":{
+ *      "@message_id":"IQ10012016080217135001344",
+ *      "@response_to":"",
+ *      "@type":"CHAT-DROP-MONITORING-SESSION",
+ *      "monitored_agent_id":{"#text":"1"}
+ *    }
+ * }
+ */
+StopMonitorChatRequest.prototype.processResponse = function(data) {
+    var notif = data.ui_notification;
+
+    return ({ monitoredAgentId : utils.getText(notif, "monitored_agent_id") });
+
 };
 
 
@@ -5134,6 +5185,7 @@ var ChatClientReconnectNotification = function() {
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"}
+ *          "agent_id":{"#text":"1"}
  *      }
  *  }
  */
@@ -5145,10 +5197,47 @@ ChatClientReconnectNotification.prototype.processResponse = function(notificatio
         message : "Received CHAT-CLIENT-RECONNECT notification",
         status : "OK",
         accountId : utils.getText(notif, "account_id"),
-        uii : utils.getText(notif, "uii")
+        uii : utils.getText(notif, "uii"),
+        agentId : utils.getText(notif, "agent_id")
     };
 
 };
+
+var AddChatSessionNotification = function() {
+
+};
+
+/*
+ * This class is responsible for handling "ADD-CHAT-SESSION" packets from IntelliQueue.
+ *
+ * {
+ *   "ui_notification": {
+ *       "@message_id": "IQ982008082918151403727",
+ *       "@response_to": "",
+ *       "@type": "ADD-CHAT-SESSION",
+ *       "session_id": { "#text": "2" },
+ *       "uii": { "#text": "200808291814560000000900016558" },
+ *       "session_type": { "#text": "AGENT|MONITORING" },
+ *       "agent_id": { "#text": "1856" } // null unless monitor type,
+ *       "transcript": { }
+ *   }
+ *  }
+ */
+AddChatSessionNotification.prototype.processResponse = function(notification) {
+    var notif = notification.ui_notification;
+    var formattedResponse = utils.buildDefaultResponse(notification);
+
+    formattedResponse.status = "OK";
+    formattedResponse.message = "Received ADD-CHAT-SESSION notification";
+    formattedResponse.sessionId = utils.getText(notif, "session_id");
+    formattedResponse.uii = utils.getText(notif, "uii");
+    formattedResponse.sessionType = utils.getText(notif, "session_type");
+    formattedResponse.agentId = utils.getText(notif, "agent_id");
+    formattedResponse.transcript = utils.processResponseCollection(notification, 'ui_notification', 'transcript')[0];
+
+    return formattedResponse;
+};
+
 
 var ChatActiveNotification = function() {
 
@@ -5166,7 +5255,8 @@ var ChatActiveNotification = function() {
  *          "@destination":"IQ",
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
- *          "uii":{"#text":"201608161200240139000000000120"}
+ *          "uii":{"#text":"201608161200240139000000000120"},
+ *          "is_monitoring":{"#text":"TRUE"|"FALSE"}
  *      }
  *  }
  */
@@ -5177,7 +5267,8 @@ ChatActiveNotification.prototype.processResponse = function(notification) {
         message: "Received CHAT-ACTIVE notification",
         status: "OK",
         accountId: utils.getText(notif, "account_id"),
-        uii: utils.getText(notif, "uii")
+        uii: utils.getText(notif, "uii"),
+        isMonitoring: utils.getText(notif, "is_monitoring")
     };
 
 };
@@ -5235,7 +5326,8 @@ var ChatInactiveNotification = function() {
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"},
- *          "disposition_timeout":{"#text":"30"}
+ *          "disposition_timeout":{"#text":"30"},
+ *          "dequeue_agent_id":{"#text":"123"}
  *      }
  *  }
  */
@@ -5247,7 +5339,8 @@ ChatInactiveNotification.prototype.processResponse = function(notification) {
         status: "OK",
         accountId: utils.getText(notif, "account_id"),
         uii: utils.getText(notif, "uii"),
-        dispositionTimeout: utils.getText(notif, "disposition_timeout")
+        dispositionTimeout: utils.getText(notif, "disposition_timeout"),
+        dequeueAgentId: utils.getText(notif, "dequeue_agent_id")
     };
 
 };
@@ -5316,6 +5409,7 @@ var ChatTypingNotification = function() {
  *          "account_id":{"#text":"99999999"},
  *          "from":{"#text":""},
  *          "message":{"#text":"this is the message before actual send"}
+ *          "dequeue_agent_id":{"#text":"123"}
  *      }
  *  }
  */
@@ -5329,7 +5423,8 @@ ChatTypingNotification.prototype.processResponse = function(notification) {
         uii: utils.getText(notif, "uii"),
         from: utils.getText(notif, "from"),
         type: utils.getText(notif, "type"),
-        pendingMessage: utils.getText(notif, "message")
+        pendingMessage: utils.getText(notif, "message"),
+        dequeueAgentId: utils.getText(notif, "dequeue_agent_id")
     };
 
 };
@@ -5366,6 +5461,8 @@ var NewChatNotification = function() {
  *          "script_id":{"#text":""},
  *          "script_version":{"#text":""},
  *          "idle_timeout":{"#text":""},
+ *          "is_monitoring":{#text":"TRUE"|"FALSE"},
+ *          "monitored_agent_id":{"#text":"123"| ""} <-- only populated if is_monitoring == TRUE
  *          "requeue_shortcuts":{
  *              "requeue_shortcut":{
  *                  "@chat_queue_id":"2",
@@ -5386,9 +5483,9 @@ var NewChatNotification = function() {
  *          }
  *          "transcript":{
  *              "message":[
- *                  { "@from":"system", "@type":"SYSTEM", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
- *                  { "@from":"dlbooks", "@type":"AGENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
- *                  { "@from":"user1", "@type":"CLIENT", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
+ *                  { "@from":"system", "@type":"SYSTEM", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"User1 connected"},
+ *                  { "@from":"dlbooks", "@type":"AGENT", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hello"},
+ *                  { "@from":"user1", "@type":"CLIENT", "@whisper":"FALSE", "@dts":"yyyy-MM-dd HH:mm:ss", "#text":"Hi"}
  *              ]
  *          },
  *          "json_baggage":{"#text":"json_string_form_data"}, <--- pre-form chat data
@@ -5420,6 +5517,8 @@ NewChatNotification.prototype.processResponse = function(notification) {
         scriptId: utils.getText(notif,'script_id'),
         scriptVersion: utils.getText(notif,'script_version'),
         idleTimeout: utils.getText(notif,'idle_timeout'),
+        isMonitoring: utils.getText(notif,'is_monitoring'),
+        monitoredAgentId: utils.getText(notif,'monitored_agent_id'),
         preChatData: utils.getText(notif,'json_baggage')
     };
 
@@ -5555,12 +5654,17 @@ var AgentStats = function() {
 AgentStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats.agent;
     var agentStats = [];
-    if(resp && Array.isArray(resp)) {
-        for(var i = 0; i < resp.length; i++){
-            var a = {
+
+    if (!Array.isArray(resp)) {
+        resp = [resp];
+    }
+
+    try {
+        for (var i = 0; i < resp.length; i++) {
+            agentStats.push({
                 agentLoginType: resp[i]["@alt"],
                 agentType: resp[i]["@atype"],
-                avgTalkTime:resp[i]["@avgtt"],
+                avgTalkTime: resp[i]["@avgtt"],
                 calls: resp[i]["@calls"],
                 isDequeueAgent: resp[i]["@da"],
                 defaultRoute: resp[i]["@droute"],
@@ -5583,42 +5687,9 @@ AgentStats.prototype.processResponse = function(stats) {
                 uii: resp[i]["@uii"],
                 utilization: resp[i]["@util"],
                 callDuration: resp[i]["@call_duration"]
-            };
-            agentStats.push(a);
+            });
         }
-    }else {
-        try {
-            var agent = {
-                agentLoginType: resp["@alt"],
-                agentType: resp["@atype"],
-                avgTalkTime: resp["@avgtt"],
-                calls: resp["@calls"],
-                isDequeueAgent: resp["@da"],
-                defaultRoute: resp["@droute"],
-                firstName: resp["@f"],
-                queueDesc: resp["@gdesc"],
-                queueName: resp["@gname"],
-                agentId: resp["@id"],
-                lastName: resp["@l"],
-                loginDuration: resp["@ldur"],
-                loginType: resp["@ltype"],
-                offHook: resp["@oh"],
-                pendingDisp: resp["@pd"],
-                presented: resp["@pres"],
-                rna: resp["@rna"],
-                stateDuration: resp["@sdur"],
-                skillProfileName: resp["@sp"],
-                agentState: resp["@state"],
-                totalTalkTime: resp["@ttt"],
-                username: resp["@u"],
-                uii: resp["@uii"],
-                utilization: resp["@util"],
-                callDuration: resp["@call_duration"]
-            };
-            agentStats.push(agent);
-        }catch(e){
-            // do nothing for now
-        }
+    } catch(e) {
 
     }
 
@@ -5722,67 +5793,43 @@ CampaignStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var campaigns = [];
-    var campRaw = {};
-    var camp = {};
+    var campRaw = null;
 
-    if(Array.isArray(resp.campaign)){
-        for(var c=0; c< resp.campaign.length; c++){
-            campRaw = resp.campaign[c];
-            if(campRaw){
-                camp = {
-                    active:campRaw["@a"],
-                    abandon:campRaw["@aba"],
-                    answer:campRaw["@an"],
-                    available:campRaw["@av"],
-                    busy:campRaw["@b"],
-                    complete:campRaw["@c"],
-                    error:campRaw["@e"],
-                    fax:campRaw["@f"],
-                    campaignId:campRaw["@id"],
-                    intercept:campRaw["@int"],
-                    machine:campRaw["@m"],
-                    noanswer:campRaw["@na"],
-                    campaignName:campRaw["@name"],
-                    pending:campRaw["@p"],
-                    ready:campRaw["@r"],
-                    staffed:campRaw["@s"],
-                    totalConnects:campRaw["@tc"],
-                    totalTalkTime:campRaw["@ttt"]
-                };
-            }
+    if (!Array.isArray(resp.campaign)) {
+        resp.campaign = [resp.campaign];
+    }
 
-            campaigns.push(camp);
-        }
-    }else{
-        campRaw = resp.campaign;
-        if(campRaw){
-            camp = {
-                active:campRaw["@a"],
-                abandon:campRaw["@aba"],
-                answer:campRaw["@an"],
-                available:campRaw["@av"],
-                busy:campRaw["@b"],
-                complete:campRaw["@c"],
-                error:campRaw["@e"],
-                fax:campRaw["@f"],
-                campaignId:campRaw["@id"],
-                intercept:campRaw["@int"],
-                machine:campRaw["@m"],
-                noanswer:campRaw["@na"],
-                campaignName:campRaw["@name"],
-                pending:campRaw["@p"],
-                ready:campRaw["@r"],
-                staffed:campRaw["@s"],
-                totalConnects:campRaw["@tc"],
-                totalTalkTime:campRaw["@ttt"]
-            };
+    for(var c = 0; c < resp.campaign.length; c++){
+        campRaw = resp.campaign[c];
+
+        if (campRaw == null) {
+            continue;
         }
 
-        campaigns.push(camp);
+        campaigns.push({
+            active:campRaw["@a"],
+            abandon:campRaw["@aba"],
+            answer:campRaw["@an"],
+            available:campRaw["@av"],
+            busy:campRaw["@b"],
+            complete:campRaw["@c"],
+            error:campRaw["@e"],
+            fax:campRaw["@f"],
+            campaignId:campRaw["@id"],
+            intercept:campRaw["@int"],
+            machine:campRaw["@m"],
+            noanswer:campRaw["@na"],
+            campaignName:campRaw["@name"],
+            pending:campRaw["@p"],
+            ready:campRaw["@r"],
+            staffed:campRaw["@s"],
+            totalConnects:campRaw["@tc"],
+            totalTalkTime:campRaw["@ttt"]
+        });
     }
 
     var campaignStats = {
-        type:resp["@type"],
+        type: resp["@type"],
         campaigns: campaigns,
         totals:totals
     };
@@ -5924,79 +5971,46 @@ QueueStats.prototype.processResponse = function(stats) {
     var resp = stats.ui_stats;
     var totals = utils.processResponseCollection(stats,"ui_stats","totals")[0];
     var queues = [];
-    var gate = {};
     var gateRaw = {};
 
-    if(Array.isArray(resp.gate)){
-        for(var c=0; c< resp.gate.length; c++){
-            gateRaw = resp.gate[c];
-            if(gateRaw){
-                gate = {
-                    abandon:gateRaw["@aba"],
-                    active:gateRaw["@active"],
-                    answer:gateRaw["@ans"],
-                    asa:gateRaw["@asa"],
-                    available:gateRaw["@avail"],
-                    avgAbandon:gateRaw["@avga"],
-                    avgQueue:gateRaw["@avgq"],
-                    avgTalk:gateRaw["@avgt"],
-                    deflected:gateRaw["@def"],
-                    queueId:gateRaw["@id"],
-                    inQueue:gateRaw["@inq"],
-                    longCall:gateRaw["@long_c"],
-                    longestInQueue:gateRaw["@longq"],
-                    queueName:gateRaw["@name"],
-                    presented:gateRaw["@pres"],
-                    routing:gateRaw["@route"],
-                    shortAbandon:gateRaw["@short_aba"],
-                    shortCall:gateRaw["@short_c"],
-                    sla:gateRaw["@sla"],
-                    slaPass:gateRaw["@sla_p"],
-                    slaFail:gateRaw["@sla_f"],
-                    staffed:gateRaw["@staff"],
-                    tAbandonTime:gateRaw["@t_aba"],
-                    tQueueTime:gateRaw["@t_q"],
-                    tSpeedOfAnswer:gateRaw["@t_soa"],
-                    utilization:gateRaw["@util"]
-                };
-            }
+    if (!Array.isArray(resp.gate)) {
+        resp.gate = [resp.gate];
+    }
 
-            queues.push(gate);
-        }
-    }else{
-        gateRaw = resp.gate;
-        if(gateRaw){
-            gate = {
-                abandon:gateRaw["@aba"],
-                active:gateRaw["@active"],
-                answer:gateRaw["@ans"],
-                asa:gateRaw["@asa"],
-                available:gateRaw["@avail"],
-                avgAbandon:gateRaw["@avga"],
-                avgQueue:gateRaw["@avgq"],
-                avgTalk:gateRaw["@avgt"],
-                deflected:gateRaw["@def"],
-                queueId:gateRaw["@id"],
-                inQueue:gateRaw["@inq"],
-                longCall:gateRaw["@long_c"],
-                longestInQueue:gateRaw["@longq"],
-                queueName:gateRaw["@name"],
-                presented:gateRaw["@pres"],
-                routing:gateRaw["@route"],
-                shortAbandon:gateRaw["@short_aba"],
-                shortCall:gateRaw["@short_c"],
-                sla:gateRaw["@sla"],
-                slaPass:gateRaw["@sla_p"],
-                slaFail:gateRaw["@sla_f"],
-                staffed:gateRaw["@staff"],
-                tAbandonTime:gateRaw["@t_aba"],
-                tQueueTime:gateRaw["@t_q"],
-                tSpeedOfAnswer:gateRaw["@t_soa"],
-                utilization:gateRaw["@util"]
-            };
+    for(var c = 0; c < resp.gate.length; c++) {
+        gateRaw = resp.gate[c];
+        if (gateRaw == null) {
+            continue;
         }
 
-        queues.push(gate);
+        queues.push({
+            abandon: gateRaw["@aba"],
+            active: gateRaw["@active"],
+            answer: gateRaw["@ans"],
+            asa: gateRaw["@asa"],
+            available: gateRaw["@avail"],
+            avgAbandon: gateRaw["@avga"],
+            avgQueue: gateRaw["@avgq"],
+            avgTalk: gateRaw["@avgt"],
+            deflected: gateRaw["@def"],
+            queueId: gateRaw["@id"],
+            inQueue: gateRaw["@inq"],
+            longCall: gateRaw["@long_c"],
+            longestInQueue: gateRaw["@longq"],
+            queueName: gateRaw["@name"],
+            presented: gateRaw["@pres"],
+            routing: gateRaw["@route"],
+            shortAbandon: gateRaw["@short_aba"],
+            shortCall: gateRaw["@short_c"],
+            sla: gateRaw["@sla"],
+            slaPass: gateRaw["@sla_p"],
+            slaFail: gateRaw["@sla_f"],
+            staffed: gateRaw["@staff"],
+            tAbandonTime: gateRaw["@t_aba"],
+            tQueueTime: gateRaw["@t_q"],
+            tSpeedOfAnswer: gateRaw["@t_soa"],
+            utilization: gateRaw["@util"]
+        });
     }
 
     var queueStats = {
@@ -6691,6 +6705,16 @@ var utils = {
                 var chatCancelledResponse = chatCancelled.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.CHAT_CANCELLED, chatCancelledResponse);
                 break;
+            case MESSAGE_TYPES.CHAT_ADD_SESSION:
+                var addChatSession = new AddChatSessionNotification();
+                var addChatSessionResponse = addChatSession.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_ADD_SESSION, addChatSessionResponse);
+                break;
+            case MESSAGE_TYPES.STOP_MONITOR_CHAT:
+                var stopChatMonitor = new StopMonitorChatRequest();
+                var stopChatMonitorResponse = stopChatMonitor.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.CHAT_STOP_MONITOR, stopChatMonitorResponse);
+                break;
             case MESSAGE_TYPES.DIRECT_AGENT_ROUTE:
                 var directAgentTransfer = new DirectAgentTransferNotification();
                 var directAgentTransferResponse = directAgentTransfer.processResponse(data);
@@ -6906,125 +6930,130 @@ var utils = {
      *   }
      */
 
-    processResponseCollection: function(response, groupProp, itemProp, textName) {
-        var items = [];
-        var item = {};
-        var itemsRaw = [];
-        var textName = textName || "text";
+    processResponseCollection: function (response, groupProp, itemProp, textName) {
+        textName = textName || "text";
 
-        if(response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined'){
-            itemsRaw = response[groupProp][itemProp];
+        if (response[groupProp] && typeof response[groupProp][itemProp] !== 'undefined') {
+            var itemsRaw = response[groupProp][itemProp];
+            return this._processItems(itemsRaw, textName);
+        } else {
+            return [];
         }
-
-        if(Array.isArray(itemsRaw)) {
-            // multiple items
-            for (var i = 0; i < itemsRaw.length; i++) {
-                var formattedKey = "";
-                for(var key in itemsRaw[i]){
-                    if(key.match(/^#/)){
-                        // dealing with text property
-                        formattedKey = textName;
-                    }else{
-                        // dealing with attribute
-                        formattedKey = key.replace(/@/, ''); // remove leading '@'
-                        formattedKey = formattedKey.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); }); // convert to camelCase
-                    }
-
-                    if(typeof itemsRaw[i][key] === "object"){
-                        if(Object.keys(itemsRaw[i][key]).length === 1 && itemsRaw[i][key]['#text']) {
-                            // only one property - #text attribute
-                            item[formattedKey] = itemsRaw[i][key]['#text'];
-                        }else if(Object.keys(itemsRaw[i][key]).length === 0){
-                            // dealing with empty property
-                            item[formattedKey] = "";
-                        }else {
-                            if(Array.isArray(itemsRaw[key]) || Object.keys(itemsRaw[i][key]).length > 1) {
-                                //console.error('notify ross, array code has been hit', itemsRaw.toString(), key, groupProp, itemProp, textName);
-                                var newIt = [];
-                                newIt = utils.processResponseCollection(response[groupProp], itemProp, key, textName);
-                                if(formattedKey.substr(formattedKey.length - 1) !== 's') {
-                                    item[formattedKey + 's'] = newIt;
-                                } else {
-                                    item[formattedKey] = newIt;
-                                }
-                            } else {
-                                var newItemProp = Object.keys(itemsRaw[i][key])[0];
-                                var newItems = [];
-                                newItems = utils.processResponseCollection(itemsRaw[i], key, newItemProp);
-                                item[formattedKey] = newItems;
-                            }
-                        }
-                    }else{
-                        // can't convert 0 | 1 to boolean since some are counters
-                        if(itemsRaw[i][key].toUpperCase() === "TRUE"){
-                            item[formattedKey] = true;
-                        }else if(itemsRaw[i][key].toUpperCase() === "FALSE"){
-                            item[formattedKey] = false;
-                        }else{
-                            item[formattedKey] = itemsRaw[i][key];
-                        }
-                    }
-                }
-
-                items.push(item);
-                item = {};
-            }
-        }else{
-            // single item
-            var formattedProp = "";
-            for(var prop in itemsRaw){
-                if(prop.match(/^#/)) {
-                    // dealing with text property
-                    formattedProp = textName;
-                }else{
-                    // dealing with attribute
-                    formattedProp = prop.replace(/@/, ''); // remove leading '@'
-                    formattedProp = formattedProp.replace(/_([a-z])/g, function (g) {
-                        return g[1].toUpperCase();
-                    }); // convert to camelCase
-                }
-
-                if(typeof itemsRaw[prop] === "object"){
-                    if(itemsRaw[prop]['#text'] && Object.keys(itemsRaw[prop]).length === 1) {
-                        // dealing only with #text element
-                        item[formattedProp] = itemsRaw[prop]['#text'];
-                    }else if(Object.keys(itemsRaw[prop]).length === 0){
-                        // dealing with empty property
-                        item[formattedProp] = "";
-                    }else{
-                        // make recursive call
-                        if(Array.isArray(itemsRaw[prop]) || Object.keys(itemsRaw[prop]).length > 1){
-                            var newIt = [];
-                            newIt = utils.processResponseCollection(response[groupProp], itemProp, prop, textName);
-                            if(formattedProp.substr(formattedProp.length - 1) !== 's'){
-                                item[formattedProp + 's'] = newIt;
-                            }else{
-                                item[formattedProp] = newIt;
-                            }
-                        }else {
-                            var newProp = Object.keys(itemsRaw[prop])[0];
-                            var newItms = [];
-                            newItms = utils.processResponseCollection(itemsRaw, prop, newProp);
-                            item[formattedProp] = newItms;
-                        }
-                    }
-                }else{
-                    // can't convert 0 | 1 to boolean since some are counters
-                    if(itemsRaw[prop].toUpperCase() === "TRUE"){
-                        item[formattedProp] = true;
-                    }else if(itemsRaw[prop].toUpperCase() === "FALSE"){
-                        item[formattedProp] = false;
-                    }else {
-                        item[formattedProp] = itemsRaw[prop];
-                    }
-                }
-            }
-
-            items.push(item);
-        }
-
-        return items;
     },
+
+
+    _processItems: function (itemsRaw, textName) {
+
+        var result = [];
+        if (typeof itemsRaw === "undefined" || itemsRaw === null) {
+            return result;
+        }
+
+        if (!Array.isArray(itemsRaw)) {
+            itemsRaw = [itemsRaw];
+        }
+
+        for (var i = 0; i < itemsRaw.length; i++) {
+            result.push(this._processItem(itemsRaw[i], textName));
+        }
+
+        return result;
+    },
+
+
+    _processItem: function (itemRaw, textName) {
+
+        /*
+         * Be sure that the item we are processing is not a #text node only, where the "texName" is also "text". If this
+         * is the case, it means there's a default value that needs to get converted and isn't going to be mapped to a custom
+         * field.  Therefore, we treat it as just a single value, not an object.
+         */
+        if (textName === "text" && Object.keys(itemRaw).length === 1 && itemRaw['#text'] != null) {
+            return this._tryConvertValueToBoolean(itemRaw["#text"]);
+        }
+
+        // Convert the raw item to a new item, with keys and values processed below
+        //
+        var item = {};
+        for (var key in itemRaw) {
+            var formattedKey = this._convertToFormattedKey(key, textName);
+
+            var value = itemRaw[key];
+
+            // If we aren't an object, set the value and continue to next key
+            if (typeof value !== "object") {
+                item[formattedKey] = this._tryConvertValueToBoolean(value);
+                continue;
+            }
+
+            if ((Array.isArray(value) && value.length === 0) || Object.keys(value).length === 0) {
+
+                // Empty property
+                item[formattedKey] = "";
+
+            } else if (Array.isArray(value) || Object.keys(value).length > 1) {
+
+                // Array or object with more than one key
+                formattedKey = this._convertKeyForCollection(formattedKey);
+                item[formattedKey] = this._processItems(value, textName);
+
+            } else if (Object.keys(value).length === 1 && value['#text'] != null) {
+
+                // One property of type "#text"
+                item[formattedKey] = value['#text'];
+
+            } else {
+
+                // One property not with key "#text"
+                item[formattedKey] = this._processItems(value[Object.keys(value)[0]], "text");
+            }
+        }
+
+        return item;
+    },
+
+
+    _convertToFormattedKey: function (key, textName) {
+        var formattedKey;
+        if (key.match(/^#/)) {
+            // dealing with text property
+            formattedKey = textName;
+        } else {
+            // dealing with attribute
+            formattedKey = key.replace(/@/, ''); // remove leading '@'
+            formattedKey = formattedKey.replace(/_([a-z])/g, function (g) {
+                return g[1].toUpperCase();
+            }); // convert to camelCase
+        }
+
+        return formattedKey;
+    },
+
+
+    _convertKeyForCollection: function (formattedKey) {
+        if (formattedKey.substr(formattedKey.length - 1) !== 's') {
+            return formattedKey + 's';
+        }
+
+        return formattedKey;
+    },
+
+
+    _tryConvertValueToBoolean: function (value) {
+        if (value === null) {
+            return null;
+        }
+
+        // can't convert 0 | 1 to boolean since some are counters
+        if (value.toUpperCase() === "TRUE") {
+            return true;
+        } else if (value.toUpperCase() === "FALSE") {
+            return false;
+        } else {
+            return value;
+        }
+    },
+
 
     fireCallback: function(instance, type, response) {
         response = response || "";
@@ -7320,6 +7349,8 @@ const CALLBACK_TYPES = {
     "CHAT_MESSAGE":"chatMessageNotification",       // external chat
     "CHAT_NEW":"chatNewNotification",               // external chat
     "CHAT_LIST":"chatListResponse",                 // external chat
+    "CHAT_ADD_SESSION":"addChatSessionNotification",// external chat
+    "CHAT_STOP_MONITOR":"stopAgentChatMonitorNotification",// external chat
     "CHAT_CLIENT_RECONNECT" : "chatClientReconnectNotification",
     "CHAT_STATE":"chatStateResponse",               // external chat
     "CHAT_ROOM_STATE":"chatRoomStateResponse",
@@ -7397,6 +7428,8 @@ const MESSAGE_TYPES = {
     "CHAT_STATE":"CHAT-STATE",                              // external chat
     "CHAT_TYPING":"CHAT-TYPING",                            // external chat
     "MONITOR_CHAT":"CHAT-MONITOR",                          // external chat
+    "CHAT_ADD_SESSION":"ADD-CHAT-SESSION",                  // external chat
+    "STOP_MONITOR_CHAT":"CHAT-DROP-MONITORING-SESSION",     // external chat
     "LEAVE_CHAT":"CHAT-DROP-SESSION",                       // external chat
     "CHAT_LIST":"CHAT-LIST",                                // external chat
     "CHAT_AGENT_END" : "CHAT-END",                          // external chat
@@ -9279,13 +9312,32 @@ function initAgentLibraryChat (context) {
     /**
      * Request to add a session on an existing chat
      * @memberof AgentLibrary.Chat
-     * @param {string} uii Unique identifier for the chat session
-     * @param {string} agentId Current logged in agent id
-     * @param {string} monitorAgentId Agent id handling this chat
+     * @param {string} monitorAgentId Agent id handling this chat, the agent being monitored
      */
-    AgentLibrary.prototype.monitorChat = function(uii, agentId, monitorAgentId){
-        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(uii, agentId, monitorAgentId);
+    AgentLibrary.prototype.monitorAgentChats = function(monitorAgentId){
+        UIModel.getInstance().monitorChatRequest = new MonitorChatRequest(monitorAgentId);
         var msg = UIModel.getInstance().monitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to stop a chat monitoring session for a specific agent
+     * @memberof AgentLibrary.Chat
+     * @param {string} monitorAgentId Agent id of agent being monitored
+     */
+    AgentLibrary.prototype.stopMonitoringChatsByAgent = function(monitorAgentId){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest(monitorAgentId);
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
+        utils.sendMessage(this, msg);
+    };
+
+    /**
+     * Request to drop all chat monitoring sessions for the logged in agent
+     * @memberof AgentLibrary.Chat
+     */
+    AgentLibrary.prototype.stopMonitoringAllAgentChats = function(){
+        UIModel.getInstance().stopMonitorChatRequest = new StopMonitorChatRequest();
+        var msg = UIModel.getInstance().stopMonitorChatRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
 
