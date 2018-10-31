@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-10-25 */
+/*! cf-agent-library - v2.1.10 - 2018-10-30 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -5185,6 +5185,7 @@ var ChatClientReconnectNotification = function() {
  *          "@response_to":"",
  *          "account_id":{"#text":"99999999"},
  *          "uii":{"#text":"201608161200240139000000000120"}
+ *          "agent_id":{"#text":"1"}
  *      }
  *  }
  */
@@ -5196,7 +5197,8 @@ ChatClientReconnectNotification.prototype.processResponse = function(notificatio
         message : "Received CHAT-CLIENT-RECONNECT notification",
         status : "OK",
         accountId : utils.getText(notif, "account_id"),
-        uii : utils.getText(notif, "uii")
+        uii : utils.getText(notif, "uii"),
+        agentId : utils.getText(notif, "agent_id")
     };
 
 };

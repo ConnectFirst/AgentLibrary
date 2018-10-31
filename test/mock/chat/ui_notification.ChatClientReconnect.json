@@ -3,6 +3,7 @@
     "@message_id":"IQ10012016081611595000289",
     "@type":"CHAT-CLIENT-RECONNECT",
     "uii":{"#text":"201608161200240139000000000120"},
-    "account_id":{"#text":"99999999"}
+    "account_id":{"#text":"99999999"},
+    "agent_id":{"#text":"1"}
   }
 }
