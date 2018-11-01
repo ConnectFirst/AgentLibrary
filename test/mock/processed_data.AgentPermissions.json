@@ -26,6 +26,7 @@
   "requireFetchedLeadsCalled": false,
   "showLeadHistory": true,
   "allowAutoAnswer": false,
+  "defaultAutoAnswerOn":false,
   "allowAgentStats" : true,
   "allowCampaignStats" : true,
   "allowGateStats" : true,

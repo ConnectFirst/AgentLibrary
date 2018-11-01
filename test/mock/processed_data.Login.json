@@ -72,7 +72,8 @@
     "updateLoginMode": false,
     "wasMonitoring": false,
     "disableSupervisorMonitoring": "0",
-    "allowAutoAnswer": "0"
+    "allowAutoAnswer": "0",
+    "defaultAutoAnswerOn" : "0"
   },
   "agentPermissions": {
     "allowBlended": true,
