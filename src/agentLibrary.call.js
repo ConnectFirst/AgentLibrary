@@ -90,13 +90,16 @@ function initAgentLibraryCall (context) {
      * @param {string} [requestId=null] The request id associated with a preview fetched lead (only for Outbound Dispositions).
      */
     AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId){
-        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId);
-        var msg = UIModel.getInstance().dispositionRequest.formatJSON();
+        var model = UIModel.getInstance();
+        model.dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId);
+        var msg = model.dispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
 
         // cancel ping call timer
-        clearInterval(UIModel.getInstance().pingIntervalId);
-        UIModel.getInstance().pingIntervalId = null;
+        if(model.pingIntervalId){
+            clearInterval(model.pingIntervalId);
+            model.pingIntervalId = null;
+        }
     };
 
     /**

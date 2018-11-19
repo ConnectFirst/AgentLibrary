@@ -279,7 +279,9 @@ var utils = {
                 }else{
                     if(generic.messageCode === "001") {
                         // caller hangup, stop pinging call
-                        clearInterval(UIModel.getInstance().pingIntervalId);
+                        if(UIModel.getInstance().pingIntervalId){
+                            clearInterval(UIModel.getInstance().pingIntervalId);
+                        }
                     }
 
                     // no corresponding request, just fire generic notification callback
