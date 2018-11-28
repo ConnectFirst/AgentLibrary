@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-11-01 */
+/*! cf-agent-library - v2.1.10 - 2018-11-19 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -398,6 +398,13 @@ EndCallNotification.prototype.processResponse = function(notification) {
         model.agentSettings.updateDGFromAdminUI = false;
     }
 
+
+    // start ping call interval timer, sends message every 30 seconds
+    // if this is not a manual outdial and we are not suppressing disposition pop
+    if(model.currentCall.outdialDispositions && model.currentCall.outdialDispositions.dispositions && model.currentCall.outdialDispositions.dispositions.length > 0 && model.currentCall.surveyPopType !== "SUPPRESS"){
+        model.pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
+    }
+
     var formattedResponse = {
         message: "End Call Notification Received.",
         detail: "",
@@ -737,12 +744,6 @@ NewCallNotification.prototype.processResponse = function(notification) {
     // todo handle scripting??
 
     model.currentCall = newCall;
-
-    // start ping call interval timer, sends message every 30 seconds
-    // if this is not a manual outdial and we are not suppressing disposition pop
-    if(newCall.outdialDispositions && newCall.outdialDispositions.dispositions && newCall.outdialDispositions.dispositions.length > 0 && newCall.surveyPopType !== "SUPPRESS"){
-        UIModel.getInstance().pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
-    }
 
     return newCall;
 };
@@ -6619,7 +6620,9 @@ var utils = {
                 }else{
                     if(generic.messageCode === "001") {
                         // caller hangup, stop pinging call
-                        clearInterval(UIModel.getInstance().pingIntervalId);
+                        if(UIModel.getInstance().pingIntervalId){
+                            clearInterval(UIModel.getInstance().pingIntervalId);
+                        }
                     }
 
                     // no corresponding request, just fire generic notification callback
@@ -8672,13 +8675,16 @@ function initAgentLibraryCall (context) {
      * @param {string} [requestId=null] The request id associated with a preview fetched lead (only for Outbound Dispositions).
      */
     AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId){
-        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId);
-        var msg = UIModel.getInstance().dispositionRequest.formatJSON();
+        var model = UIModel.getInstance();
+        model.dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId);
+        var msg = model.dispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
 
         // cancel ping call timer
-        clearInterval(UIModel.getInstance().pingIntervalId);
-        UIModel.getInstance().pingIntervalId = null;
+        if(model.pingIntervalId){
+            clearInterval(model.pingIntervalId);
+            model.pingIntervalId = null;
+        }
     };
 
     /**

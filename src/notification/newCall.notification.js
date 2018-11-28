@@ -236,12 +236,6 @@ NewCallNotification.prototype.processResponse = function(notification) {
 
     model.currentCall = newCall;
 
-    // start ping call interval timer, sends message every 30 seconds
-    // if this is not a manual outdial and we are not suppressing disposition pop
-    if(newCall.outdialDispositions && newCall.outdialDispositions.dispositions && newCall.outdialDispositions.dispositions.length > 0 && newCall.surveyPopType !== "SUPPRESS"){
-        UIModel.getInstance().pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
-    }
-
     return newCall;
 };
 

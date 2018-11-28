@@ -56,6 +56,13 @@ EndCallNotification.prototype.processResponse = function(notification) {
         model.agentSettings.updateDGFromAdminUI = false;
     }
 
+
+    // start ping call interval timer, sends message every 30 seconds
+    // if this is not a manual outdial and we are not suppressing disposition pop
+    if(model.currentCall.outdialDispositions && model.currentCall.outdialDispositions.dispositions && model.currentCall.outdialDispositions.dispositions.length > 0 && model.currentCall.surveyPopType !== "SUPPRESS"){
+        model.pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
+    }
+
     var formattedResponse = {
         message: "End Call Notification Received.",
         detail: "",
