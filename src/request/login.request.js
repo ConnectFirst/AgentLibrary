@@ -202,6 +202,7 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
             model.agentPermissions.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring') === "1";
             model.agentPermissions.allowAutoAnswer = utils.getText(resp, 'allow_auto_answer') === "1";
+            model.agentPermissions.defaultAutoAnswerOn = utils.getText(resp, 'default_auto_answer_on') === "1";
             model.agentPermissions.allowHistoricalDialing = utils.getText(resp, 'allow_historical_dialing') === "1";
             model.agentPermissions.allowAgentStats = utils.getText(resp, 'allow_agent_stats') === "1";
             model.agentPermissions.allowCampaignStats = utils.getText(resp, 'allow_camp_stats') === "1";
