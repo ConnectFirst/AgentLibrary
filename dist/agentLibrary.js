@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-11-19 */
+/*! cf-agent-library - v2.1.10 - 2018-11-30 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -56,20 +56,42 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     var sessionType = utils.getText(notif, "session_type"),
         allowControl = utils.getText(notif, "allow_control"),
         sessionId = utils.getText(notif, "session_id"),
-        uii = utils.getText(notif, "uii");
-    if(sessionId !== '1' && sessionAgentId !== model.agentSettings.agentId && allowControl) {
-        if(sessionType === 'OUTBOUND' || sessionType === 'AGENT') {
-            var destination = utils.getText(notif, "phone");
-            if(sessionType === 'AGENT' || sessionAgentId !== '') {
-                destination = utils.getText(notif, "agent_name");
-            }
+        uii = utils.getText(notif, "uii"),
+        isMonitoring = model.currentCall.isMonitoring,
+        monitoringType = model.currentCall.monitoringType;
 
-            model.transferSessions[sessionId] = {
-                sessionId: sessionId,
-                destination: destination,
-                uii: uii
-            };
+
+    var isBargeInMonitor = isMonitoring && monitoringType === 'FULL',
+        notCurrentAgent = sessionAgentId !== model.agentSettings.agentId,
+        notSessionOne = sessionId !== '1',
+        shouldTrackSession = false;
+
+    if(notCurrentAgent) {
+        if(isBargeInMonitor) {
+            shouldTrackSession = true;
+
+        } else if(notSessionOne && allowControl) {
+            if(sessionType === 'OUTBOUND' || sessionType === 'AGENT') {
+                shouldTrackSession = true;
+
+            }
         }
+    }
+
+    if(shouldTrackSession) {
+        var destination = utils.getText(notif, "phone"),
+            isAgent = false;
+        if(sessionType === 'AGENT' || sessionAgentId !== '') {
+            destination = utils.getText(notif, "agent_name");
+            isAgent = true;
+        }
+
+        model.transferSessions[sessionId] = {
+            sessionId: sessionId,
+            destination: destination,
+            uii: uii,
+            isAgent: isAgent
+        };
     }
 
     // if agent session, set on call status
@@ -642,6 +664,10 @@ NewCallNotification.prototype.processResponse = function(notification) {
         requeueType: utils.getText(notif,'requeue_type'),
         hangupOnDisposition: utils.getText(notif,'hangup_on_disposition')
     };
+
+    if(newCall.isMonitoring) {
+        newCall.monitoringType = utils.getText(notif,'monitoring_type');    // FULL, COACHING, MONITOR
+    }
 
     // set collection values
     newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
