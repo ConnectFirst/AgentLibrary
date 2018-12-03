@@ -57,11 +57,11 @@ AddSessionNotification.prototype.processResponse = function(notification) {
         notSessionOne = sessionId !== '1',
         shouldTrackSession = false;
 
-    if(notCurrentAgent) {
+    if(notSessionOne && notCurrentAgent) {
         if(isBargeInMonitor) {
             shouldTrackSession = true;
 
-        } else if(notSessionOne && allowControl) {
+        } else if(allowControl) {
             if(sessionType === 'OUTBOUND' || sessionType === 'AGENT') {
                 shouldTrackSession = true;
 
@@ -70,18 +70,16 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     }
 
     if(shouldTrackSession) {
-        var destination = utils.getText(notif, "phone"),
-            isAgent = false;
+        var destination = utils.getText(notif, "phone");
+
         if(sessionType === 'AGENT' || sessionAgentId !== '') {
             destination = utils.getText(notif, "agent_name");
-            isAgent = true;
         }
 
         model.transferSessions[sessionId] = {
             sessionId: sessionId,
             destination: destination,
-            uii: uii,
-            isAgent: isAgent
+            uii: uii
         };
     }
 

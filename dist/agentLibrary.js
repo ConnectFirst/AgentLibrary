@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-11-30 */
+/*! cf-agent-library - v2.1.10 - 2018-12-03 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -66,11 +66,11 @@ AddSessionNotification.prototype.processResponse = function(notification) {
         notSessionOne = sessionId !== '1',
         shouldTrackSession = false;
 
-    if(notCurrentAgent) {
+    if(notSessionOne && notCurrentAgent) {
         if(isBargeInMonitor) {
             shouldTrackSession = true;
 
-        } else if(notSessionOne && allowControl) {
+        } else if(allowControl) {
             if(sessionType === 'OUTBOUND' || sessionType === 'AGENT') {
                 shouldTrackSession = true;
 
@@ -79,18 +79,16 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     }
 
     if(shouldTrackSession) {
-        var destination = utils.getText(notif, "phone"),
-            isAgent = false;
+        var destination = utils.getText(notif, "phone");
+
         if(sessionType === 'AGENT' || sessionAgentId !== '') {
             destination = utils.getText(notif, "agent_name");
-            isAgent = true;
         }
 
         model.transferSessions[sessionId] = {
             sessionId: sessionId,
             destination: destination,
-            uii: uii,
-            isAgent: isAgent
+            uii: uii
         };
     }
 
