@@ -151,8 +151,8 @@ function initAgentLibraryChat (context) {
      * @memberof AgentLibrary.Chat
      * @param {string} uii Unique identifier for the chat session
      */
-    AgentLibrary.prototype.chatTyping = function(uii){
-        UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii);
+    AgentLibrary.prototype.chatTyping = function(uii,message){
+        UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii,message);
         var msg = UIModel.getInstance().chatTypingRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
