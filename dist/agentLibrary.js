@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-11-19 */
+/*! cf-agent-library - v2.1.10 - 2018-12-04 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -4863,8 +4863,9 @@ ChatSendRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-var ChatTypingRequest = function(uii) {
+var ChatTypingRequest = function(uii,message) {
     this.uii = uii;
+    this.message=message;
 };
 
 /*
@@ -4893,6 +4894,9 @@ ChatTypingRequest.prototype.formatJSON = function() {
             },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "message":{
+                "#text":utils.toString(this.message)
             }
         }
     };
@@ -9310,8 +9314,8 @@ function initAgentLibraryChat (context) {
      * @memberof AgentLibrary.Chat
      * @param {string} uii Unique identifier for the chat session
      */
-    AgentLibrary.prototype.chatTyping = function(uii){
-        UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii);
+    AgentLibrary.prototype.chatTyping = function(uii,message){
+        UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii,message);
         var msg = UIModel.getInstance().chatTypingRequest.formatJSON();
         utils.sendMessage(this, msg);
     };
