@@ -1,6 +1,7 @@
 
-var ChatTypingRequest = function(uii) {
+var ChatTypingRequest = function(uii,message) {
     this.uii = uii;
+    this.message=message;
 };
 
 /*
@@ -13,7 +14,8 @@ var ChatTypingRequest = function(uii) {
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},
- *      "agent_id":{"#text":""}
+ *      "agent_id":{"#text":""},
+ *      "message":{"#text":""}
  *    }
  * }
  */
@@ -29,6 +31,9 @@ ChatTypingRequest.prototype.formatJSON = function() {
             },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "message":{
+                "#text":utils.toString(this.message)
             }
         }
     };
