@@ -168,7 +168,6 @@ module.exports = function(grunt) {
         'karma'
     ]);
     grunt.registerTask('compile', [
-        'test',
         'build',
         'jsdoc',
         'compress:dist'

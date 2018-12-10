@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2018-11-28 */
+/*! cf-agent-library - v2.1.10 - 2018-12-10 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -56,20 +56,40 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     var sessionType = utils.getText(notif, "session_type"),
         allowControl = utils.getText(notif, "allow_control"),
         sessionId = utils.getText(notif, "session_id"),
-        uii = utils.getText(notif, "uii");
-    if(sessionId !== '1' && sessionAgentId !== model.agentSettings.agentId && allowControl) {
-        if(sessionType === 'OUTBOUND' || sessionType === 'AGENT') {
-            var destination = utils.getText(notif, "phone");
-            if(sessionType === 'AGENT' || sessionAgentId !== '') {
-                destination = utils.getText(notif, "agent_name");
-            }
+        uii = utils.getText(notif, "uii"),
+        isMonitoring = model.currentCall.isMonitoring,
+        monitoringType = model.currentCall.monitoringType;
 
-            model.transferSessions[sessionId] = {
-                sessionId: sessionId,
-                destination: destination,
-                uii: uii
-            };
+
+    var isBargeInMonitor = isMonitoring && monitoringType === 'FULL',
+        notCurrentAgent = sessionAgentId !== model.agentSettings.agentId,
+        notSessionOne = sessionId !== '1',
+        shouldTrackSession = false;
+
+    if(notSessionOne && notCurrentAgent) {
+        if(isBargeInMonitor) {
+            shouldTrackSession = true;
+
+        } else if(allowControl) {
+            if(sessionType === 'OUTBOUND' || sessionType === 'AGENT') {
+                shouldTrackSession = true;
+
+            }
         }
+    }
+
+    if(shouldTrackSession) {
+        var destination = utils.getText(notif, "phone");
+
+        if(sessionType === 'AGENT' || sessionAgentId !== '') {
+            destination = utils.getText(notif, "agent_name");
+        }
+
+        model.transferSessions[sessionId] = {
+            sessionId: sessionId,
+            destination: destination,
+            uii: uii
+        };
     }
 
     // if agent session, set on call status
@@ -398,6 +418,13 @@ EndCallNotification.prototype.processResponse = function(notification) {
         model.agentSettings.updateDGFromAdminUI = false;
     }
 
+
+    // start ping call interval timer, sends message every 30 seconds
+    // if this is not a manual outdial and we are not suppressing disposition pop
+    if(model.currentCall.outdialDispositions && model.currentCall.outdialDispositions.dispositions && model.currentCall.outdialDispositions.dispositions.length > 0 && model.currentCall.surveyPopType !== "SUPPRESS"){
+        model.pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
+    }
+
     var formattedResponse = {
         message: "End Call Notification Received.",
         detail: "",
@@ -636,6 +663,10 @@ NewCallNotification.prototype.processResponse = function(notification) {
         hangupOnDisposition: utils.getText(notif,'hangup_on_disposition')
     };
 
+    if(newCall.isMonitoring) {
+        newCall.monitoringType = utils.getText(notif,'monitoring_type');    // FULL, COACHING, MONITOR
+    }
+
     // set collection values
     newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
     newCall.agentRecording = utils.processResponseCollection(notification, 'ui_notification', 'agent_recording', 'agentRecording')[0];
@@ -737,12 +768,6 @@ NewCallNotification.prototype.processResponse = function(notification) {
     // todo handle scripting??
 
     model.currentCall = newCall;
-
-    // start ping call interval timer, sends message every 30 seconds
-    // if this is not a manual outdial and we are not suppressing disposition pop
-    if(newCall.outdialDispositions && newCall.outdialDispositions.dispositions && newCall.outdialDispositions.dispositions.length > 0 && newCall.surveyPopType !== "SUPPRESS"){
-        UIModel.getInstance().pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
-    }
 
     return newCall;
 };
@@ -4862,8 +4887,9 @@ ChatSendRequest.prototype.processResponse = function(response) {
     return formattedResponse;
 };
 
-var ChatTypingRequest = function(uii) {
+var ChatTypingRequest = function(uii,message) {
     this.uii = uii;
+    this.message=message;
 };
 
 /*
@@ -4876,7 +4902,8 @@ var ChatTypingRequest = function(uii) {
  *      "@message_id":"",
  *      "@response_to":"",
  *      "uii":{"#text":""},
- *      "agent_id":{"#text":""}
+ *      "agent_id":{"#text":""},
+ *      "message":{"#text":""}
  *    }
  * }
  */
@@ -4892,6 +4919,9 @@ ChatTypingRequest.prototype.formatJSON = function() {
             },
             "agent_id":{
                 "#text":UIModel.getInstance().agentSettings.agentId
+            },
+            "message":{
+                "#text":utils.toString(this.message)
             }
         }
     };
@@ -6619,7 +6649,9 @@ var utils = {
                 }else{
                     if(generic.messageCode === "001") {
                         // caller hangup, stop pinging call
-                        clearInterval(UIModel.getInstance().pingIntervalId);
+                        if(UIModel.getInstance().pingIntervalId){
+                            clearInterval(UIModel.getInstance().pingIntervalId);
+                        }
                     }
 
                     // no corresponding request, just fire generic notification callback
@@ -8672,13 +8704,16 @@ function initAgentLibraryCall (context) {
      * @param {string} [requestId=null] The request id associated with a preview fetched lead (only for Outbound Dispositions).
      */
     AgentLibrary.prototype.dispositionCall = function(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId){
-        UIModel.getInstance().dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId);
-        var msg = UIModel.getInstance().dispositionRequest.formatJSON();
+        var model = UIModel.getInstance();
+        model.dispositionRequest = new DispositionRequest(uii, dispId, notes, callback, callbackDTS, contactForwardNumber, survey, externId, leadId, requestId);
+        var msg = model.dispositionRequest.formatJSON();
         utils.sendMessage(this, msg);
 
         // cancel ping call timer
-        clearInterval(UIModel.getInstance().pingIntervalId);
-        UIModel.getInstance().pingIntervalId = null;
+        if(model.pingIntervalId){
+            clearInterval(model.pingIntervalId);
+            model.pingIntervalId = null;
+        }
     };
 
     /**
@@ -9303,9 +9338,10 @@ function initAgentLibraryChat (context) {
      * Sent when agent starts/stops typing
      * @memberof AgentLibrary.Chat
      * @param {string} uii Unique identifier for the chat session
+     * @param {string} message Pending Agent message - sent to any monitoring Supervisors
      */
-    AgentLibrary.prototype.chatTyping = function(uii){
-        UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii);
+    AgentLibrary.prototype.chatTyping = function(uii,message){
+        UIModel.getInstance().chatTypingRequest = new ChatTypingRequest(uii,message);
         var msg = UIModel.getInstance().chatTypingRequest.formatJSON();
         utils.sendMessage(this, msg);
     };

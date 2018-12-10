@@ -47,20 +47,40 @@ AddSessionNotification.prototype.processResponse = function(notification) {
     var sessionType = utils.getText(notif, "session_type"),
         allowControl = utils.getText(notif, "allow_control"),
         sessionId = utils.getText(notif, "session_id"),
-        uii = utils.getText(notif, "uii");
-    if(sessionId !== '1' && sessionAgentId !== model.agentSettings.agentId && allowControl) {
-        if(sessionType === 'OUTBOUND' || sessionType === 'AGENT') {
-            var destination = utils.getText(notif, "phone");
-            if(sessionType === 'AGENT' || sessionAgentId !== '') {
-                destination = utils.getText(notif, "agent_name");
-            }
+        uii = utils.getText(notif, "uii"),
+        isMonitoring = model.currentCall.isMonitoring,
+        monitoringType = model.currentCall.monitoringType;
 
-            model.transferSessions[sessionId] = {
-                sessionId: sessionId,
-                destination: destination,
-                uii: uii
-            };
+
+    var isBargeInMonitor = isMonitoring && monitoringType === 'FULL',
+        notCurrentAgent = sessionAgentId !== model.agentSettings.agentId,
+        notSessionOne = sessionId !== '1',
+        shouldTrackSession = false;
+
+    if(notSessionOne && notCurrentAgent) {
+        if(isBargeInMonitor) {
+            shouldTrackSession = true;
+
+        } else if(allowControl) {
+            if(sessionType === 'OUTBOUND' || sessionType === 'AGENT') {
+                shouldTrackSession = true;
+
+            }
         }
+    }
+
+    if(shouldTrackSession) {
+        var destination = utils.getText(notif, "phone");
+
+        if(sessionType === 'AGENT' || sessionAgentId !== '') {
+            destination = utils.getText(notif, "agent_name");
+        }
+
+        model.transferSessions[sessionId] = {
+            sessionId: sessionId,
+            destination: destination,
+            uii: uii
+        };
     }
 
     // if agent session, set on call status

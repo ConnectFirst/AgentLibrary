@@ -134,6 +134,10 @@ NewCallNotification.prototype.processResponse = function(notification) {
         hangupOnDisposition: utils.getText(notif,'hangup_on_disposition')
     };
 
+    if(newCall.isMonitoring) {
+        newCall.monitoringType = utils.getText(notif,'monitoring_type');    // FULL, COACHING, MONITOR
+    }
+
     // set collection values
     newCall.queue = utils.processResponseCollection(notification, 'ui_notification', 'gate')[0];
     newCall.agentRecording = utils.processResponseCollection(notification, 'ui_notification', 'agent_recording', 'agentRecording')[0];
@@ -235,12 +239,6 @@ NewCallNotification.prototype.processResponse = function(notification) {
     // todo handle scripting??
 
     model.currentCall = newCall;
-
-    // start ping call interval timer, sends message every 30 seconds
-    // if this is not a manual outdial and we are not suppressing disposition pop
-    if(newCall.outdialDispositions && newCall.outdialDispositions.dispositions && newCall.outdialDispositions.dispositions.length > 0 && newCall.surveyPopType !== "SUPPRESS"){
-        UIModel.getInstance().pingIntervalId = setInterval(utils.sendPingCallMessage, 30000);
-    }
 
     return newCall;
 };
