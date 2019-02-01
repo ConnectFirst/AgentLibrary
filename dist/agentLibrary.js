@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*! cf-agent-library - v2.1.10 - 2018-12-10 */
+=======
+/*! cf-agent-library - v2.1.10 - 2019-01-10 */
+>>>>>>> develop
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -5668,6 +5672,7 @@ var AgentStats = function() {
            "@ltype":"INBOUND",
            "@oh":"0",
            "@pd":"0",
+           "@pdt":"0",
            "@pres":"0",
            "@rna":"0",
            "@sdur":"6",
@@ -5708,6 +5713,7 @@ AgentStats.prototype.processResponse = function(stats) {
                 loginType: resp[i]["@ltype"],
                 offHook: resp[i]["@oh"],
                 pendingDisp: resp[i]["@pd"],
+                pendingDispTime: resp[i]["@pdt"],
                 presented: resp[i]["@pres"],
                 rna: resp[i]["@rna"],
                 stateDuration: resp[i]["@sdur"],
