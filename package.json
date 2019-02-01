@@ -1,6 +1,6 @@
 {
   "name": "cf-agent-library",
-  "version": "2.1.13",
+  "version": "2.1.16",
   "author": "Connect First",
   "description": "Connect First Agent UI Library",
   "main": "src/cfAgentLibrary.js",
