@@ -4138,8 +4138,9 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
 };
 
 
-var UpdateDialDestinationRequest = function(dialDest) {
+var UpdateDialDestinationRequest = function(dialDest, isSoftphoneError) {
     this.dialDest = dialDest;
+    this.isSoftphoneError = isSoftphoneError || false;
 };
 
 /*
@@ -4148,7 +4149,9 @@ var UpdateDialDestinationRequest = function(dialDest) {
  *      "@type":MESSAGE_TYPES.UPDATE_DIAL_DESTINATION,
  *      "@message_id":"UI200809291036128",
  *      "@response_to":"",
- *      "dial_dest":{"#text":"blah@something.com"}
+ *      "agent_id":"1",
+ *      "dial_dest":{"#text":"blah@something.com"},
+ *      "log_softphone_error": {"#text":"TRUE|FALSE"},
  *    }
  * }
  */
@@ -4164,6 +4167,9 @@ UpdateDialDestinationRequest.prototype.formatJSON = function() {
             },
             "dial_dest":{
                 "#text":utils.toString(this.dialDest)
+            },
+            "log_softphone_error":{
+                "#text":utils.toString(this.isSoftphoneError === true ? "TRUE" : "FALSE")
             }
         }
     };

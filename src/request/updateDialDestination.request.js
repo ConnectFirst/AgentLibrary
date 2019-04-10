@@ -1,6 +1,7 @@
 
-var UpdateDialDestinationRequest = function(dialDest) {
+var UpdateDialDestinationRequest = function(dialDest, isSoftphoneError) {
     this.dialDest = dialDest;
+    this.isSoftphoneError = isSoftphoneError || false;
 };
 
 /*
@@ -10,7 +11,8 @@ var UpdateDialDestinationRequest = function(dialDest) {
  *      "@message_id":"UI200809291036128",
  *      "@response_to":"",
  *      "agent_id":"1",
- *      "dial_dest":{"#text":"blah@something.com"}
+ *      "dial_dest":{"#text":"blah@something.com"},
+ *      "log_softphone_error": {"#text":"TRUE|FALSE"},
  *    }
  * }
  */
@@ -26,6 +28,9 @@ UpdateDialDestinationRequest.prototype.formatJSON = function() {
             },
             "dial_dest":{
                 "#text":utils.toString(this.dialDest)
+            },
+            "log_softphone_error":{
+                "#text":utils.toString(this.isSoftphoneError === true ? "TRUE" : "FALSE")
             }
         }
     };
