@@ -177,4 +177,16 @@ function initAgentLibraryAgent (context) {
         UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
     };
 
+    /**
+     * Set the agent dial destination
+     * @memberof AgentLibrary.Agent
+     * @param {string} dialDest The dial destination used for softphone registration
+     */
+    AgentLibrary.prototype.updateDialDestination = function(dialDest){
+        UIModel.getInstance().agentStateRequest = new UpdateDialDestinationRequest(dialDest);
+        var msg = UIModel.getInstance().agentStateRequest.formatJSON();
+
+        utils.sendMessage(this, msg);
+    };
+
 }
