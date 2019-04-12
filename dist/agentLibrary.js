@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2019-04-10 */
+/*! cf-agent-library - v2.1.10 - 2019-04-12 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -8659,9 +8659,10 @@ function initAgentLibraryAgent (context) {
      * Set the agent dial destination
      * @memberof AgentLibrary.Agent
      * @param {string} dialDest The dial destination used for softphone registration
+     * @param {boolean} isSoftphoneError True - if we want to log this dial destination update as a softphone error
      */
-    AgentLibrary.prototype.updateDialDestination = function(dialDest){
-        UIModel.getInstance().agentStateRequest = new UpdateDialDestinationRequest(dialDest);
+    AgentLibrary.prototype.updateDialDestination = function(dialDest, isSoftphoneError){
+        UIModel.getInstance().agentStateRequest = new UpdateDialDestinationRequest(dialDest, isSoftphoneError);
         var msg = UIModel.getInstance().agentStateRequest.formatJSON();
 
         utils.sendMessage(this, msg);
