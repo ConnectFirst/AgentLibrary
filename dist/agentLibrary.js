@@ -1,4 +1,4 @@
-/*! cf-agent-library - v2.1.10 - 2019-01-10 */
+/*! cf-agent-library - v2.1.10 - 2019-04-12 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -4138,6 +4138,48 @@ TcpaSafeRequest.prototype.processResponse = function(notification) {
 };
 
 
+var UpdateDialDestinationRequest = function(dialDest, isSoftphoneError) {
+    this.dialDest = dialDest;
+    this.isSoftphoneError = isSoftphoneError || false;
+};
+
+/*
+ * {"ui_request":{
+ *      "@destination":"IQ",
+ *      "@type":MESSAGE_TYPES.UPDATE_DIAL_DESTINATION,
+ *      "@message_id":"UI200809291036128",
+ *      "@response_to":"",
+ *      "agent_id":"1",
+ *      "dial_dest":{"#text":"blah@something.com"},
+ *      "log_softphone_error": {"#text":"TRUE|FALSE"},
+ *    }
+ * }
+ */
+UpdateDialDestinationRequest.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request": {
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.UPDATE_DIAL_DESTINATION,
+            "@message_id":utils.getMessageId(),
+            "@response_to":"",
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
+            },
+            "dial_dest":{
+                "#text":utils.toString(this.dialDest)
+            },
+            "log_softphone_error":{
+                "#text":utils.toString(this.isSoftphoneError === true ? "TRUE" : "FALSE")
+            }
+        }
+    };
+
+    return JSON.stringify(msg);
+};
+
+
+
+
 var XferWarmRequest = function(dialDest, callerId, sipHeaders, countryId) {
     this.dialDest = dialDest;
     this.callerId = callerId || "";
@@ -7519,7 +7561,8 @@ const MESSAGE_TYPES = {
     "XFER_WARM_CANCEL":"WARM-XFER-CANCEL",
     "DIRECT_AGENT_TRANSFER_LIST": "DIRECT-AGENT-TRANSFER-LIST",
     "DIRECT_AGENT_TRANSFER": "DIRECT-AGENT-TRANSFER",
-    "DIRECT_AGENT_ROUTE": "DIRECT-AGENT-ROUTE"
+    "DIRECT_AGENT_ROUTE": "DIRECT-AGENT-ROUTE",
+    "UPDATE_DIAL_DESTINATION": "UPDATE_DIAL_DESTINATION"
 };
 
 
@@ -8610,6 +8653,19 @@ function initAgentLibraryAgent (context) {
     AgentLibrary.prototype.requestStats = function(){
         // start stats interval timer, request stats every 5 seconds
         UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
+    };
+
+    /**
+     * Set the agent dial destination
+     * @memberof AgentLibrary.Agent
+     * @param {string} dialDest The dial destination used for softphone registration
+     * @param {boolean} isSoftphoneError True - if we want to log this dial destination update as a softphone error
+     */
+    AgentLibrary.prototype.updateDialDestination = function(dialDest, isSoftphoneError){
+        UIModel.getInstance().agentStateRequest = new UpdateDialDestinationRequest(dialDest, isSoftphoneError);
+        var msg = UIModel.getInstance().agentStateRequest.formatJSON();
+
+        utils.sendMessage(this, msg);
     };
 
 }
