@@ -8662,8 +8662,8 @@ function initAgentLibraryAgent (context) {
      * @param {boolean} isSoftphoneError True - if we want to log this dial destination update as a softphone error
      */
     AgentLibrary.prototype.updateDialDestination = function(dialDest, isSoftphoneError){
-        UIModel.getInstance().agentStateRequest = new UpdateDialDestinationRequest(dialDest, isSoftphoneError);
-        var msg = UIModel.getInstance().agentStateRequest.formatJSON();
+        UIModel.getInstance().updateDialDestinationRequest = new UpdateDialDestinationRequest(dialDest, isSoftphoneError);
+        var msg = UIModel.getInstance().updateDialDestinationRequest.formatJSON();
 
         utils.sendMessage(this, msg);
     };
