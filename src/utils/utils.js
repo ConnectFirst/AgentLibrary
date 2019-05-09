@@ -123,18 +123,16 @@ var utils = {
                 var update = UIModel.getInstance().leadUpdateRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.LEAD_UPDATE, update);
                 break;
+            case MESSAGE_TYPES.LOGIN_PHASE_1:
+                var loginPhase1Response = UIModel.getInstance().loginPhase1Request.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LOGIN_PHASE_1, loginPhase1Response);
+                break;
             case MESSAGE_TYPES.LOGIN:
-                if (dest === "IS") {
-                    var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, loginResponse);
-                } else if (dest === 'IQ') {
-                    var configResponse = UIModel.getInstance().configRequest.processResponse(response);
-                    utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
-
-                    if (configResponse.status === "SUCCESS") {
-                        // start stats interval timer, request stats every 5 seconds
-                        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
-                    }
+                var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, loginResponse);
+                if (loginResponse.status === "SUCCESS") {
+                    // start stats interval timer, request stats every 5 seconds
+                    UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
                 }
                 break;
             case MESSAGE_TYPES.LOGOUT:

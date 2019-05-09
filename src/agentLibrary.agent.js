@@ -9,34 +9,35 @@ function initAgentLibraryAgent (context) {
     var AgentLibrary = context.AgentLibrary;
 
     /**
-     * Sends agent login message to IntelliServices
+     * Sends authenticate request to Engage Auth. Can either pass in 3 params of username, password, and platformId or
+     * two params of jwt and tokenType. In each case a callback function may optionally be specified.
      * @memberof AgentLibrary.Agent
      * @param {string} username Agent's username
      * @param {string} password Agent's password
+     * @param {string} platformId Designate the platform where the agent is set up
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.loginAgent = function(username, password, callback){
-        UIModel.getInstance().loginRequest = new LoginRequest(username, password);
-        var msg = UIModel.getInstance().loginRequest.formatJSON();
+    AgentLibrary.prototype.authenticateAgent = function(username, password, platformId, callback){
 
-        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
-        utils.sendMessage(this, msg);
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(username, password, platformId);
+        UIModel.getInstance().authenticateRequest.sendPost();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
     };
 
     /**
-     * Sends agent login message to IntelliServices, with flag to tell IntelliServices
-     * that agent password is to be treated as case sensitive
+     * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
      * @memberof AgentLibrary.Agent
-     * @param {string} username Agent's username
-     * @param {string} password Agent's password
+     * @param {string} jwt JSON Web Token received from RingCentral Single Sign-on API
+     * @param {string} tokenType string type received from RingCentral Single Sign-on API
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.loginAgentCaseSensitive = function(username, password, callback){
-        UIModel.getInstance().loginRequest = new LoginRequest(username, password, true);
-        var msg = UIModel.getInstance().loginRequest.formatJSON();
+    AgentLibrary.prototype.authenticateAgentWithJwt = function(jwt, tokenType, callback){
 
-        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
-        utils.sendMessage(this, msg);
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(null, null, null, jwt, tokenType);
+        UIModel.getInstance().authenticateRequest.sendPost();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
     };
 
     /**
@@ -51,11 +52,11 @@ function initAgentLibraryAgent (context) {
      * @param {boolean} isForce Whether the agent login is forcing an existing agentlogin out.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
-        var msg = UIModel.getInstance().configRequest.formatJSON();
+    AgentLibrary.prototype.loginAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
+        UIModel.getInstance().loginRequest = new LoginRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
+        var msg = UIModel.getInstance().loginRequest.formatJSON();
 
-        utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);
+        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
         utils.sendMessage(this, msg);
     };
 

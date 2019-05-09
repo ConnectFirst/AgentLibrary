@@ -1,248 +1,262 @@
 
-var LoginRequest = function(username, password, isCaseSensitive) {
-    this.username = username;
-    this.password = password;
-    this.isCaseSensitive = isCaseSensitive || false;
+var LoginRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce) {
+    this.queueIds = queueIds || [];
+    this.chatIds = chatIds || [];
+    this.skillProfileId = skillProfileId || "";
+    this.dialGroupId = dialGroupId || "";
+    this.dialDest = dialDest || "";
+    this.updateFromAdminUI = updateFromAdminUI || false;
+    this.loginType = "NO-SELECTION";
+    this.updateLogin = false;
+    this.isForce = isForce;
+
+    // Remove any ids agent doesn't have access to
+    var model = UIModel.getInstance();
+    this.queueIds = utils.checkExistingIds(model.inboundSettings.availableQueues, this.queueIds, "gateId");
+    this.chatIds = utils.checkExistingIds(model.chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
+    this.skillProfileId = utils.checkExistingIds(model.inboundSettings.availableSkillProfiles, [this.skillProfileId], "profileId")[0] || "";
+    this.dialGroupId = utils.checkExistingIds(model.outboundSettings.availableOutdialGroups, [this.dialGroupId], "dialGroupId")[0] || "";
+
+    // Set loginType value
+    if(this.queueIds.length > 0 && this.dialGroupId !== ""){
+        this.loginType = "BLENDED";
+    } else if(this.queueIds.length > 0){
+        this.loginType = "INBOUND";
+    } else if(this.dialGroupId !== ""){
+        this.loginType = "OUTBOUND";
+    } else if(this.chatIds.length > 0){
+        this.loginType = "CHAT";
+    } else {
+        this.loginType = "NO-SELECTION";
+    }
+
+    // set updateLogin value
+    if(model.agentSettings.isLoggedIn){
+        this.updateLogin = true;
+    }
+
+    // validate dialDest is sip or 10-digit num
+    if(!utils.validateDest(this.dialDest)){
+        utils.logMessage(LOG_LEVELS.WARN, "dialDest [" + this.dialDest + "] must be a valid sip or 10-digit DID", "");
+    }
+
 };
 
 LoginRequest.prototype.formatJSON = function() {
     var msg = {
-        "ui_request": {
-            "@destination":"IS",
+        "ui_request":{
+            "@destination":"IQ",
             "@type":MESSAGE_TYPES.LOGIN,
             "@message_id":utils.getMessageId(),
             "response_to":"",
-            "username":{
-                "#text":this.username
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
             },
-            "password":{
-                "#text":this.password
+            "agent_pwd":{
+                "#text": UIModel.getInstance().authenticateRequest.accessToken // todo - dlb - move accessToken to local storage
             },
-            "is_case_sensitive":{
-                "#text":utils.toString(this.isCaseSensitive === true ? "TRUE" : "FALSE")
+            "dial_dest":{
+                "#text":utils.toString(this.dialDest)
+            },
+            "login_type":{
+                "#text":this.loginType
+            },
+            "update_login":{
+                "#text":utils.toString(this.updateLogin)
+            },
+            "outdial_group_id":{
+                "#text":utils.toString(this.dialGroupId)
+            },
+            "skill_profile_id":{
+                "#text":utils.toString(this.skillProfileId)
+            },
+            "update_from_adminui":{
+                "#text":utils.toString(this.updateFromAdminUI)
+            },
+            "agent_platform_id" : {
+                "#text" : utils.toString(2) //Hard-coded platformId
+            },
+            "is_force" : {
+                "#text" : utils.toString(this.isForce)
             }
         }
     };
+
+    // add arrays
+    var queueIds = [];
+    for(var i = 0; i < this.queueIds.length; i++){
+        if(this.queueIds[i] !== ""){
+            queueIds.push( { "#text": utils.toString(this.queueIds[i]) } );
+        }
+    }
+    if(queueIds.length > 0){
+        msg.ui_request.gates = { "gate_id" : queueIds };
+    }else{
+        msg.ui_request.gates = {};
+    }
+
+    var chatIds = [];
+    for(var i = 0; i < this.chatIds.length; i++){
+        if(this.chatIds[i] !== "") {
+            chatIds.push( {"#text": utils.toString(this.chatIds[i]) } );
+        }
+    }
+    if(chatIds.length > 0) {
+        msg.ui_request.chat_queues = {"chat_queue_id": chatIds};
+    }else{
+        msg.ui_request.chat_queues = {};
+    }
 
     return JSON.stringify(msg);
 };
 
 
 /*
- * This function is responsible for handling the login packet received from IntelliServices. It will save
- * a copy of it in the UIModel as loginPacket, as well as set the isLoggedInIS variable to
- * true (for reconnect purposes) and the loginDTS with the current date/time.
+ * This function is responsible for handling the response to Login from IntelliQueue.
  *
  * {"ui_response":{
- *      "@type":"login",
- *      "status":{"#text":"OK"},
- *      "agent_id":{"#text":"1810"},
- *      "agent_pwd":{"#text":"bound25"},
- *      "first_name":{"#text":"mandy"},
- *      "last_name":{"#text":"pants"},
- *      "email":{"#text":"mandypants@aol.coim"},
- *      "agent_type":{"#text":"AGENT"},
- *      "external_agent_id":{"#text":"blahblah"},
- *      "default_login_dest":{"#text":"9548298548|123"},
- *      "alt_default_login_dest":{"#text":"9548298548|123"},
- *      "iq_url":{"#text":"dev.connectfirst.com"},
- *      "iq_port":{"#text":"1313"},
- *      "iq_ssl_port":{"#text":"1213"},
- *      "iq_secret_key":{"#text":"F-OFF"},
- *      "allow_inbound":{"#text":"1"},
- *      "allow_outbound":{"#text":"1"},
- *      "allow_chat":{"#text":"1"},
- *      "allow_blended":{"#text":"0"},
- *      "allow_off_hook":{"#text":"1"},
- *      "allow_call_control":{"#text":"1"},
- *      "allow_login_control":{"#text":"1"},
- *      "allow_login_updates":{"#text":"1"},
- *      "allow_lead_inserts":{"#text":"1"},
- *      "show_lead_history":{"#text":"1"},
- *      "allow_cross_gate_requeue":{"#text":"1"},
- *      "phone_login_dial_group":{"#text":"44"},
- *      "phone_login_pin":{"#text":"1234"},
- *      "allow_manual_calls":{"#text":"1"},
- *      "allow_manual_intl_calls":{"#text":"0"},
- *      "init_login_state":{"#text":"ON-BREAK"},
- *      "init_login_state_label":{"#text":"Morning Break"},
- *      "outbound_prepay":{"#text":"0"},
- *      "max_break_time":{"#text":"-1"},
- *      "max_lunch_time":{"#text":"-1"},
- *      "allow_lead_search":{"#text":"YES_ALL"},
- *      "tcpa_safe_mode":{"#text":"1|0"},
- *      "pci_enabled":{"#text":"1|0"},
- *      "login_gates":{
- *          "gate":[
- *              {"@default_dest_override":"","@gate_desc":"","@gate_id":"37","@gate_name":"test"},
- *              {"@default_dest_override":"","@gate_desc":"","@gate_id":"42","@gate_name":"test gate two"},
- *              {"@default_dest_override":"","@gate_desc":"","@gate_id":"43","@gate_name":"test gate three"},
- *              {"@default_dest_override":"","@gate_desc":"Amandas Other Gate","@gate_id":"46","@gate_name":"You know it!"}
+ *      "@message_id":"IQ10012016082513212000447",
+ *      "@response_to":"IQ201608251121200",
+ *      "@type":"LOGIN",
+ *      "agent_id":{"#text":"1"},
+ *      "status":{"#text":"SUCCESS"},
+ *      "message":{"#text":"Hello Geoffrey Mina!"},
+ *      "detail":{"#text":"Logon request processed successfully!"},
+ *      "hash_code":{"#text":"404946966"},
+ *      "login_type":{"#text":"BLENDED"},
+ *      "outdial_group_id":{"#text":"50692"},
+ *      "skill_profile_id":{"#text":"1513"},
+ *      "gates":{
+ *          "gate_id":[
+ *              {"#text":"11116"},
+ *              {"#text":"11117"}
  *          ]
  *      },
- *      "login_chat_queues":{
- *          "chat_queue":[
- *              {"@chat_queue_description":"","@chat_queue_id":"","@chat_queue_name":""},
- *              {"@chat_queue_description":"","@chat_queue_id":"","@chat_queue_name":""}
- *          ]
- *      },
- *      "outdial_groups":{
- *          "group":[
- *              {"@billing_key":"","@dial_group_desc":"","@dial_group_id":"44","@dial_group_name":"Geoff Dial Test","@dial_mode":"PREDICTIVE"},
- *              {"@billing_key":"2","@dial_group_desc":"AutoDial Configured Dial Group","@dial_group_id":"46","@dial_group_name":"Phone Only test5","@dial_mode":"PREDICTIVE"},
- *              {"@billing_key":"","@dial_group_desc":"Test","@dial_group_id":"200000","@dial_group_name":"Test","@dial_mode":"PREDICTIVE"},
- *              {"@billing_key":"","@dial_group_desc":"Test","@dial_group_id":"200010","@dial_group_name":"Carissa's Test Group","@dial_mode":"PREDICTIVE"}
- *          ]
- *      },"skill_profiles":{
- *          "profile":[
- *              {"@profile_desc":"","@profile_id":"571","@profile_name":"skill1"},
- *              {"@profile_desc":"","@profile_id":"572","@profile_name":"skill2"}
- *          ]
- *      },
- *      "requeue_gates":{
- *          "gate_group":[
- *              {
- *                  "@gate_group_id":"18",
- *                  "@group_name":"new gate group",
- *                  "gates":{
- *                      "gate":[
- *                          {"@gate_desc":"","@gate_id":"37","@gate_name":"test"},
- *                          {"@gate_desc":"","@gate_id":"43","@gate_name":"test gate three"},
- *                          {"@gate_desc":"","@gate_id":"42","@gate_name":"test gate two"}
- *                      ]
- *                  },
- *                  "skills":{
- *                      "skill":[
- *                          {"@skill_desc":"","@skill_id":"58","@skill_name":"one"},
- *                          {"@skill_desc":"","@skill_id":"59","@skill_name":"two"},
- *                      ]
- *                  }
- *              }
- *          ]
- *      },
- *      "chat_rooms":{},
- *      "scripts": {
- *           "script": {
- *               "@script_id": "15",
- *               "@script_name": "Don't Read This Script"
- *           }
- *      },
- *      "campaigns": {
- *          "campaign": {
- *              "@allow_lead_updates": "",
- *              "@campaign_id": "",
- *              "@campaign_name": "",
- *              "@survey_id": "",
- *              "@survey_name": "",
- *              "custom_labels": {
- *                  "@aux_1_label": "",
- *                  "@aux_2_label": "",
- *                  "@aux_3_label": "",
- *                  "@aux_4_label": "",
- *                  "@aux_5_label": ""
- *              },
- *              "generic_key_value_pairs": {}
- *          }
- *      },
- *      "account_countries":{
- *          "country":[
- *              {"@country_id":"BRA"},{"@country_id":"FRA"},{"@country_id":"GER"}
- *          ]
+ *      "chat_queues":{
+ *          "chat_queue_id":{"#text":"30"}
  *      }
- *   }
+ *    }
  * }
  */
 LoginRequest.prototype.processResponse = function(response) {
     var resp = response.ui_response;
-    var status = resp.status['#text'];
+    var status = utils.getText(resp, "status");
+    var detail = utils.getText(resp, "detail");
     var model = UIModel.getInstance();
+    var message = "";
     var formattedResponse = utils.buildDefaultResponse(response);
+    var Lib = UIModel.getInstance().libraryInstance;
 
-    if(status === 'OK'){
-        if(!model.isLoggedInIS){
-            // save login packet properties to UIModel
+    if(detail === "Logon Session Configuration Updated!"){
+        // this is an update login packet
+        model.agentSettings.updateLoginMode = true;
+
+        message = "Logon Session Configuration Updated!";
+        utils.logMessage(LOG_LEVELS.INFO, message, response);
+    }
+
+    if(status === "SUCCESS"){
+        if(!model.agentSettings.isLoggedIn){
+            // fresh login, set UI Model properties
             model.loginPacket = response;
-            model.applicationSettings.isLoggedInIS = true;
-            model.applicationSettings.isTcpaSafeMode = utils.getText(resp, 'tcpa_safe_mode') === "1";
-            model.applicationSettings.pciEnabled = utils.getText(resp, 'pci_enabled') === "1";
-            model.chatSettings.alias = utils.getText(resp, 'first_name') + " " + utils.getText(resp, 'last_name');
-
+            model.connectionSettings.hashCode = utils.getText(resp, "hash_code");
+            model.agentSettings.isLoggedIn = true;
             model.agentSettings.loginDTS = new Date();
-            model.agentSettings.maxBreakTime = utils.getText(resp, 'max_break_time');
-            model.agentSettings.maxLunchTime = utils.getText(resp, 'max_lunch_time');
-            model.agentSettings.firstName = utils.getText(resp, 'first_name');
-            model.agentSettings.lastName = utils.getText(resp, 'last_name');
-            model.agentSettings.email = utils.getText(resp, 'email');
-            model.agentSettings.agentId = utils.getText(resp, 'agent_id');
-            model.agentSettings.externalAgentId = utils.getText(resp, 'external_agent_id');
-            model.agentSettings.agentType = utils.getText(resp, 'agent_type');
-            model.agentSettings.realAgentType = utils.getText(resp, 'real_agent_type');
-            model.agentSettings.defaultLoginDest = utils.getText(resp, 'default_login_dest');
-            model.agentSettings.altDefaultLoginDest = utils.getText(resp, 'alt_default_login_dest');
-            model.agentSettings.initLoginState = utils.getText(resp, 'init_login_state');
-            model.agentSettings.initLoginStateLabel = utils.getText(resp, 'init_login_state_label');
-            model.agentSettings.outboundManualDefaultRingtime = utils.getText(resp, 'outbound_manual_default_ringtime');
-            model.agentSettings.isOutboundPrepay = utils.getText(resp, 'outbound_prepay') === "1";
-            model.agentSettings.phoneLoginPin = utils.getText(resp, 'phone_login_pin');
-            model.agentSettings.username = model.loginRequest.username;
-
-            model.agentPermissions.allowCallControl = utils.getText(resp, 'allow_call_control') === "1";
-            model.agentPermissions.allowChat = utils.getText(resp, 'allow_chat') === "1";
-            model.agentPermissions.showLeadHistory = utils.getText(resp, 'show_lead_history') === "1";
-            model.agentPermissions.allowManualOutboundGates = utils.getText(resp, 'allow_manual_outbound_gates') === "1";
-            model.agentPermissions.allowOffHook = utils.getText(resp, 'allow_off_hook') === "1";
-            model.agentPermissions.allowManualCalls = utils.getText(resp, 'allow_manual_calls') === "1";
-            model.agentPermissions.allowManualPass = utils.getText(resp, 'allow_manual_pass') === "1";
-            model.agentPermissions.allowManualIntlCalls = utils.getText(resp, 'allow_manual_intl_calls') === "1";
-            model.agentPermissions.allowLoginUpdates = utils.getText(resp, 'allow_login_updates') === "1";
-            model.agentPermissions.allowInbound = utils.getText(resp, 'allow_inbound') === "1";
-            model.agentPermissions.allowOutbound = utils.getText(resp, 'allow_outbound') === "1";
-            model.agentPermissions.allowBlended = utils.getText(resp, 'allow_blended') === "1";
-            model.agentPermissions.allowLoginControl = utils.getText(resp, 'allow_login_control') === "1";
-            model.agentPermissions.allowCrossQueueRequeue = utils.getText(resp, 'allow_cross_gate_requeue') === "1";
-            model.agentPermissions.disableSupervisorMonitoring = utils.getText(resp, 'disable_supervisor_monitoring') === "1";
-            model.agentPermissions.allowAutoAnswer = utils.getText(resp, 'allow_auto_answer') === "1";
-            model.agentPermissions.defaultAutoAnswerOn = utils.getText(resp, 'default_auto_answer_on') === "1";
-            model.agentPermissions.allowHistoricalDialing = utils.getText(resp, 'allow_historical_dialing') === "1";
-            model.agentPermissions.allowAgentStats = utils.getText(resp, 'allow_agent_stats') === "1";
-            model.agentPermissions.allowCampaignStats = utils.getText(resp, 'allow_camp_stats') === "1";
-            model.agentPermissions.allowGateStats = utils.getText(resp, 'allow_gate_stats') === "1";
-            model.agentPermissions.allowChatStats = utils.getText(resp, 'allow_chat_stats') === "1";
-
-            model.outboundSettings.defaultDialGroup = utils.getText(resp, 'phone_login_dial_group');
-
-            if(response.ui_response.allow_lead_inserts && typeof resp.insert_campaigns !== 'undefined' && response.ui_response.insert_campaigns.campaign){
-                model.agentPermissions.allowLeadInserts = utils.getText(resp, 'allow_lead_inserts') === "1";
-            }
+            model.connectionSettings.reconnect = true;
+            model.agentPermissions.allowLeadSearch = false;
+            model.agentSettings.dialDest = model.loginRequest.dialDest; // not sent in response
+            model.agentSettings.loginType = utils.getText(resp, "login_type");
+            model.agentSettings.guid = utils.getText(resp,"guid");
+            model.agentSettings.accountId = utils.getText(resp,"account_id");
 
             // Set collection values
-            model.outboundSettings.availableCampaigns = _processCampaigns(response);
-            model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
-            processChatQueueDnis(model.chatSettings, response);
-            model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
-            model.inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
-            model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
-            model.inboundSettings.availableRequeueQueues = utils.processResponseCollection(response.ui_response, "requeue_gates", "gate_group");
-            model.chatSettings.availableChatRooms = utils.processResponseCollection(response.ui_response, "chat_rooms", "room");
-            model.scriptSettings.availableScripts = utils.processResponseCollection(response.ui_response, "scripts", "script");
-            model.agentSettings.callerIds = utils.processResponseCollection(response.ui_response, "caller_ids", "caller_id");
-            model.agentSettings.availableAgentStates = utils.processResponseCollection(response.ui_response, "agent_states", "agent_state");
-            model.applicationSettings.availableCountries = utils.processResponseCollection(response.ui_response, "account_countries", "country");
-            model.outboundSettings.insertCampaigns = utils.processResponseCollection(response.ui_response, "insert_campaigns", "campaign");
+            setDialGroupSettings(response);
+            setGateSettings(response);
+            setChatQueueSettings(response);
+            setSkillProfileSettings(response);
 
-            var dialGroups = utils.processResponseCollection(response.ui_response, "outdial_groups", "group");
-            // set boolean values
-            for(var dg = 0; dg < dialGroups.length; dg++){
-                var group = dialGroups[dg];
-                group.allowLeadSearch = group.allowLeadSearch === "YES";
-                group.allowPreviewLeadFilters = group.allowPreviewLeadFilters === "1";
-                group.progressiveEnabled = group.progressiveEnabled === "1";
-                group.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled === "1";
-                group.hciType = parseInt(group.hciEnabled) || 0;
-                group.hciEnabled = group.hciEnabled === "1" || group.hciEnabled === "2";
-                group.hciClicker = group.hciClicker === "1";
+        }else{
+            if(model.agentSettings.updateLoginMode){
+                model.agentSettings.dialDest = model.loginRequest.dialDest;
+                model.agentSettings.loginType = utils.getText(resp, "login_type");
+                model.agentSettings.guid = utils.getText(resp,"guid");
+                model.agentSettings.accountId = utils.getText(resp,"account_id");
+
+                // This was an update login request
+                model.agentSettings.updateLoginMode = false;
+
+                // reset to false before updating dial group settings
+                model.agentPermissions.allowLeadSearch = false;
+                model.agentPermissions.requireFetchedLeadsCalled = false;
+                model.agentPermissions.allowPreviewLeadFilters = false;
+
+                // Set collection values
+                setDialGroupSettings(response);
+                setGateSettings(response);
+                setChatQueueSettings(response);
+                setSkillProfileSettings(response);
+
+            }else{
+                // this was a reconnect
+                message = "Processed a Layer 2 Reconnect Successfully";
+
+                model.connectionSettings.isOnCall = utils.getText(resp, "is_on_call");
+                model.connectionSettings.activeCallUii  =  utils.getText(resp, "active_call_uii");
+                model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
+
+
+                if(model.connectionSettings.isOnCall === false){
+                    if(model.currentCall.uii) {
+                        var mockEndCallPacket = {
+                            "ui_notification": {
+                                "@message_id": "",
+                                "@type": "END-CALL",
+                                "uii": {"#text": model.currentCall.uii},
+                                "term_reason": {"#text": "SOCKET-DISCONNECT"}
+                            }
+                        };
+
+                        utils.processNotification(Lib, mockEndCallPacket);
+                    }
+
+                    if(model.agentSettings.isOffhook){
+                        var offHookTermPacket = {
+                            "ui_notification" : {
+                                "agent_id" : {"#text": UIModel.getInstance().agentSettings.agentId},
+                                "@type" : "OFF-HOOK-TERM",
+                                "@message_id": ""
+                            }
+
+                        };
+
+                        var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
+                        Lib.offhookTerm(agentProcessOffhookCallback);
+                    }
+                }else if(model.connectionSettings.isOnCall && (model.currentCall.uii !== model.connectionSettings.activeCallUii || Lib.waitingForAddSession === true)){
+                    //if the agent does not know it is on a call, but IQ thinks it is on a call
+                    //normally in the case of disconnect during transition
+
+                    model.currentCall.uii = model.connectionSettings.activeCallUii;
+                    model.currentCall.pendingDisp = false;
+                    Lib.hangup(1, true);
+                    
+                }else{
+                    //agent still is on call and there are transferSessions, verify no transferSession were drop
+                    var activeAgentUiSessions = Lib.getTransferSessions();
+                    var activeAgentSessions = response.ui_response.active_call_sessions.call_session_id.map(function(sessionObj){
+                        return sessionObj['#text'];
+                    });
+
+                    for(var transferSession in activeAgentUiSessions){
+                        if(activeAgentSessions.indexOf(transferSession) === -1){
+                            //if the active ui session is no longer active, we need to tell the ui
+                            delete UIModel.getInstance().transferSessions[transferSession];
+                        }
+                    }
+                }
+
+                utils.logMessage(LOG_LEVELS.INFO, message, response);
             }
-            model.outboundSettings.availableOutdialGroups = dialGroups;
         }
 
         formattedResponse.agentSettings = model.agentSettings;
@@ -253,125 +267,98 @@ LoginRequest.prototype.processResponse = function(response) {
         formattedResponse.inboundSettings = model.inboundSettings;
         formattedResponse.outboundSettings = model.outboundSettings;
         formattedResponse.scriptSettings = model.scriptSettings;
-
-    }else if(status === 'RESTRICTED'){
-        formattedResponse.message = "Invalid IP Address";
-        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }else{
-        formattedResponse.message = "Invalid Username or password";
+        // Login failed
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Agent configuration attempt failed (2nd layer login)"
+        }
         utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }
 
     return formattedResponse;
 };
 
+function setDialGroupSettings(response){
+    var model = UIModel.getInstance();
+    var outdialGroups = model.outboundSettings.availableOutdialGroups;
+    model.outboundSettings.outdialGroup = {}; // reset
+    for(var g = 0; g < outdialGroups.length; g++){
+        var group = outdialGroups[g];
+        if(group.dialGroupId === response.ui_response.outdial_group_id['#text']){
+            model.agentPermissions.allowLeadSearch = group.allowLeadSearch;
+            model.agentPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
+            model.agentPermissions.progressiveEnabled = group.progressiveEnabled;
+            model.outboundSettings.outdialGroup = JSON.parse(JSON.stringify(group)); // copy object
 
-function _processCampaigns(response){
-    var campaigns = [];
-    var campaignsRaw = null;
-
-    if(typeof response.ui_response.campaigns.campaign !== 'undefined'){
-        campaignsRaw = response.ui_response.campaigns.campaign;
-    }
-
-    if(campaignsRaw){
-        if(!Array.isArray(campaignsRaw)) {
-            campaignsRaw = [campaignsRaw];
+            // Only used for Preview or TCPA Safe accounts.
+            // If set to true, only allow fetching new leads when current leads are called or expired
+            model.agentPermissions.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled;
         }
-
-        for(var c = 0; c < campaignsRaw.length; c++){
-            campaigns.push(_processCampaign(campaignsRaw[c]));
-        }
     }
-
-    return campaigns;
 }
 
-
-function _processCampaign(campaignRaw) {
-    // single campaign object
-    var campaignId = campaignRaw['@campaign_id'];
-    var allowLeadUpdates = campaignRaw['@allow_lead_updates']; // 0 = no update, 1 = allow phone update, 2 = don't allow phone update
-    UIModel.getInstance().agentPermissions.allowLeadUpdatesByCampaign[campaignId] = allowLeadUpdates;
-
-    var customLabels = campaignRaw['custom_labels'];
-    var labelArray = [];
-
-    for (var p in customLabels) {
-        var label = p.replace(/@/, ''); // remove leading '@'
-        var obj = {};
-        obj[label] = customLabels[p];
-
-        labelArray.push(obj);
+function setSkillProfileSettings(response){
+    var model = UIModel.getInstance();
+    model.inboundSettings.skillProfile = {};
+    var skillProfiles = model.inboundSettings.availableSkillProfiles;
+    for(var s = 0; s < skillProfiles.length; s++){
+        var profile = skillProfiles[s];
+        var responseId = utils.getText(response.ui_response, "skill_profile_id");
+        if(profile.profileId === responseId){
+            model.inboundSettings.skillProfile = JSON.parse(JSON.stringify(profile)); // copy object
+        }
     }
-
-    return {
-        campaignId: campaignId,
-        campaignName: campaignRaw['@campaign_name'],
-        surveyId: campaignRaw['@survey_id'],
-        surveyName: campaignRaw['@survey_name'],
-        customLabels: labelArray,
-        allowLeadUpdates: allowLeadUpdates
-    };
 }
 
+function setGateSettings(response){
+    var model = UIModel.getInstance();
+    var gates = model.inboundSettings.availableQueues;
+    var selectedGateIds = [];
+    var selectedGates = [];
+    var gateIds = response.ui_response.gates.gate_id || [];
 
-/**
- * example packet
- *  {
- *      "chat_queue":[
- *          {
- *              "@chat_queue_desc":"",
- *              "@chat_queue_id":"74",
- *              "@chat_queue_name":"Please don't delete"
- *          },
- *          {
- *              "@chat_queue_desc":"blah",
- *              "@chat_queue_id":"131",
- *              "@chat_queue_name":"cris chat queue",
- *              "dnis":[
- *                  {"#text":"5555551215"},
- *                  {"#text":"5555554444"},
- *                  {"#text":"8885551212"},
- *                  {"#text":"97687"}
- *              ]
- *          }
- *      ]
- *   }
- *
- *
- *      This function will format the dnis list and put them back on chatSettings.availableChatQueues
- **/
-function processChatQueueDnis(chatSettings, response) {
-    var queues = chatSettings.availableChatQueues;
-    var rawQueues = response.ui_response.login_chat_queues.chat_queue;
-
-    if(!Array.isArray(rawQueues)) {
-        rawQueues = [rawQueues];
+    if (!Array.isArray(gateIds)) {
+        gateIds = [gateIds];
     }
 
-    for(var i = 0; i < queues.length; i++) {
-        var queue = queues[i];
+    for(var s = 0; s < gateIds.length; s++){
+        var obj = gateIds[s];
+        selectedGateIds.push(obj["#text"]);
+    }
 
-        var rawQueue = {};
-        for (var j = 0; j < rawQueues.length; j++) {
-            var rq = rawQueues[j];
-            if(rq['@chat_queue_id'] === queue.chatQueueId) {
-                rawQueue = rq;
-                break;
-            }
-        }
-
-        if(rawQueue.dnis) {
-            if(!Array.isArray(rawQueue.dnis)) {
-                rawQueue.dnis = [rawQueue.dnis];
-            }
-
-            // update the dnis array to just be a list
-            queue.dnis = rawQueue.dnis.map(function(d) {
-                return d['#text'];
-            });
+    for(var gIdx = 0; gIdx < gates.length; gIdx++){
+        var gate = gates[gIdx];
+        if(selectedGateIds.indexOf(gate.gateId) > -1){
+            selectedGates.push(gate);
         }
     }
 
+    model.inboundSettings.queues = JSON.parse(JSON.stringify(selectedGates)); // copy array
+}
+
+function setChatQueueSettings(response){
+    var model = UIModel.getInstance();
+    var chatQueues = model.chatSettings.availableChatQueues;
+    var selectedChatQueueIds = [];
+    var selectedChatQueues = [];
+    var cQueues = response.ui_response.chat_queues || {};
+    var chatQueueIds = cQueues.chat_queue_id || [];
+
+    if (!Array.isArray(chatQueueIds)) {
+        chatQueueIds = [chatQueueIds];
+    }
+
+    for(var c = 0; c < chatQueueIds.length; c++){
+        var obj = chatQueueIds[c];
+        selectedChatQueueIds.push(obj["#text"]);
+    }
+
+    for(var cIdx = 0; cIdx < chatQueues.length; cIdx++){
+        var chatQueue = chatQueues[cIdx];
+        if(selectedChatQueueIds.indexOf(chatQueue.chatQueueId) > -1){
+            selectedChatQueues.push(chatQueue);
+        }
+    }
+
+    model.chatSettings.chatQueues = JSON.parse(JSON.stringify(selectedChatQueues)); // copy array
 }

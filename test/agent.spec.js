@@ -77,7 +77,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         fixture.cleanup()
     });
 
-    it( 'should build loginAgent message and send message over socket', function() {
+    /*it( 'should build loginAgent message and send message over socket', function() {
         var Lib = new AgentLibrary();
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();
@@ -197,6 +197,6 @@ describe( 'Tests for Agent Library agent methods', function() {
         expect(outbound).toEqual(expectedOutbound);
         expect(chat).toEqual(expectedChat);
         expect(connection).toEqual(this.processed_data_ConnectionSettings);
-    });
+    });*/
 
 });

@@ -49,7 +49,9 @@ const CALLBACK_TYPES = {
     "HOLD":"holdResponse",
     "LOG_RESULTS":"logResultsResponse",
     "LOG_CONSOLE_RESULTS":"logConsoleResultsResponse",
+    "AUTHENTICATE":"authenticateResponse",
     "LOGIN":"loginResponse",
+    "LOGIN_PHASE_1": "loginPhase1Response",
     "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
     "LEAD_HISTORY":"leadHistoryResponse",
@@ -134,6 +136,7 @@ const MESSAGE_TYPES = {
     "LEAD_INSERT":"LEAD-INSERT",
     "LEAD_UPDATE":"LEAD-UPDATE",
     "LOGIN":"LOGIN",
+    "LOGIN_PHASE_1": "LOGIN-PHASE-1",
     "LOGOUT":"LOGOUT",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
@@ -227,12 +230,13 @@ function initAgentLibraryCore (context) {
             this.callbacks = config.callbacks;
         }
 
-        if(typeof config.socketDest !== 'undefined'){
+        /*if(typeof config.socketDest !== 'undefined'){
             UIModel.getInstance().applicationSettings.socketDest = config.socketDest;
             this.openSocket();
         }else{
-            // todo default socket address?
-        }
+
+        }*/
+
 
         return this;
     };
@@ -354,16 +358,16 @@ function initAgentLibraryCore (context) {
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
-    AgentLibrary.prototype.getLoginRequest = function() {
-        return UIModel.getInstance().loginRequest;
+    AgentLibrary.prototype.getAuthenticateRequest = function() {
+        return UIModel.getInstance().authenticateRequest;
     };
     /**
-     * Get outgoing Config Request object
+     * Get outgoing Login Request object
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
-    AgentLibrary.prototype.getConfigRequest = function() {
-        return UIModel.getInstance().configRequest;
+    AgentLibrary.prototype.getLoginRequest = function() {
+        return UIModel.getInstance().loginRequest;
     };
     /**
      * Get outgoing Logout Request object
@@ -963,6 +967,8 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype._utils = utils;
 
     AgentLibrary.prototype._NewCallUtils = NewCallUtils;
+
+    AgentLibrary.prototype._HttpService = HttpService;
 
     AgentLibrary.prototype._getUIModel= function() {
         return UIModel;

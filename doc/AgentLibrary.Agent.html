@@ -71,7 +71,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8480">line 8480</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8750">line 8750</a>
     </li></ul></dd>
     
 
@@ -103,6 +103,337 @@
 
     
         <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="authenticateAgent"><span class="type-signature">(static) </span>AgentLibrary#authenticateAgent<span class="signature">(username, password, platformId, jwt, tokenType, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Sends authenticate request to Engage Auth. Can either pass in 3 params of username, password, and platformId or
+two params of jwt and tokenType. In each case a callback function may optionally be specified.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>username</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Agent's username</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>password</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Agent's password</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>platformId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Designate the platform where the agent is set up</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>jwt</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">JSON Web Token received from RingCentral Single Sign-on API</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>tokenType</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">string type received from RingCentral Single Sign-on API</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
+            
+
+            <td class="description last">Callback function when loginAgent response received</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8770">line 8770</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         
             
@@ -305,7 +636,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8640">line 8640</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8897">line 8897</a>
     </li></ul></dd>
     
 
@@ -339,7 +670,201 @@
     
 
     
-    <h4 class="name" id="configureAgent"><span class="type-signature">(static) </span>AgentLibrary#configureAgent<span class="signature">(dialDest, queueIds<span class="signature-attributes">opt</span>, chatIds<span class="signature-attributes">opt</span>, skillProfileId<span class="signature-attributes">opt</span>, dialGroupId<span class="signature-attributes">opt</span>, updateFromAdminUI<span class="signature-attributes">opt</span>, isForce, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="getPendingCallbacks"><span class="type-signature">(static) </span>AgentLibrary#getPendingCallbacks<span class="signature">(agentId<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Returns scheduled callbacks for the given agent
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>agentId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    logged in agent id
+                
+                </td>
+            
+
+            <td class="description last">Id of agent to get callbacks for</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
+            
+
+            <td class="description last">Callback function when pending callbacks response received</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8882">line 8882</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="loginAgent"><span class="type-signature">(static) </span>AgentLibrary#loginAgent<span class="signature">(dialDest, queueIds<span class="signature-attributes">opt</span>, chatIds<span class="signature-attributes">opt</span>, skillProfileId<span class="signature-attributes">opt</span>, dialGroupId<span class="signature-attributes">opt</span>, updateFromAdminUI<span class="signature-attributes">opt</span>, isForce, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
     
 
     
@@ -725,652 +1250,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8532">line 8532</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="getPendingCallbacks"><span class="type-signature">(static) </span>AgentLibrary#getPendingCallbacks<span class="signature">(agentId<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Returns scheduled callbacks for the given agent
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>agentId</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    logged in agent id
-                
-                </td>
-            
-
-            <td class="description last">Id of agent to get callbacks for</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    null
-                
-                </td>
-            
-
-            <td class="description last">Callback function when pending callbacks response received</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8625">line 8625</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="loginAgent"><span class="type-signature">(static) </span>AgentLibrary#loginAgent<span class="signature">(username, password, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Sends agent login message to IntelliServices
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>username</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">Agent's username</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>password</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">Agent's password</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    null
-                
-                </td>
-            
-
-            <td class="description last">Callback function when loginAgent response received</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8496">line 8496</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="loginAgentCaseSensitive"><span class="type-signature">(static) </span>AgentLibrary#loginAgentCaseSensitive<span class="signature">(username, password, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Sends agent login message to IntelliServices, with flag to tell IntelliServices
-that agent password is to be treated as case sensitive
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>username</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">Agent's username</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>password</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">Agent's password</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    null
-                
-                </td>
-            
-
-            <td class="description last">Callback function when loginAgent response received</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8512">line 8512</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8789">line 8789</a>
     </li></ul></dd>
     
 
@@ -1560,7 +1440,7 @@ that agent password is to be treated as case sensitive
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8546">line 8546</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8803">line 8803</a>
     </li></ul></dd>
     
 
@@ -1715,7 +1595,7 @@ that agent password is to be treated as case sensitive
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8598">line 8598</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8855">line 8855</a>
     </li></ul></dd>
     
 
@@ -1870,7 +1750,7 @@ that agent password is to be treated as case sensitive
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8611">line 8611</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8868">line 8868</a>
     </li></ul></dd>
     
 
@@ -2099,7 +1979,7 @@ that agent password is to be treated as case sensitive
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8564">line 8564</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8821">line 8821</a>
     </li></ul></dd>
     
 
@@ -2186,7 +2066,7 @@ four possible callback types: agentStats, agentDailyStats, campaignStats, or que
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8653">line 8653</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8910">line 8910</a>
     </li></ul></dd>
     
 
@@ -2416,7 +2296,7 @@ AVAILABLE | TRANSITION | ENGAGED | ON-BREAK | WORKING | AWAY | LUNCH | AUX-UNAVA
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8585">line 8585</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8842">line 8842</a>
     </li></ul></dd>
     
 
@@ -2607,7 +2487,7 @@ CHAT-AVAILABLE | CHAT-PRESENTED | CHAT-ENGAGED | CHAT-RNA</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line9488">line 9488</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line9745">line 9745</a>
     </li></ul></dd>
     
 
@@ -2765,7 +2645,7 @@ CHAT-AVAILABLE | CHAT-PRESENTED | CHAT-ENGAGED | CHAT-RNA</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8664">line 8664</a>
+        <a href="agentLibrary.js.html">agentLibrary.js</a>, <a href="agentLibrary.js.html#line8921">line 8921</a>
     </li></ul></dd>
     
 
@@ -2815,7 +2695,7 @@ CHAT-AVAILABLE | CHAT-PRESENTED | CHAT-ENGAGED | CHAT-RNA</td>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Apr 18 2019 16:14:56 GMT-0600 (Mountain Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu May 09 2019 11:35:28 GMT-0600 (Mountain Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

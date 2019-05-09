@@ -24,6 +24,7 @@ var UIModel = (function() {
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
             waitingForAddSession : null,
+            baseAuthApi : "http://localhost:81/api/auth/login/",
 
             // internal chat requests
             chatAliasRequest : null,
@@ -53,7 +54,7 @@ var UIModel = (function() {
             callNotesRequest : null,
             callbacksPendingRequest : null,
             campaignDispositionsRequest : null,
-            configRequest : null,
+            loginRequest : null,
             coldXferRequest : null,
             dispositionRequest : null,
             dispositionManualPassRequest : null,
@@ -63,7 +64,9 @@ var UIModel = (function() {
             leadInsertRequest : null,
             leadUpdateRequest : null,
             logoutRequest : null,
-            loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
+            authenticateRequest : null, // get RC access token
+            loginPhase1Request : null,
+            // todo - dlb - figure out RC reconnects loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
             offhookInitRequest : null,
             offhookTermRequest : null,
             oneToOneOutdialRequest : null,
@@ -86,9 +89,10 @@ var UIModel = (function() {
             // response packets
             agentStatePacket : null,
             chatStatePacket : null,
-            configPacket : null,
-            currentCallPacket : null,
             loginPacket : null,
+            currentCallPacket : null,
+            authenticatePacket : null,
+            loginPhase1Packet : null,
             offhookInitPacket : null,
             offhookTermPacket : null,
             transferSessions: {},
