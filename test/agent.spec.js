@@ -6,11 +6,26 @@ var windowMock;
 var address = 'ws://test.address';
 var username = "testUser";
 var password = "sp!phy";
+var platformId = "local";
 var dialGroupId = "1";
 var gateIds = ["1","2"];
 var chatIds = ["1"];
 var skillProfileId = "1";
 var dialDest = "sip:99@boulder-voip.connectfirst.com";
+/*var Promise = function(){
+    return {};
+};
+var HttpService = function(){
+    return {
+        httpPost: function(){
+            return {};
+        }
+    }
+};*/
+
+var _mock = function(){
+    return {};
+};
 
 describe( 'Tests for Agent Library agent methods', function() {
     beforeEach(function() {
@@ -20,6 +35,7 @@ describe( 'Tests for Agent Library agent methods', function() {
         dialDest = "sip:99@boulder-voip.connectfirst.com";
 
         fixture.setBase('mock');  // If base path is different from the default `spec/fixtures`
+        this.response_authenticate = fixture.load('response.authenticate.json');
         this.ui_response_login = fixture.load('ui_response.Login.json');
         this.ui_response_Configure = fixture.load('ui_response.Configure.json');
 
@@ -77,35 +93,23 @@ describe( 'Tests for Agent Library agent methods', function() {
         fixture.cleanup()
     });
 
-    /*it( 'should build loginAgent message and send message over socket', function() {
+    /*it( 'should build authenticateAgent message with username, password, platformId', function() {
         var Lib = new AgentLibrary();
-        Lib.socket = windowMock.WebSocket(address);
-        Lib.socket._open();
+        Lib.authenticateAgent(username, password, platformId);
+        Lib.getAuthenticateRequest().processResponse(this.response_authenticate);
 
-        Lib.loginAgent(username, password);
-        var msg = Lib.getLoginRequest().formatJSON();
+        var authenticateRequest = Lib.getAuthenticateRequest();
+        var applicationSettings = Lib.getApplicationSettings();
 
-        Lib.socket._message(msg);
+        expect(authenticateRequest.accessToken).toEqual("123456789");
+        expect(authenticateRequest.refreshToken).toEqual("223867e6-ad0f-4af1-bbe7-5090d8259065");
+        expect(authenticateRequest.tokenType).toEqual("Bearer");
+        expect(authenticateRequest.agents.length).toEqual(1);
 
-        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
-        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
-    });
+        expect(applicationSettings.socketDest).toEqual("wss://d01-dev.vacd.biz:8080?access_token=123456789");
+    });*/
 
-    it( 'should build loginAgent with case sensitive flag and send message over socket', function() {
-        var Lib = new AgentLibrary();
-        Lib.socket = windowMock.WebSocket(address);
-        Lib.socket._open();
-
-        Lib.loginAgentCaseSensitive(username, password);
-        var msg = Lib.getLoginRequest().formatJSON();
-
-        Lib.socket._message(msg);
-
-        expect(windowMock.WebSocket).toHaveBeenCalledWith(address);
-        expect(Lib.socket.onmessage).toHaveBeenCalledWith(msg);
-    });
-
-    it( 'should process loginAgent response message', function() {
+    /*it( 'should process loginAgent response message', function() {
         var Lib = new AgentLibrary();
         Lib.socket = windowMock.WebSocket(address);
         Lib.socket._open();

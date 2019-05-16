@@ -1,0 +1,19 @@
+{
+   "refreshToken": "223867e6-ad0f-4af1-bbe7-5090d8259065",
+   "accessToken": "123456789",
+   "tokenType": "Bearer",
+   "platformId": "local",
+   "iqUrl": "d01-dev.vacd.biz",
+   "port": 8080,
+   "agentDetails": [
+     {
+       "agentId": 1,
+       "firstName": "D",
+       "lastName": "LB",
+       "email": "dlb@somewhere.com",
+       "username": "dlbooks"
+       }
+   ],
+  "adminId": null,
+  "mainAccountId": "99990000"
+}

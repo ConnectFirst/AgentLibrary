@@ -9,6 +9,7 @@ var AuthenticateRequest = function(username, password, platformId, jwt, tokenTyp
 
 AuthenticateRequest.prototype.sendPost = function() {
     var model = UIModel.getInstance();
+    model.authenticateRequest = this;
     if(this.username && this.password && this.platformId){
         // username/password authentication
         var params = {
@@ -25,8 +26,14 @@ AuthenticateRequest.prototype.sendPost = function() {
             "agent",
             params)
             .then(function(response){
-                var authenticateResponse = AuthenticateRequest.processResponse(response);
-                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                try{
+                    response = JSON.parse(response.response);
+
+                    var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                }catch(err){
+                    utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with Username/Password", err);
+                }
             }, function(err){
                 var errResponse = {
                     type: "Authenticate Error",
@@ -50,8 +57,14 @@ AuthenticateRequest.prototype.sendPost = function() {
             "/rc/accesstoken",
             jwtParams)
             .then(function(response){
-                var authenticateResponse = AuthenticateRequest.processResponse(response);
-                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                try{
+                    response = JSON.parse(response.response);
+
+                    var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
+                    utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                }catch(err){
+                    utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with JWT", err);
+                }
             }, function(err){
                 var errResponse = {
                     type: "Authenticate Error",

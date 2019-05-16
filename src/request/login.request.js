@@ -52,8 +52,8 @@ LoginRequest.prototype.formatJSON = function() {
             "agent_id":{
                 "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
             },
-            "agent_pwd":{
-                "#text": UIModel.getInstance().authenticateRequest.accessToken // todo - dlb - move accessToken to local storage
+            "access_token":{
+                "#text": UIModel.getInstance().authenticateRequest.accessToken // todo - dlb - move accessToken to local storage?
             },
             "dial_dest":{
                 "#text":utils.toString(this.dialDest)
@@ -74,7 +74,7 @@ LoginRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.updateFromAdminUI)
             },
             "agent_platform_id" : {
-                "#text" : utils.toString(2) //Hard-coded platformId
+                "#text" : utils.toString(2) // Hard-coded platformId for agent-js repo
             },
             "is_force" : {
                 "#text" : utils.toString(this.isForce)

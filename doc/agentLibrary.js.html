@@ -26,7 +26,7 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v2.1.10 - 2019-05-09 */
+            <pre class="prettyprint source linenums"><code>/*! cf-agent-library - v2.1.10 - 2019-05-16 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1187,12 +1187,12 @@ var AuthenticateRequest = function(username, password, platformId, jwt, tokenTyp
 
 AuthenticateRequest.prototype.sendPost = function() {
     var model = UIModel.getInstance();
+    model.authenticateRequest = this;
     if(this.username &amp;&amp; this.password &amp;&amp; this.platformId){
         // username/password authentication
         var params = {
             headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "https://localhost:8081"
+                "Content-Type": "application/json"
             },
             queryParams: {
                 username:this.username,
@@ -1204,18 +1204,53 @@ AuthenticateRequest.prototype.sendPost = function() {
             "agent",
             params)
             .then(function(response){
-                var authenticateResponse = AuthenticateRequest.processResponse(response);
-                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                try{
+                    response = JSON.parse(response.response);
+
+                    var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                }catch(err){
+                    utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with Username/Password", err);
+                }
             }, function(err){
                 var errResponse = {
                     type: "Authenticate Error",
                     message: "Error authenticating agent with username/password."
                 };
-                utils.logMessage(LOG_LEVELS.WARN, "error on agent login", err);
+                utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
                 utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, errResponse);
             });
     }else if(this.jwt &amp;&amp; this.tokenType){
-        // todo - dlb - JWT authentication
+        // JWT authentication
+        var jwtParams = {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            queryParams: {
+                rcAccessToken:this.jwt,
+                rcTokenType: this.tokenType
+            }
+        };
+        new HttpService(model.baseAuthApi).httpPost(
+            "/rc/accesstoken",
+            jwtParams)
+            .then(function(response){
+                try{
+                    response = JSON.parse(response.response);
+
+                    var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
+                    utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                }catch(err){
+                    utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with JWT", err);
+                }
+            }, function(err){
+                var errResponse = {
+                    type: "Authenticate Error",
+                    message: "Error authenticating agent with RC JSON web token."
+                };
+                utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
+                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, errResponse);
+            });
     }
 };
 
@@ -1233,28 +1268,8 @@ AuthenticateRequest.prototype.sendPost = function() {
  *           "agentId": 1,
  *           "firstName": "D",
  *           "lastName": "LB",
- *           "agentGroupId": 12,
  *           "email": "dlb@somewhere.com",
- *           "username": "dlbooks",
- *           "externalAgentId": "",
- *           "location": null,
- *           "team": null,
- *           "allowLoginControl": true,
- *           "allowLoginUpdates": true,
- *           "password": "password1",
- *           "agentType": "AGENT",
- *           "agentRank": 0,
- *           "initLoginBaseState": "AVAILABLE",
- *           "ghostRnaAction": "AVAILABLE",
- *           "enableSoftphone": false,
- *           "altDefaultLoginDest": "6001@169.54.178.37",
- *           "phoneLoginPin": "",
- *           "manualOutboundDefaultCallerId": "",
- *           "directAgentExtension": "",
- *           "maxChats": 1,
- *           "rcUserId": null,
- *           "accountId": "99990050",
- *           "accountName": "D Test Account"
+ *           "username": "dlbooks"
  *       }
  *   ],
  *   "adminId": null,
@@ -1271,7 +1286,9 @@ AuthenticateRequest.prototype.processResponse = function(response) {
     model.authenticateRequest.socketPort = response.port;
     model.authenticateRequest.agents = response.agentDetails;
 
-    model.applicationSettings.socketDest = "wss://" + response.iqUrl + ":" + response.port;
+    model.applicationSettings.socketDest = "wss://" + response.iqUrl;
+    model.applicationSettings.socketDest += ":" + response.port;
+    model.applicationSettings.socketDest += "?access_token=" + response.accessToken;
 
     return model.authenticateRequest;
 };
@@ -2671,8 +2688,8 @@ LoginRequest.prototype.formatJSON = function() {
             "agent_id":{
                 "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
             },
-            "agent_pwd":{
-                "#text": UIModel.getInstance().authenticateRequest.accessToken // todo - dlb - move accessToken to local storage
+            "access_token":{
+                "#text": UIModel.getInstance().authenticateRequest.accessToken // todo - dlb - move accessToken to local storage?
             },
             "dial_dest":{
                 "#text":utils.toString(this.dialDest)
@@ -2693,7 +2710,7 @@ LoginRequest.prototype.formatJSON = function() {
                 "#text":utils.toString(this.updateFromAdminUI)
             },
             "agent_platform_id" : {
-                "#text" : utils.toString(2) //Hard-coded platformId
+                "#text" : utils.toString(2) // Hard-coded platformId for agent-js repo
             },
             "is_force" : {
                 "#text" : utils.toString(this.isForce)
@@ -2987,15 +3004,7 @@ var LoginPhase1Request = function() {
 
 };
 
-
-/*"ghost_login": {
-    "#text": "FALSE"
-},
-"is_case_sensitive": {
-    "#text": "TRUE"
-},*/
-
-LoginRequest.prototype.formatJSON = function() {
+LoginPhase1Request.prototype.formatJSON = function() {
     var msg = {
         "ui_request":{
             "@destination":"IQ",
@@ -3207,7 +3216,7 @@ LoginPhase1Request.prototype.processResponse = function(response) {
             // Set collection values
             model.outboundSettings.availableCampaigns = _processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
-            processChatQueueDnis(model.chatSettings, response);
+            _processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
             model.inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
@@ -3324,7 +3333,7 @@ function _processCampaign(campaignRaw) {
  *
  *      This function will format the dnis list and put them back on chatSettings.availableChatQueues
  **/
-function processChatQueueDnis(chatSettings, response) {
+function _processChatQueueDnis(chatSettings, response) {
     var queues = chatSettings.availableChatQueues;
     var rawQueues = response.ui_response.login_chat_queues.chat_queue;
 
@@ -6292,6 +6301,7 @@ var UIModel = (function() {
             leadUpdateRequest : null,
             logoutRequest : null,
             authenticateRequest : null, // get RC access token
+            loginPhase1Request : null,
             // todo - dlb - figure out RC reconnects loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
             offhookInitRequest : null,
             offhookTermRequest : null,
@@ -6541,7 +6551,7 @@ function HttpService(apiBase) {
       req.open("POST", that.apiBase + path + queryParams);
       _addHeaders(config, req);
       _addCompletionListeners(resolve, reject, req);
-      req.send(); //_getUriEncodedBody(config)
+      req.send(_getUriEncodedBody(config));
     });
   };
 
@@ -6820,19 +6830,16 @@ var utils = {
                 var update = UIModel.getInstance().leadUpdateRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.LEAD_UPDATE, update);
                 break;
-            // todo - dlb - handle stats and callbacks after authentication
+            case MESSAGE_TYPES.LOGIN_PHASE_1:
+                var loginPhase1Response = UIModel.getInstance().loginPhase1Request.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LOGIN_PHASE_1, loginPhase1Response);
+                break;
             case MESSAGE_TYPES.LOGIN:
-                if (dest === "IS") {
-                    var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, loginResponse);
-                } else if (dest === 'IQ') {
-                    var configResponse = UIModel.getInstance().configRequest.processResponse(response);
-                    utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
-
-                    if (configResponse.status === "SUCCESS") {
-                        // start stats interval timer, request stats every 5 seconds
-                        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
-                    }
+                var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, loginResponse);
+                if (loginResponse.status === "SUCCESS") {
+                    // start stats interval timer, request stats every 5 seconds
+                    UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
                 }
                 break;
             case MESSAGE_TYPES.LOGOUT:
@@ -7728,6 +7735,7 @@ const CALLBACK_TYPES = {
     "LOG_CONSOLE_RESULTS":"logConsoleResultsResponse",
     "AUTHENTICATE":"authenticateResponse",
     "LOGIN":"loginResponse",
+    "LOGIN_PHASE_1": "loginPhase1Response",
     "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
     "LEAD_HISTORY":"leadHistoryResponse",
@@ -8660,6 +8668,9 @@ function initAgentLibrarySocket (context) {
         utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
         if("WebSocket" in context){
             if(!instance.socket){
+                UIModel.getInstance().agentSettings.agentId = agentId; // set agentId here since id is in scope
+                UIModel.getInstance().applicationSettings.socketDest += "&amp;agent_id=" + agentId;
+
                 var socketDest = UIModel.getInstance().applicationSettings.socketDest;
                 utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
                 instance.socket = new WebSocket(socketDest);
@@ -8724,7 +8735,6 @@ function initAgentLibrarySocket (context) {
         var queuedMsg;
 
         // get agent configuration information - "phase 1 login"
-        UIModel.getInstance().agentSettings.agentId = agentId;
         UIModel.getInstance().loginPhase1Request = new LoginPhase1Request();
         var msg = UIModel.getInstance().loginPhase1Request.formatJSON();
         utils.sendMessage(this, msg);
@@ -8791,15 +8801,57 @@ function initAgentLibraryAgent (context) {
      * @param {string} username Agent's username
      * @param {string} password Agent's password
      * @param {string} platformId Designate the platform where the agent is set up
+     * @param {function} [callback=null] Callback function when loginAgent response received
+     */
+    AgentLibrary.prototype.authenticateAgentWithUsernamePassword = function(username, password, platformId, callback){
+
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(username, password, platformId);
+        UIModel.getInstance().authenticateRequest.sendPost();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
+    };
+
+    /**
+     * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
+     * @memberof AgentLibrary.Agent
      * @param {string} jwt JSON Web Token received from RingCentral Single Sign-on API
      * @param {string} tokenType string type received from RingCentral Single Sign-on API
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.authenticateAgent = function(username, password, platformId, jwt, tokenType, callback){
-        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(username, password, platformId, jwt, tokenType);
+    AgentLibrary.prototype.authenticateAgentWithRcJwt = function(jwt, tokenType, callback){
+
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(null, null, null, jwt, tokenType);
         UIModel.getInstance().authenticateRequest.sendPost();
 
         utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
+    };
+
+    /**
+     * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
+     * @memberof AgentLibrary.Agent
+     * @param {string} token JSON Web Token received from RingCentral Single Sign-on API
+     * @param {function} [callback=null] Callback function when loginAgent response received
+     */
+    AgentLibrary.prototype.authenticateAgentWithEngageAccessToken = function(token, callback){
+
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(null, null, null, null, null, token);
+        UIModel.getInstance().authenticateRequest.sendPost();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
+    };
+
+    /**
+     * Sends request to IntelliQueue to get the agent's available products for login
+     * @memberof AgentLibrary.Agent
+     * @param {function} [callback=null] Callback function when loginPhase1 response received
+     */
+    AgentLibrary.prototype.getAgentConfig = function(callback){
+
+        UIModel.getInstance().loginPhase1Request = new LoginPhase1Request();
+        var msg = UIModel.getInstance().loginPhase1Request.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LOGIN_PHASE_1, callback);
+        utils.sendMessage(this, msg);
     };
 
     /**
@@ -10262,7 +10314,7 @@ if (typeof define === 'function' &amp;&amp; define.amd) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu May 09 2019 11:35:28 GMT-0600 (Mountain Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu May 16 2019 12:54:34 GMT-0600 (Mountain Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

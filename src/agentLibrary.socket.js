@@ -6,7 +6,9 @@ function initAgentLibrarySocket (context) {
         utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
         if("WebSocket" in context){
             if(!instance.socket){
-                UIModel.getInstance().applicationSettings.socketDest += "&agent_id=" + response.agentId;
+                UIModel.getInstance().agentSettings.agentId = agentId; // set agentId here since id is in scope
+                UIModel.getInstance().applicationSettings.socketDest += "&agent_id=" + agentId;
+
                 var socketDest = UIModel.getInstance().applicationSettings.socketDest;
                 utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
                 instance.socket = new WebSocket(socketDest);
@@ -71,9 +73,7 @@ function initAgentLibrarySocket (context) {
         var queuedMsg;
 
         // get agent configuration information - "phase 1 login"
-        var model = UIModel.getInstance();
-        model.agentSettings.agentId = agentId;
-        model.loginPhase1Request = new LoginPhase1Request();
+        UIModel.getInstance().loginPhase1Request = new LoginPhase1Request();
         var msg = UIModel.getInstance().loginPhase1Request.formatJSON();
         utils.sendMessage(this, msg);
 

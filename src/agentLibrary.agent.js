@@ -17,7 +17,7 @@ function initAgentLibraryAgent (context) {
      * @param {string} platformId Designate the platform where the agent is set up
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.authenticateAgent = function(username, password, platformId, callback){
+    AgentLibrary.prototype.authenticateAgentWithUsernamePassword = function(username, password, platformId, callback){
 
         UIModel.getInstance().authenticateRequest = new AuthenticateRequest(username, password, platformId);
         UIModel.getInstance().authenticateRequest.sendPost();
@@ -32,12 +32,40 @@ function initAgentLibraryAgent (context) {
      * @param {string} tokenType string type received from RingCentral Single Sign-on API
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.authenticateAgentWithJwt = function(jwt, tokenType, callback){
+    AgentLibrary.prototype.authenticateAgentWithRcJwt = function(jwt, tokenType, callback){
 
         UIModel.getInstance().authenticateRequest = new AuthenticateRequest(null, null, null, jwt, tokenType);
         UIModel.getInstance().authenticateRequest.sendPost();
 
         utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
+    };
+
+    /**
+     * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
+     * @memberof AgentLibrary.Agent
+     * @param {string} token JSON Web Token received from RingCentral Single Sign-on API
+     * @param {function} [callback=null] Callback function when loginAgent response received
+     */
+    AgentLibrary.prototype.authenticateAgentWithEngageAccessToken = function(token, callback){
+
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(null, null, null, null, null, token);
+        UIModel.getInstance().authenticateRequest.sendPost();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
+    };
+
+    /**
+     * Sends request to IntelliQueue to get the agent's available products for login
+     * @memberof AgentLibrary.Agent
+     * @param {function} [callback=null] Callback function when loginPhase1 response received
+     */
+    AgentLibrary.prototype.getAgentConfig = function(callback){
+
+        UIModel.getInstance().loginPhase1Request = new LoginPhase1Request();
+        var msg = UIModel.getInstance().loginPhase1Request.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LOGIN_PHASE_1, callback);
+        utils.sendMessage(this, msg);
     };
 
     /**

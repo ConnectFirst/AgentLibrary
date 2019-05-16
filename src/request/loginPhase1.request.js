@@ -3,15 +3,7 @@ var LoginPhase1Request = function() {
 
 };
 
-
-/*"ghost_login": {
-    "#text": "FALSE"
-},
-"is_case_sensitive": {
-    "#text": "TRUE"
-},*/
-
-LoginRequest.prototype.formatJSON = function() {
+LoginPhase1Request.prototype.formatJSON = function() {
     var msg = {
         "ui_request":{
             "@destination":"IQ",
@@ -223,7 +215,7 @@ LoginPhase1Request.prototype.processResponse = function(response) {
             // Set collection values
             model.outboundSettings.availableCampaigns = _processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
-            processChatQueueDnis(model.chatSettings, response);
+            _processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
             model.inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
@@ -340,7 +332,7 @@ function _processCampaign(campaignRaw) {
  *
  *      This function will format the dnis list and put them back on chatSettings.availableChatQueues
  **/
-function processChatQueueDnis(chatSettings, response) {
+function _processChatQueueDnis(chatSettings, response) {
     var queues = chatSettings.availableChatQueues;
     var rawQueues = response.ui_response.login_chat_queues.chat_queue;
 
