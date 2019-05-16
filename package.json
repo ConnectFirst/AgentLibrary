@@ -1,8 +1,8 @@
 {
   "name": "cf-agent-library",
-  "version": "2.1.10",
+  "version": "3.0.0",
   "author": "Connect First",
-  "description": "Connect First Agent UI Library",
+  "description": "RingCentral Engage AgentSDK",
   "main": "src/cfAgentLibrary.js",
   "scripts": {
     "build": "grunt build",
@@ -13,10 +13,10 @@
     "type": "git",
     "url": "http://git.connectfirst.com/dev/AgentLibrary.git"
   },
-  "homepage": "http://www.connectfirst.com",
+  "homepage": "https://www.ringcentral.com/",
   "licenses": {
     "type": "NA",
-    "url": "http://www.connectfirst.com"
+    "url": "https://www.ringcentral.com/"
   },
   "readmeFilename": "README.md",
   "devDependencies": {
