@@ -5,3 +5,4 @@
 protractor/testresults
 /vendor
 /test/agentLibrary.js
+\.DS_Store

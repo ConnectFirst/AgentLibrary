@@ -1,4 +1,4 @@
-/*! cf-agent-library - v3.0.0 - 2019-05-16 */
+/*! cf-agent-library - v3.0.0 - 2019-05-20 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1149,12 +1149,13 @@ AgentStateRequest.prototype.processResponse = function(response) {
 
 
 
-var AuthenticateRequest = function(username, password, platformId, jwt, tokenType) {
+var AuthenticateRequest = function(username, password, platformId, jwt, tokenType, engageAuthtoken) {
     this.username = username;
     this.password = password;
     this.platformId = platformId;
     this.jwt = jwt;
     this.tokenType = tokenType;
+    this.engageAuthtoken = engageAuthtoken;
 };
 
 AuthenticateRequest.prototype.sendPost = function() {
@@ -1173,7 +1174,7 @@ AuthenticateRequest.prototype.sendPost = function() {
             }
         };
         new HttpService(model.baseAuthApi).httpPost(
-            "agent",
+            "login/agent",
             params)
             .then(function(response){
                 try{
@@ -1204,7 +1205,7 @@ AuthenticateRequest.prototype.sendPost = function() {
             }
         };
         new HttpService(model.baseAuthApi).httpPost(
-            "/rc/accesstoken",
+            "login/rc/accesstoken",
             jwtParams)
             .then(function(response){
                 try{
@@ -1219,6 +1220,34 @@ AuthenticateRequest.prototype.sendPost = function() {
                 var errResponse = {
                     type: "Authenticate Error",
                     message: "Error authenticating agent with RC JSON web token."
+                };
+                utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
+                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, errResponse);
+            });
+    }else if(this.engageAuthtoken) {
+        // Engage Auth Access Token Authentication
+        var authParams = {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + utils.toString(this.engageAuthtoken)
+            }
+        };
+        new HttpService(model.baseAuthApi).httpGet(
+            "user",
+            authParams)
+            .then(function (response) {
+                try {
+                    response = JSON.parse(response.response);
+
+                    var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
+                    utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                } catch (err) {
+                    utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with Engage Auth access token", err);
+                }
+            }, function (err) {
+                var errResponse = {
+                    type: "Authenticate Error",
+                    message: "Error authenticating agent with Engage Auth access token."
                 };
                 utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
                 utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, errResponse);
@@ -1258,7 +1287,7 @@ AuthenticateRequest.prototype.processResponse = function(response) {
     model.authenticateRequest.socketPort = response.port;
     model.authenticateRequest.agents = response.agentDetails;
 
-    model.applicationSettings.socketDest = "wss://" + response.iqUrl;
+    model.applicationSettings.socketDest = "ws://" + response.iqUrl;
     model.applicationSettings.socketDest += ":" + response.port;
     model.applicationSettings.socketDest += "?access_token=" + response.accessToken;
 
@@ -6232,7 +6261,7 @@ var UIModel = (function() {
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
             waitingForAddSession : null,
-            baseAuthApi : "http://localhost:81/api/auth/login/",
+            baseAuthApi : "http://localhost:81/api/auth/", //window.location.origin + "/api/auth/",
 
             // internal chat requests
             chatAliasRequest : null,
