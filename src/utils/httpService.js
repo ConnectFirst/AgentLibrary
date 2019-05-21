@@ -1,8 +1,6 @@
 function HttpService(apiBase) {
   this.XMLHttpRequest = window.XMLHttpRequest;
   this.encodeURIComponent = window.encodeURIComponent;
-
-  // Set the apiBase value based on .env file.
   this.apiBase = apiBase || "http://localhost:81";
 
   var that = this;

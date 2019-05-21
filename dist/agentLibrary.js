@@ -1160,6 +1160,7 @@ var AuthenticateRequest = function(username, password, platformId, jwt, tokenTyp
 
 AuthenticateRequest.prototype.sendPost = function() {
     var model = UIModel.getInstance();
+    var baseUrl = model.authHost + model.baseAuthUri;
     model.authenticateRequest = this;
     if(this.username && this.password && this.platformId){
         // username/password authentication
@@ -1173,7 +1174,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                 platformId: this.platformId
             }
         };
-        new HttpService(model.baseAuthApi).httpPost(
+        new HttpService(baseUrl).httpPost(
             "login/agent",
             params)
             .then(function(response){
@@ -1191,7 +1192,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                     message: "Error authenticating agent with username/password."
                 };
                 utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
-                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, errResponse);
+                utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
             });
     }else if(this.jwt && this.tokenType){
         // JWT authentication
@@ -1204,7 +1205,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                 rcTokenType: this.tokenType
             }
         };
-        new HttpService(model.baseAuthApi).httpPost(
+        new HttpService(baseUrl).httpPost(
             "login/rc/accesstoken",
             jwtParams)
             .then(function(response){
@@ -1212,7 +1213,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                     response = JSON.parse(response.response);
 
                     var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
-                    utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
                 }catch(err){
                     utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with JWT", err);
                 }
@@ -1222,7 +1223,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                     message: "Error authenticating agent with RC JSON web token."
                 };
                 utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
-                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, errResponse);
+                utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
             });
     }else if(this.engageAuthtoken) {
         // Engage Auth Access Token Authentication
@@ -1232,7 +1233,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                 "Authorization": "Bearer " + utils.toString(this.engageAuthtoken)
             }
         };
-        new HttpService(model.baseAuthApi).httpGet(
+        new HttpService(baseUrl).httpGet(
             "user",
             authParams)
             .then(function (response) {
@@ -1240,7 +1241,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                     response = JSON.parse(response.response);
 
                     var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
-                    utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
                 } catch (err) {
                     utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with Engage Auth access token", err);
                 }
@@ -1250,7 +1251,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                     message: "Error authenticating agent with Engage Auth access token."
                 };
                 utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
-                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, errResponse);
+                utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
             });
     }
 };
@@ -1287,7 +1288,7 @@ AuthenticateRequest.prototype.processResponse = function(response) {
     model.authenticateRequest.socketPort = response.port;
     model.authenticateRequest.agents = response.agentDetails;
 
-    model.applicationSettings.socketDest = "ws://" + response.iqUrl;
+    model.applicationSettings.socketDest = model.socketProtocol + response.iqUrl;
     model.applicationSettings.socketDest += ":" + response.port;
     model.applicationSettings.socketDest += "?access_token=" + response.accessToken;
 
@@ -6261,7 +6262,9 @@ var UIModel = (function() {
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
             waitingForAddSession : null,
-            baseAuthApi : "http://localhost:81/api/auth/", //window.location.origin + "/api/auth/",
+            authHost: "http://localhost:81",         // default to localhost if nothing passed in on initialization
+            socketProtocol: "wss://",               // default to secure socket unless local test flag passed in on initialization
+            baseAuthUri : "/api/auth/", // http://localhost:81/api/auth/ or window.location.origin + "/api/auth/",
 
             // internal chat requests
             chatAliasRequest : null,
@@ -6507,8 +6510,6 @@ var UIModel = (function() {
 function HttpService(apiBase) {
   this.XMLHttpRequest = window.XMLHttpRequest;
   this.encodeURIComponent = window.encodeURIComponent;
-
-  // Set the apiBase value based on .env file.
   this.apiBase = apiBase || "http://localhost:81";
 
   var that = this;
@@ -7914,6 +7915,16 @@ function initAgentLibraryCore (context) {
         if(typeof config.callbacks !== 'undefined'){
             this.callbacks = config.callbacks;
         }
+
+        if(typeof config.authHost !== 'undefined'){
+            UIModel.getInstance().authHost = config.authHost;
+        }
+
+        if(typeof config.localTesting !== 'undefined'){
+            UIModel.getInstance().socketProtocol = config.localTesting ? "ws://" : "wss://";
+        }
+
+
 
         /*if(typeof config.socketDest !== 'undefined'){
             UIModel.getInstance().applicationSettings.socketDest = config.socketDest;

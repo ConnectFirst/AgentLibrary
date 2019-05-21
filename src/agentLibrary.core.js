@@ -230,6 +230,16 @@ function initAgentLibraryCore (context) {
             this.callbacks = config.callbacks;
         }
 
+        if(typeof config.authHost !== 'undefined'){
+            UIModel.getInstance().authHost = config.authHost;
+        }
+
+        if(typeof config.localTesting !== 'undefined'){
+            UIModel.getInstance().socketProtocol = config.localTesting ? "ws://" : "wss://";
+        }
+
+
+
         /*if(typeof config.socketDest !== 'undefined'){
             UIModel.getInstance().applicationSettings.socketDest = config.socketDest;
             this.openSocket();

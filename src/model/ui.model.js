@@ -24,7 +24,9 @@ var UIModel = (function() {
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
             waitingForAddSession : null,
-            baseAuthApi : "http://localhost:81/api/auth/", //window.location.origin + "/api/auth/",
+            authHost: "http://localhost:81",         // default to localhost if nothing passed in on initialization
+            socketProtocol: "wss://",               // default to secure socket unless local test flag passed in on initialization
+            baseAuthUri : "/api/auth/", // http://localhost:81/api/auth/ or window.location.origin + "/api/auth/",
 
             // internal chat requests
             chatAliasRequest : null,

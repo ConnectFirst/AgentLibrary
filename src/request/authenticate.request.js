@@ -10,6 +10,7 @@ var AuthenticateRequest = function(username, password, platformId, jwt, tokenTyp
 
 AuthenticateRequest.prototype.sendPost = function() {
     var model = UIModel.getInstance();
+    var baseUrl = model.authHost + model.baseAuthUri;
     model.authenticateRequest = this;
     if(this.username && this.password && this.platformId){
         // username/password authentication
@@ -23,7 +24,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                 platformId: this.platformId
             }
         };
-        new HttpService(model.baseAuthApi).httpPost(
+        new HttpService(baseUrl).httpPost(
             "login/agent",
             params)
             .then(function(response){
@@ -41,7 +42,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                     message: "Error authenticating agent with username/password."
                 };
                 utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
-                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, errResponse);
+                utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
             });
     }else if(this.jwt && this.tokenType){
         // JWT authentication
@@ -54,7 +55,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                 rcTokenType: this.tokenType
             }
         };
-        new HttpService(model.baseAuthApi).httpPost(
+        new HttpService(baseUrl).httpPost(
             "login/rc/accesstoken",
             jwtParams)
             .then(function(response){
@@ -62,7 +63,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                     response = JSON.parse(response.response);
 
                     var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
-                    utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
                 }catch(err){
                     utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with JWT", err);
                 }
@@ -72,7 +73,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                     message: "Error authenticating agent with RC JSON web token."
                 };
                 utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
-                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, errResponse);
+                utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
             });
     }else if(this.engageAuthtoken) {
         // Engage Auth Access Token Authentication
@@ -82,7 +83,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                 "Authorization": "Bearer " + utils.toString(this.engageAuthtoken)
             }
         };
-        new HttpService(model.baseAuthApi).httpGet(
+        new HttpService(baseUrl).httpGet(
             "user",
             authParams)
             .then(function (response) {
@@ -90,7 +91,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                     response = JSON.parse(response.response);
 
                     var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
-                    utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
                 } catch (err) {
                     utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with Engage Auth access token", err);
                 }
@@ -100,7 +101,7 @@ AuthenticateRequest.prototype.sendPost = function() {
                     message: "Error authenticating agent with Engage Auth access token."
                 };
                 utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
-                utils.fireCallback(UIModel.getInstance(), CALLBACK_TYPES.AUTHENTICATE, errResponse);
+                utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
             });
     }
 };
@@ -137,7 +138,7 @@ AuthenticateRequest.prototype.processResponse = function(response) {
     model.authenticateRequest.socketPort = response.port;
     model.authenticateRequest.agents = response.agentDetails;
 
-    model.applicationSettings.socketDest = "wss://" + response.iqUrl;
+    model.applicationSettings.socketDest = model.socketProtocol + response.iqUrl;
     model.applicationSettings.socketDest += ":" + response.port;
     model.applicationSettings.socketDest += "?access_token=" + response.accessToken;
 
