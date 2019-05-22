@@ -1,4 +1,4 @@
-/*! cf-agent-library - v3.0.0 - 2019-05-20 */
+/*! cf-agent-library - v3.0.0 - 2019-05-22 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1149,110 +1149,27 @@ AgentStateRequest.prototype.processResponse = function(response) {
 
 
 
-var AuthenticateRequest = function(username, password, platformId, jwt, tokenType, engageAuthtoken) {
-    this.username = username;
-    this.password = password;
-    this.platformId = platformId;
-    this.jwt = jwt;
-    this.tokenType = tokenType;
-    this.engageAuthtoken = engageAuthtoken;
+var AuthenticateRequest = function(config) {
+    this.username = config.username;
+    this.password = config.password;
+    this.platformId = config.platformId;
+    this.rcAccessToken = config.rcAccessToken;
+    this.tokenType = config.tokenType;
+    this.engageAccessToken = config.engageAccessToken;
+    this.authType = config.authType;
 };
 
-AuthenticateRequest.prototype.sendPost = function() {
-    var model = UIModel.getInstance();
-    var baseUrl = model.authHost + model.baseAuthUri;
-    model.authenticateRequest = this;
-    if(this.username && this.password && this.platformId){
-        // username/password authentication
-        var params = {
-            headers: {
-                "Content-Type": "application/json"
-            },
-            queryParams: {
-                username:this.username,
-                password: this.password,
-                platformId: this.platformId
-            }
-        };
-        new HttpService(baseUrl).httpPost(
-            "login/agent",
-            params)
-            .then(function(response){
-                try{
-                    response = JSON.parse(response.response);
-
-                    var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
-                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
-                }catch(err){
-                    utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with Username/Password", err);
-                }
-            }, function(err){
-                var errResponse = {
-                    type: "Authenticate Error",
-                    message: "Error authenticating agent with username/password."
-                };
-                utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
-                utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
-            });
-    }else if(this.jwt && this.tokenType){
-        // JWT authentication
-        var jwtParams = {
-            headers: {
-                "Content-Type": "application/json"
-            },
-            queryParams: {
-                rcAccessToken:this.jwt,
-                rcTokenType: this.tokenType
-            }
-        };
-        new HttpService(baseUrl).httpPost(
-            "login/rc/accesstoken",
-            jwtParams)
-            .then(function(response){
-                try{
-                    response = JSON.parse(response.response);
-
-                    var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
-                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
-                }catch(err){
-                    utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with JWT", err);
-                }
-            }, function(err){
-                var errResponse = {
-                    type: "Authenticate Error",
-                    message: "Error authenticating agent with RC JSON web token."
-                };
-                utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
-                utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
-            });
-    }else if(this.engageAuthtoken) {
-        // Engage Auth Access Token Authentication
-        var authParams = {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + utils.toString(this.engageAuthtoken)
-            }
-        };
-        new HttpService(baseUrl).httpGet(
-            "user",
-            authParams)
-            .then(function (response) {
-                try {
-                    response = JSON.parse(response.response);
-
-                    var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
-                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
-                } catch (err) {
-                    utils.logMessage(LOG_LEVELS.WARN, "Error on agent authenticate with Engage Auth access token", err);
-                }
-            }, function (err) {
-                var errResponse = {
-                    type: "Authenticate Error",
-                    message: "Error authenticating agent with Engage Auth access token."
-                };
-                utils.logMessage(LOG_LEVELS.WARN, "error on agent authenticate", err);
-                utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
-            });
+AuthenticateRequest.prototype.sendHttpRequest = function() {
+    switch(this.authType){
+        case AUTHENTICATE_TYPES.USERNAME_PASSWORD:
+            _buildHttpRequest(this.authType, "login/agent", {username:this.username, password: this.password, platformId: this.platformId});
+            break;
+        case AUTHENTICATE_TYPES.RC_TOKEN:
+            _buildHttpRequest(this.authType, "login/rc/accesstoken", {rcAccessToken:this.rcAccessToken, rcTokenType: this.tokenType});
+            break;
+        case AUTHENTICATE_TYPES.ENGAGE_TOKEN:
+            _buildHttpRequest(this.authType, "user", {});
+            break;
     }
 };
 
@@ -1295,6 +1212,69 @@ AuthenticateRequest.prototype.processResponse = function(response) {
     return model.authenticateRequest;
 };
 
+function _buildHttpRequest(authType, path, queryParams){
+    var model = UIModel.getInstance();
+    var baseUrl = model.authHost + model.baseAuthUri;
+    model.authenticateRequest = this;
+    var params = {
+        headers: {
+            "Content-Type": "application/json"
+        }
+    };
+
+    switch(authType){
+        case AUTHENTICATE_TYPES.USERNAME_PASSWORD:
+        case AUTHENTICATE_TYPES.RC_TOKEN:
+            params["queryParams"] = queryParams;
+            var errorMsg = "Error on agent authenticate POST to engage-auth. URL: " + baseUrl + path;
+            new HttpService(baseUrl).httpPost(
+                path,
+                params)
+                .then(function(response){
+                    try{
+                        response = JSON.parse(response.response);
+
+                        var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
+                        utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                    }catch(err){
+                        utils.logMessage(LOG_LEVELS.WARN, errorMsg, err);
+                    }
+                }, function(err){
+                    var errResponse = {
+                        type: "Authenticate Error",
+                        message: errorMsg
+                    };
+                    utils.logMessage(LOG_LEVELS.WARN, errorMsg, err);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
+                });
+            break;
+        case AUTHENTICATE_TYPES.ENGAGE_TOKEN:
+            var errMsg = "Error on agent authenticate GET to engage-auth. URL: " + baseUrl + path;
+            params.headers["Authorization"] =  "Bearer " + utils.toString(this.engageAuthtoken);
+            new HttpService(baseUrl).httpGet(
+                path,
+                params)
+                .then(function (response) {
+                    try {
+                        response = JSON.parse(response.response);
+
+                        var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
+                        utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                    } catch (err) {
+                        utils.logMessage(LOG_LEVELS.WARN, errMsg, err);
+                    }
+                }, function (err) {
+                    var errResponse = {
+                        type: "Authenticate Error",
+                        message: errMsg
+                    };
+                    utils.logMessage(LOG_LEVELS.WARN, errMsg, err);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
+                });
+            break;
+    }
+
+}
 
 var BargeInRequest = function(audioType, agentId, uii, monitorAgentId) {
     this.audioType = audioType || "FULL";
@@ -7697,6 +7677,12 @@ const LOG_LEVELS ={
     "ERROR":"error"
 };
 
+const AUTHENTICATE_TYPES ={
+    "USERNAME_PASSWORD":"USERNAME_PASSWORD",
+    "RC_TOKEN":"RC_TOKEN",
+    "ENGAGE_TOKEN":"ENGAGE_TOKEN"
+};
+
 // add all callback types to setCallback method description
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
@@ -7920,19 +7906,9 @@ function initAgentLibraryCore (context) {
             UIModel.getInstance().authHost = config.authHost;
         }
 
-        if(typeof config.localTesting !== 'undefined'){
+        if(!!config.localTesting){
             UIModel.getInstance().socketProtocol = config.localTesting ? "ws://" : "wss://";
         }
-
-
-
-        /*if(typeof config.socketDest !== 'undefined'){
-            UIModel.getInstance().applicationSettings.socketDest = config.socketDest;
-            this.openSocket();
-        }else{
-
-        }*/
-
 
         return this;
     };
@@ -8050,7 +8026,7 @@ function initAgentLibraryCore (context) {
     // requests and responses //
     ////////////////////////////
     /**
-     * Get outgoing Login Request object
+     * Get outgoing Authenticate Request object
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
@@ -8726,6 +8702,7 @@ function initAgentLibrarySocket (context) {
                         console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
 
                         setTimeout(function(){
+                            // todo - dlb - take a look at this for reconnects with SSO
                             instance.openSocket(UIModel.getInstance().agentSettings.agentId);
                         }, 5000);
                     }
@@ -8817,8 +8794,8 @@ function initAgentLibraryAgent (context) {
      */
     AgentLibrary.prototype.authenticateAgentWithUsernamePassword = function(username, password, platformId, callback){
 
-        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(username, password, platformId);
-        UIModel.getInstance().authenticateRequest.sendPost();
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({username:username, password:password, platformId:platformId, authType:AUTHENTICATE_TYPES.USERNAME_PASSWORD});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
 
         utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
     };
@@ -8826,14 +8803,14 @@ function initAgentLibraryAgent (context) {
     /**
      * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
      * @memberof AgentLibrary.Agent
-     * @param {string} jwt JSON Web Token received from RingCentral Single Sign-on API
+     * @param {string} rcAccessToken JSON Web Token received from RingCentral Single Sign-on API
      * @param {string} tokenType string type received from RingCentral Single Sign-on API
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.authenticateAgentWithRcJwt = function(jwt, tokenType, callback){
+    AgentLibrary.prototype.authenticateAgentWithRcAccessToken = function(rcAccessToken, tokenType, callback){
 
-        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(null, null, null, jwt, tokenType);
-        UIModel.getInstance().authenticateRequest.sendPost();
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({rcAccessToken: rcAccessToken, tokenType:tokenType, authType:AUTHENTICATE_TYPES.RC_TOKEN});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
 
         utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
     };
@@ -8841,13 +8818,13 @@ function initAgentLibraryAgent (context) {
     /**
      * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
      * @memberof AgentLibrary.Agent
-     * @param {string} token JSON Web Token received from RingCentral Single Sign-on API
+     * @param {string} engageAccessToken JSON Web Token received from RingCentral Single Sign-on API
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.authenticateAgentWithEngageAccessToken = function(token, callback){
+    AgentLibrary.prototype.authenticateAgentWithEngageAccessToken = function(engageAccessToken, callback){
 
-        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(null, null, null, null, null, token);
-        UIModel.getInstance().authenticateRequest.sendPost();
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({engageAccessToken:engageAccessToken, authType:AUTHENTICATE_TYPES.ENGAGE_TOKEN});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
 
         utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
     };

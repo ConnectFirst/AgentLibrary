@@ -52,6 +52,7 @@ function initAgentLibrarySocket (context) {
                         console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
 
                         setTimeout(function(){
+                            // todo - dlb - take a look at this for reconnects with SSO
                             instance.openSocket(UIModel.getInstance().agentSettings.agentId);
                         }, 5000);
                     }

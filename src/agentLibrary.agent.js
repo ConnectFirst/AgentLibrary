@@ -19,8 +19,8 @@ function initAgentLibraryAgent (context) {
      */
     AgentLibrary.prototype.authenticateAgentWithUsernamePassword = function(username, password, platformId, callback){
 
-        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(username, password, platformId);
-        UIModel.getInstance().authenticateRequest.sendPost();
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({username:username, password:password, platformId:platformId, authType:AUTHENTICATE_TYPES.USERNAME_PASSWORD});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
 
         utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
     };
@@ -28,14 +28,14 @@ function initAgentLibraryAgent (context) {
     /**
      * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
      * @memberof AgentLibrary.Agent
-     * @param {string} jwt JSON Web Token received from RingCentral Single Sign-on API
+     * @param {string} rcAccessToken JSON Web Token received from RingCentral Single Sign-on API
      * @param {string} tokenType string type received from RingCentral Single Sign-on API
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.authenticateAgentWithRcJwt = function(jwt, tokenType, callback){
+    AgentLibrary.prototype.authenticateAgentWithRcAccessToken = function(rcAccessToken, tokenType, callback){
 
-        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(null, null, null, jwt, tokenType);
-        UIModel.getInstance().authenticateRequest.sendPost();
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({rcAccessToken: rcAccessToken, tokenType:tokenType, authType:AUTHENTICATE_TYPES.RC_TOKEN});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
 
         utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
     };
@@ -43,13 +43,13 @@ function initAgentLibraryAgent (context) {
     /**
      * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
      * @memberof AgentLibrary.Agent
-     * @param {string} token JSON Web Token received from RingCentral Single Sign-on API
+     * @param {string} engageAccessToken JSON Web Token received from RingCentral Single Sign-on API
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.authenticateAgentWithEngageAccessToken = function(token, callback){
+    AgentLibrary.prototype.authenticateAgentWithEngageAccessToken = function(engageAccessToken, callback){
 
-        UIModel.getInstance().authenticateRequest = new AuthenticateRequest(null, null, null, null, null, token);
-        UIModel.getInstance().authenticateRequest.sendPost();
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({engageAccessToken:engageAccessToken, authType:AUTHENTICATE_TYPES.ENGAGE_TOKEN});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
 
         utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
     };

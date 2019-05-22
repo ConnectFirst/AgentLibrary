@@ -11,6 +11,12 @@ const LOG_LEVELS ={
     "ERROR":"error"
 };
 
+const AUTHENTICATE_TYPES ={
+    "USERNAME_PASSWORD":"USERNAME_PASSWORD",
+    "RC_TOKEN":"RC_TOKEN",
+    "ENGAGE_TOKEN":"ENGAGE_TOKEN"
+};
+
 // add all callback types to setCallback method description
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
@@ -234,19 +240,9 @@ function initAgentLibraryCore (context) {
             UIModel.getInstance().authHost = config.authHost;
         }
 
-        if(typeof config.localTesting !== 'undefined'){
+        if(!!config.localTesting){
             UIModel.getInstance().socketProtocol = config.localTesting ? "ws://" : "wss://";
         }
-
-
-
-        /*if(typeof config.socketDest !== 'undefined'){
-            UIModel.getInstance().applicationSettings.socketDest = config.socketDest;
-            this.openSocket();
-        }else{
-
-        }*/
-
 
         return this;
     };
@@ -364,7 +360,7 @@ function initAgentLibraryCore (context) {
     // requests and responses //
     ////////////////////////////
     /**
-     * Get outgoing Login Request object
+     * Get outgoing Authenticate Request object
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
