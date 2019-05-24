@@ -10,6 +10,7 @@ var AuthenticateRequest = function(config) {
 };
 
 AuthenticateRequest.prototype.sendHttpRequest = function() {
+    UIModel.getInstance().authenticateRequest = this;
     switch(this.authType){
         case AUTHENTICATE_TYPES.USERNAME_PASSWORD:
             _buildHttpRequest(this.authType, "login/agent", {username:this.username, password: this.password, platformId: this.platformId});
@@ -65,7 +66,6 @@ AuthenticateRequest.prototype.processResponse = function(response) {
 function _buildHttpRequest(authType, path, queryParams){
     var model = UIModel.getInstance();
     var baseUrl = model.authHost + model.baseAuthUri;
-    model.authenticateRequest = this;
     var params = {
         headers: {
             "Content-Type": "application/json"
@@ -100,7 +100,7 @@ function _buildHttpRequest(authType, path, queryParams){
             break;
         case AUTHENTICATE_TYPES.ENGAGE_TOKEN:
             var errMsg = "Error on agent authenticate GET to engage-auth. URL: " + baseUrl + path;
-            params.headers["Authorization"] =  "Bearer " + utils.toString(this.engageAuthtoken);
+            params.headers["Authorization"] =  "Bearer " + utils.toString(UIModel.getInstance().authenticateRequest.engageAccessToken);
             new HttpService(baseUrl).httpGet(
                 path,
                 params)

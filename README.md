@@ -38,16 +38,17 @@ at [https://portal.vacd.biz/cfagent/doc/AgentLibrary.html](https://portal.vacd.b
 There are a few steps needed to authenticate and sign in an agent before being able to send and receive requests from the 
 Engage Voice system.
 
-1. Initialize the AgentSDK, pass in any needed callback functions. The AgentLibrary constructor expects an object of callbacks
+1. Initialize the AgentSDK, pass in any needed callback functions and the host for the engage-auth server. If you need to set up an 
+unsecured web socket, use `localTesting = true` flag. The AgentLibrary constructor expects an object of callbacks
 that are set up as key/value pairs, the key representing the name of the callback and the value being the callback function.
     ```
-    var Lib = new AgentLibrary({callbacks: objectOfCallbacks});
+    var Lib = new AgentLibrary({callbacks: objectOfCallbacks, authHost: "http://localhost:81", localTesting: true});
     ```
 2. Authenticate the AgentSDK in one of three ways: username/password (legacy), RC JWT (API use), Engage Auth Access Token 
 (Single Point of Entry). Each of these authenticate methods will return a list of available agents associated with the 
 provided credentials. 
     - `authenticateAgentWithUsernamePassword(username, password, platformId, callback)`
-    - `authenticateAgentWithRcJwt(jwt, tokenType, callback)`
+    - `authenticateAgentWithRcAccessToken(rcAccessToken, tokenType, callback)`
     - `authenticateAgentWithEngageAccessToken(token, callback)`
 3. Initialize the socket. Pass in the agent id to the `openSocket()` method for the agent you wish to sign in.
 This call will return all the config options for the selected agent.
