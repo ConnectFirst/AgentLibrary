@@ -19,7 +19,7 @@ AuthenticateRequest.prototype.sendHttpRequest = function() {
             _buildHttpRequest(this.authType, "login/rc/accesstoken", {rcAccessToken:this.rcAccessToken, rcTokenType: this.tokenType});
             break;
         case AUTHENTICATE_TYPES.ENGAGE_TOKEN:
-            _buildHttpRequest(this.authType, "user", {});
+            _buildHttpRequest(this.authType, "login", {});
             break;
     }
 };
