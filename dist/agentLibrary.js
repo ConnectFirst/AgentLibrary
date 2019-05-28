@@ -1,4 +1,4 @@
-/*! cf-agent-library - v3.0.0 - 2019-05-24 */
+/*! cf-agent-library - v3.0.0 - 2019-05-28 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -6242,7 +6242,7 @@ var UIModel = (function() {
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
             waitingForAddSession : null,
-            authHost: "http://localhost:81",         // default to localhost if nothing passed in on initialization
+            authHost: window.location.origin,       // default to protocol + hostname + port
             socketProtocol: "wss://",               // default to secure socket unless local test flag passed in on initialization
             baseAuthUri : "/api/auth/", // http://localhost:81/api/auth/ or window.location.origin + "/api/auth/",
 
