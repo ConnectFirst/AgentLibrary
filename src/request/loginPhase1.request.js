@@ -182,6 +182,7 @@ LoginPhase1Request.prototype.processResponse = function(response) {
             model.agentSettings.isOutboundPrepay = utils.getText(resp, 'outbound_prepay') === "1";
             model.agentSettings.phoneLoginPin = utils.getText(resp, 'phone_login_pin');
             model.agentSettings.username = utils.getText(resp, 'username');
+            model.agentSettings.agentPassword = utils.getText(resp, 'agent_pwd');
 
             model.agentPermissions.allowCallControl = utils.getText(resp, 'allow_call_control') === "1";
             model.agentPermissions.allowChat = utils.getText(resp, 'allow_chat') === "1";

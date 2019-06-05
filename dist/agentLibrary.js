@@ -1,4 +1,4 @@
-/*! cf-agent-library - v3.0.0 - 2019-05-28 */
+/*! cf-agent-library - v3.0.0 - 2019-06-05 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1169,7 +1169,7 @@ AuthenticateRequest.prototype.sendHttpRequest = function() {
             _buildHttpRequest(this.authType, "login/rc/accesstoken", {rcAccessToken:this.rcAccessToken, rcTokenType: this.tokenType});
             break;
         case AUTHENTICATE_TYPES.ENGAGE_TOKEN:
-            _buildHttpRequest(this.authType, "user", {});
+            _buildHttpRequest(this.authType, "login", {});
             break;
     }
 };
@@ -3165,6 +3165,7 @@ LoginPhase1Request.prototype.processResponse = function(response) {
             model.agentSettings.isOutboundPrepay = utils.getText(resp, 'outbound_prepay') === "1";
             model.agentSettings.phoneLoginPin = utils.getText(resp, 'phone_login_pin');
             model.agentSettings.username = utils.getText(resp, 'username');
+            model.agentSettings.agentPassword = utils.getText(resp, 'agent_pwd');
 
             model.agentPermissions.allowCallControl = utils.getText(resp, 'allow_call_control') === "1";
             model.agentPermissions.allowChat = utils.getText(resp, 'allow_chat') === "1";
