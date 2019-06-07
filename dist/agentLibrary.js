@@ -1,4 +1,4 @@
-/*! cf-agent-library - v3.0.0 - 2019-06-05 */
+/*! cf-agent-library - v3.0.0 - 2019-06-07 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1176,25 +1176,25 @@ AuthenticateRequest.prototype.sendHttpRequest = function() {
 
 /*
  * response:
- * {
- *   "refreshToken": "223867e6-ad0f-4af1-bbe7-5090d8259065",
- *   "accessToken": "",
- *   "tokenType": "Bearer",
- *   "platformId": "local",
- *   "iqUrl": "d01-dev.vacd.biz",
- *   "port": 8080,
- *   "agentDetails": [
- *       {
- *           "agentId": 1,
- *           "firstName": "D",
- *           "lastName": "LB",
- *           "email": "dlb@somewhere.com",
- *           "username": "dlbooks"
- *       }
- *   ],
- *   "adminId": null,
- *   "mainAccountId": "99990000"
- * }
+  {
+    "refreshToken": "223867e6-ad0f-4af1-bbe7-5090d8259065",
+    "accessToken": "",
+    "tokenType": "Bearer",
+    "platformId": "local",
+    "iqUrl": "d01-dev.vacd.biz",
+    "port": 8080,
+    "agentDetails": [
+        {
+            "agentId": 1,
+            "firstName": "D",
+            "lastName": "LB",
+            "email": "dlb@somewhere.com",
+            "username": "dlbooks"
+        }
+    ],
+    "adminId": null,
+    "mainAccountId": "99990000"
+  }
  */
 AuthenticateRequest.prototype.processResponse = function(response) {
     var model = UIModel.getInstance();
@@ -1268,6 +1268,9 @@ function _buildHttpRequest(authType, path, queryParams){
                         type: "Authenticate Error",
                         message: errMsg
                     };
+                    if(err.status){
+                        errResponse.status = err.status;
+                    }
                     utils.logMessage(LOG_LEVELS.WARN, errMsg, err);
                     utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
                 });
@@ -7907,8 +7910,8 @@ function initAgentLibraryCore (context) {
             UIModel.getInstance().authHost = config.authHost;
         }
 
-        if(!!config.localTesting){
-            UIModel.getInstance().socketProtocol = config.localTesting ? "ws://" : "wss://";
+        if(config.isSecureSocket !== 'undefined'){
+            UIModel.getInstance().socketProtocol = config.isSecureSocket ? "wss://" : "ws://";
         }
 
         return this;

@@ -118,6 +118,9 @@ function _buildHttpRequest(authType, path, queryParams){
                         type: "Authenticate Error",
                         message: errMsg
                     };
+                    if(err.status){
+                        errResponse.status = err.status;
+                    }
                     utils.logMessage(LOG_LEVELS.WARN, errMsg, err);
                     utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
                 });

@@ -240,8 +240,8 @@ function initAgentLibraryCore (context) {
             UIModel.getInstance().authHost = config.authHost;
         }
 
-        if(!!config.localTesting){
-            UIModel.getInstance().socketProtocol = config.localTesting ? "ws://" : "wss://";
+        if(config.isSecureSocket !== 'undefined'){
+            UIModel.getInstance().socketProtocol = config.isSecureSocket ? "wss://" : "ws://";
         }
 
         return this;
