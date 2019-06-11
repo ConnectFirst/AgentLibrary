@@ -1,4 +1,4 @@
-/*! cf-agent-library - v3.0.0 - 2019-06-07 */
+/*! cf-agent-library - v3.0.0 - 2019-06-11 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1176,25 +1176,25 @@ AuthenticateRequest.prototype.sendHttpRequest = function() {
 
 /*
  * response:
-  {
-    "refreshToken": "223867e6-ad0f-4af1-bbe7-5090d8259065",
-    "accessToken": "",
-    "tokenType": "Bearer",
-    "platformId": "local",
-    "iqUrl": "d01-dev.vacd.biz",
-    "port": 8080,
-    "agentDetails": [
-        {
-            "agentId": 1,
-            "firstName": "D",
-            "lastName": "LB",
-            "email": "dlb@somewhere.com",
-            "username": "dlbooks"
-        }
-    ],
-    "adminId": null,
-    "mainAccountId": "99990000"
-  }
+ * {
+ *   "refreshToken": "223867e6-ad0f-4af1-bbe7-5090d8259065",
+ *   "accessToken": "",
+ *   "tokenType": "Bearer",
+ *   "platformId": "local",
+ *   "iqUrl": "d01-dev.vacd.biz",
+ *   "port": 8080,
+ *   "agentDetails": [
+ *       {
+ *           "agentId": 1,
+ *           "firstName": "D",
+ *           "lastName": "LB",
+ *           "email": "dlb@somewhere.com",
+ *           "username": "dlbooks"
+ *       }
+ *   ],
+ *   "adminId": null,
+ *   "mainAccountId": "99990000"
+ * }
  */
 AuthenticateRequest.prototype.processResponse = function(response) {
     var model = UIModel.getInstance();
@@ -3354,10 +3354,9 @@ function _processChatQueueDnis(chatSettings, response) {
 }
 
 
-var LogoutRequest = function(agentId, message, isSupervisor) {
+var LogoutRequest = function(agentId, message) {
     this.agentId = agentId;
     this.message = message || "";
-    this.isSupervisor = isSupervisor;
 };
 
 LogoutRequest.prototype.formatJSON = function() {
@@ -3379,6 +3378,12 @@ LogoutRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+
+LogoutRequest.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+
+    return formattedResponse;
+};
 
 var OffhookInitRequest = function() {
 
@@ -6828,10 +6833,6 @@ var utils = {
                     UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
                 }
                 break;
-            case MESSAGE_TYPES.LOGOUT:
-                // TODO add processResponse?
-                utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
-                break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var offhook = new OffhookInitRequest();
                 var initResponse = offhook.processResponse(response);
@@ -7078,6 +7079,11 @@ var utils = {
                 var emailNotif = new AdminDebugEmailNotification();
                 var emailNotifResp = emailNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.AGENT_DEBUG_EMAIL_NOTIF, emailNotifResp);
+                break;
+            case MESSAGE_TYPES.LOGOUT:
+                var logoutNotification = new LogoutRequest();
+                var logoutNotifResponse = logoutNotification.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, logoutNotifResponse);
                 break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
@@ -8874,14 +8880,20 @@ function initAgentLibraryAgent (context) {
      * @param {function} [callback=null] Callback function when logoutAgent response received.
      */
     AgentLibrary.prototype.logoutAgent = function(agentId, callback){
-        UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
-        utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
-        UIModel.getInstance().agentSettings.isLoggedIn = false;
+        var model = UIModel.getInstance();
+        if(model.agentSettings.isLoggedIn){
+            model.agentSettings.isLoggedIn = false;
+            model.logoutRequest = new LogoutRequest(agentId);
+            var msg = model.logoutRequest.formatJSON();
 
-        // Agent requested logout, just close socket??
-        utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
-        this.closeSocket();
+            utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
+            utils.sendMessage(this, msg);
 
+            // requested logout, wait 5 sec then close socket
+            setTimeout(function(){
+                this.closeSocket();
+            }, 5000);
+        }
     };
 
     /**
