@@ -241,6 +241,9 @@ function initAgentLibraryCore (context) {
         }
 
         if(config.isSecureSocket !== 'undefined'){
+            if(typeof(config.isSecureSocket) === 'string'){
+                config.isSecureSocket = config.isSecureSocket.toLowerCase() === "true";
+            }
             UIModel.getInstance().socketProtocol = config.isSecureSocket ? "wss://" : "ws://";
         }
 

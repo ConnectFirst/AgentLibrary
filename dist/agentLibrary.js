@@ -1,4 +1,4 @@
-/*! cf-agent-library - v3.0.0 - 2019-06-11 */
+/*! cf-agent-library - v3.0.0 - 2019-06-13 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1264,15 +1264,8 @@ function _buildHttpRequest(authType, path, queryParams){
                         utils.logMessage(LOG_LEVELS.WARN, errMsg, err);
                     }
                 }, function (err) {
-                    var errResponse = {
-                        type: "Authenticate Error",
-                        message: errMsg
-                    };
-                    if(err.status){
-                        errResponse.status = err.status;
-                    }
                     utils.logMessage(LOG_LEVELS.WARN, errMsg, err);
-                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, err);
                 });
             break;
     }
@@ -7917,6 +7910,9 @@ function initAgentLibraryCore (context) {
         }
 
         if(config.isSecureSocket !== 'undefined'){
+            if(typeof(config.isSecureSocket) === 'string'){
+                config.isSecureSocket = config.isSecureSocket.toLowerCase() === "true";
+            }
             UIModel.getInstance().socketProtocol = config.isSecureSocket ? "wss://" : "ws://";
         }
 
