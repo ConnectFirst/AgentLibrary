@@ -386,6 +386,9 @@ var utils = {
                 var logoutNotification = new LogoutRequest();
                 var logoutNotifResponse = logoutNotification.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, logoutNotifResponse);
+
+                var instance = UIModel.getInstance().libraryInstance;
+                instance.closeSocket();
                 break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this

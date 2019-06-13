@@ -7077,6 +7077,9 @@ var utils = {
                 var logoutNotification = new LogoutRequest();
                 var logoutNotifResponse = logoutNotification.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, logoutNotifResponse);
+
+                var instance = UIModel.getInstance().libraryInstance;
+                instance.closeSocket();
                 break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
@@ -8882,13 +8885,9 @@ function initAgentLibraryAgent (context) {
             model.logoutRequest = new LogoutRequest(agentId);
             var msg = model.logoutRequest.formatJSON();
 
+            // socket closed in callback function
             utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
             utils.sendMessage(this, msg);
-
-            // requested logout, wait 5 sec then close socket
-            setTimeout(function(){
-                this.closeSocket();
-            }, 5000);
         }
     };
 

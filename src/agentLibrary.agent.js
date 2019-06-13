@@ -101,13 +101,9 @@ function initAgentLibraryAgent (context) {
             model.logoutRequest = new LogoutRequest(agentId);
             var msg = model.logoutRequest.formatJSON();
 
+            // socket closed in callback function
             utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
             utils.sendMessage(this, msg);
-
-            // requested logout, wait 5 sec then close socket
-            setTimeout(function(){
-                this.closeSocket();
-            }, 5000);
         }
     };
 
