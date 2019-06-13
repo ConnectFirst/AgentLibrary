@@ -1,6 +1,6 @@
 {
   "name": "cf-agent-library",
-  "version":"2.1.9",
+  "version":"3.0.1",
   "description": "Javascript library for Agent UI functionality",
   "main": "./dist/agentLibrary.js",
   "keywords": [

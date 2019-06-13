@@ -1,6 +1,6 @@
 {
   "name": "cf-agent-library",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "author": "Connect First",
   "description": "RingCentral Engage AgentSDK",
   "main": "src/cfAgentLibrary.js",
