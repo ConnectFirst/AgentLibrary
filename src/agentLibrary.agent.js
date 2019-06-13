@@ -95,14 +95,16 @@ function initAgentLibraryAgent (context) {
      * @param {function} [callback=null] Callback function when logoutAgent response received.
      */
     AgentLibrary.prototype.logoutAgent = function(agentId, callback){
-        UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
-        utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
-        UIModel.getInstance().agentSettings.isLoggedIn = false;
+        var model = UIModel.getInstance();
+        if(model.agentSettings.isLoggedIn){
+            model.agentSettings.isLoggedIn = false;
+            model.logoutRequest = new LogoutRequest(agentId);
+            var msg = model.logoutRequest.formatJSON();
 
-        // Agent requested logout, just close socket??
-        utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
-        this.closeSocket();
-
+            // socket closed in callback function
+            utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
+            utils.sendMessage(this, msg);
+        }
     };
 
     /**

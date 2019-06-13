@@ -135,10 +135,6 @@ var utils = {
                     UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
                 }
                 break;
-            case MESSAGE_TYPES.LOGOUT:
-                // TODO add processResponse?
-                utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
-                break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var offhook = new OffhookInitRequest();
                 var initResponse = offhook.processResponse(response);
@@ -385,6 +381,14 @@ var utils = {
                 var emailNotif = new AdminDebugEmailNotification();
                 var emailNotifResp = emailNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.AGENT_DEBUG_EMAIL_NOTIF, emailNotifResp);
+                break;
+            case MESSAGE_TYPES.LOGOUT:
+                var logoutNotification = new LogoutRequest();
+                var logoutNotifResponse = logoutNotification.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, logoutNotifResponse);
+
+                var instance = UIModel.getInstance().libraryInstance;
+                instance.closeSocket();
                 break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this

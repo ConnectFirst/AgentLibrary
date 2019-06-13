@@ -1,4 +1,4 @@
-/*! cf-agent-library - v3.0.0 - 2019-06-11 */
+/*! cf-agent-library - v3.0.0 - 2019-06-13 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
  * @version 2.1.8
@@ -1264,13 +1264,6 @@ function _buildHttpRequest(authType, path, queryParams){
                         utils.logMessage(LOG_LEVELS.WARN, errMsg, err);
                     }
                 }, function (err) {
-                    /*var errResponse = {
-                        type: "Authenticate Error",
-                        message: errMsg
-                    };
-                    if(err.status){
-                        errResponse.status = err.status;
-                    }*/
                     utils.logMessage(LOG_LEVELS.WARN, errMsg, err);
                     utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, err);
                 });
@@ -3354,10 +3347,9 @@ function _processChatQueueDnis(chatSettings, response) {
 }
 
 
-var LogoutRequest = function(agentId, message, isSupervisor) {
+var LogoutRequest = function(agentId, message) {
     this.agentId = agentId;
     this.message = message || "";
-    this.isSupervisor = isSupervisor;
 };
 
 LogoutRequest.prototype.formatJSON = function() {
@@ -3379,6 +3371,12 @@ LogoutRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+
+LogoutRequest.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+
+    return formattedResponse;
+};
 
 var OffhookInitRequest = function() {
 
@@ -6828,10 +6826,6 @@ var utils = {
                     UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
                 }
                 break;
-            case MESSAGE_TYPES.LOGOUT:
-                // TODO add processResponse?
-                utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
-                break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var offhook = new OffhookInitRequest();
                 var initResponse = offhook.processResponse(response);
@@ -7078,6 +7072,14 @@ var utils = {
                 var emailNotif = new AdminDebugEmailNotification();
                 var emailNotifResp = emailNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.AGENT_DEBUG_EMAIL_NOTIF, emailNotifResp);
+                break;
+            case MESSAGE_TYPES.LOGOUT:
+                var logoutNotification = new LogoutRequest();
+                var logoutNotifResponse = logoutNotification.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, logoutNotifResponse);
+
+                var instance = UIModel.getInstance().libraryInstance;
+                instance.closeSocket();
                 break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
@@ -8877,14 +8879,16 @@ function initAgentLibraryAgent (context) {
      * @param {function} [callback=null] Callback function when logoutAgent response received.
      */
     AgentLibrary.prototype.logoutAgent = function(agentId, callback){
-        UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
-        utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
-        UIModel.getInstance().agentSettings.isLoggedIn = false;
+        var model = UIModel.getInstance();
+        if(model.agentSettings.isLoggedIn){
+            model.agentSettings.isLoggedIn = false;
+            model.logoutRequest = new LogoutRequest(agentId);
+            var msg = model.logoutRequest.formatJSON();
 
-        // Agent requested logout, just close socket??
-        utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
-        this.closeSocket();
-
+            // socket closed in callback function
+            utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
+            utils.sendMessage(this, msg);
+        }
     };
 
     /**
