@@ -1,8 +1,7 @@
 
-var LogoutRequest = function(agentId, message, isSupervisor) {
+var LogoutRequest = function(agentId, message) {
     this.agentId = agentId;
     this.message = message || "";
-    this.isSupervisor = isSupervisor;
 };
 
 LogoutRequest.prototype.formatJSON = function() {
@@ -22,4 +21,11 @@ LogoutRequest.prototype.formatJSON = function() {
     };
 
     return JSON.stringify(msg);
+};
+
+
+LogoutRequest.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+
+    return formattedResponse;
 };

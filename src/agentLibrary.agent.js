@@ -9,33 +9,62 @@ function initAgentLibraryAgent (context) {
     var AgentLibrary = context.AgentLibrary;
 
     /**
-     * Sends agent login message to IntelliServices
+     * Sends authenticate request to Engage Auth. Can either pass in 3 params of username, password, and platformId or
+     * two params of jwt and tokenType. In each case a callback function may optionally be specified.
      * @memberof AgentLibrary.Agent
      * @param {string} username Agent's username
      * @param {string} password Agent's password
+     * @param {string} platformId Designate the platform where the agent is set up
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.loginAgent = function(username, password, callback){
-        UIModel.getInstance().loginRequest = new LoginRequest(username, password);
-        var msg = UIModel.getInstance().loginRequest.formatJSON();
+    AgentLibrary.prototype.authenticateAgentWithUsernamePassword = function(username, password, platformId, callback){
 
-        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
-        utils.sendMessage(this, msg);
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({username:username, password:password, platformId:platformId, authType:AUTHENTICATE_TYPES.USERNAME_PASSWORD});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
     };
 
     /**
-     * Sends agent login message to IntelliServices, with flag to tell IntelliServices
-     * that agent password is to be treated as case sensitive
+     * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
      * @memberof AgentLibrary.Agent
-     * @param {string} username Agent's username
-     * @param {string} password Agent's password
+     * @param {string} rcAccessToken JSON Web Token received from RingCentral Single Sign-on API
+     * @param {string} tokenType string type received from RingCentral Single Sign-on API
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.loginAgentCaseSensitive = function(username, password, callback){
-        UIModel.getInstance().loginRequest = new LoginRequest(username, password, true);
-        var msg = UIModel.getInstance().loginRequest.formatJSON();
+    AgentLibrary.prototype.authenticateAgentWithRcAccessToken = function(rcAccessToken, tokenType, callback){
 
-        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({rcAccessToken: rcAccessToken, tokenType:tokenType, authType:AUTHENTICATE_TYPES.RC_TOKEN});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
+    };
+
+    /**
+     * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
+     * @memberof AgentLibrary.Agent
+     * @param {string} engageAccessToken JSON Web Token received from RingCentral Single Sign-on API
+     * @param {function} [callback=null] Callback function when loginAgent response received
+     */
+    AgentLibrary.prototype.authenticateAgentWithEngageAccessToken = function(engageAccessToken, callback){
+
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({engageAccessToken:engageAccessToken, authType:AUTHENTICATE_TYPES.ENGAGE_TOKEN});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
+    };
+
+    /**
+     * Sends request to IntelliQueue to get the agent's available products for login
+     * @memberof AgentLibrary.Agent
+     * @param {function} [callback=null] Callback function when loginPhase1 response received
+     */
+    AgentLibrary.prototype.getAgentConfig = function(callback){
+
+        UIModel.getInstance().loginPhase1Request = new LoginPhase1Request();
+        var msg = UIModel.getInstance().loginPhase1Request.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LOGIN_PHASE_1, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -51,11 +80,11 @@ function initAgentLibraryAgent (context) {
      * @param {boolean} isForce Whether the agent login is forcing an existing agentlogin out.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
-        var msg = UIModel.getInstance().configRequest.formatJSON();
+    AgentLibrary.prototype.loginAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
+        UIModel.getInstance().loginRequest = new LoginRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
+        var msg = UIModel.getInstance().loginRequest.formatJSON();
 
-        utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);
+        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -66,14 +95,16 @@ function initAgentLibraryAgent (context) {
      * @param {function} [callback=null] Callback function when logoutAgent response received.
      */
     AgentLibrary.prototype.logoutAgent = function(agentId, callback){
-        UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
-        utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
-        UIModel.getInstance().agentSettings.isLoggedIn = false;
+        var model = UIModel.getInstance();
+        if(model.agentSettings.isLoggedIn){
+            model.agentSettings.isLoggedIn = false;
+            model.logoutRequest = new LogoutRequest(agentId);
+            var msg = model.logoutRequest.formatJSON();
 
-        // Agent requested logout, just close socket??
-        utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
-        this.closeSocket();
-
+            // socket closed in callback function
+            utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
+            utils.sendMessage(this, msg);
+        }
     };
 
     /**

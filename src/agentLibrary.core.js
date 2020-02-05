@@ -11,6 +11,12 @@ const LOG_LEVELS ={
     "ERROR":"error"
 };
 
+const AUTHENTICATE_TYPES ={
+    "USERNAME_PASSWORD":"USERNAME_PASSWORD",
+    "RC_TOKEN":"RC_TOKEN",
+    "ENGAGE_TOKEN":"ENGAGE_TOKEN"
+};
+
 // add all callback types to setCallback method description
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
@@ -49,7 +55,9 @@ const CALLBACK_TYPES = {
     "HOLD":"holdResponse",
     "LOG_RESULTS":"logResultsResponse",
     "LOG_CONSOLE_RESULTS":"logConsoleResultsResponse",
+    "AUTHENTICATE":"authenticateResponse",
     "LOGIN":"loginResponse",
+    "LOGIN_PHASE_1": "loginPhase1Response",
     "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
     "LEAD_HISTORY":"leadHistoryResponse",
@@ -134,6 +142,7 @@ const MESSAGE_TYPES = {
     "LEAD_INSERT":"LEAD-INSERT",
     "LEAD_UPDATE":"LEAD-UPDATE",
     "LOGIN":"LOGIN",
+    "LOGIN_PHASE_1": "LOGIN-PHASE-1",
     "LOGOUT":"LOGOUT",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
@@ -227,11 +236,15 @@ function initAgentLibraryCore (context) {
             this.callbacks = config.callbacks;
         }
 
-        if(typeof config.socketDest !== 'undefined'){
-            UIModel.getInstance().applicationSettings.socketDest = config.socketDest;
-            this.openSocket();
-        }else{
-            // todo default socket address?
+        if(typeof config.authHost !== 'undefined'){
+            UIModel.getInstance().authHost = config.authHost;
+        }
+
+        if(config.isSecureSocket !== 'undefined'){
+            if(typeof(config.isSecureSocket) === 'string'){
+                config.isSecureSocket = config.isSecureSocket.toLowerCase() === "true";
+            }
+            UIModel.getInstance().socketProtocol = config.isSecureSocket ? "wss://" : "ws://";
         }
 
         return this;
@@ -350,20 +363,20 @@ function initAgentLibraryCore (context) {
     // requests and responses //
     ////////////////////////////
     /**
+     * Get outgoing Authenticate Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAuthenticateRequest = function() {
+        return UIModel.getInstance().authenticateRequest;
+    };
+    /**
      * Get outgoing Login Request object
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getLoginRequest = function() {
         return UIModel.getInstance().loginRequest;
-    };
-    /**
-     * Get outgoing Config Request object
-     * @memberof AgentLibrary.Core.Requests
-     * @returns {object}
-     */
-    AgentLibrary.prototype.getConfigRequest = function() {
-        return UIModel.getInstance().configRequest;
     };
     /**
      * Get outgoing Logout Request object
@@ -963,6 +976,8 @@ function initAgentLibraryCore (context) {
     AgentLibrary.prototype._utils = utils;
 
     AgentLibrary.prototype._NewCallUtils = NewCallUtils;
+
+    AgentLibrary.prototype._HttpService = HttpService;
 
     AgentLibrary.prototype._getUIModel= function() {
         return UIModel;

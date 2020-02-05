@@ -1,11 +1,14 @@
 function initAgentLibrarySocket (context) {
     'use strict';
     var AgentLibrary = context.AgentLibrary;
-    AgentLibrary.prototype.openSocket = function(callback){
+    AgentLibrary.prototype.openSocket = function(agentId, callback){
         var instance = this;
         utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
         if("WebSocket" in context){
             if(!instance.socket){
+                UIModel.getInstance().agentSettings.agentId = agentId; // set agentId here since id is in scope
+                UIModel.getInstance().applicationSettings.socketDest += "&agent_id=" + agentId;
+
                 var socketDest = UIModel.getInstance().applicationSettings.socketDest;
                 utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
                 instance.socket = new WebSocket(socketDest);
@@ -49,7 +52,8 @@ function initAgentLibrarySocket (context) {
                         console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
 
                         setTimeout(function(){
-                            instance.openSocket();
+                            // todo - dlb - take a look at this for reconnects with SSO
+                            instance.openSocket(UIModel.getInstance().agentSettings.agentId);
                         }, 5000);
                     }
                 };
@@ -68,24 +72,32 @@ function initAgentLibrarySocket (context) {
         var currDts = new Date();
         var threeMins = 3 * 60 * 1000; // milliseconds
         var queuedMsg;
+
+        // get agent configuration information - "phase 1 login"
+        UIModel.getInstance().loginPhase1Request = new LoginPhase1Request();
+        var msg = UIModel.getInstance().loginPhase1Request.formatJSON();
+        utils.sendMessage(this, msg);
+
         // if this is a reconnect, we need to re-authenticate with IntelliServices & IntelliQueue
         if(instance._isReconnect){
             instance._isReconnect = false;
             // Add IntelliQueue reconnect
-            var configRequest = JSON.parse(UIModel.getInstance().configRequest.formatJSON());
+            var loginRequest = JSON.parse(UIModel.getInstance().loginRequest.formatJSON());
             var hashCode = UIModel.getInstance().connectionSettings.hashCode;
-            configRequest.ui_request.hash_code = {
+            loginRequest.ui_request.hash_code = {
                 "#text":hashCode
             };
-            configRequest.ui_request.update_login = {
+            loginRequest.ui_request.update_login = {
                 "#text": "FALSE"
             };
-            configRequest.ui_request.reconnect = {
+            loginRequest.ui_request.reconnect = {
                 "#text": "TRUE"
             };
-            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(configRequest)});
+            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(loginRequest)});
+
+            // todo - dlb - remove with new RC SSO
             // Add IntelliServices reconnect
-            var loginRequest = JSON.parse(UIModel.getInstance().loginRequest.formatJSON());
+            /*var loginRequest = JSON.parse(UIModel.getInstance().loginRequest.formatJSON());
             var agentId = UIModel.getInstance().agentSettings.agentId;
             loginRequest.ui_request.reconnect = {
                 "#text":"TRUE"
@@ -93,7 +105,7 @@ function initAgentLibrarySocket (context) {
             loginRequest.ui_request.agent_id = {
                 "#text": utils.toString(agentId)
             };
-            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(loginRequest)});
+            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(loginRequest)});*/
         }
         for(var idx=0; idx < instance._queuedMsgs.length; idx++){
             queuedMsg = instance._queuedMsgs[idx];

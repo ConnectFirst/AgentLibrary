@@ -46,10 +46,10 @@ EndCallNotification.prototype.processResponse = function(notification) {
     // Check if there is a pending dial group change
     if(model.agentSettings.pendingDialGroupChange > 0 || model.agentSettings.pendingDialGroupChange == -1) {
         // update dial group id
-        model.configRequest.dialGroupId = model.agentSettings.pendingDialGroupChange;
+        model.loginRequest.dialGroupId = model.agentSettings.pendingDialGroupChange;
 
         // send login update request
-        this.libInstance.configureAgent(model.configRequest.queueIds, model.configRequest.chatIds, model.configRequest.skillProfileId, model.configRequest.dialGroupId, model.configRequest.dialDest, model.agentSettings.updateDGFromAdminUI);
+        this.libInstance.loginAgent(model.loginRequest.queueIds, model.configRequest.chatIds, model.configRequest.skillProfileId, model.configRequest.dialGroupId, model.configRequest.dialDest, model.agentSettings.updateDGFromAdminUI);
 
         // reset pending dial group variables
         model.agentSettings.pendingDialGroupChange = 0;

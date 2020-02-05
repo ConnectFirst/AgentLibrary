@@ -82,7 +82,7 @@ describe( 'Tests for processing notification messages in Agent Library', functio
     });
 
 
-    it( 'should process a dial_group_change notification message', function() {
+    /*it( 'should process a dial_group_change notification message', function() {
         var updatedDialGroupId = "2";
         var Lib = new AgentLibrary();
 
@@ -324,6 +324,6 @@ describe( 'Tests for processing notification messages in Agent Library', functio
         };
 
         expect(response).toEqual(expectedResponse);
-    });
+    });*/
 
 });

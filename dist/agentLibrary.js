@@ -1,7 +1,7 @@
-/*! cf-agent-library - v2.1.10 - 2019-04-18 */
+/*! cf-agent-library - v3.0.1 - 2019-06-13 */
 /**
  * @fileOverview Exposed functionality for Contact Center AgentUI.
- * @version 2.1.8
+ * @version 3.0.1
  * @namespace AgentLibrary
  */
 
@@ -167,10 +167,10 @@ var DialGroupChangeNotification = function() {
  *   }
  */
 DialGroupChangeNotification.prototype.processResponse = function(notification) {
-    //Modify configRequest with new DialGroupId
+    //Modify loginRequest with new DialGroupId
     var model = UIModel.getInstance();
     var notif = notification.ui_notification;
-    var origLoginType = model.configRequest.loginType;
+    var origLoginType = model.loginRequest.loginType;
     var newDgId = utils.getText(notif, "dial_group_id");
 
     model.dialGroupChangeNotification = notification;
@@ -178,16 +178,16 @@ DialGroupChangeNotification.prototype.processResponse = function(notification) {
     // Calculate type of login - called from AdminUI when assigning agent to new dial group.
     // Only options should be BLENDED or OUTBOUND here.
     if(newDgId && newDgId !== "" && (origLoginType === "INBOUND" || origLoginType === "BLENDED") ){
-        model.configRequest.loginType = "BLENDED";
+        model.loginRequest.loginType = "BLENDED";
     }else if (newDgId && newDgId !== ""){
-        model.configRequest.loginType = "OUTBOUND";
+        model.loginRequest.loginType = "OUTBOUND";
     }else if (origLoginType  === "INBOUND"){
-        model.configRequest.loginType = "INBOUND";
+        model.loginRequest.loginType = "INBOUND";
     }else{
-        model.configRequest.loginType = "NO-SELECTION";
+        model.loginRequest.loginType = "NO-SELECTION";
     }
 
-    UIModel.getInstance().configRequest.dialGroupId = newDgId;
+    UIModel.getInstance().loginRequest.dialGroupId = newDgId;
 
     var formattedResponse = {
         message: "Dial Group Updated Successfully.",
@@ -408,10 +408,10 @@ EndCallNotification.prototype.processResponse = function(notification) {
     // Check if there is a pending dial group change
     if(model.agentSettings.pendingDialGroupChange > 0 || model.agentSettings.pendingDialGroupChange == -1) {
         // update dial group id
-        model.configRequest.dialGroupId = model.agentSettings.pendingDialGroupChange;
+        model.loginRequest.dialGroupId = model.agentSettings.pendingDialGroupChange;
 
         // send login update request
-        this.libInstance.configureAgent(model.configRequest.queueIds, model.configRequest.chatIds, model.configRequest.skillProfileId, model.configRequest.dialGroupId, model.configRequest.dialDest, model.agentSettings.updateDGFromAdminUI);
+        this.libInstance.loginAgent(model.loginRequest.queueIds, model.configRequest.chatIds, model.configRequest.skillProfileId, model.configRequest.dialGroupId, model.configRequest.dialDest, model.agentSettings.updateDGFromAdminUI);
 
         // reset pending dial group variables
         model.agentSettings.pendingDialGroupChange = 0;
@@ -1149,6 +1149,129 @@ AgentStateRequest.prototype.processResponse = function(response) {
 
 
 
+var AuthenticateRequest = function(config) {
+    this.username = config.username;
+    this.password = config.password;
+    this.platformId = config.platformId;
+    this.rcAccessToken = config.rcAccessToken;
+    this.tokenType = config.tokenType;
+    this.engageAccessToken = config.engageAccessToken;
+    this.authType = config.authType;
+};
+
+AuthenticateRequest.prototype.sendHttpRequest = function() {
+    UIModel.getInstance().authenticateRequest = this;
+    switch(this.authType){
+        case AUTHENTICATE_TYPES.USERNAME_PASSWORD:
+            _buildHttpRequest(this.authType, "login/agent", {username:this.username, password: this.password, platformId: this.platformId});
+            break;
+        case AUTHENTICATE_TYPES.RC_TOKEN:
+            _buildHttpRequest(this.authType, "login/rc/accesstoken", {rcAccessToken:this.rcAccessToken, rcTokenType: this.tokenType});
+            break;
+        case AUTHENTICATE_TYPES.ENGAGE_TOKEN:
+            _buildHttpRequest(this.authType, "login", {});
+            break;
+    }
+};
+
+/*
+ * response:
+ * {
+ *   "refreshToken": "223867e6-ad0f-4af1-bbe7-5090d8259065",
+ *   "accessToken": "",
+ *   "tokenType": "Bearer",
+ *   "platformId": "local",
+ *   "iqUrl": "d01-dev.vacd.biz",
+ *   "port": 8080,
+ *   "agentDetails": [
+ *       {
+ *           "agentId": 1,
+ *           "firstName": "D",
+ *           "lastName": "LB",
+ *           "email": "dlb@somewhere.com",
+ *           "username": "dlbooks"
+ *       }
+ *   ],
+ *   "adminId": null,
+ *   "mainAccountId": "99990000"
+ * }
+ */
+AuthenticateRequest.prototype.processResponse = function(response) {
+    var model = UIModel.getInstance();
+    model.authenticatePacket = response; // raw response packet
+    model.authenticateRequest.accessToken = response.accessToken; // TODO - dlb - store in local storage
+    model.authenticateRequest.refreshToken = response.refreshToken;
+    model.authenticateRequest.tokenType = response.tokenType;
+    model.authenticateRequest.socketUrl = response.iqUrl;
+    model.authenticateRequest.socketPort = response.port;
+    model.authenticateRequest.agents = response.agentDetails;
+
+    model.applicationSettings.socketDest = model.socketProtocol + response.iqUrl;
+    model.applicationSettings.socketDest += ":" + response.port;
+    model.applicationSettings.socketDest += "?access_token=" + response.accessToken;
+
+    return model.authenticateRequest;
+};
+
+function _buildHttpRequest(authType, path, queryParams){
+    var model = UIModel.getInstance();
+    var baseUrl = model.authHost + model.baseAuthUri;
+    var params = {
+        headers: {
+            "Content-Type": "application/json"
+        }
+    };
+
+    switch(authType){
+        case AUTHENTICATE_TYPES.USERNAME_PASSWORD:
+        case AUTHENTICATE_TYPES.RC_TOKEN:
+            params["queryParams"] = queryParams;
+            var errorMsg = "Error on agent authenticate POST to engage-auth. URL: " + baseUrl + path;
+            new HttpService(baseUrl).httpPost(
+                path,
+                params)
+                .then(function(response){
+                    try{
+                        response = JSON.parse(response.response);
+
+                        var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
+                        utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                    }catch(err){
+                        utils.logMessage(LOG_LEVELS.WARN, errorMsg, err);
+                    }
+                }, function(err){
+                    var errResponse = {
+                        type: "Authenticate Error",
+                        message: errorMsg
+                    };
+                    utils.logMessage(LOG_LEVELS.WARN, errorMsg, err);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, errResponse);
+                });
+            break;
+        case AUTHENTICATE_TYPES.ENGAGE_TOKEN:
+            var errMsg = "Error on agent authenticate GET to engage-auth. URL: " + baseUrl + path;
+            params.headers["Authorization"] =  "Bearer " + utils.toString(UIModel.getInstance().authenticateRequest.engageAccessToken);
+            new HttpService(baseUrl).httpGet(
+                path,
+                params)
+                .then(function (response) {
+                    try {
+                        response = JSON.parse(response.response);
+
+                        var authenticateResponse = UIModel.getInstance().authenticateRequest.processResponse(response);
+                        utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, authenticateResponse);
+                    } catch (err) {
+                        utils.logMessage(LOG_LEVELS.WARN, errMsg, err);
+                    }
+                }, function (err) {
+                    utils.logMessage(LOG_LEVELS.WARN, errMsg, err);
+                    utils.fireCallback(UIModel.getInstance().libraryInstance, CALLBACK_TYPES.AUTHENTICATE, err);
+                });
+            break;
+    }
+
+}
+
 var BargeInRequest = function(audioType, agentId, uii, monitorAgentId) {
     this.audioType = audioType || "FULL";
     this.agentId = agentId;
@@ -1632,371 +1755,6 @@ XferColdRequest.prototype.processResponse = function(response) {
 
     return formattedResponse;
 };
-
-
-var ConfigRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce) {
-    this.queueIds = queueIds || [];
-    this.chatIds = chatIds || [];
-    this.skillProfileId = skillProfileId || "";
-    this.dialGroupId = dialGroupId || "";
-    this.dialDest = dialDest || "";
-    this.updateFromAdminUI = updateFromAdminUI || false;
-    this.loginType = "NO-SELECTION";
-    this.updateLogin = false;
-    this.isForce = isForce;
-
-    // Remove any ids agent doesn't have access to
-    var model = UIModel.getInstance();
-    this.queueIds = utils.checkExistingIds(model.inboundSettings.availableQueues, this.queueIds, "gateId");
-    this.chatIds = utils.checkExistingIds(model.chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
-    this.skillProfileId = utils.checkExistingIds(model.inboundSettings.availableSkillProfiles, [this.skillProfileId], "profileId")[0] || "";
-    this.dialGroupId = utils.checkExistingIds(model.outboundSettings.availableOutdialGroups, [this.dialGroupId], "dialGroupId")[0] || "";
-
-    // Set loginType value
-    if(this.queueIds.length > 0 && this.dialGroupId !== ""){
-        this.loginType = "BLENDED";
-    } else if(this.queueIds.length > 0){
-        this.loginType = "INBOUND";
-    } else if(this.dialGroupId !== ""){
-        this.loginType = "OUTBOUND";
-    } else if(this.chatIds.length > 0){
-        this.loginType = "CHAT";
-    } else {
-        this.loginType = "NO-SELECTION";
-    }
-
-    // set updateLogin value
-    if(model.agentSettings.isLoggedIn){
-        this.updateLogin = true;
-    }
-
-    // validate dialDest is sip or 10-digit num
-    if(!utils.validateDest(this.dialDest)){
-        utils.logMessage(LOG_LEVELS.WARN, "dialDest [" + this.dialDest + "] must be a valid sip or 10-digit DID", "");
-    }
-
-};
-
-ConfigRequest.prototype.formatJSON = function() {
-    var msg = {
-        "ui_request":{
-            "@destination":"IQ",
-            "@type":MESSAGE_TYPES.LOGIN,
-            "@message_id":utils.getMessageId(),
-            "response_to":"",
-            "agent_id":{
-                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
-            },
-            "agent_pwd":{
-                "#text": UIModel.getInstance().loginRequest.password
-            },
-            "dial_dest":{
-                "#text":utils.toString(this.dialDest)
-            },
-            "login_type":{
-                "#text":this.loginType
-            },
-            "update_login":{
-                "#text":utils.toString(this.updateLogin)
-            },
-            "outdial_group_id":{
-                "#text":utils.toString(this.dialGroupId)
-            },
-            "skill_profile_id":{
-                "#text":utils.toString(this.skillProfileId)
-            },
-            "update_from_adminui":{
-                "#text":utils.toString(this.updateFromAdminUI)
-            },
-            "agent_platform_id" : {
-                "#text" : utils.toString(2) //Hard-coded platformId
-            },
-            "is_force" : {
-                "#text" : utils.toString(this.isForce)
-            }
-        }
-    };
-
-    // add arrays
-    var queueIds = [];
-    for(var i = 0; i < this.queueIds.length; i++){
-        if(this.queueIds[i] !== ""){
-            queueIds.push( { "#text": utils.toString(this.queueIds[i]) } );
-        }
-    }
-    if(queueIds.length > 0){
-        msg.ui_request.gates = { "gate_id" : queueIds };
-    }else{
-        msg.ui_request.gates = {};
-    }
-
-    var chatIds = [];
-    for(var i = 0; i < this.chatIds.length; i++){
-        if(this.chatIds[i] !== "") {
-            chatIds.push( {"#text": utils.toString(this.chatIds[i]) } );
-        }
-    }
-    if(chatIds.length > 0) {
-        msg.ui_request.chat_queues = {"chat_queue_id": chatIds};
-    }else{
-        msg.ui_request.chat_queues = {};
-    }
-
-    return JSON.stringify(msg);
-};
-
-
-/*
- * This function is responsible for handling the response to Login from IntelliQueue.
- *
- * {"ui_response":{
- *      "@message_id":"IQ10012016082513212000447",
- *      "@response_to":"IQ201608251121200",
- *      "@type":"LOGIN",
- *      "agent_id":{"#text":"1"},
- *      "status":{"#text":"SUCCESS"},
- *      "message":{"#text":"Hello Geoffrey Mina!"},
- *      "detail":{"#text":"Logon request processed successfully!"},
- *      "hash_code":{"#text":"404946966"},
- *      "login_type":{"#text":"BLENDED"},
- *      "outdial_group_id":{"#text":"50692"},
- *      "skill_profile_id":{"#text":"1513"},
- *      "gates":{
- *          "gate_id":[
- *              {"#text":"11116"},
- *              {"#text":"11117"}
- *          ]
- *      },
- *      "chat_queues":{
- *          "chat_queue_id":{"#text":"30"}
- *      }
- *    }
- * }
- */
-ConfigRequest.prototype.processResponse = function(response) {
-    var resp = response.ui_response;
-    var status = utils.getText(resp, "status");
-    var detail = utils.getText(resp, "detail");
-    var model = UIModel.getInstance();
-    var message = "";
-    var formattedResponse = utils.buildDefaultResponse(response);
-    var Lib = UIModel.getInstance().libraryInstance;
-
-    if(detail === "Logon Session Configuration Updated!"){
-        // this is an update login packet
-        model.agentSettings.updateLoginMode = true;
-
-        message = "Logon Session Configuration Updated!";
-        utils.logMessage(LOG_LEVELS.INFO, message, response);
-    }
-
-    if(status === "SUCCESS"){
-        if(!model.agentSettings.isLoggedIn){
-            // fresh login, set UI Model properties
-            model.configPacket = response;
-            model.connectionSettings.hashCode = utils.getText(resp, "hash_code");
-            model.agentSettings.isLoggedIn = true;
-            model.agentSettings.loginDTS = new Date();
-            model.connectionSettings.reconnect = true;
-            model.agentPermissions.allowLeadSearch = false;
-            model.agentSettings.dialDest = model.configRequest.dialDest; // not sent in response
-            model.agentSettings.loginType = utils.getText(resp, "login_type");
-            model.agentSettings.guid = utils.getText(resp,"guid");
-            model.agentSettings.accountId = utils.getText(resp,"account_id");
-
-            // Set collection values
-            setDialGroupSettings(response);
-            setGateSettings(response);
-            setChatQueueSettings(response);
-            setSkillProfileSettings(response);
-
-        }else{
-            if(model.agentSettings.updateLoginMode){
-                model.agentSettings.dialDest = model.configRequest.dialDest;
-                model.agentSettings.loginType = utils.getText(resp, "login_type");
-                model.agentSettings.guid = utils.getText(resp,"guid");
-                model.agentSettings.accountId = utils.getText(resp,"account_id");
-
-                // This was an update login request
-                model.agentSettings.updateLoginMode = false;
-
-                // reset to false before updating dial group settings
-                model.agentPermissions.allowLeadSearch = false;
-                model.agentPermissions.requireFetchedLeadsCalled = false;
-                model.agentPermissions.allowPreviewLeadFilters = false;
-
-                // Set collection values
-                setDialGroupSettings(response);
-                setGateSettings(response);
-                setChatQueueSettings(response);
-                setSkillProfileSettings(response);
-
-            }else{
-                // this was a reconnect
-                message = "Processed a Layer 2 Reconnect Successfully";
-
-                model.connectionSettings.isOnCall = utils.getText(resp, "is_on_call");
-                model.connectionSettings.activeCallUii  =  utils.getText(resp, "active_call_uii");
-                model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
-
-
-                if(model.connectionSettings.isOnCall === false){
-                    if(model.currentCall.uii) {
-                        var mockEndCallPacket = {
-                            "ui_notification": {
-                                "@message_id": "",
-                                "@type": "END-CALL",
-                                "uii": {"#text": model.currentCall.uii},
-                                "term_reason": {"#text": "SOCKET-DISCONNECT"}
-                            }
-                        };
-
-                        utils.processNotification(Lib, mockEndCallPacket);
-                    }
-
-                    if(model.agentSettings.isOffhook){
-                        var offHookTermPacket = {
-                            "ui_notification" : {
-                                "agent_id" : {"#text": UIModel.getInstance().agentSettings.agentId},
-                                "@type" : "OFF-HOOK-TERM",
-                                "@message_id": ""
-                            }
-
-                        };
-
-                        var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
-                        Lib.offhookTerm(agentProcessOffhookCallback);
-                    }
-                }else if(model.connectionSettings.isOnCall && (model.currentCall.uii !== model.connectionSettings.activeCallUii || Lib.waitingForAddSession === true)){
-                    //if the agent does not know it is on a call, but IQ thinks it is on a call
-                    //normally in the case of disconnect during transition
-
-                    model.currentCall.uii = model.connectionSettings.activeCallUii;
-                    model.currentCall.pendingDisp = false;
-                    Lib.hangup(1, true);
-                    
-                }else{
-                    //agent still is on call and there are transferSessions, verify no transferSession were drop
-                    var activeAgentUiSessions = Lib.getTransferSessions();
-                    var activeAgentSessions = response.ui_response.active_call_sessions.call_session_id.map(function(sessionObj){
-                        return sessionObj['#text'];
-                    });
-
-                    for(var transferSession in activeAgentUiSessions){
-                        if(activeAgentSessions.indexOf(transferSession) === -1){
-                            //if the active ui session is no longer active, we need to tell the ui
-                            delete UIModel.getInstance().transferSessions[transferSession];
-                        }
-                    }
-                }
-
-                utils.logMessage(LOG_LEVELS.INFO, message, response);
-            }
-        }
-
-        formattedResponse.agentSettings = model.agentSettings;
-        formattedResponse.agentPermissions = model.agentPermissions;
-        formattedResponse.applicationSettings = model.applicationSettings;
-        formattedResponse.chatSettings = model.chatSettings;
-        formattedResponse.connectionSettings = model.connectionSettings;
-        formattedResponse.inboundSettings = model.inboundSettings;
-        formattedResponse.outboundSettings = model.outboundSettings;
-        formattedResponse.scriptSettings = model.scriptSettings;
-    }else{
-        // Login failed
-        if(formattedResponse.message === ""){
-            formattedResponse.message = "Agent configuration attempt failed (2nd layer login)"
-        }
-        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
-    }
-
-    return formattedResponse;
-};
-
-function setDialGroupSettings(response){
-    var model = UIModel.getInstance();
-    var outdialGroups = model.outboundSettings.availableOutdialGroups;
-    model.outboundSettings.outdialGroup = {}; // reset
-    for(var g = 0; g < outdialGroups.length; g++){
-        var group = outdialGroups[g];
-        if(group.dialGroupId === response.ui_response.outdial_group_id['#text']){
-            model.agentPermissions.allowLeadSearch = group.allowLeadSearch;
-            model.agentPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
-            model.agentPermissions.progressiveEnabled = group.progressiveEnabled;
-            model.outboundSettings.outdialGroup = JSON.parse(JSON.stringify(group)); // copy object
-
-            // Only used for Preview or TCPA Safe accounts.
-            // If set to true, only allow fetching new leads when current leads are called or expired
-            model.agentPermissions.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled;
-        }
-    }
-}
-
-function setSkillProfileSettings(response){
-    var model = UIModel.getInstance();
-    model.inboundSettings.skillProfile = {};
-    var skillProfiles = model.inboundSettings.availableSkillProfiles;
-    for(var s = 0; s < skillProfiles.length; s++){
-        var profile = skillProfiles[s];
-        var responseId = utils.getText(response.ui_response, "skill_profile_id");
-        if(profile.profileId === responseId){
-            model.inboundSettings.skillProfile = JSON.parse(JSON.stringify(profile)); // copy object
-        }
-    }
-}
-
-function setGateSettings(response){
-    var model = UIModel.getInstance();
-    var gates = model.inboundSettings.availableQueues;
-    var selectedGateIds = [];
-    var selectedGates = [];
-    var gateIds = response.ui_response.gates.gate_id || [];
-
-    if (!Array.isArray(gateIds)) {
-        gateIds = [gateIds];
-    }
-
-    for(var s = 0; s < gateIds.length; s++){
-        var obj = gateIds[s];
-        selectedGateIds.push(obj["#text"]);
-    }
-
-    for(var gIdx = 0; gIdx < gates.length; gIdx++){
-        var gate = gates[gIdx];
-        if(selectedGateIds.indexOf(gate.gateId) > -1){
-            selectedGates.push(gate);
-        }
-    }
-
-    model.inboundSettings.queues = JSON.parse(JSON.stringify(selectedGates)); // copy array
-}
-
-function setChatQueueSettings(response){
-    var model = UIModel.getInstance();
-    var chatQueues = model.chatSettings.availableChatQueues;
-    var selectedChatQueueIds = [];
-    var selectedChatQueues = [];
-    var cQueues = response.ui_response.chat_queues || {};
-    var chatQueueIds = cQueues.chat_queue_id || [];
-
-    if (!Array.isArray(chatQueueIds)) {
-        chatQueueIds = [chatQueueIds];
-    }
-
-    for(var c = 0; c < chatQueueIds.length; c++){
-        var obj = chatQueueIds[c];
-        selectedChatQueueIds.push(obj["#text"]);
-    }
-
-    for(var cIdx = 0; cIdx < chatQueues.length; cIdx++){
-        var chatQueue = chatQueues[cIdx];
-        if(selectedChatQueueIds.indexOf(chatQueue.chatQueueId) > -1){
-            selectedChatQueues.push(chatQueue);
-        }
-    }
-
-    model.chatSettings.chatQueues = JSON.parse(JSON.stringify(selectedChatQueues)); // copy array
-}
 
 
 var DirectAgentTransfer = function(targetAgentId, transferType, uii) {
@@ -2855,34 +2613,396 @@ _formatBaggage = function(baggage){
 };
 
 
-var LoginRequest = function(username, password, isCaseSensitive) {
-    this.username = username;
-    this.password = password;
-    this.isCaseSensitive = isCaseSensitive || false;
+var LoginRequest = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce) {
+    this.queueIds = queueIds || [];
+    this.chatIds = chatIds || [];
+    this.skillProfileId = skillProfileId || "";
+    this.dialGroupId = dialGroupId || "";
+    this.dialDest = dialDest || "";
+    this.updateFromAdminUI = updateFromAdminUI || false;
+    this.loginType = "NO-SELECTION";
+    this.updateLogin = false;
+    this.isForce = isForce;
+
+    // Remove any ids agent doesn't have access to
+    var model = UIModel.getInstance();
+    this.queueIds = utils.checkExistingIds(model.inboundSettings.availableQueues, this.queueIds, "gateId");
+    this.chatIds = utils.checkExistingIds(model.chatSettings.availableChatQueues, this.chatIds, "chatQueueId");
+    this.skillProfileId = utils.checkExistingIds(model.inboundSettings.availableSkillProfiles, [this.skillProfileId], "profileId")[0] || "";
+    this.dialGroupId = utils.checkExistingIds(model.outboundSettings.availableOutdialGroups, [this.dialGroupId], "dialGroupId")[0] || "";
+
+    // Set loginType value
+    if(this.queueIds.length > 0 && this.dialGroupId !== ""){
+        this.loginType = "BLENDED";
+    } else if(this.queueIds.length > 0){
+        this.loginType = "INBOUND";
+    } else if(this.dialGroupId !== ""){
+        this.loginType = "OUTBOUND";
+    } else if(this.chatIds.length > 0){
+        this.loginType = "CHAT";
+    } else {
+        this.loginType = "NO-SELECTION";
+    }
+
+    // set updateLogin value
+    if(model.agentSettings.isLoggedIn){
+        this.updateLogin = true;
+    }
+
+    // validate dialDest is sip or 10-digit num
+    if(!utils.validateDest(this.dialDest)){
+        utils.logMessage(LOG_LEVELS.WARN, "dialDest [" + this.dialDest + "] must be a valid sip or 10-digit DID", "");
+    }
+
 };
 
 LoginRequest.prototype.formatJSON = function() {
     var msg = {
-        "ui_request": {
-            "@destination":"IS",
+        "ui_request":{
+            "@destination":"IQ",
             "@type":MESSAGE_TYPES.LOGIN,
             "@message_id":utils.getMessageId(),
             "response_to":"",
-            "username":{
-                "#text":this.username
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
             },
-            "password":{
-                "#text":this.password
+            "access_token":{
+                "#text": UIModel.getInstance().authenticateRequest.accessToken // todo - dlb - move accessToken to local storage?
             },
-            "is_case_sensitive":{
-                "#text":utils.toString(this.isCaseSensitive === true ? "TRUE" : "FALSE")
+            "dial_dest":{
+                "#text":utils.toString(this.dialDest)
+            },
+            "login_type":{
+                "#text":this.loginType
+            },
+            "update_login":{
+                "#text":utils.toString(this.updateLogin)
+            },
+            "outdial_group_id":{
+                "#text":utils.toString(this.dialGroupId)
+            },
+            "skill_profile_id":{
+                "#text":utils.toString(this.skillProfileId)
+            },
+            "update_from_adminui":{
+                "#text":utils.toString(this.updateFromAdminUI)
+            },
+            "agent_platform_id" : {
+                "#text" : utils.toString(2) // Hard-coded platformId for agent-js repo
+            },
+            "is_force" : {
+                "#text" : utils.toString(this.isForce)
+            }
+        }
+    };
+
+    // add arrays
+    var queueIds = [];
+    for(var i = 0; i < this.queueIds.length; i++){
+        if(this.queueIds[i] !== ""){
+            queueIds.push( { "#text": utils.toString(this.queueIds[i]) } );
+        }
+    }
+    if(queueIds.length > 0){
+        msg.ui_request.gates = { "gate_id" : queueIds };
+    }else{
+        msg.ui_request.gates = {};
+    }
+
+    var chatIds = [];
+    for(var i = 0; i < this.chatIds.length; i++){
+        if(this.chatIds[i] !== "") {
+            chatIds.push( {"#text": utils.toString(this.chatIds[i]) } );
+        }
+    }
+    if(chatIds.length > 0) {
+        msg.ui_request.chat_queues = {"chat_queue_id": chatIds};
+    }else{
+        msg.ui_request.chat_queues = {};
+    }
+
+    return JSON.stringify(msg);
+};
+
+
+/*
+ * This function is responsible for handling the response to Login from IntelliQueue.
+ *
+ * {"ui_response":{
+ *      "@message_id":"IQ10012016082513212000447",
+ *      "@response_to":"IQ201608251121200",
+ *      "@type":"LOGIN",
+ *      "agent_id":{"#text":"1"},
+ *      "status":{"#text":"SUCCESS"},
+ *      "message":{"#text":"Hello Geoffrey Mina!"},
+ *      "detail":{"#text":"Logon request processed successfully!"},
+ *      "hash_code":{"#text":"404946966"},
+ *      "login_type":{"#text":"BLENDED"},
+ *      "outdial_group_id":{"#text":"50692"},
+ *      "skill_profile_id":{"#text":"1513"},
+ *      "gates":{
+ *          "gate_id":[
+ *              {"#text":"11116"},
+ *              {"#text":"11117"}
+ *          ]
+ *      },
+ *      "chat_queues":{
+ *          "chat_queue_id":{"#text":"30"}
+ *      }
+ *    }
+ * }
+ */
+LoginRequest.prototype.processResponse = function(response) {
+    var resp = response.ui_response;
+    var status = utils.getText(resp, "status");
+    var detail = utils.getText(resp, "detail");
+    var model = UIModel.getInstance();
+    var message = "";
+    var formattedResponse = utils.buildDefaultResponse(response);
+    var Lib = UIModel.getInstance().libraryInstance;
+
+    if(detail === "Logon Session Configuration Updated!"){
+        // this is an update login packet
+        model.agentSettings.updateLoginMode = true;
+
+        message = "Logon Session Configuration Updated!";
+        utils.logMessage(LOG_LEVELS.INFO, message, response);
+    }
+
+    if(status === "SUCCESS"){
+        if(!model.agentSettings.isLoggedIn){
+            // fresh login, set UI Model properties
+            model.loginPacket = response;
+            model.connectionSettings.hashCode = utils.getText(resp, "hash_code");
+            model.agentSettings.isLoggedIn = true;
+            model.agentSettings.loginDTS = new Date();
+            model.connectionSettings.reconnect = true;
+            model.agentPermissions.allowLeadSearch = false;
+            model.agentSettings.dialDest = model.loginRequest.dialDest; // not sent in response
+            model.agentSettings.loginType = utils.getText(resp, "login_type");
+            model.agentSettings.guid = utils.getText(resp,"guid");
+            model.agentSettings.accountId = utils.getText(resp,"account_id");
+
+            // Set collection values
+            setDialGroupSettings(response);
+            setGateSettings(response);
+            setChatQueueSettings(response);
+            setSkillProfileSettings(response);
+
+        }else{
+            if(model.agentSettings.updateLoginMode){
+                model.agentSettings.dialDest = model.loginRequest.dialDest;
+                model.agentSettings.loginType = utils.getText(resp, "login_type");
+                model.agentSettings.guid = utils.getText(resp,"guid");
+                model.agentSettings.accountId = utils.getText(resp,"account_id");
+
+                // This was an update login request
+                model.agentSettings.updateLoginMode = false;
+
+                // reset to false before updating dial group settings
+                model.agentPermissions.allowLeadSearch = false;
+                model.agentPermissions.requireFetchedLeadsCalled = false;
+                model.agentPermissions.allowPreviewLeadFilters = false;
+
+                // Set collection values
+                setDialGroupSettings(response);
+                setGateSettings(response);
+                setChatQueueSettings(response);
+                setSkillProfileSettings(response);
+
+            }else{
+                // this was a reconnect
+                message = "Processed a Layer 2 Reconnect Successfully";
+
+                model.connectionSettings.isOnCall = utils.getText(resp, "is_on_call");
+                model.connectionSettings.activeCallUii  =  utils.getText(resp, "active_call_uii");
+                model.connectionSettings.isPendingDisp = utils.getText(resp, "is_pending_disp");
+
+
+                if(model.connectionSettings.isOnCall === false){
+                    if(model.currentCall.uii) {
+                        var mockEndCallPacket = {
+                            "ui_notification": {
+                                "@message_id": "",
+                                "@type": "END-CALL",
+                                "uii": {"#text": model.currentCall.uii},
+                                "term_reason": {"#text": "SOCKET-DISCONNECT"}
+                            }
+                        };
+
+                        utils.processNotification(Lib, mockEndCallPacket);
+                    }
+
+                    if(model.agentSettings.isOffhook){
+                        var offHookTermPacket = {
+                            "ui_notification" : {
+                                "agent_id" : {"#text": UIModel.getInstance().agentSettings.agentId},
+                                "@type" : "OFF-HOOK-TERM",
+                                "@message_id": ""
+                            }
+
+                        };
+
+                        var agentProcessOffhookCallback = utils.processNotification(Lib, offHookTermPacket);
+                        Lib.offhookTerm(agentProcessOffhookCallback);
+                    }
+                }else if(model.connectionSettings.isOnCall && (model.currentCall.uii !== model.connectionSettings.activeCallUii || Lib.waitingForAddSession === true)){
+                    //if the agent does not know it is on a call, but IQ thinks it is on a call
+                    //normally in the case of disconnect during transition
+
+                    model.currentCall.uii = model.connectionSettings.activeCallUii;
+                    model.currentCall.pendingDisp = false;
+                    Lib.hangup(1, true);
+                    
+                }else{
+                    //agent still is on call and there are transferSessions, verify no transferSession were drop
+                    var activeAgentUiSessions = Lib.getTransferSessions();
+                    var activeAgentSessions = response.ui_response.active_call_sessions.call_session_id.map(function(sessionObj){
+                        return sessionObj['#text'];
+                    });
+
+                    for(var transferSession in activeAgentUiSessions){
+                        if(activeAgentSessions.indexOf(transferSession) === -1){
+                            //if the active ui session is no longer active, we need to tell the ui
+                            delete UIModel.getInstance().transferSessions[transferSession];
+                        }
+                    }
+                }
+
+                utils.logMessage(LOG_LEVELS.INFO, message, response);
+            }
+        }
+
+        formattedResponse.agentSettings = model.agentSettings;
+        formattedResponse.agentPermissions = model.agentPermissions;
+        formattedResponse.applicationSettings = model.applicationSettings;
+        formattedResponse.chatSettings = model.chatSettings;
+        formattedResponse.connectionSettings = model.connectionSettings;
+        formattedResponse.inboundSettings = model.inboundSettings;
+        formattedResponse.outboundSettings = model.outboundSettings;
+        formattedResponse.scriptSettings = model.scriptSettings;
+    }else{
+        // Login failed
+        if(formattedResponse.message === ""){
+            formattedResponse.message = "Agent configuration attempt failed (2nd layer login)"
+        }
+        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
+    }
+
+    return formattedResponse;
+};
+
+function setDialGroupSettings(response){
+    var model = UIModel.getInstance();
+    var outdialGroups = model.outboundSettings.availableOutdialGroups;
+    model.outboundSettings.outdialGroup = {}; // reset
+    for(var g = 0; g < outdialGroups.length; g++){
+        var group = outdialGroups[g];
+        if(group.dialGroupId === response.ui_response.outdial_group_id['#text']){
+            model.agentPermissions.allowLeadSearch = group.allowLeadSearch;
+            model.agentPermissions.allowPreviewLeadFilters = group.allowPreviewLeadFilters;
+            model.agentPermissions.progressiveEnabled = group.progressiveEnabled;
+            model.outboundSettings.outdialGroup = JSON.parse(JSON.stringify(group)); // copy object
+
+            // Only used for Preview or TCPA Safe accounts.
+            // If set to true, only allow fetching new leads when current leads are called or expired
+            model.agentPermissions.requireFetchedLeadsCalled = group.requireFetchedLeadsCalled;
+        }
+    }
+}
+
+function setSkillProfileSettings(response){
+    var model = UIModel.getInstance();
+    model.inboundSettings.skillProfile = {};
+    var skillProfiles = model.inboundSettings.availableSkillProfiles;
+    for(var s = 0; s < skillProfiles.length; s++){
+        var profile = skillProfiles[s];
+        var responseId = utils.getText(response.ui_response, "skill_profile_id");
+        if(profile.profileId === responseId){
+            model.inboundSettings.skillProfile = JSON.parse(JSON.stringify(profile)); // copy object
+        }
+    }
+}
+
+function setGateSettings(response){
+    var model = UIModel.getInstance();
+    var gates = model.inboundSettings.availableQueues;
+    var selectedGateIds = [];
+    var selectedGates = [];
+    var gateIds = response.ui_response.gates.gate_id || [];
+
+    if (!Array.isArray(gateIds)) {
+        gateIds = [gateIds];
+    }
+
+    for(var s = 0; s < gateIds.length; s++){
+        var obj = gateIds[s];
+        selectedGateIds.push(obj["#text"]);
+    }
+
+    for(var gIdx = 0; gIdx < gates.length; gIdx++){
+        var gate = gates[gIdx];
+        if(selectedGateIds.indexOf(gate.gateId) > -1){
+            selectedGates.push(gate);
+        }
+    }
+
+    model.inboundSettings.queues = JSON.parse(JSON.stringify(selectedGates)); // copy array
+}
+
+function setChatQueueSettings(response){
+    var model = UIModel.getInstance();
+    var chatQueues = model.chatSettings.availableChatQueues;
+    var selectedChatQueueIds = [];
+    var selectedChatQueues = [];
+    var cQueues = response.ui_response.chat_queues || {};
+    var chatQueueIds = cQueues.chat_queue_id || [];
+
+    if (!Array.isArray(chatQueueIds)) {
+        chatQueueIds = [chatQueueIds];
+    }
+
+    for(var c = 0; c < chatQueueIds.length; c++){
+        var obj = chatQueueIds[c];
+        selectedChatQueueIds.push(obj["#text"]);
+    }
+
+    for(var cIdx = 0; cIdx < chatQueues.length; cIdx++){
+        var chatQueue = chatQueues[cIdx];
+        if(selectedChatQueueIds.indexOf(chatQueue.chatQueueId) > -1){
+            selectedChatQueues.push(chatQueue);
+        }
+    }
+
+    model.chatSettings.chatQueues = JSON.parse(JSON.stringify(selectedChatQueues)); // copy array
+}
+
+
+var LoginPhase1Request = function() {
+
+};
+
+LoginPhase1Request.prototype.formatJSON = function() {
+    var msg = {
+        "ui_request":{
+            "@destination":"IQ",
+            "@type":MESSAGE_TYPES.LOGIN_PHASE_1,
+            "@message_id":utils.getMessageId(),
+            "response_to":"",
+            "reconnect": {
+                "#text": utils.toString(UIModel.getInstance().connectionSettings.reconnect)
+            },
+            "agent_id":{
+                "#text":utils.toString(UIModel.getInstance().agentSettings.agentId)
+            },
+            "access_token":{
+                "#text": utils.toString(UIModel.getInstance().authenticateRequest.accessToken)
             }
         }
     };
 
     return JSON.stringify(msg);
 };
-
 
 /*
  * This function is responsible for handling the login packet received from IntelliServices. It will save
@@ -3008,16 +3128,16 @@ LoginRequest.prototype.formatJSON = function() {
  *   }
  * }
  */
-LoginRequest.prototype.processResponse = function(response) {
+LoginPhase1Request.prototype.processResponse = function(response) {
     var resp = response.ui_response;
-    var status = resp.status['#text'];
+    var status = utils.getText(resp,"status");
     var model = UIModel.getInstance();
     var formattedResponse = utils.buildDefaultResponse(response);
 
-    if(status === 'OK'){
-        if(!model.isLoggedInIS){
+    if(status === "OK"){
+        if(!model.applicationSettings.isLoggedInIS){
             // save login packet properties to UIModel
-            model.loginPacket = response;
+            model.loginPhase1Packet = response;
             model.applicationSettings.isLoggedInIS = true;
             model.applicationSettings.isTcpaSafeMode = utils.getText(resp, 'tcpa_safe_mode') === "1";
             model.applicationSettings.pciEnabled = utils.getText(resp, 'pci_enabled') === "1";
@@ -3040,7 +3160,8 @@ LoginRequest.prototype.processResponse = function(response) {
             model.agentSettings.outboundManualDefaultRingtime = utils.getText(resp, 'outbound_manual_default_ringtime');
             model.agentSettings.isOutboundPrepay = utils.getText(resp, 'outbound_prepay') === "1";
             model.agentSettings.phoneLoginPin = utils.getText(resp, 'phone_login_pin');
-            model.agentSettings.username = model.loginRequest.username;
+            model.agentSettings.username = utils.getText(resp, 'username');
+            model.agentSettings.agentPassword = utils.getText(resp, 'agent_pwd');
 
             model.agentPermissions.allowCallControl = utils.getText(resp, 'allow_call_control') === "1";
             model.agentPermissions.allowChat = utils.getText(resp, 'allow_chat') === "1";
@@ -3074,7 +3195,7 @@ LoginRequest.prototype.processResponse = function(response) {
             // Set collection values
             model.outboundSettings.availableCampaigns = _processCampaigns(response);
             model.chatSettings.availableChatQueues = utils.processResponseCollection(response.ui_response, "login_chat_queues", "chat_queue");
-            processChatQueueDnis(model.chatSettings, response);
+            _processChatQueueDnis(model.chatSettings, response);
             model.chatSettings.availableChatRequeueQueues = utils.processResponseCollection(response.ui_response, "chat_requeue_queues", "chat_group");
             model.inboundSettings.availableQueues = utils.processResponseCollection(response.ui_response, "login_gates", "gate");
             model.inboundSettings.availableSkillProfiles = utils.processResponseCollection(response.ui_response, "skill_profiles", "profile");
@@ -3100,23 +3221,16 @@ LoginRequest.prototype.processResponse = function(response) {
             }
             model.outboundSettings.availableOutdialGroups = dialGroups;
         }
-
-        formattedResponse.agentSettings = model.agentSettings;
-        formattedResponse.agentPermissions = model.agentPermissions;
-        formattedResponse.applicationSettings = model.applicationSettings;
-        formattedResponse.chatSettings = model.chatSettings;
-        formattedResponse.connectionSettings = model.connectionSettings;
-        formattedResponse.inboundSettings = model.inboundSettings;
-        formattedResponse.outboundSettings = model.outboundSettings;
-        formattedResponse.scriptSettings = model.scriptSettings;
-
-    }else if(status === 'RESTRICTED'){
-        formattedResponse.message = "Invalid IP Address";
-        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
-    }else{
-        formattedResponse.message = "Invalid Username or password";
-        utils.logMessage(LOG_LEVELS.WARN, formattedResponse.message, response);
     }
+
+    formattedResponse.agentSettings = model.agentSettings;
+    formattedResponse.agentPermissions = model.agentPermissions;
+    formattedResponse.applicationSettings = model.applicationSettings;
+    formattedResponse.chatSettings = model.chatSettings;
+    formattedResponse.connectionSettings = model.connectionSettings;
+    formattedResponse.inboundSettings = model.inboundSettings;
+    formattedResponse.outboundSettings = model.outboundSettings;
+    formattedResponse.scriptSettings = model.scriptSettings;
 
     return formattedResponse;
 };
@@ -3198,7 +3312,7 @@ function _processCampaign(campaignRaw) {
  *
  *      This function will format the dnis list and put them back on chatSettings.availableChatQueues
  **/
-function processChatQueueDnis(chatSettings, response) {
+function _processChatQueueDnis(chatSettings, response) {
     var queues = chatSettings.availableChatQueues;
     var rawQueues = response.ui_response.login_chat_queues.chat_queue;
 
@@ -3233,10 +3347,9 @@ function processChatQueueDnis(chatSettings, response) {
 }
 
 
-var LogoutRequest = function(agentId, message, isSupervisor) {
+var LogoutRequest = function(agentId, message) {
     this.agentId = agentId;
     this.message = message || "";
-    this.isSupervisor = isSupervisor;
 };
 
 LogoutRequest.prototype.formatJSON = function() {
@@ -3258,6 +3371,12 @@ LogoutRequest.prototype.formatJSON = function() {
     return JSON.stringify(msg);
 };
 
+
+LogoutRequest.prototype.processResponse = function(notification) {
+    var formattedResponse = utils.buildDefaultResponse(notification);
+
+    return formattedResponse;
+};
 
 var OffhookInitRequest = function() {
 
@@ -6125,6 +6244,9 @@ var UIModel = (function() {
             statsIntervalId: null,                  // The id of the timer used to send stats request messages
             agentDailyIntervalId: null,             // The id of the timer used to update some agent daily stats values
             waitingForAddSession : null,
+            authHost: window.location.origin,       // default to protocol + hostname + port
+            socketProtocol: "wss://",               // default to secure socket unless local test flag passed in on initialization
+            baseAuthUri : "/api/auth/", // http://localhost:81/api/auth/ or window.location.origin + "/api/auth/",
 
             // internal chat requests
             chatAliasRequest : null,
@@ -6154,7 +6276,7 @@ var UIModel = (function() {
             callNotesRequest : null,
             callbacksPendingRequest : null,
             campaignDispositionsRequest : null,
-            configRequest : null,
+            loginRequest : null,
             coldXferRequest : null,
             dispositionRequest : null,
             dispositionManualPassRequest : null,
@@ -6164,7 +6286,9 @@ var UIModel = (function() {
             leadInsertRequest : null,
             leadUpdateRequest : null,
             logoutRequest : null,
-            loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
+            authenticateRequest : null, // get RC access token
+            loginPhase1Request : null,
+            // todo - dlb - figure out RC reconnects loginRequest : null,                // Original LoginRequest sent to IS - used for reconnects
             offhookInitRequest : null,
             offhookTermRequest : null,
             oneToOneOutdialRequest : null,
@@ -6187,9 +6311,10 @@ var UIModel = (function() {
             // response packets
             agentStatePacket : null,
             chatStatePacket : null,
-            configPacket : null,
-            currentCallPacket : null,
             loginPacket : null,
+            currentCallPacket : null,
+            authenticatePacket : null,
+            loginPhase1Packet : null,
             offhookInitPacket : null,
             offhookTermPacket : null,
             transferSessions: {},
@@ -6362,6 +6487,158 @@ var UIModel = (function() {
     };
 
 })();
+
+
+function HttpService(apiBase) {
+  this.XMLHttpRequest = window.XMLHttpRequest;
+  this.encodeURIComponent = window.encodeURIComponent;
+  this.apiBase = apiBase || "http://localhost:81";
+
+  var that = this;
+
+  /**
+   * Makes a GET request to Engage Auth.
+   *
+   * @param {string} path - Relative path to append to apiUrl.
+   * @param {Object} config - Object describing different properties of the request.
+   * @returns {Promise} Promise that represents status of the request. Resolves if server responds with 200 status code, and is rejected otherwise.
+   */
+  this.httpGet = function (path, config) {
+    return new Promise(function(resolve, reject) {
+      var req = new that.XMLHttpRequest();
+      var queryParams = "";
+      if(config.queryParams) {
+        queryParams = "?" + _getUriEncodedParams(config.queryParams);
+      }
+      req.open("GET", that.apiBase + path + queryParams);
+      _addHeaders(config, req);
+      _addCompletionListeners(resolve, reject, req);
+      req.send();
+    });
+  };
+
+
+  /**
+   * Makes a GET request to Engage Auth.
+   *
+   * @param {string} path - Relative path to append to apiUrl.
+   * @param {Object} config - Object describing different properties of the request.
+   * @returns {Promise} Promise that represents status of the request. Resolves if server responds with 200 status code, and is rejected otherwise.
+   */
+  this.httpPost = function (path, config) {
+    return new Promise(function(resolve, reject) {
+      var req = new that.XMLHttpRequest();
+      var queryParams = "";
+      if(config.queryParams) {
+        queryParams = "?" + _getUriEncodedParams(config.queryParams);
+      }
+      req.open("POST", that.apiBase + path + queryParams);
+      _addHeaders(config, req);
+      _addCompletionListeners(resolve, reject, req);
+      req.send(_getUriEncodedBody(config));
+    });
+  };
+
+  /**
+   * Utility method used to check if an argument is actually an object.
+   *
+   * @param {*} obj
+   */
+  function _isObj(obj) {
+    return typeof obj === "object" && obj !== null;
+  }
+
+
+  /**
+   * Adds headers to XMLHttpRequest based on configuration object.
+   *
+   * @param {Object} config - Config object passed to HttpService methods.
+   * @param {XMLHttpRequest} req - Instance of XMLHttpRequest that needs to be configured.
+   */
+  function _addHeaders(config, req) {
+    if (!_isObj(config)) {
+      return;
+    }
+
+    var headers = config.headers;
+
+    if (!_isObj(headers)) {
+      return;
+    }
+
+    for(var key in headers){
+      req.setRequestHeader(key, headers[key]);
+    }
+  }
+
+
+  /**
+   * Configures an XMLHttpRequest object to properly resolve/reject a promise, depending on the outcome of the request.
+   *
+   * @param {Function} resolve - Resolve callback function from a promise. Invoked if the request completed successfully.
+   * @param {Function} reject - Reject callback function from a promise. Invoked if the request failed.
+   * @param {XMLHttpRequest} req - Instance of XMLHttpRequest that will be configured.
+   */
+  function _addCompletionListeners(resolve, reject, req) {
+    req.addEventListener("error", function(e) {
+      reject(e);
+    });
+    req.addEventListener("timeout", function() {
+      reject(new Error("request timeout"));
+    });
+    req.addEventListener("load", function() {
+      if (this.status !== 200) {
+        reject({
+          status: this.status,
+          response: this.responseText
+        });
+      } else {
+        resolve({
+          status: this.status,
+          response: this.responseText
+        });
+      }
+    });
+  }
+
+
+  /**
+   * Takes a config object and serializes/URI encodes the contents of the body property. If the "Content-Type" header is set
+   * to "application/json", it encodes the payload as JSON. Otherwise, we assume that the payload should be x-www-form-urlencoded.
+   */
+  function _getUriEncodedBody (config) {
+    var contentType =
+        config && config.headers && config.headers["Content-Type"];
+    var body = (config && config.body) || "";
+
+    if (contentType === "application/json") {
+      body = JSON.stringify(body);
+    } else {
+      if (_isObj(body)) {
+        body =  _getUriEncodedParams(body);
+      }
+    }
+
+    return body;
+  }
+
+  function _getUriEncodedParams(params){
+    if (!_isObj(params)) {
+      return;
+    }
+
+    return Object
+        .keys(params)
+        .map(function(key) {
+          return encodeURIComponent(key) + "=" + encodeURIComponent(params[key])
+        })
+        .join("&")
+  }
+}
+
+
+
+
 
 
 function NewCallUtils(instance, data) {
@@ -6537,23 +6814,17 @@ var utils = {
                 var update = UIModel.getInstance().leadUpdateRequest.processResponse(response);
                 utils.fireCallback(instance, CALLBACK_TYPES.LEAD_UPDATE, update);
                 break;
-            case MESSAGE_TYPES.LOGIN:
-                if (dest === "IS") {
-                    var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
-                    utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, loginResponse);
-                } else if (dest === 'IQ') {
-                    var configResponse = UIModel.getInstance().configRequest.processResponse(response);
-                    utils.fireCallback(instance, CALLBACK_TYPES.CONFIG, configResponse);
-
-                    if (configResponse.status === "SUCCESS") {
-                        // start stats interval timer, request stats every 5 seconds
-                        UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
-                    }
-                }
+            case MESSAGE_TYPES.LOGIN_PHASE_1:
+                var loginPhase1Response = UIModel.getInstance().loginPhase1Request.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LOGIN_PHASE_1, loginPhase1Response);
                 break;
-            case MESSAGE_TYPES.LOGOUT:
-                // TODO add processResponse?
-                utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, response);
+            case MESSAGE_TYPES.LOGIN:
+                var loginResponse = UIModel.getInstance().loginRequest.processResponse(response);
+                utils.fireCallback(instance, CALLBACK_TYPES.LOGIN, loginResponse);
+                if (loginResponse.status === "SUCCESS") {
+                    // start stats interval timer, request stats every 5 seconds
+                    UIModel.getInstance().statsIntervalId = setInterval(utils.sendStatsRequestMessage, 5000);
+                }
                 break;
             case MESSAGE_TYPES.OFFHOOK_INIT:
                 var offhook = new OffhookInitRequest();
@@ -6801,6 +7072,14 @@ var utils = {
                 var emailNotif = new AdminDebugEmailNotification();
                 var emailNotifResp = emailNotif.processResponse(data);
                 utils.fireCallback(instance, CALLBACK_TYPES.AGENT_DEBUG_EMAIL_NOTIF, emailNotifResp);
+                break;
+            case MESSAGE_TYPES.LOGOUT:
+                var logoutNotification = new LogoutRequest();
+                var logoutNotifResponse = logoutNotification.processResponse(data);
+                utils.fireCallback(instance, CALLBACK_TYPES.LOGOUT, logoutNotifResponse);
+
+                var instance = UIModel.getInstance().libraryInstance;
+                instance.closeSocket();
                 break;
             case MESSAGE_TYPES.MONITOR_CHAT:
                 //TODO: do this
@@ -7404,6 +7683,12 @@ const LOG_LEVELS ={
     "ERROR":"error"
 };
 
+const AUTHENTICATE_TYPES ={
+    "USERNAME_PASSWORD":"USERNAME_PASSWORD",
+    "RC_TOKEN":"RC_TOKEN",
+    "ENGAGE_TOKEN":"ENGAGE_TOKEN"
+};
+
 // add all callback types to setCallback method description
 const CALLBACK_TYPES = {
     "ADD_SESSION":"addSessionNotification",
@@ -7442,7 +7727,9 @@ const CALLBACK_TYPES = {
     "HOLD":"holdResponse",
     "LOG_RESULTS":"logResultsResponse",
     "LOG_CONSOLE_RESULTS":"logConsoleResultsResponse",
+    "AUTHENTICATE":"authenticateResponse",
     "LOGIN":"loginResponse",
+    "LOGIN_PHASE_1": "loginPhase1Response",
     "LOGOUT":"logoutResponse",
     "NEW_CALL":"newCallNotification",
     "LEAD_HISTORY":"leadHistoryResponse",
@@ -7527,6 +7814,7 @@ const MESSAGE_TYPES = {
     "LEAD_INSERT":"LEAD-INSERT",
     "LEAD_UPDATE":"LEAD-UPDATE",
     "LOGIN":"LOGIN",
+    "LOGIN_PHASE_1": "LOGIN-PHASE-1",
     "LOGOUT":"LOGOUT",
     "NEW_CALL":"NEW-CALL",
     "OFFHOOK_INIT":"OFF-HOOK-INIT",
@@ -7620,11 +7908,15 @@ function initAgentLibraryCore (context) {
             this.callbacks = config.callbacks;
         }
 
-        if(typeof config.socketDest !== 'undefined'){
-            UIModel.getInstance().applicationSettings.socketDest = config.socketDest;
-            this.openSocket();
-        }else{
-            // todo default socket address?
+        if(typeof config.authHost !== 'undefined'){
+            UIModel.getInstance().authHost = config.authHost;
+        }
+
+        if(config.isSecureSocket !== 'undefined'){
+            if(typeof(config.isSecureSocket) === 'string'){
+                config.isSecureSocket = config.isSecureSocket.toLowerCase() === "true";
+            }
+            UIModel.getInstance().socketProtocol = config.isSecureSocket ? "wss://" : "ws://";
         }
 
         return this;
@@ -7743,20 +8035,20 @@ function initAgentLibraryCore (context) {
     // requests and responses //
     ////////////////////////////
     /**
+     * Get outgoing Authenticate Request object
+     * @memberof AgentLibrary.Core.Requests
+     * @returns {object}
+     */
+    AgentLibrary.prototype.getAuthenticateRequest = function() {
+        return UIModel.getInstance().authenticateRequest;
+    };
+    /**
      * Get outgoing Login Request object
      * @memberof AgentLibrary.Core.Requests
      * @returns {object}
      */
     AgentLibrary.prototype.getLoginRequest = function() {
         return UIModel.getInstance().loginRequest;
-    };
-    /**
-     * Get outgoing Config Request object
-     * @memberof AgentLibrary.Core.Requests
-     * @returns {object}
-     */
-    AgentLibrary.prototype.getConfigRequest = function() {
-        return UIModel.getInstance().configRequest;
     };
     /**
      * Get outgoing Logout Request object
@@ -8357,6 +8649,8 @@ function initAgentLibraryCore (context) {
 
     AgentLibrary.prototype._NewCallUtils = NewCallUtils;
 
+    AgentLibrary.prototype._HttpService = HttpService;
+
     AgentLibrary.prototype._getUIModel= function() {
         return UIModel;
     };
@@ -8366,11 +8660,14 @@ function initAgentLibraryCore (context) {
 function initAgentLibrarySocket (context) {
     'use strict';
     var AgentLibrary = context.AgentLibrary;
-    AgentLibrary.prototype.openSocket = function(callback){
+    AgentLibrary.prototype.openSocket = function(agentId, callback){
         var instance = this;
         utils.setCallback(instance, CALLBACK_TYPES.OPEN_SOCKET, callback);
         if("WebSocket" in context){
             if(!instance.socket){
+                UIModel.getInstance().agentSettings.agentId = agentId; // set agentId here since id is in scope
+                UIModel.getInstance().applicationSettings.socketDest += "&agent_id=" + agentId;
+
                 var socketDest = UIModel.getInstance().applicationSettings.socketDest;
                 utils.logMessage(LOG_LEVELS.DEBUG, "Attempting to open socket connection to " + socketDest, "");
                 instance.socket = new WebSocket(socketDest);
@@ -8414,7 +8711,8 @@ function initAgentLibrarySocket (context) {
                         console.warn("AgentLibrary: WebSocket is not connected, attempting to reconnect.");
 
                         setTimeout(function(){
-                            instance.openSocket();
+                            // todo - dlb - take a look at this for reconnects with SSO
+                            instance.openSocket(UIModel.getInstance().agentSettings.agentId);
                         }, 5000);
                     }
                 };
@@ -8433,24 +8731,32 @@ function initAgentLibrarySocket (context) {
         var currDts = new Date();
         var threeMins = 3 * 60 * 1000; // milliseconds
         var queuedMsg;
+
+        // get agent configuration information - "phase 1 login"
+        UIModel.getInstance().loginPhase1Request = new LoginPhase1Request();
+        var msg = UIModel.getInstance().loginPhase1Request.formatJSON();
+        utils.sendMessage(this, msg);
+
         // if this is a reconnect, we need to re-authenticate with IntelliServices & IntelliQueue
         if(instance._isReconnect){
             instance._isReconnect = false;
             // Add IntelliQueue reconnect
-            var configRequest = JSON.parse(UIModel.getInstance().configRequest.formatJSON());
+            var loginRequest = JSON.parse(UIModel.getInstance().loginRequest.formatJSON());
             var hashCode = UIModel.getInstance().connectionSettings.hashCode;
-            configRequest.ui_request.hash_code = {
+            loginRequest.ui_request.hash_code = {
                 "#text":hashCode
             };
-            configRequest.ui_request.update_login = {
+            loginRequest.ui_request.update_login = {
                 "#text": "FALSE"
             };
-            configRequest.ui_request.reconnect = {
+            loginRequest.ui_request.reconnect = {
                 "#text": "TRUE"
             };
-            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(configRequest)});
+            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(loginRequest)});
+
+            // todo - dlb - remove with new RC SSO
             // Add IntelliServices reconnect
-            var loginRequest = JSON.parse(UIModel.getInstance().loginRequest.formatJSON());
+            /*var loginRequest = JSON.parse(UIModel.getInstance().loginRequest.formatJSON());
             var agentId = UIModel.getInstance().agentSettings.agentId;
             loginRequest.ui_request.reconnect = {
                 "#text":"TRUE"
@@ -8458,7 +8764,7 @@ function initAgentLibrarySocket (context) {
             loginRequest.ui_request.agent_id = {
                 "#text": utils.toString(agentId)
             };
-            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(loginRequest)});
+            instance._queuedMsgs.unshift({dts: new Date(), msg: JSON.stringify(loginRequest)});*/
         }
         for(var idx=0; idx < instance._queuedMsgs.length; idx++){
             queuedMsg = instance._queuedMsgs[idx];
@@ -8487,33 +8793,62 @@ function initAgentLibraryAgent (context) {
     var AgentLibrary = context.AgentLibrary;
 
     /**
-     * Sends agent login message to IntelliServices
+     * Sends authenticate request to Engage Auth. Can either pass in 3 params of username, password, and platformId or
+     * two params of jwt and tokenType. In each case a callback function may optionally be specified.
      * @memberof AgentLibrary.Agent
      * @param {string} username Agent's username
      * @param {string} password Agent's password
+     * @param {string} platformId Designate the platform where the agent is set up
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.loginAgent = function(username, password, callback){
-        UIModel.getInstance().loginRequest = new LoginRequest(username, password);
-        var msg = UIModel.getInstance().loginRequest.formatJSON();
+    AgentLibrary.prototype.authenticateAgentWithUsernamePassword = function(username, password, platformId, callback){
 
-        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
-        utils.sendMessage(this, msg);
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({username:username, password:password, platformId:platformId, authType:AUTHENTICATE_TYPES.USERNAME_PASSWORD});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
     };
 
     /**
-     * Sends agent login message to IntelliServices, with flag to tell IntelliServices
-     * that agent password is to be treated as case sensitive
+     * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
      * @memberof AgentLibrary.Agent
-     * @param {string} username Agent's username
-     * @param {string} password Agent's password
+     * @param {string} rcAccessToken JSON Web Token received from RingCentral Single Sign-on API
+     * @param {string} tokenType string type received from RingCentral Single Sign-on API
      * @param {function} [callback=null] Callback function when loginAgent response received
      */
-    AgentLibrary.prototype.loginAgentCaseSensitive = function(username, password, callback){
-        UIModel.getInstance().loginRequest = new LoginRequest(username, password, true);
-        var msg = UIModel.getInstance().loginRequest.formatJSON();
+    AgentLibrary.prototype.authenticateAgentWithRcAccessToken = function(rcAccessToken, tokenType, callback){
 
-        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({rcAccessToken: rcAccessToken, tokenType:tokenType, authType:AUTHENTICATE_TYPES.RC_TOKEN});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
+    };
+
+    /**
+     * Sends authenticate request to Engage Auth. Returns an array of agents to continue login process.
+     * @memberof AgentLibrary.Agent
+     * @param {string} engageAccessToken JSON Web Token received from RingCentral Single Sign-on API
+     * @param {function} [callback=null] Callback function when loginAgent response received
+     */
+    AgentLibrary.prototype.authenticateAgentWithEngageAccessToken = function(engageAccessToken, callback){
+
+        UIModel.getInstance().authenticateRequest = new AuthenticateRequest({engageAccessToken:engageAccessToken, authType:AUTHENTICATE_TYPES.ENGAGE_TOKEN});
+        UIModel.getInstance().authenticateRequest.sendHttpRequest();
+
+        utils.setCallback(this, CALLBACK_TYPES.AUTHENTICATE, callback);
+    };
+
+    /**
+     * Sends request to IntelliQueue to get the agent's available products for login
+     * @memberof AgentLibrary.Agent
+     * @param {function} [callback=null] Callback function when loginPhase1 response received
+     */
+    AgentLibrary.prototype.getAgentConfig = function(callback){
+
+        UIModel.getInstance().loginPhase1Request = new LoginPhase1Request();
+        var msg = UIModel.getInstance().loginPhase1Request.formatJSON();
+
+        utils.setCallback(this, CALLBACK_TYPES.LOGIN_PHASE_1, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -8529,11 +8864,11 @@ function initAgentLibraryAgent (context) {
      * @param {boolean} isForce Whether the agent login is forcing an existing agentlogin out.
      * @param {function} [callback=null] Callback function when configureAgent response received.
      */
-    AgentLibrary.prototype.configureAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
-        UIModel.getInstance().configRequest = new ConfigRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
-        var msg = UIModel.getInstance().configRequest.formatJSON();
+    AgentLibrary.prototype.loginAgent = function(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce, callback){
+        UIModel.getInstance().loginRequest = new LoginRequest(dialDest, queueIds, chatIds, skillProfileId, dialGroupId, updateFromAdminUI, isForce);
+        var msg = UIModel.getInstance().loginRequest.formatJSON();
 
-        utils.setCallback(this, CALLBACK_TYPES.CONFIG, callback);
+        utils.setCallback(this, CALLBACK_TYPES.LOGIN, callback);
         utils.sendMessage(this, msg);
     };
 
@@ -8544,14 +8879,16 @@ function initAgentLibraryAgent (context) {
      * @param {function} [callback=null] Callback function when logoutAgent response received.
      */
     AgentLibrary.prototype.logoutAgent = function(agentId, callback){
-        UIModel.getInstance().logoutRequest = new LogoutRequest(agentId);
-        utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
-        UIModel.getInstance().agentSettings.isLoggedIn = false;
+        var model = UIModel.getInstance();
+        if(model.agentSettings.isLoggedIn){
+            model.agentSettings.isLoggedIn = false;
+            model.logoutRequest = new LogoutRequest(agentId);
+            var msg = model.logoutRequest.formatJSON();
 
-        // Agent requested logout, just close socket??
-        utils.fireCallback(this, CALLBACK_TYPES.LOGOUT, "");
-        this.closeSocket();
-
+            // socket closed in callback function
+            utils.setCallback(this, CALLBACK_TYPES.LOGOUT, callback);
+            utils.sendMessage(this, msg);
+        }
     };
 
     /**
