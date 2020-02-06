@@ -19,6 +19,9 @@
     "url": "https://www.ringcentral.com/"
   },
   "readmeFilename": "README.md",
+  "dependencies": {
+    "engage-auth-js": "https://git.ringcentral.com/engage-voice/engage-auth-js.git#develop"
+  },
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-beep": "^0.3.2",
@@ -51,6 +54,9 @@
     "karma-json-fixtures-preprocessor": "0.0.6",
     "karma-junit-reporter": "^0.3.8",
     "karma-phantomjs-launcher": "^0.2.1",
-    "phantomjs": "^2.1.1"
+    "phantomjs": "^2.1.1",
+    "prompts": "^2.3.0",
+    "window-mock": "^0.1.0",
+    "xmlhttprequest": "^1.8.0"
   }
 }

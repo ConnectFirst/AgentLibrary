@@ -1,10 +1,12 @@
 const FilePicker = require('./helpers/FilePicker');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
+require('./helpers/InitGlobals');
 
+// prompt for files and execute
 FilePicker.promptForFiles().then((files) => {
   files.forEach((file) => {
     console.time(file);
-    exec(`node ${FilePicker.baseDir}/${file}`, (err, stdout, stderr) => {
+    execFile('node', [`./examples/${file}`], (err, stdout, stderr) => {
       if (err) {
         console.error(err);
       } else {

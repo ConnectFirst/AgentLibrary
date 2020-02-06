@@ -1,6 +1,6 @@
 const fs = require('fs');
 const prompts = require('prompts');
-const ignoreFiles = ['base.config.js', 'helpers'];
+const ignoreFiles = ['base.config.js', 'helpers', 'transport'];
 const baseDir = './examples';
 
 function promptForFiles() {
